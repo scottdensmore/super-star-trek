@@ -3,6 +3,15 @@
 
 void prelim(void) {
 	skip(2);
+    prout("__________________           __");
+    prout("\\_________________|)____.---'--`---.____");
+    prout("              ||    \\----.________.----/");
+    prout("              ||     / /    `--'");
+    prout("            __||____/ /_");
+    prout("           |___         \\");
+    prout("               `--------'");
+    prout("  THE USS ENTERPRISE --- NCC-1701");
+    skip(1);
 	prout("-SUPER- STAR TREK");
 	skip(1);
 	prout("Latest update-21 Sept 78");
