@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "d4dfc0928709",
+  "strategy": "manual-commit",
+  "branch": "chore/agent-workflow",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "CLAUDE.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d4/dfc0928709/0/metadata.json",
+      "transcript": "/d4/dfc0928709/0/full.jsonl",
+      "compact_transcript": "/d4/dfc0928709/0/transcript.jsonl",
+      "content_hash": "/d4/dfc0928709/0/content_hash.txt",
+      "prompt": "/d4/dfc0928709/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 22,
+    "cache_creation_tokens": 18395,
+    "cache_read_tokens": 356317,
+    "output_tokens": 8794,
+    "api_call_count": 11
+  }
+}
