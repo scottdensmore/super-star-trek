@@ -6,10 +6,21 @@ Super Star Trek is probably the most famous early text-only game ever created an
 
 [Read more about Star Trek and Super Star Trek.](https://en.wikipedia.org/wiki/Star_Trek_%281971_video_game%29)
 
+### Full-screen mode
+
+Run `sst -t` for a full-screen interface: the short-range scan and the
+ship's status stay on screen in two panels while the usual game
+conversation scrolls below them. It needs a terminal of at least 72x24
+and can be combined with the fixed-coordinate option (`sst -f -t`).
+Without `-t` the game uses its classic scrolling display.
+
 ### Building for Windows
 For compiling with Visual Studio, you don't need to run Visual Studio but use the Developer Command Prompt.
 From the start menu run the Developer Command Prompt for Visual Studio  and cd to where the sst source files are.
 Then run the command "cl /DWINDOWS /Fesst.exe *.c"
 This works if the only C source files are those of SST, otherwise you will need to list all the source file names
 in the command line
+
+Note: the full-screen mode (`-t`) uses curses and is only available on
+Unix-like systems; it is not part of the Windows build.
 

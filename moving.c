@@ -237,7 +237,7 @@ void dock(void) {
 #ifdef CAPTURE
     if (brigcapacity-brigfree > 0)
     {
-        printf("%d captured Klingons transferred to base.\n", brigcapacity-brigfree);
+        proutf("%d captured Klingons transferred to base.\n", brigcapacity-brigfree);
         kcaptured += brigcapacity-brigfree;
         brigfree = brigcapacity;
     }

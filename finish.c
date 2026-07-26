@@ -1,6 +1,16 @@
 #include "sst.h"
+#include "tui.h"
 #include <string.h>
 #include <time.h>
+
+/* Read one line of user input, in whichever mode is active. */
+static void readline(char *buf, int buflen) {
+	if (tui_active)
+		tui_readline(buf, buflen);
+	else
+		fgets(buf, buflen, stdin);
+	buf[strlen(buf)-1] = '\0';
+}
 
 void dstrct() {
 	/* Finish with a BANG! */
@@ -68,11 +78,11 @@ void finish(FINTYPE ifin) {
 	int igotit = 0;
 	alldone = 1;
 	skip(3);
-	printf("It is stardate %.1f .\n\n", d.date);
+	proutf("It is stardate %.1f .\n\n", d.date);
 	switch (ifin) {
 		case FWON: // Game has been won
 			if (d.nromrem != 0)
-				printf("The remaining %d Romulan ships surrender to Starfleet Command.\n",
+				proutf("The remaining %d Romulan ships surrender to Starfleet Command.\n",
 					   d.nromrem);
 
 
@@ -82,7 +92,7 @@ void finish(FINTYPE ifin) {
 #ifdef CAPTURE
             if (alive && brigcapacity-brigfree > 0) { // captured Klingon crew will get transfered to starbase
                 kcaptured += brigcapacity-brigfree;
-                printf("The %d captured Klingons are transferred to Star Fleet Command.\n",
+                proutf("The %d captured Klingons are transferred to Star Fleet Command.\n",
                        brigcapacity-brigfree);
             }
 #endif
@@ -358,49 +368,49 @@ void score(int inGame) {
     if (inGame) prout("Your score so far --");
     else prout("Your score --");
 	if (d.nromkl)
-		printf(d.nromkl> 1 ? "%6d Romulan ships destroyed            %5d\n" : "%6d Romulan ship destroyed             %5d\n",
+		proutf(d.nromkl> 1 ? "%6d Romulan ships destroyed            %5d\n" : "%6d Romulan ship destroyed             %5d\n",
 			   d.nromkl, 20*d.nromkl);
 	if (dnromrem)
-		printf(dnromrem > 1 ? "%6d Romulan ships surrendered         %5d\n" : "%6d Romulan ship surrendered           %5d\n",
+		proutf(dnromrem > 1 ? "%6d Romulan ships surrendered         %5d\n" : "%6d Romulan ship surrendered           %5d\n",
 			   dnromrem, dnromrem);
 	if (d.killk)
-		printf(d.killk > 1 ? "%6d ordinary Klingon ships destroyed   %5d\n" : "%6d ordinary Klingon ship destroyed    %5d\n",
+		proutf(d.killk > 1 ? "%6d ordinary Klingon ships destroyed   %5d\n" : "%6d ordinary Klingon ship destroyed    %5d\n",
 			   d.killk,  10*d.killk);
 	if (d.killc)
-		printf(d.killc > 1 ? "%6d Klingon Commander ships destroyed  %5d\n" : "%6d Klingon Commander ship destroyed   %5d\n",
+		proutf(d.killc > 1 ? "%6d Klingon Commander ships destroyed  %5d\n" : "%6d Klingon Commander ship destroyed   %5d\n",
 			   d.killc, 50*d.killc);
 	if (d.nsckill)
-		printf("%6d Super-Commander ship destroyed     %5d\n",
+		proutf("%6d Super-Commander ship destroyed     %5d\n",
 			   d.nsckill, 200*d.nsckill);
 	if (ithperd)
-		printf("%6.2f Klingon ships per stardate         %5d\n",
+		proutf("%6.2f Klingon ships per stardate         %5d\n",
 			   perdate, ithperd);
 #ifdef CAPTURE
 	if (kcaptured)
-		printf(kcaptured > 1 ? "%6d Klingons captured                  %5d\n" : "%6d Klingon captured                   %5d\n",
+		proutf(kcaptured > 1 ? "%6d Klingons captured                  %5d\n" : "%6d Klingon captured                   %5d\n",
 		        kcaptured, 3*kcaptured);
 #endif
 	if (d.starkl)
-		printf(d.starkl > 1 ? "%6d stars destroyed by your action     %5d\n" : "%6d star destroyed by your action      %5d\n",
+		proutf(d.starkl > 1 ? "%6d stars destroyed by your action     %5d\n" : "%6d star destroyed by your action      %5d\n",
 			   d.starkl, -5*d.starkl);
 	if (d.nplankl)
-		printf(d.nplankl > 1 ? "%6d planets destroyed by your action   %5d\n" : "%6d planet destroyed by your action    %5d\n",
+		proutf(d.nplankl > 1 ? "%6d planets destroyed by your action   %5d\n" : "%6d planet destroyed by your action    %5d\n",
 			   d.nplankl, -10*d.nplankl);
 	if (d.basekl)
-		printf(d.basekl > 1 ? "%6d bases destroyed by your action     %5d\n" : "%6d base destroyed by your action      %5d\n",
+		proutf(d.basekl > 1 ? "%6d bases destroyed by your action     %5d\n" : "%6d base destroyed by your action      %5d\n",
 			   d.basekl, -100*d.basekl);
 	if (nhelp)
-		printf(nhelp > 1 ? "%6d calls for help from starbase       %5d\n" : "%6d call for help from starbase        %5d\n",
+		proutf(nhelp > 1 ? "%6d calls for help from starbase       %5d\n" : "%6d call for help from starbase        %5d\n",
 			   nhelp, -45*nhelp);
 	if (casual)
-		printf(casual > 1 ? "%6d casualties incurred                %5d\n" : "%6d casualty incurred                  %5d\n",
+		proutf(casual > 1 ? "%6d casualties incurred                %5d\n" : "%6d casualty incurred                  %5d\n",
 			   casual, -casual);
 	if (klship)
-		printf(klship > 1 ? "%6d ships lost or destroyed            %5d\n" : "%6d ship lost or destroyed             %5d\n",
+		proutf(klship > 1 ? "%6d ships lost or destroyed            %5d\n" : "%6d ship lost or destroyed             %5d\n",
 			   klship, -100*klship);
 #ifdef CLOAKING
 	if (ncviol>0)
-		printf(ncviol > 1 ? "%6d Treaty of Algeron violations       %5d\n" : "%6d Treaty of Algeron violation        %5d\n",
+		proutf(ncviol > 1 ? "%6d Treaty of Algeron violations       %5d\n" : "%6d Treaty of Algeron violation        %5d\n",
 		       ncviol, -100*ncviol);
 #endif
 	if (alive==0)
@@ -415,11 +425,11 @@ void score(int inGame) {
 			case SEXPERT: proutn("Expert game  "); break;
 			case SEMERITUS: proutn("Emeritus game"); break;
 		}
-		printf("           %5d\n", iwon);
+		proutf("           %5d\n", iwon);
 	}
 	skip(2);
-    printf("TOTAL SCORE                               %5d\n", iscore);
-    if (inGame && skill < SGOOD) printf("REMEMBER--The score doesn't really matter until the mission is accomplished!\n");
+    proutf("TOTAL SCORE                               %5d\n", iscore);
+    if (inGame && skill < SGOOD) proutf("REMEMBER--The score doesn't really matter until the mission is accomplished!\n");
 }
 
 void plaque(void) {
@@ -432,18 +442,16 @@ void plaque(void) {
 	skip(2);
 	
 	while (fp == NULL) {
-		printf("File or device name for your plaque:");
-		fgets(winner, 128, stdin);
-		winner[strlen(winner)-1] = '\0';
+		proutf("File or device name for your plaque:");
+		readline(winner, 128);
 		fp = fopen(winner, "w");
 		if (fp==NULL) {
-			printf("Invalid name.\n");
+			proutf("Invalid name.\n");
 		}
 	}
 
-	printf("Enter name to go on plaque (up to 30 characters):");
-	fgets(winner, 128, stdin);
-	winner[strlen(winner)-1] = '\0';
+	proutf("Enter name to go on plaque (up to 30 characters):");
+	readline(winner, 128);
 	winner[30] = '\0';
 	nskip = 64 - strlen(winner)/2;
 

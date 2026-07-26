@@ -639,7 +639,7 @@ void attack(int k) {
 		if (hit > hitmax) hitmax = hit;
 		hittot += hit;
 		fry(hit);
-		printf("Hit %g energy %g\n", hit, energy);
+		proutf("Hit %g energy %g\n", hit, energy);
 		energy -= hit;
 	}
 	if (energy <= 0) {
@@ -1396,17 +1396,17 @@ void
 	/* Make sure there is room in the brig */
 	if (brigfree == 0)
 	{
-		printf("Security reports the brig is already full.\n");
+		proutf("Security reports the brig is already full.\n");
 		return;
 	}
 
 	if (!REPORTS) {
-		printf("Uhura- \"We have no subspace radio communication, sir.\"\n");
+		proutf("Uhura- \"We have no subspace radio communication, sir.\"\n");
 		return;
 	}
 
 	if (damage[DTRANSP] != 0) {
-		printf("Scotty- \"Transporter damaged, sir.\"\n");
+		proutf("Scotty- \"Transporter damaged, sir.\"\n");
 		return;
 	}
 
@@ -1415,7 +1415,7 @@ void
 	/* find out if there are any at all */
 	if (klhere < 1)
 	{
-		printf("Uhura- \"Getting no response, sir.\"\n");
+		proutf("Uhura- \"Getting no response, sir.\"\n");
 		return;
 	}
 
@@ -1433,27 +1433,27 @@ void
 	x *= 2.5;  /* would originally have been equivalent of 1.4, but we want command to work more often, more humanely */
 	i = x;
 #ifdef DEBUG
-	printf("Prob = %d (%.4f)\n", i, x);
+	proutf("Prob = %d (%.4f)\n", i, x);
 //	i = 100; // For testing, of course!
 #endif
 	if (i > 100*Rand())
 	{
 		/* guess what, he surrendered!!! */
-		printf("Klingon captain at %d,%d surrenders\n", kx[k], ky[k]);
+		proutf("Klingon captain at %d,%d surrenders\n", kx[k], ky[k]);
 		i = 200*Rand();
 		if ( i > 0 )
-			printf("%d Klingons commit suicide rather than be taken captive\n", 200 - i);
+			proutf("%d Klingons commit suicide rather than be taken captive\n", 200 - i);
 		if (i > brigfree && condit != IHDOCKED)
 		{
-			printf("%d Klingons die because there is no room for them in the brig.\n", i-brigfree);
+			proutf("%d Klingons die because there is no room for them in the brig.\n", i-brigfree);
 			i = brigfree;
 		}
 		if (condit != IHDOCKED) {
 			brigfree -= i;
-			printf("%d captives taken\n", i);
+			proutf("%d captives taken\n", i);
 		} else {
 			kcaptured += i;
-			printf("%d captives taken and transferred to base\n", i);
+			proutf("%d captives taken and transferred to base\n", i);
 		}
 		deadkl(kx[k], ky[k], quad[kx[k]][ky[k]], kx[k], ky[k]);
 		if (d.remkl==0) finish(FWON);
@@ -1461,7 +1461,7 @@ void
 	}
 
 	/* big surprise, he refuses to surrender */
-	printf("Fat chance, captain\n");
+	proutf("Fat chance, captain\n");
 	return;
 }
 

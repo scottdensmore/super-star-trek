@@ -189,3 +189,7 @@ Temporary Items
 .apdisk
 
 # End of https://www.toptal.com/developers/gitignore/api/clion,macos,c++,cmake
+
+# Local CMake build trees
+build/
+build-*/

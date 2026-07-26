@@ -1532,6 +1532,12 @@ Modifications I made:
   have more than one Klingon aboard! The CLOAK command and some other
   bug fixes and correction of typos are thanks to Erik Olofsen.
 
+  In 2026 I added an optional full-screen interface, enabled with the
+  -t command line option. It keeps the short-range scan and the status
+  readout on screen at all times, with the usual game conversation
+  scrolling below them. It needs a terminal of at least 72x24; the
+  classic scrolling display remains the default.
+
 
                ----------ACKNOWLEDGMENTS----------                    27
 

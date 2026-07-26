@@ -25,6 +25,10 @@ int min(int a, int b) {
 int getch(void) {
     char chbuf[1];
     struct termios oldstate, newstate;
+    extern int tui_active;
+    int tui_getch(void);
+    if (tui_active)
+        return tui_getch();
     fflush(stdout);
 	tcgetattr(0, &oldstate);
 	newstate = oldstate;

@@ -431,6 +431,7 @@ void chew2(void);
 void skip(int);
 void prout(char *s);
 void proutn(char *s);
+void proutf(const char *fmt, ...);
 void stars(void);
 void newqad(int);
 int ja(void);
