@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "df8b38e033a9",
+  "strategy": "manual-commit",
+  "branch": "feat/tui-mode",
+  "checkpoints_count": 4,
+  "files_touched": [
+    ".gitignore",
+    "CMakeLists.txt",
+    "README.md",
+    "battle.c",
+    "finish.c",
+    "moving.c",
+    "osx.c",
+    "reports.c",
+    "setup.c",
+    "sst.c",
+    "sst.doc",
+    "sst.h",
+    "tests/test_tuifmt.c",
+    "tui.c",
+    "tui.h",
+    "tuifmt.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/df/8b38e033a9/0/metadata.json",
+      "transcript": "/df/8b38e033a9/0/full.jsonl",
+      "compact_transcript": "/df/8b38e033a9/0/transcript.jsonl",
+      "content_hash": "/df/8b38e033a9/0/content_hash.txt",
+      "prompt": "/df/8b38e033a9/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 225,
+    "cache_creation_tokens": 332231,
+    "cache_read_tokens": 8023555,
+    "output_tokens": 71949,
+    "api_call_count": 116
+  }
+}
