@@ -1,0 +1,149 @@
+#!/bin/sh
+# Plays a short scripted game in plain mode and checks the output.
+#
+# This guards the rule in AGENTS.md that plain mode (no -t) keeps
+# working: a stray printf, a TUI change leaking into plain mode, or a
+# prompt that stops consuming input all show up here. The byte ceiling
+# catches the input-exhausted reprompt loop, which floods stdout.
+#
+# Only commands that pass no game time are used. Anything that advances
+# the clock can schedule an event, and an event's [HIT SPACE BAR]
+# prompt eats a byte of the piped script and desynchronizes every
+# command after it. A navigation/combat journey needs a seeded
+# tournament game instead.
+#
+# Usage: journey.sh /path/to/sst [build-type]
+
+set -u
+
+SST="${1:-./sst}"
+BUILD_TYPE="${2:-}"
+MAXBYTES=1048576
+DUMPBYTES=8192
+
+# An explicit template is the one form both GNU and BSD mktemp accept.
+work=$(mktemp -d "${TMPDIR:-/tmp}/sst-journey.XXXXXX")
+if [ -z "${work:-}" ] || [ ! -d "$work" ]; then
+	echo "FAIL: could not create a temporary directory" >&2
+	exit 1
+fi
+trap 'rm -rf "$work"' EXIT
+trap 'rm -rf "$work"; exit 130' INT
+trap 'rm -rf "$work"; exit 143' TERM
+trap 'rm -rf "$work"; exit 129' HUP
+# PIPE too: piping this script into `head` would otherwise kill it
+# outright, before any other trap runs.
+trap 'rm -rf "$work"; exit 141' PIPE
+out="$work/out.txt"
+rc="$work/rc.txt"
+
+# Bound the run in wall-clock time too, where coreutils timeout exists.
+run() {
+	if command -v timeout >/dev/null 2>&1; then
+		timeout 60 "$@"
+	else
+		"$@"
+	fi
+}
+
+# Head caps the capture so a runaway game cannot fill the disk; the
+# subshell records the game's own exit status before that cap applies.
+(
+	printf 'regular\nshort\nnovice\nxyz\nsrscan\nstatus\nlrscan\nchart\ndamages\nreport\nscore\ncommands\nbogus\nquit\nn\n' \
+		| run "$SST" 2>&1
+	echo $? > "$rc"
+) | head -c "$MAXBYTES" > "$out"
+
+status=$(cat "$rc" 2>/dev/null || echo "no-status")
+bytes=$(wc -c < "$out" | tr -d ' ')	# BSD wc pads its output
+
+fails=0
+fail() {
+	printf 'FAIL: %s\n' "$1" >&2
+	fails=$((fails + 1))
+}
+
+want() {
+	if ! grep -q "$2" "$out"; then
+		fail "$1 (expected output to contain: $2)"
+	fi
+}
+
+want_re() {
+	if ! grep -qE "$2" "$out"; then
+		fail "$1 (expected output to match: $2)"
+	fi
+}
+
+want_count() {
+	got=$(grep -c "$3" "$out")
+	if [ "$got" -lt "$2" ]; then
+		fail "$1 (expected at least $2 lines matching '$3', found $got)"
+	fi
+}
+
+if [ "$status" != "0" ]; then
+	fail "game exited with status $status, want 0"
+fi
+if [ "$bytes" -ge "$MAXBYTES" ]; then
+	fail "game produced at least $MAXBYTES bytes -- runaway output?"
+fi
+
+# Startup and the command loop.
+want "startup banner missing" "SUPER- STAR TREK"
+want "setup did not ask for game length" "Short, Medium, or Long"
+want "command prompt missing" "COMMAND>"
+
+# srscan: column header plus a grid row, so an empty grid is caught.
+want "short-range scan grid header missing" "1 2 3 4 5 6 7 8 9 10"
+want_re "short-range scan grid rows missing" "^10  "
+
+# status: these lines start at column 1, unlike the copies srscan
+# prints beside the grid, so they are attributable to the command.
+want_re "status report missing stardate" "^ Stardate"
+want_re "status report missing condition" "^ Condition"
+want_re "status report missing klingon count" "^ Klingons Left"
+
+# The remaining read-only reports, all converted to proutf for the TUI.
+want "long-range scan missing" "Long-range scan for Quadrant"
+want "star chart missing" "STAR CHART FOR THE KNOWN GALAXY"
+want "damage report missing" "All devices functional."
+want "status report command missing" "Klingon ships have been destroyed"
+want "score report missing" "TOTAL SCORE"
+
+# The command table prints for both `commands` and an unknown command,
+# so require both occurrences rather than just one.
+want_count "command list missing" 2 "SRSCAN    MOVE"
+want "bad command was not rejected" "UNRECOGNIZED COMMAND"
+
+# Plain mode must not emit terminal escape sequences -- curses output
+# leaking out of the TUI is exactly what AGENTS.md forbids. The pager's
+# clearscreen() does legitimately emit one, but this journey never
+# pages; revisit if a future journey does.
+if tr -cd '\033' < "$out" | grep -q .; then
+	fail "escape sequences leaked into plain-mode output"
+fi
+
+# A release build must never show the Debug-only setup chatter. Not
+# anchored: the first such line lands on the end of a prompt line.
+if [ -n "$BUILD_TYPE" ] && [ "$BUILD_TYPE" != "Debug" ]; then
+	if grep -q 'DEBUG:' "$out"; then
+		fail "debug output leaked into a $BUILD_TYPE build"
+	fi
+fi
+
+# The farewell has to be the end of the game, not merely present.
+last=$(grep -v '^[[:space:]]*$' "$out" | tail -n 1)
+case "$last" in
+	*"Great Bird of the Galaxy"*) ;;
+	*) fail "game did not sign off cleanly (last line was: $last)" ;;
+esac
+
+if [ "$fails" -ne 0 ]; then
+	printf '\n%d check(s) failed. Captured %s bytes, showing at most %d:\n' \
+		"$fails" "$bytes" "$DUMPBYTES" >&2
+	head -c "$DUMPBYTES" "$out" >&2
+	exit 1
+fi
+
+printf 'journey OK (%s bytes)\n' "$bytes"
