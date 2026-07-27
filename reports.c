@@ -42,17 +42,17 @@ void report(int f) {
 		case SEMERITUS: s3="emeritus"; break;
 		default: s3="skilled"; break;
 	}
-	printf("\nYou %s playing a %s%s %s game.\n",
+	proutf("\nYou %s playing a %s%s %s game.\n",
 		   alldone? "were": "are now", s1, s2, s3);
 	if (skill>SGOOD && thawed && !alldone) prout("No plaque is allowed.");
-	if (tourn) printf("This is tournament game %d.\n", tourn);
-	if (f) printf("Your secret password is \"%s\"\n",passwd);
-	printf("%d of %d Klingon ships have been destroyed",
+	if (tourn) proutf("This is tournament game %d.\n", tourn);
+	if (f) proutf("Your secret password is \"%s\"\n",passwd);
+	proutf("%d of %d Klingon ships have been destroyed",
 		   d.killk+d.killc+d.nsckill, inkling);
-	if (d.killc) printf(", including %d Commander%s.\n", d.killc, d.killc==1?"":"s");
+	if (d.killc) proutf(", including %d Commander%s.\n", d.killc, d.killc==1?"":"s");
 	else if (d.killk+d.nsckill > 0) prout(", but no Commanders.");
 	else prout(".");
-	if (skill > SFAIR) printf("The Super Commander has %sbeen destroyed.\n",
+	if (skill > SFAIR) proutf("The Super Commander has %sbeen destroyed.\n",
 						  d.nscrem?"not ":"");
 	if (d.rembase != inbase) {
 		proutn("There ");
@@ -66,22 +66,22 @@ void report(int f) {
 		crami(d.rembase, 1);
 		prout(" remaining.");
 	}
-	else printf("There are %d bases.\n", inbase);
+	else proutf("There are %d bases.\n", inbase);
 	if (REPORTS || iseenit) {
 		/* Don't report this if not seen and
 			either the radio is dead or not at base! */
 		attakreport();
 		iseenit = 1;
 	}
-	if (casual) printf("%d casualt%s suffered so far.\n",
+	if (casual) proutf("%d casualt%s suffered so far.\n",
 					   casual, casual==1? "y" : "ies");
 #ifdef CAPTURE
-    if (brigcapacity != brigfree) printf("%d Klingon%s in brig.\n",
+    if (brigcapacity != brigfree) proutf("%d Klingon%s in brig.\n",
     							brigcapacity-brigfree, brigcapacity-brigfree>1 ? "s" : "");
-    if (kcaptured > 0) printf("%d captured Klingon%s turned in to Star Fleet.\n", 
+    if (kcaptured > 0) proutf("%d captured Klingon%s turned in to Star Fleet.\n", 
                                kcaptured, kcaptured>1 ? "s" : "");
 #endif
-	if (nhelp) printf("There %s %d call%s for help.\n",
+	if (nhelp) proutf("There %s %d call%s for help.\n",
 					 nhelp==1 ? "was" : "were", nhelp, nhelp==1 ? "" : "s");
 	if (ship == IHE) {
 		proutn("You have ");
@@ -109,7 +109,7 @@ void report(int f) {
 				ai *= 2.0;
 				i++;
 			}
-			printf("Dilithium crystals have been used %d time%s.\n",
+			proutf("Dilithium crystals have been used %d time%s.\n",
 				   i, i==1? "" : "s");
 		}
 	}
@@ -138,9 +138,9 @@ void lrscan(void) {
 	for (y = quady+1; y >= quady-1; y--) {
 		for (x = quadx-1; x <= quadx+1; x++) {
 			if (x == 0 || x > 8 || y == 0 || y > 8)
-				printf("   -1");
+				proutf("   -1");
 			else {
-				printf("%5d", d.galaxy[x][y]);
+				proutf("%5d", d.galaxy[x][y]);
 				// If radio works, mark star chart so
 				// it will show current information.
 				// Otherwise mark with current
@@ -148,15 +148,15 @@ void lrscan(void) {
 				starch[x][y] = damage[DRADIO] > 0 ? d.galaxy[x][y]+1000 :1;
 			}
 		}
-		putchar('\n');
+		proutf("\n");
 	}
 	else
 	for (x = quadx-1; x <= quadx+1; x++) {
 		for (y = quady-1; y <= quady+1; y++) {
 			if (x == 0 || x > 8 || y == 0 || y > 8)
-				printf("   -1");
+				proutf("   -1");
 			else {
-				printf("%5d", d.galaxy[x][y]);
+				proutf("%5d", d.galaxy[x][y]);
 				// If radio works, mark star chart so
 				// it will show current information.
 				// Otherwise mark with current
@@ -164,7 +164,7 @@ void lrscan(void) {
 				starch[x][y] = damage[DRADIO] > 0 ? d.galaxy[x][y]+1000 :1;
 			}
 		}
-		putchar('\n');
+		proutf("\n");
 	}
 
 }
@@ -181,7 +181,7 @@ void dreprt(void) {
 				prout("                IN FLIGHT   DOCKED");
 				jdam = TRUE;
 			}
-			printf("  %16s ", device[i]);
+			proutf("  %16s ", device[i]);
 			if (i == DDRAY) { // Deathray is special case
 				proutn("           ");
 				cramf(damage[i]+0.005, 8, 2);
@@ -228,31 +228,31 @@ void chart(int nn) {
 	if (nn==0) prout("  -");
 	if (coordfixed)
 	for (j = 8; j >= 1; j--) {
-		printf("%d -", j);
+		proutf("%d -", j);
 		for (i = 1; i <= 8; i++) {
 			if (starch[i][j] < 0) // We know only about the bases
-				printf("  .1.");
+				proutf("  .1.");
 			else if (starch[i][j] == 0) // Unknown
-				printf("  ...");
+				proutf("  ...");
 			else if (starch[i][j] > 999) // Memorized value
-				printf("%5d", starch[i][j]-1000);
+				proutf("%5d", starch[i][j]-1000);
 			else
-				printf("%5d", d.galaxy[i][j]); // What is actually there (happens when value is 1)
+				proutf("%5d", d.galaxy[i][j]); // What is actually there (happens when value is 1)
 		}
 		prout("  -");
 	}
 	else
 	for (i = 1; i <= 8; i++) {
-		printf("%d -", i);
+		proutf("%d -", i);
 		for (j = 1; j <= 8; j++) {
 			if (starch[i][j] < 0) // We know only about the bases
-				printf("  .1.");
+				proutf("  .1.");
 			else if (starch[i][j] == 0) // Unknown
-				printf("  ...");
+				proutf("  ...");
 			else if (starch[i][j] > 999) // Memorized value
-				printf("%5d", starch[i][j]-1000);
+				proutf("%5d", starch[i][j]-1000);
 			else
-				printf("%5d", d.galaxy[i][j]); // What is actually there (happens when value is 1)
+				proutf("%5d", d.galaxy[i][j]); // What is actually there (happens when value is 1)
 		}
 		prout("  -");
 	}
@@ -294,7 +294,7 @@ void srscan(int l) {
 			break;
 		case 2: // REQUEST
 			while (scan() == IHEOL)
-				printf("Information desired? ");
+				proutf("Information desired? ");
 			chew();
 			for (k = 1; k <= 10; k++)
 				if (strncmp(citem,requests[k],min(2,strlen(citem)))==0)
@@ -315,27 +315,27 @@ void srscan(int l) {
 		int jj = (k!=0 ? k : i);
 		if (leftside) {
 			if (coordfixed) {
-				printf("%2d  ", 11-i);
+				proutf("%2d  ", 11-i);
 				for (j = 1; j <= 10; j++) {
 					if (goodScan || (abs((11-i)-secty)<= 1 && abs(j-sectx) <= 1))
-						printf("%c ",quad[j][11-i]);
+						proutf("%c ",quad[j][11-i]);
 					else
-						printf("- ");
+						proutf("- ");
 				}
 			} else {
-				printf("%2d  ", i);
+				proutf("%2d  ", i);
 				for (j = 1; j <= 10; j++) {
 					if (goodScan || (abs(i-sectx)<= 1 && abs(j-secty) <= 1))
-						printf("%c ",quad[i][j]);
+						proutf("%c ",quad[i][j]);
 					else
-						printf("- ");
+						proutf("- ");
 				}
 			}
 		}
 		if (rightside) {
 			switch (jj) {
 				case 1:
-					printf(" Stardate      %.1f", d.date);
+					proutf(" Stardate      %.1f", d.date);
 					break;
 				case 2:
 					if (condit != IHDOCKED) newcnd();
@@ -345,53 +345,53 @@ void srscan(int l) {
 						case IHYELLOW: cp = "YELLOW"; break;
 						case IHDOCKED: cp = "DOCKED"; break;
 					}
-					printf(" Condition     %s", cp);
+					proutf(" Condition     %s", cp);
 #ifdef CLOAKING
-				    if (iscloaked) printf(", CLOAKED");
+				    if (iscloaked) proutf(", CLOAKED");
 #endif
 					break;
 				case 3:
-					printf(" Position     ");
+					proutf(" Position     ");
 					cramlc(0, quadx, quady);
-					putchar(',');
+					proutf(",");
 					cramlc(0, sectx, secty);
 					break;
 				case 4:
-					printf(" Life Support  ");
+					proutf(" Life Support  ");
 					if (damage[DLIFSUP] != 0.0) {
 						if (condit == IHDOCKED)
-							printf("DAMAGED, supported by starbase");
+							proutf("DAMAGED, supported by starbase");
 						else
-							printf("DAMAGED, reserves=%4.2f", lsupres);
+							proutf("DAMAGED, reserves=%4.2f", lsupres);
 					}
 					else
-						printf("ACTIVE");
+						proutf("ACTIVE");
 					break;
 				case 5:
-					printf(" Warp Factor   %.1f", warpfac);
+					proutf(" Warp Factor   %.1f", warpfac);
 					break;
 				case 6:
-					printf(" Energy        %.2f", energy);
+					proutf(" Energy        %.2f", energy);
 					break;
 				case 7:
-					printf(" Torpedoes     %d", torps);
+					proutf(" Torpedoes     %d", torps);
 					break;
 				case 8:
-					printf(" Shields       ");
+					proutf(" Shields       ");
 					if (damage[DSHIELD] != 0)
-						printf("DAMAGED,");
+						proutf("DAMAGED,");
 					else if (shldup)
-						printf("UP,");
+						proutf("UP,");
 					else
-						printf("DOWN,");
-					printf(" %d%% %.1f units",
+						proutf("DOWN,");
+					proutf(" %d%% %.1f units",
 						   (int)((100.0*shield)/inshld + 0.5), shield);
 					break;
 				case 9:
-					printf(" Klingons Left %d", d.remkl);
+					proutf(" Klingons Left %d", d.remkl);
 					break;
 				case 10:
-					printf(" Time Left     %.2f", d.remtime);
+					proutf(" Time Left     %.2f", d.remtime);
 					break;
 			}
 					

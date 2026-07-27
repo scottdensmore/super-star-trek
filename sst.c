@@ -1,6 +1,8 @@
 #define INCLUDED	// Define externs here
 #include "sst.h"
+#include "tui.h"
 #include <ctype.h>
+#include <stdarg.h>
 #ifdef MSDOS
 #include <dos.h>
 #endif
@@ -421,17 +423,24 @@ static void makemoves(void) {
 
 
 int main(int argc, char **argv) {
+	int usetui = 0;
+
+	while (argc > 1) { // look for -f and -t options
+		if (strcmp(argv[1], "-f") == 0)
+			coordfixed = 1;
+		else if (strcmp(argv[1], "-t") == 0)
+			usetui = 1;
+		else
+			break;
+		argc--;
+		argv++;
+	}
+
+	if (usetui && !tui_init())
+		prout("Terminal too small for full-screen mode (need 72x24).");
+
 	prelim();
 
-	if (argc > 1) { // look for -f option
-		if (strcmp(argv[1], "-f")== 0) {
-			coordfixed = 1;
-			argc--;
-			argv++;
-		}
-	}
-					
-	
 	if (argc > 1) {
 		fromcommandline = 1;
 		line[0] = '\0';
@@ -455,15 +464,16 @@ int main(int argc, char **argv) {
 		skip(1);
 
 		if (tourn && alldone) {
-			printf("Do you want your score recorded?");
+			proutf("Do you want your score recorded?");
 			if (ja()) {
 				chew2();
 				freeze(FALSE);
 			}
 		}
-		printf("Do you want to play again?");
+		proutf("Do you want to play again?");
 		if (!ja()) break;
 	}
+	tui_shutdown();		/* so the farewell survives the screen restore */
 	skip(1);
 	prout("May the Great Bird of the Galaxy roost upon your home planet.");
 	return 0;
@@ -570,7 +580,10 @@ int scan(void) {
 		}
 //		gets(line);
 		// We should really be using fgets
-		fgets(line,sizeof(line),stdin);
+		if (tui_active)
+			tui_readline(line, sizeof(line));
+		else
+			fgets(line,sizeof(line),stdin);
 		if (line[strlen(line)-1] == '\n')
 			line[strlen(line)-1] = '\0';
 		linep = line;
@@ -632,7 +645,10 @@ double square(double i) { return i*i; }
 									
 static void clearscreen(void) {
 	/* Somehow we need to clear the screen */
-	proutn("\033[2J\033[0;0H");	/* Hope for an ANSI display */
+	if (tui_active)
+		tui_clearmsg();
+	else
+		proutn("\033[2J\033[0;0H");	/* Hope for an ANSI display */
 }
 
 /* We will pull these out in case we want to do something special later */
@@ -641,7 +657,7 @@ void pause(int i) {
 #ifdef CLOAKING
 	if (iscloaked) return;
 #endif
-	putchar('\n');
+	proutn("\n");
 	if (i==1) {
 		if (skill > SFAIR)
 			prout("[ANNOUNCEMENT ARRIVING...]");
@@ -667,8 +683,10 @@ void pause(int i) {
 void skip(int i) {
 	while (i-- > 0) {
 		linecount++;
-		if (linecount >= 23)
+		if (linecount >= (tui_active ? tui_pageheight() : 23))
 			pause(0);
+		else if (tui_active)
+			tui_puts("\n");
 		else
 			putchar('\n');
 	}
@@ -676,7 +694,10 @@ void skip(int i) {
 
 
 void proutn(char *s) {
-	fputs(s, stdout);
+	if (tui_active)
+		tui_puts(s);
+	else
+		fputs(s, stdout);
 }
 
 void prout(char *s) {
@@ -684,8 +705,21 @@ void prout(char *s) {
 	skip(1);
 }
 
+void proutf(const char *fmt, ...) {
+	char buf[512];
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	proutn(buf);
+}
+
 void prouts(char *s) {
 	clock_t endTime;
+	if (tui_active) {
+		tui_puts_slow(s);
+		return;
+	}
 	/* print slowly! */
 	while (*s) {
 		endTime = clock() + CLOCKS_PER_SEC*0.05;

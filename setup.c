@@ -278,13 +278,13 @@ void setup(void) {
 				if (distq < 6.0*(6-inbase) && Rand() < 0.75) {
 					contflag = TRUE;
 #ifdef DEBUG
-					printf("DEBUG: Abandoning base #%d at %d-%d\n", i, ix, iy);
+					proutf("DEBUG: Abandoning base #%d at %d-%d\n", i, ix, iy);
 #endif
 					break;
 				}
 #ifdef DEBUG
 				else if (distq < 6.0 * (6-inbase)) {
-					printf("DEBUG: saving base #%d, close to #%d\n", i, j);
+					proutf("DEBUG: saving base #%d, close to #%d\n", i, j);
 				}
 #endif
 			}
@@ -373,24 +373,24 @@ void setup(void) {
 	d.snap = 0;
 		
 	if (skill == SNOVICE) {
-		printf("It is stardate %d. The Federation is being attacked by\n",
+		proutf("It is stardate %d. The Federation is being attacked by\n",
 			   (int)d.date);
-		printf("a deadly Klingon invasion force. As captain of the United\n"
+		proutf("a deadly Klingon invasion force. As captain of the United\n"
 			   "Starship U.S.S. Enterprise, it is your mission to seek out\n"
 			   "and destroy this invasion force of %d battle cruisers.\n",
 			   inkling);
-		printf("You have an initial allotment of %d stardates to complete\n"
+		proutf("You have an initial allotment of %d stardates to complete\n"
 			   "your mission.  As you proceed you may be given more time.\n\n"
 			   "You will have %d supporting starbases.\n"
 			   "Starbase locations-  ",
 			   (int)intime, inbase);
 	}
 	else {
-		printf("Stardate %d.\n\n"
+		proutf("Stardate %d.\n\n"
 			   "%d Klingons,\nan unknown number of Romulans\n",
 			   (int)d.date, inkling);
-		if (d.nscrem) printf("and one (GULP) Super-Commander.\n");
-		printf("%d stardates\n%d starbases in  ",(int)intime, inbase);
+		if (d.nscrem) proutf("and one (GULP) Super-Commander.\n");
+		proutf("%d stardates\n%d starbases in  ",(int)intime, inbase);
 	}
 	for (i = 1; i <= inbase; i++) {
 		cramlc(0, d.baseqx[i], d.baseqy[i]);
