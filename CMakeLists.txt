@@ -34,3 +34,8 @@ add_test(NAME journey
 set_tests_properties(journey PROPERTIES
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                      TIMEOUT 120)
+
+add_test(NAME instructions
+         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/instructions.sh
+                 ${CMAKE_CURRENT_SOURCE_DIR})
+set_tests_properties(instructions PROPERTIES TIMEOUT 30)
