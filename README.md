@@ -14,6 +14,11 @@ conversation scrolls below them. It needs a terminal of at least 72x24
 and can be combined with the fixed-coordinate option (`sst -f -t`).
 Without `-t` the game uses its classic scrolling display.
 
+If full-screen mode isn't possible — the terminal is too small, the
+game isn't attached to one (piped input, redirected output, a job with
+no tty), or `TERM` names a terminal that can't address the cursor —
+`-t` prints a notice and plays in the classic display instead.
+
 ### Building for Windows
 For compiling with Visual Studio, you don't need to run Visual Studio but use the Developer Command Prompt.
 From the start menu run the Developer Command Prompt for Visual Studio  and cd to where the sst source files are.

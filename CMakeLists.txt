@@ -20,6 +20,14 @@ find_package(Curses REQUIRED)
 target_include_directories(sst PRIVATE ${CURSES_INCLUDE_DIRS})
 target_link_libraries(sst PRIVATE ${CURSES_LIBRARIES} m)
 
+# tui.c calls setupterm/tigetstr, which some distributions ship in a
+# separate libtinfo. Linking -lncurses happens to pull it in where
+# libncurses.so is a linker script, but that is luck, not a contract.
+find_library(TINFO_LIBRARY tinfo)
+if(TINFO_LIBRARY)
+    target_link_libraries(sst PRIVATE ${TINFO_LIBRARY})
+endif()
+
 enable_testing()
 add_executable(test_tuifmt tests/test_tuifmt.c tuifmt.c)
 target_link_libraries(test_tuifmt PRIVATE m)
@@ -33,6 +41,20 @@ add_test(NAME journey
 # which macOS runners do not have.
 set_tests_properties(journey PROPERTIES
                      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                     TIMEOUT 120)
+
+# The same journey with -t: with no terminal to draw on, full-screen
+# mode has to fall back to the plain one rather than hang. ctest hands
+# the test pipes for stdin and stdout, so this covers the no-tty path
+# only -- the terminfo probe in tui_terminal_capable() needs a real
+# pty and is checked by hand for now (issue #13). TERM=dumb is pinned
+# so a regression here fails as the original hang rather than as the
+# quicker error exit an unknown TERM would give.
+add_test(NAME journey-tui
+         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/journey.sh $<TARGET_FILE:sst> $<CONFIG> -t)
+set_tests_properties(journey-tui PROPERTIES
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                     ENVIRONMENT "TERM=dumb"
                      TIMEOUT 120)
 
 add_test(NAME instructions

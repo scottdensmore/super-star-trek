@@ -1538,6 +1538,10 @@ Modifications I made:
   scrolling below them. It needs a terminal of at least 72x24; the
   classic scrolling display remains the default.
 
+  If the terminal is too small, cannot address the cursor, or the
+  game is not attached to one at all, -t says so and plays in the
+  classic display rather than failing.
+
 
                ----------ACKNOWLEDGMENTS----------                    27
 

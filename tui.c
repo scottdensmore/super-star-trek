@@ -1,6 +1,7 @@
 #include "sst.h"
 #include "tui.h"
 #include <curses.h>
+#include <term.h>
 
 /* Curses backend for the full-screen interface (sst -t).
  *
@@ -16,7 +17,38 @@
 
 static WINDOW *wquad, *wstat, *wmsg;
 
+/* Whether this terminal can actually run the full-screen interface.
+ *
+ * initscr() is no good for asking: given a TERM it doesn't know it
+ * prints an error and exits the process, taking the game with it. Worse
+ * is a terminal it does know but that cannot address the cursor -- TERM
+ * =dumb, which is what Emacs' shell buffer sets. There curses starts
+ * happily and then draws nothing usable, so the game looks hung.
+ *
+ * setupterm() reports both cases instead of exiting. The answer is
+ * cached because main() asks again to word the fallback notice. */
+int tui_terminal_capable(void) {
+	static int checked = FALSE, capable = FALSE;
+	char *cup;
+	int err;
+
+	if (checked) return capable;
+	checked = TRUE;
+	if (setupterm(NULL, fileno(stdout), &err) == ERR)
+		return capable;		/* no such terminal type */
+	cup = tigetstr("cup");
+	capable = cup != NULL && cup != (char *)-1;
+	return capable;
+}
+
 int tui_init(void) {
+	/* Both checks come before initscr(): with no terminal, or one it
+	   cannot drive, curses either kills the process outright or leaves
+	   the player staring at a screen that never fills in. */
+	if (!stdio_is_terminal())
+		return FALSE;
+	if (!tui_terminal_capable())
+		return FALSE;
 	initscr();
 	if (LINES < 24 || COLS < 72) {
 		endwin();

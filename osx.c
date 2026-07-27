@@ -22,6 +22,14 @@ int min(int a, int b) {
 	return b;
 }
 
+/* Whether the game is talking to a real terminal. This lives here
+   rather than in tui.c because it needs <unistd.h>, and sst.h -- which
+   tui.c includes -- declares void pause(int), which collides with the
+   POSIX pause(void) that header brings in. */
+int stdio_is_terminal(void) {
+	return isatty(STDIN_FILENO) && isatty(STDOUT_FILENO);
+}
+
 int getch(void) {
     char chbuf[1];
     struct termios oldstate, newstate;
