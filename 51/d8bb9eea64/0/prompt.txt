@@ -1,0 +1,444 @@
+<task-notification>
+<task-id>bylvh4yte</task-id>
+<summary>Monitor event: "CI check results on PR 4"</summary>
+<event>build-and-test (macos-latest, Debug): pass
+build-and-test (macos-latest, Release): pass
+build-and-test (ubuntu-latest, Debug): pass
+build-and-test (ubuntu-latest, Release): pass
+ALL CHECKS COMPLETE</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bylvh4yte</task-id>
+<tool-use-id>toolu_01V239yUWHHCyUBxF6YHZoQR</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/bylvh4yte.output</output-file>
+<status>completed</status>
+<summary>Monitor "CI check results on PR 4" stream ended</summary>
+</task-notification>
+
+---
+
+Ok lets squash merge
+
+---
+
+<task-notification>
+<task-id>by2vg0nv0</task-id>
+<summary>Monitor event: "post-merge CI run on main"</summary>
+<event>main CI: success</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>by2vg0nv0</task-id>
+<tool-use-id>toolu_01KD7DU365gA5zyZ5JZVpAvk</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/by2vg0nv0.output</output-file>
+<status>completed</status>
+<summary>Monitor "post-merge CI run on main" stream ended</summary>
+</task-notification>
+
+---
+
+Lets make a plan of the next things we should be doing so we don't forget anything
+
+---
+
+Yes lets file them as issues. Make sure they are written well and could be picked up easily by anyone or any coding agent.
+
+---
+
+How do we make sure that AGENTS.md is the source of truth even for CLAUDE.md?
+
+---
+
+What about making CLaude.md a symlink of Agents.md. Would this work across all OS types?
+
+---
+
+Ok lets add the CI check this should be the best option
+
+---
+
+<task-notification>
+<task-id>a0e0b43ae60b8a662</task-id>
+<tool-use-id>toolu_014eodwXRzer7wcjytc9haxD</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a0e0b43ae60b8a662.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify TUI change builds/tests" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: PASS — with a gap list you should read before merging (none blocking)
+
+### Builds and tests
+
+- Fresh Debug and Release: Debug **0 warnings**, Release **17** (unchanged pre-existing `-Wunused-result` set). No C sources touched by this branch.
+- `ctest --test-dir &lt;tree&gt; --output-on-failure --no-tests=error`: **3/3 passed in both build types**; `instructions` runs in both (0.02–0.03 s) — it is config-independent, as expected for a docs check.
+- `TIMEOUT "30"` present in the generated `CTestTestfile.cmake` in **both** trees; the `add_test` line passes the source dir as the single argument.
+- `sh -n`, `dash -n`, `shellcheck -s sh` all clean.
+
+### Your seven drift scenarios — all reproduced as caught
+
+Bullet append, added section, `/init`-style wholesale rewrite, AGENTS.md deleted, import line removed, AGENTS.md gutted, and one-line prose rule: **7/7 fail**, each with the actionable message you intended (the `/init` case trips three checks at once, which reads well). Baseline repo passes.
+
+### What I found that does **not** get caught
+
+I hunted for realistic drift the check misses. Three classes slip through:
+
+1. **Rules folded into an existing prose line** (no new line). Appending `… Always run ctest before pushing and never commit to main:` to the existing sentence → 4 lines, 226 bytes → **passes**. A whole rule paragraph folded in the same way (334 bytes) also **passes**. The byte cap is the only backstop here and it currently leaves ~430 bytes of headroom above the real 168. Tightening `MAXBYTES` toward ~300 would shrink the hiding space considerably at no cost to legitimate rewording. This is the most plausible miss of the three, though I'd note the natural agent behavior (`#` shortcut, "add a rule to CLAUDE.md") produces a *new* line, which you do catch.
+2. **A second import line.** Replacing the prose with `Rules live in AGENTS.md; also see the extra project rules below:` + `@RULES.md`, keeping 4 lines → **passes** (100 bytes). A one-line guard — fail if any `^@` line other than `@AGENTS.md` exists — closes it exactly.
+3. **Rules in other files Claude Code actually loads** — this is the biggest surface, since the script only ever looks at `$ROOT/CLAUDE.md`:
+   - `tests/CLAUDE.md` (subdirectory CLAUDE.md, loaded when working in that directory) → **passes**
+   - `CLAUDE.local.md` → **passes**
+   - `.claude/CLAUDE.md` → **passes**
+   
+   A `find`-based guard on `CLAUDE*.md` outside the root would catch all three. Note it must match on the *filename pattern*, not "any .md under `.claude/`", because `.claude/agents/{ui-review,verifier,code-review}.md` legitimately exist in this repo.
+
+Correctly caught in my adversarial set: HTML-comment rule, blockquote rule, table-row rule, prose appended with **no trailing newline** (the incomplete last line still counts), and any 4-line rewrite exceeding 600 bytes (`651 bytes, over the 600 limit`).
+
+### Portability (BSD/macOS)
+
+Every construct is POSIX and BSD-safe; I exercised the script under `dash` and `busybox ash` (both pass) and behind a BSD-style padding `wc` shim (passes — the `| tr -d ' '` is doing its job here as in journey.sh):
+- `wc -c &lt; f | tr -d ' '` ✓ · `grep -cv '^[[:space:]]*$'` ✓ (combined flags are POSIX; the exit-1-on-zero-count quirk is harmless with no `set -e`) · `grep -q` BRE with `[[:space:]]` ✓ · `grep -qE` with `(#|[-*+][[:space:]]|[0-9]+\.[[:space:]])` ✓ (leading `-` inside the bracket is literal and portable) · `tail -n +2` ✓ (POSIX, supported by BSD tail) · `-lt`/`-gt` ✓ · `printf` ✓ · `${1:-.}` under `set -u` ✓.
+- One cosmetic nit: `'^@AGENTS.md[[:space:]]*$'` leaves `.` unescaped, so `@AGENTSxmd` would also match. Zero practical impact; escape it if you care.
+
+### cwd independence and side effects
+
+Passes from `/`, from an unrelated scratch dir, with a relative argument from the repo root, with **no** argument (defaults to `.`), and with a repo path **containing spaces** (quoting is correct throughout). It creates no files and no temp dirs — `git status` is unchanged after runs, and there is nothing to clean up, which is a nice property versus journey.sh.
+
+### `MAXLINES=4` brittleness — my second opinion
+
+**It is brittle, but the brittleness is the feature, and I'd keep it.** Measured sensitivity by re-wrapping the *identical* sentence at several widths:
+
+| wrap width | prose lines | non-blank | result |
+|---|---|---|---|
+| 100 / 80 / 72 cols | 2 | 4 | PASS |
+| 60 / 50 cols | 3 | 5 | **FAIL** |
+
+So ordinary reformatting is safe as long as it stays at ≥72 columns — which matches this repo's prevailing style (AGENTS.md, README, and the scripts all wrap around 72). Narrowing the wrap, or rewording into a third line, trips it. That is acceptable because: the failure is loud, deterministic, arrives in CI rather than silently, and the message explicitly says *"if you reworded the pointer, update MAXLINES in this script"* — which is exactly the right instruction. And the trade-off is unavoidable: catching a one-line prose rule (your scenario 7) *requires* an exact line budget; any slack you add to accommodate rewrapping is slack a rule can hide in. The one thing I'd suggest is a brief note in the script (or AGENTS.md) that the pointer is wrapped at 72 columns by convention, so a future formatter run has a documented target.
+
+### Environment issues
+
+None. No `actionlint` needed here; nothing macOS-specific was untestable this round beyond the shim-based simulation described above.
+
+Cleanup: the two build trees, the sandbox copies, the spaces-in-path directory, and the `wc` shim I created were removed. No blanket deletions. Repository worktree unchanged: ` M CLAUDE.md`, ` M CMakeLists.txt`, `?? tests/instructions.sh`.</result>
+<usage><subagent_tokens>193906</subagent_tokens><tool_uses>12</tool_uses><duration_ms>229076</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a0e0b43ae60b8a662</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a0e0b43ae60b8a662.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify TUI change builds/tests" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: PASS
+
+### Builds and tests
+
+- Fresh Debug and Release: Debug **0 warnings**, Release **17** (unchanged pre-existing set). `ctest --output-on-failure --no-tests=error`: **3/3 in both build types**.
+- `sh -n`, `dash -n`, `shellcheck -s sh` clean. The script also passes when run by `dash` and `busybox ash` directly, and behind a BSD-style padding `wc` shim.
+- Real repo passes; the `find` expression returns **empty** against the actual layout — no false positive from `.claude/agents/*.md` (names don't match `CLAUDE*.md`), and `build/`-style trees are pruned as intended.
+
+### Full adversarial re-run
+
+Original seven: all still **caught** (bullet, section, `/init` rewrite, AGENTS.md deleted, import removed, AGENTS.md gutted, one-line prose rule). Baseline passes.
+
+The three gaps I reported are closed:
+
+| Case | Before | Now |
+|---|---|---|
+| Rule folded into an existing line (226 B) | slipped | **caught** — over the 220 limit |
+| Multi-rule paragraph folded in (254 B) | slipped | **caught** |
+| Second import `@RULES.md` | slipped | **caught** — "imports a file other than AGENTS.md" |
+| `tests/CLAUDE.md` | slipped | **caught**, path listed |
+| `.claude/CLAUDE.md` | slipped | **caught**, path listed |
+| `.github/CLAUDE.md`, `tests/CLAUDE.local.md` (sub-dir local not exempt) | — | **caught** (correct) |
+| Very short folded phrase (186 B) | — | slips, as your comment documents |
+| Root `CLAUDE.local.md` | — | passes, by design |
+
+Spaces-in-path output is correct now: the offending path prints on one line, fully intact, correctly indented — the quoting fix works.
+
+### New residual gaps (all minor; my ranking)
+
+1. **`build*` prune is broader than the build tree.** A legitimate source directory whose name merely *starts with* "build" — I tested `buildsystem/CLAUDE.md` — is pruned and slips. This is the most plausible of the残り in a repo that later grows such a directory. Tightening to match `.gitignore`'s actual patterns (`-name build -o -name 'build-*'`) closes it exactly.
+2. **Case variants** — `claude.md`, `sub/claude.md`, `CLAUDE.MD` all slip. On case-sensitive Linux this is harmless (Claude Code wouldn't load them either), but on macOS's case-insensitive default filesystem a lone lowercase `claude.md` *would* satisfy the loader while evading `-name`. `-iname` closes it and is supported by GNU, BSD, and busybox find (I verified GNU and busybox here); it is not POSIX, but neither platform you target lacks it.
+3. **Symlinked directory pointing outside the repo** (`linkdir -&gt; /elsewhere` containing a CLAUDE.md) slips, since `find` doesn't follow symlinks. Git can't meaningfully track that arrangement, so I'd leave it. A symlinked *file* named `CLAUDE.md` inside the repo **is** caught.
+4. **Double trailing slash** in the argument (`…/sb2//`) causes a **false positive**: `${ROOT%/}` strips only one, so `! -path "$ROOT/CLAUDE.md"` no longer matches and the root pointer itself is reported as an extra file. Unreachable from CMake (`${CMAKE_CURRENT_SOURCE_DIR}` never has a trailing slash) and unlikely by hand; a `while [ "${ROOT%/}" != "$ROOT" ]` loop would make it airtight. Single trailing slash, `.`, `./`, and no-argument all behave correctly.
+
+### Portability of the new code
+
+All primaries used — `-name`, `-path`, `-prune`, `-print`, `-o`, `!`, and `\( \)` grouping — are POSIX and present in BSD find; the `\( … \) -prune -o … -print` idiom behaves identically on both. `sed 's/^/         /'` is plain POSIX BRE. `grep -E '^@' | grep -qvE` is fine everywhere. `${ROOT%/}` is POSIX parameter expansion. `!` is not history-expanded in a script. No portability defects found.
+
+### Your two judgment calls
+
+**MAXBYTES=220 — right call, and I'd stop where you stopped.** 220 against a real 168 leaves 52 bytes, which is roughly one short clause. Every folded-rule case of realistic length now fails, and what remains ("… instead. Always run ctest:") is too small to carry a meaningful rule but large enough that squeezing further would make ordinary rewording fail constantly — and a *false* failure teaches people to edit the constant reflexively, which is how the whole check rots. The comment saying so explicitly is the right treatment: it converts an unavoidable residual into a documented review responsibility. I'd only revisit if the pointer prose is ever shortened, in which case tighten the constant to match.
+
+**Exempting root `CLAUDE.local.md` — agree.** It is the supported personal, gitignored override; failing a developer's local `ctest` because they keep private preferences would be exactly the kind of user-hostile check that gets deleted. The important part is that the exemption is *narrow*: it applies only to the root path, and I confirmed `tests/CLAUDE.local.md` is still caught, so nobody can smuggle shared rules in under that name. The one thing I'd check outside my scope is that `CLAUDE.local.md` is actually in `.gitignore` — if it isn't, a "personal" file could be committed and become a de-facto shared source of truth that this check permits. Worth a one-line addition to `.gitignore` if it's missing.
+
+Cleanup: both build trees, all sandbox copies, the spaces-in-path and outside-the-repo fixtures, and the `wc` shim I created were removed. Repository worktree unchanged: ` M CLAUDE.md`, ` M CMakeLists.txt`, `?? tests/instructions.sh`.</result>
+<usage><subagent_tokens>211358</subagent_tokens><tool_uses>9</tool_uses><duration_ms>192349</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a0e0b43ae60b8a662</task-id>
+<tool-use-id>toolu_014jQGddrV2hkfoC2ua9DG4b</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a0e0b43ae60b8a662.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify TUI change builds/tests" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: PASS
+
+### Builds and tests
+
+Fresh Debug and Release: Debug **0 warnings**, Release **17** (unchanged pre-existing set). `ctest --output-on-failure --no-tests=error`: **3/3 in both build types**. `sh -n`, `dash -n`, `shellcheck -s sh` clean; the script also passes when driven by `dash`, `busybox ash`, and from `/`.
+
+### Full adversarial re-run against the current script
+
+Original seven — all still caught (bullet, section, `/init` rewrite, AGENTS.md deleted, import removed, AGENTS.md gutted, one-line prose rule); baseline passes.
+
+Earlier three gaps — folded rule, second import, and other-CLAUDE-files all still caught; root `CLAUDE.local.md` still exempt.
+
+Residuals 1, 2, 4 — all confirmed closed, with no false positives:
+
+| Case | Result |
+|---|---|
+| `buildsystem/CLAUDE.md` | **caught** (was slipping) |
+| `builds/CLAUDE.md` (plural) | **caught** |
+| real `build/`, `build-debug/`, `build-verify-release/` trees | pruned, **passes** |
+| `sub/claude.md`, `sub/CLAUDE.MD` | **caught** (was slipping) |
+| root `claude.md`, `claude.local.md` | pass — correct, `-ipath` symmetry working as you intended |
+| `sub/CLAUDE.local.md` | **caught** — the exemption stays anchored to the root |
+| `.claude/agents/*.md` | passes — no false positive |
+| `$SB/`, `$SB//`, `$SB///`, `.`, `./`, `.//`, empty arg, no arg | all pass |
+| `/`, `//`, `///` | no hang, rc=1 with the correct "CLAUDE.md is missing" diagnosis |
+
+One clarification on a number: my first pass this round labelled a "folded rule" case as slipping at 226 B — that was my own shorter phrase measuring **211 B**, not a regression. Measured precisely: 168 B baseline, cap 220, so ~52 characters of folded prose fit. `"Always run ctest before pushing and never commit to main"` → 226 B **caught**; `"Run the full verification matrix…"` → 255 B **caught**; `"Always run ctest"` → 186 B slips, exactly the residual your comment documents. The cap behaves as specified.
+
+### `-ipath` portability — no material doubt, with one caveat stated plainly
+
+Verified locally on **GNU findutils 4.10.0** (`/usr/bin/find`, which is what the script actually invokes via `sh`) and **busybox find**: both support `-iname` and `-ipath`. Note for the record that my interactive shell has a `find` function shimming to `bfs`; that shim does not apply inside the script, so the results above are genuine GNU find.
+
+For the macOS legs I cannot execute, so this is documentary: macOS `find` is FreeBSD-derived, and FreeBSD `find(1)` has documented both `-iname` and `-ipath` as case-insensitive variants for many releases; the macOS man page lists them too. My confidence is high, and the failure mode if I'm wrong is loud and immediate (`find: -ipath: unknown primary or operator` on the very first macOS run, failing the `instructions` test rather than corrupting anything). Neither primary is POSIX, so if you ever want to eliminate the dependency entirely the portable equivalent is a bracket-expression `-name '[Cc][Ll][Aa][Uu][Dd][Ee]*.[Mm][Dd]'` plus case-sensitive `-path` exclusions — uglier, and I would not make that trade now.
+
+### Trailing-slash loop
+
+Cannot infinite-loop: each iteration strictly shortens `$ROOT`, and the `[ "$ROOT" != "/" ]` guard terminates the one input that would otherwise be a fixed point. Verified under a 10-second timeout with `/`, `//`, `///`, one/two/three trailing slashes, relative `.`/`./`/`.//`, an explicitly empty argument (`${1:-.}` uses `:-`, so null → `.`), and no argument. No hangs, no misbehaviour; the degenerate `/` inputs exit 1 with the correct "CLAUDE.md is missing" message.
+
+### Narrowed prune list vs the build trees this repo actually produces
+
+`AGENTS.md` and `.github/workflows/ci.yml` both use `cmake -S . -B build`, and `.gitignore` covers `build/` and `build-*/`. The prune list (`build`, `build-*`) mirrors those exactly, and I confirmed `build/`, `build-debug/`, and `build-verify-release/` are pruned while `buildsystem/` and `builds/` are not. Nothing this repo generates is missed. My own verification trees live outside the repo, so they are irrelevant either way.
+
+### `.gitignore` addition
+
+Correct and precisely scoped. `git check-ignore -v` confirms:
+- `CLAUDE.local.md` → ignored via `.gitignore:198`
+- `tests/CLAUDE.local.md` → also ignored (the pattern has no slash, so it applies at any depth — which is the right belt-and-braces pairing with the test catching sub-directory local files)
+- `CLAUDE.md`, `AGENTS.md`, `README.md`, `.claude/agents/verifier.md`, `claude.local.md`, `CLAUDE.local.md.bak` → **not** ignored
+- No tracked file becomes newly ignored.
+
+This is what makes the narrow exemption safe, as you said. One cosmetic nit: the file still ends without a trailing newline (pre-existing before this change — the previous last line had the same issue), so the diff shows `\ No newline at end of file`. Harmless; worth one keystroke if you're touching the file anyway.
+
+### Remaining known residual
+
+Only residual 3 (a symlinked directory pointing outside the repo), deliberately not addressed — I agree with leaving it; git cannot meaningfully track that arrangement, and a symlinked *file* named `CLAUDE.md` inside the repo is still caught.
+
+Cleanup: both build trees and all sandbox fixtures I created were removed. Repository worktree unchanged: ` M .gitignore`, ` M CLAUDE.md`, ` M CMakeLists.txt`, `?? tests/instructions.sh`.</result>
+<usage><subagent_tokens>226761</subagent_tokens><tool_uses>10</tool_uses><duration_ms>195300</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab2620e37969a3049</task-id>
+<tool-use-id>toolu_0139cxofY66KXoTrYXrPCX4a</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/ab2620e37969a3049.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review of TUI branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review — test/instructions-check
+
+**State reviewed:** branch `test/instructions-check` at commit `ec60e78` plus uncommitted: new `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh` (755), and modified `CMakeLists.txt`, `CLAUDE.md`, `.gitignore`.
+
+### Verified independently
+
+I ran my own adversarial matrix (26 scenarios) rather than relying on the reported one. Correctly **caught**: rule added as prose (5th line), list item, heading, own-line second import, subdir `CLAUDE.md`, `.claude/CLAUDE.md`, `CLAUDE.notes.md`, lowercase `src/claude.md`, subdir `CLAUDE.local.md`, deleted/emptied/renamed-heading `AGENTS.md`, deleted `CLAUDE.md`. Correctly **passed**: real repo, root `CLAUDE.local.md`, `build/` and `build-*/` and `.git/` contents (pruned), root path containing a space. Correctly **not** pruned: `buildsystem/`. `ROOT=/`, `ROOT=""` and trailing-slash arguments all terminate (no hang; the strip loop's `[ "$ROOT" != "/" ]` guard is right). `shellcheck -s sh` clean; passes under dash and busybox ash. ctest 3/3 with `TIMEOUT 30` present in the generated `CTestTestfile.cmake`; the instructions test runs in 0.03 s and correctly needs no `WORKING_DIRECTORY` since ROOT is explicit.
+
+### Findings
+
+**Should-fix**
+
+1. `tests/instructions.sh:74` — the "imports nothing else" check only inspects lines *starting* with `@`, so a second import folded mid-line evades it. Demonstrated: rewriting line 4 to `...edit AGENTS.md instead, see @RULES.md:` gives 183 bytes, 4 non-blank lines, no heading/list — **`instructions OK`, rc=0**. `@RULES.md` mid-line is a functional Claude Code import, so this is a second source of truth loaded into every session — exactly the drift the test exists to stop, and it is *not* in the residual class you documented (that one is short prose, which is inert; this one is executable). Suggested fix, which also covers the own-line case and drops the fragile `-v` idiom (see nit 2):
+
+   ```sh
+   if sed 's/@AGENTS\.md//g' "$CLAUDE" | grep -q '@[A-Za-z0-9._/-]'; then
+   	fail "CLAUDE.md imports a file other than AGENTS.md -- rules should reach agents through AGENTS.md alone"
+   fi
+   ```
+   I validated this exact snippet: `ok` on the real CLAUDE.md, `FLAGGED` on both the mid-line and own-line variants, identical under dash and busybox. Keep the existing `^@AGENTS\.md$` presence check as-is. Trade-off to weigh: a bare `@word` in prose would also flag; requiring a dot (`'@[A-Za-z0-9._/-]*\.[A-Za-z]'`) narrows it to path-shaped tokens.
+
+**Nits**
+
+2. `tests/instructions.sh:74` (portability, latent) — the `grep -q … -v` exit-status idiom is not reliable across greps. On this machine `ugrep 7.5.0` returns **1** from `printf '@RULES.md\n@AGENTS.md\n' | grep -qvE '^@AGENTS\.md$'` where GNU grep returns 0, i.e. a silent false pass. It does *not* affect you today — `sh -c 'grep --version'` resolves to GNU grep 3.12 here and CI runners use GNU/BSD grep (my ugrep hit was an artifact of my interactive shell), and the own-line case has `MAXLINES` as a second net. Adopting finding 1's `sed`-based form removes the idiom and the latent exposure together.
+
+3. `.gitignore:196` vs `tests/instructions.sh:105` — depth mismatch: the gitignore pattern `CLAUDE.local.md` matches at *any* depth, but the script exempts only the root file, so `src/CLAUDE.local.md` is simultaneously gitignored and a hard ctest failure (verified both). Suggest anchoring the ignore to `/CLAUDE.local.md` so the two rules describe the same file, or exempt any-depth in the script if subdirectory personal overrides should be tolerated. The root exemption + gitignore pairing itself is right.
+
+4. `tests/instructions.sh:71,74` — `@./AGENTS.md`, a functionally identical import spelling, fails with the misleading "has no '@AGENTS.md' import line". Optional: allow an optional `./` in the presence regex. Unlikely in practice.
+
+5. `CLAUDE.md:3-4` — the colon now trails the wrong clause: "…instruction file. Do not add rules here -- edit AGENTS.md instead:" reads as if the directive introduces the import. Suggest "…instruction file below. Do not add rules here -- edit AGENTS.md instead." leaving `@AGENTS.md` to stand alone; stays within 4 lines and 220 bytes. (Also trivially: AGENTS.md uses `—`, CLAUDE.md now uses `--`; ASCII here is fine and keeps byte counting predictable.)
+
+### On the judgment calls you flagged
+
+- **MAXLINES=4 as an exact count**: agree, and it earns its keep — it is what catches a prose rule, and it fires before the heading/list check, which is then a redundant second net with a better message. The "update MAXLINES in this script" hint is the right escape hatch, and 72-column wrapping gives adequate rewording room.
+- **MAXBYTES=220 vs a real 168**: agree, stop where you stopped. I measured a realistic folded rule ("Never use printf.") landing at 186 — inside the cap, as your comment says. Tightening toward 175 would make ordinary rewording fail, and the verifier's point about teaching reflexive constant-bumping is the right call. Just don't let finding 1 be filed under this accepted residual; prose is inert, an import is not.
+- **Root `CLAUDE.local.md` exemption**: agree it would be user-hostile to fail a developer's private override, and the gitignore addition is what makes it safe. See nit 3 for the depth mismatch.
+- **`-iname`/`-ipath` over POSIX**: agree; correct call for macOS case-insensitivity, verified on GNU and busybox. Consequence worth knowing: `-ipath "$ROOT/CLAUDE.md"` also exempts a root `claude.md` on Linux — benign, since Linux tooling would not load it, and correct on macOS where it is the same file.
+- **Symlinked directories**: agree, out of scope; `find` without `-L` not following them is the safe default.
+- **Canonical-copy alternative you rejected**: agree — it duplicates content and invites thoughtless regeneration. The one alternative I'd note and also reject: driving discovery from `git ls-files` would obviate the local-file exemption and the prune list, but would miss untracked drift, which is precisely what you want caught before a commit. `find` is the better fit.
+
+### Not reviewed
+
+- macOS `find` behavior for `-iname`/`-ipath` — no macOS host here. Both are documented by FreeBSD/macOS and your fallback (loud failure on the first macOS CI leg) is acceptable.
+
+### Verdict
+
+**Request changes** — for finding 1 only. The design and the heuristics are sound and I endorse every judgment call you flagged; the check does what it claims on ten drift vectors I tried to break it with. But the stated guarantee "CLAUDE.md imports nothing else" is not currently enforced, and I have a working, demonstrated 3-line replacement that closes it and removes the latent `grep -qv` portability issue at the same time. Nits 3-5 are optional. Once finding 1 is in, send it back and I expect a fast approval.</result>
+<usage><subagent_tokens>112146</subagent_tokens><tool_uses>13</tool_uses><duration_ms>291988</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a0e0b43ae60b8a662</task-id>
+<tool-use-id>toolu_016Rr7FSYm4r2zqM8Nx4stqr</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a0e0b43ae60b8a662.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify TUI change builds/tests" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: PASS — with one evasion family found in the new import check (low realism, one-line fix available)
+
+### Builds and tests
+
+Debug **0 warnings**, Release **17** (unchanged pre-existing set); `ctest --output-on-failure --no-tests=error` **3/3 in both build types**. `sh -n`, `dash -n`, `shellcheck -s sh` clean; whole script passes under `dash` and `busybox sh` against the real repo.
+
+### The reported bug is fixed
+
+The mid-line `... see @RULES.md.` case that evaded the old start-of-line check is now **caught**, as is the own-line variant. Dropping the `grep -q … -v` idiom is the right call independent of this bug — I hit that exact discrepancy earlier in this review (my shell's `find`/`grep` shims vs `/usr/bin/*`), and an exit-status difference that silently *passes* is the worst failure mode a guard can have.
+
+### Full adversarial set — all still correct
+
+Original seven, folded rule (232 B → caught), `tests/CLAUDE.md`, `sub/claude.md`, `buildsystem/CLAUDE.md` all caught; baseline and root `CLAUDE.local.md` pass.
+
+### Attacking the new import check
+
+Caught: mid-line import, own-line second import, `@docs/AGENTS.md`, `@AGENT@AGENTS.mdS.md` (the sed-blanking game — the leftover `@AGENT…S.md` still matches), multiple imports on one line, import inside an HTML comment, import inside a code fence, extensionless `@rules` and `@docs/rules`, lowercase `@agents.md`, and the fail-closed cases (`build@example.com`, `@scottdensmore`). Duplicate `@AGENTS.md` passes, which is correct — same source of truth.
+
+**Evasion found — the "prefix" family.** Any import whose path *starts with* `AGENTS.md` survives the blanking, because what remains contains no `@`:
+
+| input | result |
+|---|---|
+| `@AGENTS.md.bak`, `@AGENTS.md.local`, `@AGENTS.md2`, `@AGENTS.mdx`, `@AGENTS.md-old.md`, `@AGENTS.md/RULES.md` | **all pass** |
+
+These are functional imports of *different* files, so the hole is real in kind — but low in realism: drift writes `@RULES.md` / `@docs/RULES.md` / `@CONTRIBUTING.md`, all of which are caught. The shape most likely to occur in practice is a rename artifact (`@AGENTS.md.bak`). If you want it closed, blanking only complete tokens does it while keeping your no-`grep -v`, fails-closed structure:
+
+```sh
+sed -E 's/@AGENTS\.md([^A-Za-z0-9._/-]|$)/\1/g' "$CLAUDE" | grep -q '@[A-Za-z0-9._/-]'
+```
+
+`sed -E` is in POSIX-2018 and present in both GNU and BSD/macOS sed, so it is as portable as what you have. I would not block on this; your call.
+
+### Broad vs narrow pattern — keep the broad one
+
+Evidence from running both over a corpus:
+
+| input | broad `@[A-Za-z0-9._/-]` | narrow `@[A-Za-z0-9._/-]*\.[A-Za-z]` |
+|---|---|---|
+| `@RULES.md`, `@docs/RULES.md` | flag | flag |
+| `@rules`, `@docs/rules` (extensionless) | flag | **miss** |
+| `build@example.com` | flag | flag |
+| `@scottdensmore` | flag | miss |
+| `5@ each`, `@AGENTS.md` | ok | ok |
+
+The narrow variant buys you only the `@mention` case while **losing extensionless imports**, which are perfectly valid Claude Code imports and exactly the kind of thing an agent would write (`@docs/rules`). It doesn't even fix the email false positive. For a frozen four-line pointer the probability of a legitimate `@` is negligible, and if one ever appears the fix is to reword one sentence. Your original judgment is the better trade — keep it.
+
+### Portability of the new pipeline
+
+`sed 's/@AGENTS\.md//g'` is plain POSIX BRE with an escaped dot and the `g` flag; the grep pattern is a POSIX bracket expression with a **trailing** `-`, which is literal per POSIX — no `-E`, no GNU-isms, no `\|`. Verified across all four combinations of `sed`/`busybox sed` × `grep`/`busybox grep`: identical results (`FLAG` on a second import, `ok` on a clean file). Nothing here can behave differently on BSD/macOS sed or grep.
+
+### `.gitignore` anchoring
+
+Correct: `/CLAUDE.local.md` ignores the root file only; `tests/CLAUDE.local.md` and `src/CLAUDE.local.md` are **not** ignored, so the previous "gitignored *and* a hard ctest failure" contradiction is resolved — the ignore and the script's exemption now describe exactly the same file. `CLAUDE.md`, `AGENTS.md`, and `.claude/agents/*.md` remain unignored; zero tracked files newly ignored. The explanatory comment is accurate. The file now ends with a newline, which also fixes the earlier nit.
+
+### Reworded CLAUDE.md
+
+174 bytes (**46 under the 220 cap**), 4 non-blank lines (at the limit, as designed), prose wrapped at 75/72 columns — inside the ≥72 band that keeps `MAXLINES=4` stable. Each check verified individually against it: import line present, no stray import, no heading or list below the title. No false positive anywhere on the real repo.
+
+Cleanup: both build trees and all sandbox fixtures I created were removed. Repository worktree unchanged: ` M .gitignore`, ` M CLAUDE.md`, ` M CMakeLists.txt`, `?? tests/instructions.sh`.</result>
+<usage><subagent_tokens>241766</subagent_tokens><tool_uses>8</tool_uses><duration_ms>191869</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a0e0b43ae60b8a662</task-id>
+<tool-use-id>toolu_01NkH1q1SuLf5FUWgsr7rB5N</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a0e0b43ae60b8a662.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify TUI change builds/tests" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: PASS — the prefix family is closed; one narrow new false positive, non-blocking
+
+### Builds and tests
+
+Debug **0 warnings**, Release **17** (unchanged); `ctest --output-on-failure --no-tests=error` **3/3 in both build types**. `sh -n`, `dash -n`, `shellcheck -s sh` clean; whole script passes under `dash`, `busybox sh`, and from `/` against the real repo.
+
+### Import-evasion corpus — all 16 must-catch cases caught
+
+All six prefix forms (`@AGENTS.md.bak`, `.local`, `2`, `x`, `-old.md`, `/RULES.md`) now **caught**, and everything that was already working still is: mid-line `@RULES.md`, own-line second import, `@docs/AGENTS.md`, the `@AGENT@AGENTS.mdS.md` blanking game, three imports on one line, HTML-comment import, code-fence import, extensionless `@rules` and `@docs/rules`, lowercase `@agents.md`.
+
+### Must-pass corpus — one new false positive
+
+| legitimate content | result |
+|---|---|
+| plain valid pointer; import as last line with no trailing newline | passes |
+| duplicate `@AGENTS.md` inline + own line (no trailing period) | passes |
+| bare `AGENTS.md` in prose (no `@`) | passes |
+| `@AGENTS.md` followed by comma, semicolon, exclamation, tab, `)`, or end-of-line | passes |
+| bare `@` with no path char; CRLF line endings | passes |
+| **`See @AGENTS.md.` — token ending a sentence with a period** | **flagged** |
+
+Root cause is inherent to the fix, not a mistake: `.` must count as a path character to catch `@AGENTS.md.bak`, so a sentence-ending period reads as part of the token. It does **not** affect the current file (the import sits alone on line 6 and the prose never uses `@`), so this is a latent trap for a future rewording, and the message would be misleading ("imports a file other than AGENTS.md") if it fired. Note your earlier duplicate-import test passed because it didn't end in a period — mine failed only for that reason.
+
+If you want it gone, this variant absorbs sentence punctuation while keeping every catch (verified against the full corpus on both GNU and busybox sed — still flags all six prefix forms plus the real second imports, stops flagging `See @AGENTS.md.`):
+
+```sh
+sed -E 's#@AGENTS\.md([.,;:!?]?)([^A-Za-z0-9._/-]|$)#\1\2#g'
+```
+
+`See @AGENTS.md.bak.` remains caught under it too. Equally defensible to leave as-is and add a half-line to the comment saying not to end a sentence with the bare import. Your call; I'd not block on it.
+
+### Capture-and-restore correctness
+
+Verified byte-exactly on the real `CLAUDE.md`: `diff` of `cat -A` before/after shows a single change — line 6 `@AGENTS.md$` becomes `$` — i.e. exactly 10 bytes removed (174 → 164), the trailing newline preserved, and no other line touched. At end-of-line `\1` is empty so nothing is eaten; with a following space or tab the character is restored intact (confirmed by the tab and end-of-line cases passing).
+
+### `sed -E`, `#` delimiter, and `/` inside the bracket on BSD/macOS
+
+I can give you a confident answer without a Mac:
+
+1. **`-E` is the safest possible choice.** It is BSD-*native* (macOS `sed` documents `-E` for extended regular expressions), GNU sed has accepted it since 4.2, and it is now standardised. The spelling that would have broken macOS is `-r`, which you did not use.
+2. **The `#` delimiter removes the exact ambiguity you were worried about.** POSIX permits any character but backslash and newline as the `s` delimiter. The historically murky area is whether a bracket expression suppresses delimiter scanning when *the delimiter itself* appears inside brackets — implementations have differed. By using `#`, no `#` occurs anywhere in the regex or replacement, so `/` inside the bracket is just an ordinary literal with no special status under any implementation. Your instinct was right and the result is strictly safer than `/`-delimited.
+3. **`([^A-Za-z0-9._/-]|$)` is portable ERE.** Grouping and alternation are standard; in ERE (unlike BRE) `$` is special *anywhere*, so `(x|$)` is well-defined on BSD; a trailing `-` in a bracket expression is literal per POSIX. GNU sed and busybox sed produce **byte-identical output** across a 10-line adversarial corpus (verified with `cmp`).
+4. **The failure mode is loud, not silent.** If BSD sed diverged on any of this, the substitution simply would not blank the allowed import, and the *baseline repository* would fail the check on the very first macOS run. I confirmed this directly: with the substitution treated as a no-op, the real `CLAUDE.md` matches the grep and fails. There is no path to a silent false pass on macOS.
+
+### Real repo
+
+No false positive: `instructions OK (CLAUDE.md 174 bytes, AGENTS.md 6174 bytes)` under every shell tested. CLAUDE.md sits at 174/220 bytes (46 headroom) and 4/4 non-blank lines, prose wrapped at 75/72 columns.
+
+Cleanup: both build trees, the sandbox, the corpus and sed-output captures I created were removed. Repository worktree unchanged: ` M .gitignore`, ` M CLAUDE.md`, ` M CMakeLists.txt`, `?? tests/instructions.sh`.</result>
+<usage><subagent_tokens>256720</subagent_tokens><tool_uses>7</tool_uses><duration_ms>200565</duration_ms></usage>
+</task-notification>
