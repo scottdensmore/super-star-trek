@@ -24,3 +24,13 @@ enable_testing()
 add_executable(test_tuifmt tests/test_tuifmt.c tuifmt.c)
 target_link_libraries(test_tuifmt PRIVATE m)
 add_test(NAME tuifmt COMMAND test_tuifmt)
+
+add_test(NAME journey
+         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/journey.sh $<TARGET_FILE:sst> $<CONFIG>)
+# Run from the source tree, where a player runs the game and where the
+# in-game `help` command finds sst.doc.
+# TIMEOUT because the script's own `timeout` guard needs coreutils,
+# which macOS runners do not have.
+set_tests_properties(journey PROPERTIES
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                     TIMEOUT 120)
