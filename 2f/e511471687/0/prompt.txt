@@ -1,0 +1,204 @@
+<task-notification>
+<task-id>by45bgi92</task-id>
+<summary>Monitor event: "CI check results on PR 16"</summary>
+<event>build-and-test (macos-latest, Debug): pass
+build-and-test (macos-latest, Release): pass
+build-and-test (ubuntu-latest, Debug): pass
+build-and-test (ubuntu-latest, Release): pass
+ALL CHECKS COMPLETE</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>by45bgi92</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/by45bgi92.output</output-file>
+<status>completed</status>
+<summary>Monitor "CI check results on PR 16" stream ended</summary>
+</task-notification>
+
+---
+
+What is next Issue we need to do?
+
+---
+
+Lets squash merge pr 16 then we can start on 5
+
+---
+
+<task-notification>
+<task-id>a72e352f789195831</task-id>
+<tool-use-id>toolu_01MSUBHSTHGgrfNPQfzMTf6F</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a72e352f789195831.output</output-file>
+<status>completed</status>
+<summary>Agent "UI review of TUI mode" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Review: `fix/tui-requires-tty` (issue #5)
+
+## Verdict
+
+The fix is correct, minimal, and lands the right player-facing behaviour for the case it targets: `sst -t` with no terminal now plays the classic game instead of hanging or dying. I verified all three original repro cases exit 0, that the new `journey-tui` test genuinely fails without the guard (status 124 with `TERM=dumb`, status 1 with `TERM` unset), and that the interactive TUI, the too-small-terminal path, and plain mode are all unaffected. Falling back with a notice — rather than erroring out — is the right call for a game, and the `&amp;&amp;` in `isatty(stdin) &amp;&amp; isatty(stdout)` makes it robustly conservative. However, I think scoping out the "real tty, unusable TERM" case is the wrong call: on a real terminal with an unknown `TERM` the game still exits 1 with a raw ncurses message and no game, and on a real pty with `TERM=dumb` (Emacs `M-x shell`) it starts curses and renders a single unusable border line while swallowing all input — both are the same player experience issue #5 is about, and both are closable with the same non-fatal ncurses probe. I'd merge this, then immediately follow with that. Approve with should-fix items.
+
+## Answers to your specific questions
+
+**Silent-ish fallback vs. something louder / non-zero exit.** Falling back is right. A non-zero exit would mean "you asked for the fancy display, so you get no game" — which is precisely the failure mode of the bug. The notice is adequate for the piped/CI case. The one place it genuinely fails to reach the player is `sst -t &gt; file` from a real terminal: the reason the fallback happened is that stdout isn't a terminal, so printing the reason *to stdout* puts it in the file where the player can't see it. I confirmed this — the player types blind and the notice ends up as line 1 of `file`. That specific message belongs on stderr. The journey script captures `2&gt;&amp;1`, so the test is unaffected either way.
+
+**Wording and flow.** "the classic display" is well chosen — it matches both `README.md` ("the game uses its classic scrolling display") and `sst.doc` ("classic scrolling display remains the default"), so it isn't inventing terminology. The `--` matches the game's house style. It reads fine sitting above the ASCII Enterprise banner. My one wording complaint is that the two branches are now inconsistent in what they tell the player: the new one says what happens next, the older one doesn't. See should-fix 3.
+
+**Is the byte-identical-output test approach sound?** The approach is sound, and it's sound partly *because* the implementation doesn't actually do what the comment claims. `journey-tui` re-runs the same assertion set; it does not diff the two captures. A literal byte-diff would be wrong and flaky here — `randomize()` seeds from `time(NULL)`, so every run has a different galaxy, stardate, and Klingon count. And the two runs legitimately differ by exactly one line (the fallback notice). So assertion-parity plus the no-escape-sequences check is the right level of strictness: it pins "the player gets a complete, correct, escape-free classic game" without locking in output we might want to change. Does it risk locking in behaviour we wouldn't want? Only mildly: it asserts that a fallback happens at all, which is the intent. What it does *not* pin is that the player is told why — see should-fix 2. Two comments overstate what's enforced; see minor 5.
+
+**Terminal situations.** I worked through the ones you listed on real ptys:
+
+| Situation | Behaviour | Right? |
+|---|---|---|
+| tmux / screen | TUI renders correctly, exit 0 | yes (verified) |
+| ssh with pty | TUI (same as tmux) | yes |
+| ssh without pty, cron, `docker run` without `-it` | falls back, exit 0 | yes |
+| stdin tty, stdout redirected (`sst -t &gt; f`) | falls back, complete game in the file, exit 0 | yes — notice invisible to player (nit 7) |
+| stdin redirected, stdout tty (`sst -t &lt; moves.txt`) | falls back | defensible; you lose panels for a scripted playback, but that's niche |
+| `script -qec './build/sst -t' /dev/null` with piped stdin | TUI starts (real pty), then hangs at end of input (exit 124) | correct behaviour, but see minor 6 |
+| **real pty, `TERM=dumb`** (Emacs `M-x shell`) | **curses starts, one border line, no prompt, input ignored** | **no — should-fix 1** |
+| **real tty, unknown/unset `TERM`** | **`ncurses: cannot initialize terminal type ($TERM="nosuchterm"); exiting`, exit 1** | **no — should-fix 1** |
+
+## Findings
+
+**Should-fix 1 — "real terminal, unusable TERM" is the same bug, and the fix is three lines.** `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c`, `tui_init()`. Two reachable cases survive:
+
+- Real pty + `TERM=nosuchterm` (or `TERM` unset under `env -i`, a serial console, a typo'd export): `initscr()` calls `exit()` from inside the library. The player asked to play Star Trek and got `ncurses: cannot initialize terminal type` and exit 1 — no banner, no game, no hint that dropping `-t` would work.
+- Real pty + `TERM=dumb`: `isatty` is true so curses starts, but `dumb` has no `cup` capability, so only `+- Quadrant ----+- Status ---+` ever reaches the screen. The message window never appears, typed input produces nothing, and the game looks hung. This is Emacs `M-x shell`, which is a mainstream way for a developer to run a CLI game.
+
+Both are closable with the same non-fatal probe. I verified the API behaves as needed:
+
+```
+TERM=xterm      setupterm rc=0  cup=present
+TERM=dumb       setupterm rc=0  cup=ABSENT
+TERM=nosuchterm setupterm rc=-1        (returns ERR, does NOT exit)
+TERM unset      setupterm rc=-1        (returns ERR, does NOT exit)
+```
+
+So in `tui_init()`, before `initscr()`: `int err; if (setupterm(NULL, STDOUT_FILENO, &amp;err) == ERR) return FALSE;` and reject when `tigetstr("cup")` is `NULL` or `(char *)-1` (needs `&lt;term.h&gt;`). Both fall into the existing fallback with a suitable message. I'd argue this belongs in *this* branch — it is the same one-sentence bug ("`-t` must never leave the player without a game"), and leaving it out means issue #5 gets closed while the more embarrassing variant (a hard crash on a real terminal) stays open.
+
+**Should-fix 2 — nothing asserts the player is told why the fallback happened.** `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/journey.sh` has no `want` for the notice, so `journey-tui` passes just as happily if the `prout()` in `sst.c` is deleted and the game silently ignores `-t`. Since journey.sh already takes the pass-through args, the script can tell it is in `-t` mode. Add `want "fallback notice missing" "using the classic display"` guarded on the `-t` case (or unconditionally in a dedicated tiny test). That is the assertion that makes this a behaviour test rather than a crash test.
+
+**Should-fix 3 — the two fallback messages disagree about whether they tell the player what happens next.** `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.c`:
+
+```
+Full-screen mode needs a terminal -- using the classic display.
+Terminal too small for full-screen mode (need 72x24).
+```
+
+A player on a 60x20 terminal is told the problem but not the resolution, and then a full game starts anyway — mildly disorienting, and inconsistent now that its sibling sets a better precedent. Suggest `Terminal too small for full-screen mode (need 72x24) -- using the classic display.` (I confirmed at 60x20 this still renders on one line with room to spare.)
+
+**Should-fix 4 — the docs don't mention the fallback.** `README.md` says "It needs a terminal of at least 72x24" and `sst.doc` (line ~1535) describes `-t`, but neither says what happens when you can't have it. This branch exists because a user hit exactly that gap. One sentence in both: "If the terminal is too small, or the game is not attached to one (piped input, redirected output, a job with no tty), `-t` prints a notice and uses the classic display." Cheap, and it is the place the player looks before filing issue #5 again.
+
+**Minor 5 — two comments claim strictness the test doesn't have.** `tests/journey.sh` says "the output has to come out identical, escape sequences and all", and your summary says "the output must be identical". The test asserts assertion-parity, not identity — and identity is impossible anyway (random galaxy; plus the extra notice line). The comment will mislead the next person into "fixing" the test by adding a diff. Reword to what it really guarantees: same journey, same assertions, exit 0, no escape bytes.
+
+**Minor 6 — the `TERM=dumb` environment on `journey-tui` no longer pins anything.** With no tty the `isatty` check short-circuits before `TERM` is ever consulted, so `TERM=dumb`, `TERM=xterm`, and unset are now identical paths. It's still a good historical pin (I confirmed the un-fixed build fails at 124 under `dumb` and at 1 under unset), so keep it — but note that if you take should-fix 1, `TERM=dumb` becomes meaningful again in a *different* place (capability probing), and you'd want a second case to keep both pinned. Also worth recording somewhere: `script(1)` cannot be used to add real TUI coverage to CI, because the pty keeps the game blocked on `wgetnstr` after piped input is exhausted (I measured exit 124). A TUI CI test needs an expect-style driver or a tmux harness.
+
+**Minor 7 — the notice goes to stdout, which is the one stream we just established isn't the player's.** `sst.c`. For the `sst -t &gt; file` case the message lands in the file. `fprintf(stderr, ...)` for the no-terminal branch specifically would reach the player; the journey captures `2&gt;&amp;1` so tests are unaffected. Slight tension with the AGENTS.md "all output through `prout`" rule, which is why I'm calling it minor rather than should-fix.
+
+**Minor 8 — `journey.sh`'s positional-then-passthrough argument handling silently misparses a natural invocation.** Running `./tests/journey.sh ./build/sst -t` (exactly what a developer reproducing issue #5 would type) consumes `-t` as `BUILD_TYPE`, never passes it to the game, and then fails with `FAIL: debug output leaked into a -t build` — a confusing message for a test that silently didn't test what was asked. I reproduced this. Validate `BUILD_TYPE` against `Debug|Release|RelWithDebInfo|MinSizeRel|""` and error out otherwise, or take a `--` separator. Also, `[ "$#" -ge 1 ] &amp;&amp; shift` twice is a cryptic way to spell "drop up to two args"; a comment or `shift $(( $# &lt; 2 ? $# : 2 ))` reads better.
+
+**Nit 9 — no prototype cross-check for `stdio_is_terminal()`.** It's declared in `tui.h` and defined in `osx.c`, which includes neither `tui.h` nor `sst.h`, so a future signature change won't be caught by the compiler. The header comment explaining the `pause(int)` vs POSIX `pause(void)` collision is genuinely good and worth keeping; the placement is the right pragmatic call.
+
+**Nit 10 — the Windows build path in `README.md` is broken (pre-existing, slightly aggravated).** `stdio_is_terminal()` sits inside `#ifndef WINDOWS` in `osx.c`, but `sst.c` calls it unguarded. `cl /DWINDOWS *.c` would now fail on that symbol in addition to already failing on `tui.c`'s `curses.h` (from PR #2). The README both documents the Windows build and notes the TUI isn't part of it; something has to give eventually.
+
+**Observation (pre-existing, PR #2, but squarely in "the player asked for `-t`") — on a stock 80x24 terminal the TUI eats the player's first keystroke.** The message window is `LINES - 13 - 1` = 10 rows, while the startup banner is ~14 lines, so `sst -t` opens with `[HIT SPACE BAR TO CONTINUE]`. I reproduced it at exactly 80x24: typing `regular` at that moment yields `Would you like a regular, tournament, or frozen game?egular` / `What is "egular"?`. Since 80x24 is the default size of most terminals, this is close to the median first-run experience of the feature. Not this branch's bug, but you're one line from the minimum supported size and it deserves its own issue.
+
+## What I exercised
+
+- Read the full branch diff (`osx.c`, `tui.c`, `tui.h`, `sst.c`, `tests/journey.sh`, `CMakeLists.txt`), plus `journey.sh` in full, `main()`'s argument loop, `tui_init()`, and `README.md` / `sst.doc` for the `-t` terminology.
+- Built Debug and ran the whole suite: `tuifmt`, `journey`, `journey-tui`, `instructions` — 4/4 pass, 5.56 s.
+- Reproduced all three original failure cases against the fixed binary: `TERM` unset, `TERM=dumb`, `TERM=xterm`, each with piped stdin — all exit 0, all print the fallback notice, all play a complete game.
+- **Falsification:** copied the tree to a scratchpad, removed the `stdio_is_terminal()` guard from `tui_init()`, rebuilt, and ran the new test — fails with `game exited with status 124` under `TERM=dumb` and `status 1` under unset `TERM`. The test is a real regression guard.
+- Real ptys via tmux: 100x30 interactive TUI (panels render, game plays); 80x24 (found the first-keystroke paging issue); 60x20 (too-small message, verified as a clean single line with `cat -A`); `TERM=dumb` on a pty (found the unusable single-border-line rendering, confirmed the process alive and ignoring input); `TERM=nosuchterm` on a pty (found the hard exit 1).
+- stdin-tty/stdout-redirected inside tmux: drove a full game to the farewell line, confirmed exit 0 and that the notice lands in the file rather than on screen.
+- `script -qec './build/sst -t' /dev/null` with piped stdin: confirmed the pty path starts curses (152 ESC bytes emitted) and then hangs at input exhaustion.
+- Wrote a small `setupterm`/`tigetstr("cup")` probe to confirm the non-fatal alternative to `initscr()` behaves as needed across `xterm` / `dumb` / unknown / unset `TERM`.
+- Reproduced the `journey.sh ./build/sst -t` argument misparse.
+- `gh issue view 5` for the stated scope. No files modified (`git status` shows only your six).</result>
+<usage><subagent_tokens>120184</subagent_tokens><tool_uses>29</tool_uses><duration_ms>572725</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a0e0b43ae60b8a662</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a0e0b43ae60b8a662.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify TUI change builds/tests" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: PASS
+
+### Builds and linking (the point you flagged)
+
+Both trees configure and build clean: **Debug 0 warnings, Release 17** — the unchanged pre-existing `-Wunused-result` set, nothing new from `tui.c` or `osx.c`.
+
+`setupterm`/`tigetstr` do link, but I want to be precise about *why*, because your instinct was right that this is fragile:
+
+- On this box (and on the `ubuntu-latest` runners, same Debian packaging) `setupterm`, `tigetstr` and even `cbreak` live in **libtinfo.so.6, not libncurses.so.6**. The link only succeeds because `/usr/lib/x86_64-linux-gnu/libncurses.so` is a **linker script** containing `INPUT(libncurses.so.6 -ltinfo)`, so `-lncurses` transitively drags in `-ltinfo`. The built binary's `DT_NEEDED` confirms both.
+- I proved the dependency is real by linking the same objects against `-l:libncurses.so.6` (bypassing the script): **`undefined reference to symbol 'cbreak@@NCURSES6_TINFO_5.0.19991023'`**.
+- **macOS: no risk.** Apple's ncurses is not split — `libncurses.dylib` carries the terminfo entry points, and `term.h` ships in the SDK. `find_package(Curses)` there resolves everything in one library.
+- **Residual risk: a distro that splits tinfo without providing the linker script** would fail to link with the current `target_link_libraries(sst PRIVATE ${CURSES_LIBRARIES} m)`. That is a build break, as you say, not a test failure. Neither CI platform is affected, so I am not calling it a blocker — but the one-line hardening is cheap if you want it, and CMake has already computed the answer during configure (`NCURSES_LDFLAGS:INTERNAL=-lncurses;-ltinfo` sits in the cache from pkg-config):
+
+  ```cmake
+  find_library(TINFO_LIBRARY tinfo)
+  if(TINFO_LIBRARY)
+    target_link_libraries(sst PRIVATE ${TINFO_LIBRARY})
+  endif()
+  ```
+
+### `&lt;term.h&gt;` collisions
+
+Clean, and I checked it exhaustively rather than by eye: I extracted **all 477 lowercase macro names** that `term.h` defines (verified the extraction by confirming `lines`, `columns`, `tab` are in the set) and intersected them with every lowercase identifier appearing in `sst.h`, `tui.c`, and `tuifmt.c` (verified by confirming `quadx` is in that set). **The intersection is empty.** Nothing is shadowed, in either build type, and `term.h` is included only in `tui.c` — and after `sst.h`, so even declarations are processed before any macro exists.
+
+### Tests
+
+`ctest --output-on-failure --no-tests=error`: **4/4 in both Debug and Release**, `journey-tui` included. Flakiness: `journey` + `journey-tui` five times each per build type — 20 runs, 0 failures.
+
+### The five repro cases — all fixed
+
+| case | result |
+|---|---|
+| piped stdin, `TERM=dumb` (previously hung, 124) | rc=0, "Full-screen mode needs a terminal — using the classic display." |
+| piped stdin, `TERM` unset (previously died, 1) | rc=0, same notice |
+| piped stdin, `TERM=xterm`, stdout redirected (previously hung) | rc=0, same notice |
+| **real pty**, `TERM=nosuchterm` (previously exit 1, no game) | rc=0, "This terminal cannot do full-screen mode — using the classic display.", full game played |
+| **real pty**, `TERM=dumb` (previously one unusable border line, input swallowed) | rc=0, same notice, full game played |
+
+All piped runs produce the farewell and **zero ESC bytes**. Two extra combinations I added also fall back correctly: stdin tty + stdout piped through `cat` (rc=0), and stdout redirected to a file with a tty stdin (rc=0). `setupterm` emits no stray bytes — the first byte of piped `-t` output is the notice itself. All three notice branches are reachable and correctly routed (pipe → "needs a terminal"; bad TERM → "cannot do full-screen"; 60x20 → "too small", measured at **57 chars on a 60-column pane**, one line).
+
+### Interactive TUI unaffected
+
+100x30 with `TERM=xterm-256color`: panels render and update, `srscan` works, `quit`/`n` exits 0. 80x24: full-screen mode still engages (no fallback notice, panels drawn), and quits cleanly.
+
+One observation, **not a regression**: at 80x24 my *scripted* tmux input desynchronises, because the 12-line banner overflows the 11-line message window and the pager's `[HIT SPACE BAR]` swallows one character. I reproduced this identically against **main's** binary at 80x24, and main is fine at 100x30 — so it is pre-existing paging behaviour at minimum height, untouched by this change. A human just presses a key.
+
+### Plain mode byte-identical to main
+
+I made this a real comparison rather than an eyeball: an `LD_PRELOAD` shim pinning `time()` to a fixed value, so both binaries generate the same galaxy. With the full scripted journey, branch vs main output is **byte-identical (3740 bytes)** in plain mode, and **byte-identical in `-f` mode** too.
+
+### `journey.sh` argument handling
+
+Legitimate forms all work: binary only; `+ Debug`; `+ Release`; `+ RelWithDebInfo`; `+ MinSizeRel`; `+ ""`; `+ Debug -t`; `+ Debug -f -t`; `+ Debug -t -f`; `+ "" -t`. Rejected with the usage message and rc=1: `-t` as the second argument (the old silent misparse), lowercase `debug`, and `Deb`. Two entries in my matrix "failed" only because I deliberately passed a Debug-built binary while claiming `Release`/`MinSizeRel` — that is the DEBUG-leak assertion firing correctly, i.e. a true positive.
+
+### The notice assertion has teeth and cannot false-positive
+
+I built a **copy** of the tree with the fallback `prout`s deleted: `journey-tui` fails with `FAIL: no fallback notice for -t (expected output to contain: using the classic display)`, while the plain `journey` on that same binary still passes — so the assertion is specific to `-t`. The phrase appears nowhere but the three `prout` calls in `sst.c`.
+
+One small brittleness worth knowing: the too-small message reads "using **classic** display" (no "the"), so it does **not** contain the asserted substring. Harmless today because `journey-tui` runs without a tty and always takes the "needs a terminal" branch, but if a future test ever exercised the size path the assertion would silently not match. Asserting on `"classic display"` would cover all three.
+
+### `sst.doc`
+
+Endings are intact: **1601/1601 lines CRLF, zero LF-only** (main: 1597/1597). The four added lines all end `^M$`. The in-game `help` command still reads it — `help` + `move` prints `Mnemonic: MOVE` and exits 0, and the new paragraph is present at line 1541 with CRLF. The 72 stray CR bytes in help output are identical on main, so pre-existing, not introduced.
+
+### Other pre-existing behaviour re-confirmed, not caused by this change
+
+`sst -t &lt; /dev/null` still exits 124 — that is the long-known unchecked-`fgets` EOF re-prompt loop; **main behaves identically** in plain mode (rc=124) and with `-t` (rc=124). The fallback notice prints correctly first; the loop is downstream and out of scope.
+
+Cleanup: both build trees, the main worktree, the modified teeth-test copy, the `LD_PRELOAD` shim, all logs, and every `tmux` session I created were removed; only the user's own `agents` session remains. Repository worktree unchanged: the eight modified files, no new untracked files.</result>
+<usage><subagent_tokens>294988</subagent_tokens><tool_uses>26</tool_uses><duration_ms>742937</duration_ms></usage>
+</task-notification>

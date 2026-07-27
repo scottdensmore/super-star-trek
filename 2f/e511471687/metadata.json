@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "2fe511471687",
+  "strategy": "manual-commit",
+  "branch": "fix/tui-requires-tty",
+  "checkpoints_count": 6,
+  "files_touched": [
+    "CMakeLists.txt",
+    "README.md",
+    "osx.c",
+    "sst.c",
+    "sst.doc",
+    "tests/journey.sh",
+    "tui.c",
+    "tui.h"
+  ],
+  "sessions": [
+    {
+      "metadata": "/2f/e511471687/0/metadata.json",
+      "transcript": "/2f/e511471687/0/full.jsonl",
+      "compact_transcript": "/2f/e511471687/0/transcript.jsonl",
+      "content_hash": "/2f/e511471687/0/content_hash.txt",
+      "prompt": "/2f/e511471687/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 110,
+    "cache_creation_tokens": 56960,
+    "cache_read_tokens": 24508286,
+    "output_tokens": 37866,
+    "api_call_count": 59
+  }
+}

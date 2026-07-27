@@ -1,0 +1,78 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "2fe511471687",
+  "session_id": "f543190f-4027-47a1-8fe2-512c2d383260",
+  "strategy": "manual-commit",
+  "created_at": "2026-07-27T05:41:54.492544756Z",
+  "branch": "fix/tui-requires-tty",
+  "checkpoints_count": 6,
+  "save_step_count": 3,
+  "files_touched": [
+    "CMakeLists.txt",
+    "README.md",
+    "osx.c",
+    "sst.c",
+    "sst.doc",
+    "tests/journey.sh",
+    "tui.c",
+    "tui.h"
+  ],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "33e04751ed32",
+  "checkpoint_transcript_start": 1685,
+  "transcript_lines_at_start": 1685,
+  "compact_transcript_start": 406,
+  "token_usage": {
+    "input_tokens": 110,
+    "cache_creation_tokens": 56960,
+    "cache_read_tokens": 24508286,
+    "output_tokens": 37866,
+    "api_call_count": 59
+  },
+  "session_metrics": {
+    "turn_count": 32
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-07-27T05:41:53.745877179Z",
+    "agent_lines": 104,
+    "agent_removed": 3,
+    "human_added": 4,
+    "human_modified": 2,
+    "human_removed": 0,
+    "total_committed": 110,
+    "total_lines_changed": 113,
+    "agent_percentage": 94.69026548672566,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 39,
+      "agent_lines_removed": 3
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 96,
+      "agent_lines_removed": 3
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 106,
+      "agent_lines_removed": 3
+    }
+  ]
+}
