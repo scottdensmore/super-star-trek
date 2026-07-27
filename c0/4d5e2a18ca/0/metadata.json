@@ -1,0 +1,160 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "c04d5e2a18ca",
+  "session_id": "f543190f-4027-47a1-8fe2-512c2d383260",
+  "strategy": "manual-commit",
+  "created_at": "2026-07-27T00:26:35.937146633Z",
+  "branch": "docs/agents-md",
+  "checkpoints_count": 9,
+  "save_step_count": 7,
+  "files_touched": [
+    "AGENTS.md",
+    "CLAUDE.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-fable-5",
+  "turn_id": "1f90b8827ca3",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 297,
+    "cache_creation_tokens": 515179,
+    "cache_read_tokens": 13660827,
+    "output_tokens": 105738,
+    "api_call_count": 155
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "prompt-skill-claude-code-doctor-2026-07-26T19:26:17.465554657Z",
+      "event_type": "prompt_invocation",
+      "skill": {
+        "name": "doctor"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "prompt_slash_command",
+        "confidence": "explicit"
+      },
+      "turn_id": "eb56005ed6ac",
+      "timestamp": "2026-07-26T19:26:17.465554657Z",
+      "native": {
+        "command": "/doctor"
+      },
+      "collapse": {
+        "target": "user_message",
+        "label": "/doctor",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "prompt-skill-claude-code-claude-md-management:revise-claude-md-2026-07-26T23:59:02.55965649Z",
+      "event_type": "prompt_invocation",
+      "skill": {
+        "name": "claude-md-management:revise-claude-md"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "prompt_slash_command",
+        "confidence": "explicit"
+      },
+      "turn_id": "082af74a7db3",
+      "timestamp": "2026-07-26T23:59:02.55965649Z",
+      "native": {
+        "command": "/claude-md-management:revise-claude-md"
+      },
+      "collapse": {
+        "target": "user_message",
+        "label": "/claude-md-management:revise-claude-md",
+        "default_collapsed": true
+      }
+    },
+    {
+      "id": "prompt-skill-claude-code-claude-md-improver-2026-07-27T00:06:51.992952956Z",
+      "event_type": "prompt_invocation",
+      "skill": {
+        "name": "claude-md-improver"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "prompt_slash_command",
+        "confidence": "explicit"
+      },
+      "turn_id": "c3a932f8c676",
+      "timestamp": "2026-07-27T00:06:51.992952956Z",
+      "native": {
+        "command": "/claude-md-improver"
+      },
+      "collapse": {
+        "target": "user_message",
+        "label": "/claude-md-improver",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 13
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-07-27T00:26:35.511233515Z",
+    "agent_lines": 130,
+    "agent_removed": 94,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 130,
+    "total_lines_changed": 224,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 17,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 17,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 5,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 130,
+      "agent_lines_removed": 94
+    },
+    {
+      "checkpoint_number": 6,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 130,
+      "agent_lines_removed": 94
+    },
+    {
+      "checkpoint_number": 7,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 130,
+      "agent_lines_removed": 94
+    },
+    {
+      "checkpoint_number": 8,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 130,
+      "agent_lines_removed": 94
+    }
+  ]
+}
