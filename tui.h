@@ -13,7 +13,10 @@ void fmt_status_line(int i, char *buf);	/* i=1..10, srscan status fields */
 /* Curses backend (tui.c) */
 EXTERN int tui_active;	/* TUI mode is on and curses is running */
 
+int stdio_is_terminal(void);	/* osx.c; stdin and stdout are both ttys */
+
 int tui_init(void);		/* returns TRUE if the TUI started */
+int tui_terminal_capable(void);	/* TERM is known and can address the cursor */
 void tui_shutdown(void);
 void tui_puts(char *s);
 void tui_puts_slow(char *s);

@@ -18,6 +18,23 @@ set -u
 
 SST="${1:-./sst}"
 BUILD_TYPE="${2:-}"
+# Anything further is passed to the game. Running the same journey with
+# -t is how we check that full-screen mode falls back to this one when
+# there is no terminal: not byte-identical output (the galaxy is seeded
+# from the clock, and the fallback adds a notice), but the same
+# assertions, exit 0, and no escape sequences.
+case "$BUILD_TYPE" in
+	Debug|Release|RelWithDebInfo|MinSizeRel|"") ;;
+	*)
+		echo "usage: journey.sh <sst> [build-type] [game args...]" >&2
+		echo "  '$BUILD_TYPE' is not a build type; game arguments go after it" >&2
+		exit 1
+		;;
+esac
+[ "$#" -ge 1 ] && shift	# drop the binary
+[ "$#" -ge 1 ] && shift	# drop the build type; "$@" is now the game's
+GAME_ARGS="$*"
+
 MAXBYTES=1048576
 DUMPBYTES=8192
 
@@ -50,7 +67,7 @@ run() {
 # subshell records the game's own exit status before that cap applies.
 (
 	printf 'regular\nshort\nnovice\nxyz\nsrscan\nstatus\nlrscan\nchart\ndamages\nreport\nscore\ncommands\nbogus\nquit\nn\n' \
-		| run "$SST" 2>&1
+		| run "$SST" "$@" 2>&1
 	echo $? > "$rc"
 ) | head -c "$MAXBYTES" > "$out"
 
@@ -123,6 +140,15 @@ want "bad command was not rejected" "UNRECOGNIZED COMMAND"
 if tr -cd '\033' < "$out" | grep -q .; then
 	fail "escape sequences leaked into plain-mode output"
 fi
+
+# Asking for -t without a terminal must say so, not silently ignore the
+# flag: without this the fallback notice could be deleted and the test
+# would still pass.
+case " $GAME_ARGS " in
+	# "classic display", not "using the classic display": the
+	# too-small-terminal branch words it without the "the".
+	*" -t "*) want "no fallback notice for -t" "classic display" ;;
+esac
 
 # A release build must never show the Debug-only setup chatter. Not
 # anchored: the first such line lands on the end of a prompt line.

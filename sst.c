@@ -436,8 +436,15 @@ int main(int argc, char **argv) {
 		argv++;
 	}
 
-	if (usetui && !tui_init())
-		prout("Terminal too small for full-screen mode (need 72x24).");
+	if (usetui && !tui_init()) {
+		if (!stdio_is_terminal())
+			prout("Full-screen mode needs a terminal -- using the classic display.");
+		else if (!tui_terminal_capable())
+			prout("This terminal cannot do full-screen mode -- using the classic display.");
+		else
+			/* Short: this one only ever prints on a narrow terminal. */
+			prout("Terminal too small (need 72x24) -- using classic display.");
+	}
 
 	prelim();
 
