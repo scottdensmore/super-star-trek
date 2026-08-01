@@ -1,0 +1,246 @@
+<task-notification>
+<task-id>bzxb6tm4m</task-id>
+<summary>Monitor event: "CI check results on PR 22"</summary>
+<event>build-and-test (macos-latest, Debug): pass
+build-and-test (macos-latest, Release): pass
+build-and-test (ubuntu-latest, Debug): pass
+build-and-test (ubuntu-latest, Release): pass
+ALL CHECKS COMPLETE</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bzxb6tm4m</task-id>
+<tool-use-id>toolu_018sZDUXYzt4s1RGt8wsJ3Q5</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/bzxb6tm4m.output</output-file>
+<status>completed</status>
+<summary>Monitor "CI check results on PR 22" stream ended</summary>
+</task-notification>
+
+---
+
+Ok lets do 11
+
+---
+
+<task-notification>
+<task-id>a72e352f789195831</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a72e352f789195831.output</output-file>
+<status>completed</status>
+<summary>Agent "UI review of TUI mode" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Review: `feat/tui-colour` (issue #11)
+
+## Verdict
+
+Approve with should-fix items. The engineering is the best-structured thing on this branch series: putting classification in `tuifmt.c` as `cell_class()`/`status_class()` and leaving `tui.c` with nothing but enum→attribute mapping means the anti-leak property is a *tested fact* rather than a claim, and I confirmed it holds at the rendering level too — with sensors damaged, a quadrant that had five yellow stars in row 6 drew as five dim `-` with not one colour escape among them. Deriving colour from the character rather than the game state is the right call and worth keeping as a rule. `TERM=vt100` renders the identical layout with zero colour escapes, so degradation is clean. On the design questions: the status panel is close to right and the restraint is correct, but the grid palette has two real problems — **the ship becomes invisible on a light-background terminal** because `COLOR_WHITE` is hardcoded against `use_default_colors()`, and **yellow means "scenery" on the left panel and "caution" on the right**, which is an internal contradiction in the colour language spent on the most numerous object on the grid.
+
+## Answers to your design questions
+
+**Is there an era convention to match? No — stop looking for one.** The 1978 lineage this code descends from (Leedom's HP-2000 BASIC → Almy's C) is text-only; the contemporaneous Apple II / Atari / TRS-80 ports coloured things idiosyncratically and did not agree with each other. There is no canonical SST colour language to match, and I'd rather tell you that than invent one. What *does* exist and is worth honouring is two conventions, one of which you already have: Star Trek's own alert language (green/yellow/red for condition — you nailed this) and the tactical-grid convention shared by roguelikes and 4X minimaps (the player is the most distinct thing on the map; threats are warm; terrain is muted; unknown is grey). Judged against the second one, your grid gets threats and unknown right and terrain wrong.
+
+**Stars yellow / planets green — yes, you have it backwards, but not for the reason you guessed.** Your instinct was "danger should drive the palette." I'd put it more precisely: **salience should track scarcity × decision-relevance, and a hue must mean one thing across both panels.** In the quadrants I sampled, stars ran 7–9 per grid against 1 hostile. Yellow is the second-loudest colour available and you're spending it on the most common object, so the grid reads as a field of yellow with a red letter hidden in it. The clincher is the cross-panel collision: yellow is your `STAT_WARN` — shields down, life support on starbase support — so on the right-hand panel yellow means *pay attention*, and eight inches to the left it means *ordinary scenery*. That is the one genuine inconsistency in the scheme.
+
+I'd make stars the quietest thing that isn't empty space (plain, or blue if you want them distinct), keep planets green (they're an objective — dilithium — so "green = something good here" agrees with the status panel's green), and reserve yellow for actual caution. That also frees yellow up coherently if you ever colour Time Left. The counter-argument is real and you should weigh it: a yellow star is *pictorially* right, there's charm in that, and this is a game rather than a dashboard. But the yellow-means-two-things problem is what tips it for me.
+
+**Bold white for the ship — no, and this is the finding I'd fix first.** See should-fix 1: on a light-background terminal it's white on white.
+
+**All hostiles the same red — keep it.** On a 10x10 grid with five hostile types, "everything red is trying to kill you" is the right level of detail. The letters already carry the identity, the game teaches them, and the message log names them in prose. Shading them would demand colour distinctions that collapse on 8-colour terminals and would compete with the red/not-red signal that actually drives decisions. One optional refinement if you ever want it: give the **Super-commander alone** something extra (`A_REVERSE`, say). "The Super-commander is in this quadrant" is the single most consequential piece of tactical news in the game, and it's the one case where the letter doing all the work undersells it. Polish, not a defect.
+
+**Dim for masked cells — keep it, it reads as "hidden".** Dim/grey is the standard "no data" idiom and, crucially, it can't be misread as an object. It also degrades safely: `A_DIM` is unimplemented on a fair number of terminals, but since `-` appears nowhere else in the grid the cell still reads as unknown from the glyph alone. Good choice.
+
+**Only three status lines — right restraint, but add exactly one.** A panel where everything is coloured is a panel where nothing is, so I'd resist Energy and Torpedoes: Energy is already mirrored by Condition (YELLOW fires at `energy &lt; 1000`, which is precisely the threshold you'd colour Energy at, so you'd be saying the same thing twice on adjacent lines), and a torpedo count of 0 is legible as a small integer. **Time Left is different.** I grepped for it: there is no low-time warning anywhere in the game — no prose, no event, nothing. Running out of time is a primary lose condition and the status panel is its only channel. Yellow under ~20% of `intime` and red under ~10% would add information rather than repeat it. That's the one field where colour would tell a player something the game currently never says.
+
+**Accessibility — you pass the test that matters, and here's why it's worth saying out loud.** Colour is *redundant everywhere*: every coloured status value also spells its state in words (GREEN/YELLOW/RED, DOCKED, ACTIVE/DAMAGED, UP/DOWN/DAMAGED), and every coloured grid cell is already a distinct glyph (K/C/S/R/T/E/F/B/\*/P/#/-). So a red-green colour-blind player loses nothing — they read exactly what a monochrome player reads. That is the correct design and it's easy to get wrong, so it deserves a comment in the code saying it's deliberate. The real accessibility failures are all light-background contrast, below.
+
+## Findings
+
+**Should-fix 1 — the ship is invisible on a light-background terminal.** `tui.c`, `init_pair(CP_SHIP, COLOR_WHITE, bg)` with `bg = -1`. The branch's stated principle is that the panels "sit in the player's colour scheme", but hardcoding `COLOR_WHITE` as a *foreground* silently assumes the background is dark. On Solarized Light, `xterm -rv`-less defaults, or any white-background terminal, the player's own ship renders white on white. Yellow stars suffer the same way — yellow on white is notoriously low contrast, so the two most numerous coloured things on the grid both fail together. Fix for the ship: drop the pair entirely and use `A_BOLD` alone, which keeps the terminal's own foreground and simply brightens it — bright white on dark, bold black on light, always legible, always distinct from the plain dots, and one fewer colour pair. That's a strictly better implementation of the intent you already had.
+
+**Should-fix 2 — the Thing (`?`) is unclassified, and the game explicitly tells the player to go look at it.** `cell_class()` has no case for `IHQUEST`, so it falls to `CELL_PLAIN`. But `setup.c:680` drops a `?` into the quadrant and prints:
+
+```
+MR. SPOCK- "Captain, this is most unusual.
+    Please examine your short-range scan."
+```
+
+The game points at the scan and says *look here*, and the panel gives that cell no emphasis whatsoever — it's the only notable object on the grid drawn in plain text. Magenta would fit (it already means "strange phenomenon" via the Tholian web), or give it its own colour. This is the one gap in an otherwise complete symbol table.
+
+**Nit 3 — the black hole's invisibility is correct but undocumented, and someone will "fix" it.** `IHBLANK` (`' '`) also falls to `CELL_PLAIN`, and `setup.c:692` drops up to three per quadrant. Flying into one is instant death, so the temptation to mark it with `A_REVERSE` is obvious — and it would be wrong: a black hole is invisible on the short-range scan in the original, that's the point, and colour would change the game's information model rather than its presentation. Worth one line in `cell_class()` saying so, exactly as you documented the masking rationale.
+
+**Nit 4 — honour `NO_COLOR`.** `start_colour()` decides purely on `has_colors()`. There is no way for a player to keep the full-screen layout but drop the colour short of `TERM=vt100`, which is a blunt instrument that also throws away line-drawing characters. Checking `getenv("NO_COLOR")` before `start_color()` is three lines and is becoming the de-facto standard for CLI tools; it's also the courtesy that low-vision users and monochrome-preferring players actually reach for.
+
+**Nit 5 — a note on `use_default_colors()` failing.** The `bg = COLOR_BLACK` fallback is sensible, but on a light-background terminal that lacks default-colour support it paints black cells behind every coloured glyph, producing a patchwork against the uncoloured dots. Rare enough not to matter; worth knowing it's the one path where the panels do impose a background.
+
+## Things worth keeping exactly as they are
+
+- Classifying from the drawn character rather than the game state. This is the right architecture and it makes the anti-leak property structural rather than vigilant. The test that runs the property over `fmt_quad_line()`'s real output — rather than over what the test author assumes masking produces — is the correct way to write it.
+- Label plain, value coloured. I checked every `fmt_status_line` case: all ten pad to exactly 14 columns, so `STATLABEL` lands cleanly at the value on every line, and the effect in the capture is that the eye runs straight down the values. Good call.
+- `status_class` using `condition_now()` rather than `newcnd()` — the display path no longer mutates game state, which closes the issue I raised in the #7 review.
+- Green in both panels meaning "good" (planet = objective, ACTIVE/UP = healthy). That coherence is worth protecting, and it's the reason I'd rather move stars off yellow than move warnings off it.
+
+## What I exercised
+
+- Read the full diff across `tui.c`, `tui.h`, `tuifmt.c`, `tests/test_tuifmt.c`; cross-read every `IH*` symbol constant in `sst.h` against `cell_class()` to find the two unclassified ones, and traced where `IHQUEST` and `IHBLANK` are placed.
+- Built Debug (zero warnings), 5/5 ctest.
+- tmux 100x30, seeded tournament game, captured with `tmux capture-pane -e` to read actual SGR codes: yellow `*` (`33`), bold white `E` (`1;37`), bold red `C` (`1;31`), green `GREEN`/`ACTIVE`/`UP` (`32`), yellow `DOWN` shields (`33`).
+- Drove the game into a Commander quadrant via tractor beam, then used `debug` selective damage to produce simultaneous **Condition RED / Life Support DAMAGED / Shields DAMAGED** — all three bold red — and damaged short-range sensors to confirm the masked grid renders as `ESC[2m-` throughout with the 3x3 box around the ship still coloured and **no colour surviving on any hidden cell**.
+- `TERM=vt100` at 100x30: identical layout, zero colour escapes.
+- Wrote a standalone curses program in the scratchpad replicating `tui.c`'s exact pairs and attributes, to render all fifteen grid symbols plus a representative grid row side by side and read the escapes for the whole palette at once. That's what surfaced the `?` gap and let me judge the star density problem.
+- Grepped for existing low-energy and low-time warnings (there are none) to test the "should Energy and Time Left warn" question against what the game already tells the player.
+- No files modified — `git status` shows only your four.</result>
+<usage><subagent_tokens>250907</subagent_tokens><tool_uses>24</tool_uses><duration_ms>450216</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a0e0b43ae60b8a662</task-id>
+<tool-use-id>toolu_019Rdv2TFPctNRNuouXBuHNM</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a0e0b43ae60b8a662.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify TUI change builds/tests" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: PASS — with one small test-coverage gap and two minor notes
+
+### Builds and tests
+
+Debug **0 warnings**, Release **14** (unchanged). `-Wall -Wextra` Release: **main 30 vs branch 30**, set diff shows **no new warnings**. `ctest`: **5/5 in both build types**, three consecutive runs each, no flakes.
+
+### Plain mode untouched — checked, not assumed
+
+With an `LD_PRELOAD` time shim: **8 seeded tournament journeys** (setup, srscan, status, lrscan, chart, damages, report, score, a warp move, shields up, commands, an unknown command, quit) and **3 more in `-f`** — all **byte-identical** to a main worktree build. Plain-mode output contains **0 escape bytes**, and so does `-t` when it falls back on a pipe.
+
+### Terminal handling
+
+| environment | layout | colour escapes |
+|---|---|---|
+| `TERM=xterm-256color` | full | 13 |
+| `NO_COLOR=1` | identical | **0** |
+| `TERM=vt100` | identical | **0** |
+| `NO_COLOR=` (empty) | full | 25 |
+
+The empty-`NO_COLOR` case correctly keeps colour — that matches the NO_COLOR convention ("present and non-empty"), and the code says so precisely. My first layout comparison appeared to differ only because each run seeded a different galaxy; with the seed pinned the layouts are the same.
+
+### The anti-leak property at the rendering level
+
+I built a probe that links the real `tui.c` and `tuifmt.c`, plants nine different objects (K, C, R, B, `*`, P, `?`, `#`, black hole) outside the ship's 3×3 visible box, damages `DSRSENS`, calls the real `tui_refresh_panels()`, then reads every cell back out of the curses window with `mvwinch()`:
+
+- **Sensors damaged**: the entire grid reduces to three renditions — labels and visible dots plain, every `'-'` **dim with no colour pair**, the ship bold. `hidden-inconsistencies=0`. Nine different hidden objects, one indistinguishable rendition.
+- **Sensors intact** (proving the test isn't vacuous): K/C/R → pair 1 + bold, B → pair 2 + bold, `*` → pair 3, P → pair 4, `?` → pair 5 + bold, `#` → pair 5 no bold, E → **bold with no pair**, black hole → drawn as `IHBLANK` = space, no attribute.
+
+That confirms all four ui-review changes at the pixel level: the ship keeps the terminal's own foreground, stars are blue (yellow appears nowhere on the grid), `?` is bold magenta, and the black hole stays invisible.
+
+### Status panel
+
+Probed the same way. **Labels are plain in every state** (`label_attrs=0x0` on all ten lines, always). Healthy ship: Condition/Life Support/Shields → green. Damaged + low clock: those three plus Time Left → red + bold. Docked: Condition → cyan + bold, Life Support → yellow. `NO_COLOR=1`: all ten lines plain with identical text.
+
+### Time Left thresholds
+
+Swept 55 combinations (intime ∈ {0, −1, 1, 7, 100} × remtime at 0, 9.99%, 10%, 10.01%, 19.99%, 20%, 20.01%, 50%, 100%, 200%, −1) against an independent reference implementation: **0 mismatches**. Boundaries are exclusive as written (`&lt; 0.10` → BAD, `&lt; 0.20` → WARN), so exactly 10% is WARN and exactly 20% is PLAIN, consistently.
+
+### Mutation testing — 8 of 9 caught
+
+| mutation | caught by |
+|---|---|
+| `?` unclassified | `FAIL the unknown thing` |
+| black hole classified | `FAIL black hole stays invisible` **and** `FAIL a hidden row still has something to colour` |
+| `'-'` → plain | `FAIL masked cell` |
+| Romulan not hostile | `FAIL romulan is hostile` |
+| docked loses priority | `FAIL docked outranks the rest` |
+| life support docked → BAD | `FAIL the starbase makes it survivable` |
+| shields down → GOOD | `FAIL shields down warns` |
+| time thresholds swapped | `FAIL nearly out of time is bad` |
+| **`intime &lt;= 0` guard removed** | **nothing — tests still pass** |
+
+**The one gap**: `checkint("no allotment, nothing to say", status_class(10), STAT_PLAIN)` runs with `d.remtime = 0.5` left over from the previous assertion, and with `intime = 0` both the guarded and unguarded code return PLAIN. The guard is only load-bearing when `remtime` is **negative** — I confirmed with the reference sweep that removing it turns `intime=0, remtime=-1` from PLAIN into BAD. Adding `d.remtime = -1.0;` before that assertion pins it. Whether negative `remtime` is reachable is arguable (`d.remtime = d.remres/(d.remkl+4*d.remcom)` in `events.c`/`battle.c`, with a positive numerator), so this is defensive code with an unpinned guard rather than a live bug.
+
+### Curses attribute handling — no leak paths
+
+`draw_quad_line` brackets each `waddch` with `wattron`/`wattroff` and contains no branch, early return, or error path between them; `waddch` returning ERR still falls through to `wattroff`. `draw_status_line` turns the attribute on at column 14 and off after the loop, again with no early exit — and if a string were shorter than 14 characters the unmatched `wattroff` is a harmless no-op. `wmsg` is never given attributes, which is why game text is untouched. `has_colors()`/`start_color()` are correctly called after `initscr()`, and `use_colour` stays 0 if `tui_init` bails before `start_colour()`, so the attribute helpers return `A_NORMAL`.
+
+Two minor notes: `init_pair` return values are unchecked, so on a terminal reporting `COLOR_PAIRS &lt; 8` the affected pairs would silently render default — cosmetic only. And at the minimum 72-column size the longest status line ("Shields DAMAGED, 100% 2500.0 units", 40 chars from column 2) ends exactly on the last interior column — zero spare. That margin is pre-existing (`mvwaddstr` had the same constraint) and per-character `waddch` clips identically with `scrollok` off; I verified correct rendering and attributes at 72×24 with the probe.
+
+### Attribute degradation
+
+On `TERM=ansi` (colour capable, **no `dim` capability**) the hidden cells still share one identical rendition — ncurses emits the same sequence for all of them, so uniformity holds even where dim doesn't exist; the worst case is that "dim" looks like something else, never that one hidden cell differs from another. On `vt100` and `xterm-mono` there is no colour at all and everything renders plain with the layout intact.
+
+Cleanup: both build trees, the main worktree, nine mutation trees, both curses probes, the threshold harness, the time shim and every tmux session I created were removed. No stray temp dirs or `.trk` files. Worktree unchanged: ` M tests/test_tuifmt.c`, ` M tui.c`, ` M tui.h`, ` M tuifmt.c`.</result>
+<usage><subagent_tokens>487048</subagent_tokens><tool_uses>36</tool_uses><duration_ms>1024547</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab2620e37969a3049</task-id>
+<tool-use-id>toolu_01PqKcCnVwn7uQF2XP21naTu</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/ab2620e37969a3049.output</output-file>
+<status>failed</status>
+<summary>Agent "Code review of TUI branch" failed: Agent terminated early due to an API error: API Error: Unable to connect to API (ENOTIMP)</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+</task-notification>
+
+---
+
+try again
+
+---
+
+<task-notification>
+<task-id>ab2620e37969a3049</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/ab2620e37969a3049.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review of TUI branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review — feat/tui-colour (issue #11)
+
+**State reviewed:** branch `feat/tui-colour` at commit `52a9198` plus modified `tui.c`, `tui.h`, `tuifmt.c`, `tests/test_tuifmt.c`. (5/5 ctest here rather than 6 — this branch predates PR #22's `help` test, as you said.)
+
+### Verified independently
+
+**The anti-leak property, at the rendering level.** I wrote my own white-box probe (`#include "tui.c"` to reach the static drawing helpers, run under a pty) that draws a fully masked row containing nine different hidden objects and reads the attributes back with `mvwinch`. All ten hidden cells share **exactly one rendition** (`0x100000`, A_DIM) and the separators between them are plain. Non-vacuous: with the sensors intact the same row yields **6 distinct renditions**. So the property holds at the pixels, not just in the classifier.
+
+**No attribute survives a drawn line.** `getattrs()` on both windows is `A_NORMAL` after drawing. The bracketing is sound: `draw_quad_line` pairs `wattron`/`wattroff` per character, and `draw_status_line`'s unconditional trailing `wattroff` is a harmless no-op in the (unreachable) case of a string shorter than the label.
+
+**Labels stay plain.** With life support damaged, shields damaged, low energy and low time simultaneously, every character before column 14 on all ten status lines reads `A_NORMAL`. A live tmux capture confirms the intent visually: `Condition` plain then `ESC[1mESC[31mRED`, `Life Support` plain then green `ACTIVE`, stars in blue.
+
+**NO_COLOR is exactly per spec:** unset → colour, empty → colour, `1`/`0`/`yes` → no colour (including `0` disabling, which is right — presence of a non-empty value is what counts). Degradation: vt100 and xterm-mono report `has_colors()==0` → `use_colour=0` with the layout intact; ansi gives 8 colours / 64 pairs.
+
+**Mutation matrix, five of my own — all caught:** colouring a black hole (`FAIL black hole stays invisible`), breaking the sensor masking (`FAIL masked far row`), merging CELL_HIDDEN into plain (`FAIL masked cell`), dropping the `intime` guard (`FAIL no allotment, nothing to say`), and making shields-down read good (`FAIL shields down warns`).
+
+**Plain mode byte-identical to main** across 8 seeded journeys with an `LD_PRELOAD` time shim, zero differences. Zero build warnings.
+
+**Glyph audit:** the game's symbols are `R K C S * P B ' ' . ? E F T #`. No glyph is `-`, so `-` unambiguously means "hidden" and no real cell content can be mistaken for a masked one.
+
+### On the architecture
+
+The enum/mapping split is the right call and I'd keep it exactly as is. Classification is a pure function of a character in a curses-free file, so the security-relevant property is a unit test over the formatter's real output; `tui.c` holds nothing but a table. That is what makes the probe I wrote *confirmatory* rather than the primary evidence.
+
+One precision point on the claim rather than the code: colour is decided from the character only for the **grid**. `attr_for_status` → `status_class` reads game state directly (`condit`, `damage`, `shldup`, `intime`, `d.remtime`). That is not a leak — the status fields are printed unmasked by `srscan()` regardless of `goodScan`, so the panel mirrors the spec — but the in-code comments are correctly scoped to cells while the PR summary generalises. Worth keeping the distinction straight in the commit message.
+
+The black hole decision is right: it is a trap that works by looking like empty space, and colouring it would change what the game tells the player. Good that it is pinned by a test rather than left as a comment.
+
+### Findings (nits only)
+
+1. `tui.c:96` — `STATLABEL 14` must agree with the padding baked into `fmt_status_line`'s format strings in another file, and nothing asserts the two agree. The exact-string tests pin the formatter side today, so a padding change breaks a test; but a deliberate relabelling that updates those strings would leave `STATLABEL` silently wrong and colour would start mid-value. Cheap hardening: move it to `tui.h` beside `FMTBUFLEN` and assert `buf[STATLABEL-1]==' ' &amp;&amp; buf[STATLABEL]!=' '` for the ten lines.
+
+2. `tests/test_tuifmt.c:test_masked_rows_are_colourless` — it counts classes that are neither PLAIN nor HIDDEN, so it would not catch a masking that emitted a *mix* of `.` and `-` for hidden cells (both non-leaking classes, but visually distinguishable). The existing exact-string masking assertions do cover that, so the suite is sound — worth a comment there so nobody later "simplifies" the string tests believing this property test subsumes them.
+
+### Your two flagged items
+
+**Unchecked `init_pair` — no action needed.** `has_colors()` is true only with a colour terminfo entry, and every such entry in practice provides at least 8 pairs (I measured the minimal `ansi` at 64). If it ever did fail, the result is uncoloured panels — the same graceful degradation you already provide for `NO_COLOR`. Adding `COLOR_PAIRS &gt;= 8` to the `use_colour` condition is a one-liner if you want it, but it guards a terminal that doesn't exist.
+
+**72-column status line — no action in this branch.** It is pre-existing and colour adds no width. If it ever matters it is a layout change deserving its own slice.
+
+### Not reviewed
+
+macOS/BSD curses behaviour (no host) — the risk is low here since everything goes through standard ncurses calls with a documented fallback, and `has_colors()` gates the whole feature.
+
+### Verdict
+
+**Approve** — for exactly this state: commit `52a9198` plus the modified `tui.c`, `tui.h`, `tuifmt.c` and `tests/test_tuifmt.c` as verified above. This is the strongest-designed change in the series: the leak-proofing is structural rather than promised, the redundancy rule (glyph and words carry everything colour does) makes it accessible by construction, and the ui-review corrections — bold-not-white for the ship, blue-not-yellow for stars — show the colour vocabulary was thought through rather than assigned. Both nits are optional. Note for sequencing: `help` still renders blank under `-t` on this branch, so land PR #22 before or with it if the two go out together.</result>
+<usage><subagent_tokens>284133</subagent_tokens><tool_uses>3</tool_uses><duration_ms>182982</duration_ms></usage>
+</task-notification>

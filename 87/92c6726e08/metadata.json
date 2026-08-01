@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "8792c6726e08",
+  "strategy": "manual-commit",
+  "branch": "feat/tui-colour",
+  "checkpoints_count": 6,
+  "files_touched": [
+    "tests/test_tuifmt.c",
+    "tui.c",
+    "tui.h",
+    "tuifmt.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/87/92c6726e08/0/metadata.json",
+      "transcript": "/87/92c6726e08/0/full.jsonl",
+      "compact_transcript": "/87/92c6726e08/0/transcript.jsonl",
+      "content_hash": "/87/92c6726e08/0/content_hash.txt",
+      "prompt": "/87/92c6726e08/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 69,
+    "cache_creation_tokens": 741027,
+    "cache_read_tokens": 23959030,
+    "output_tokens": 37328,
+    "api_call_count": 38
+  }
+}
