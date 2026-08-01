@@ -1,0 +1,620 @@
+<task-notification>
+<task-id>be1y05r7c</task-id>
+<summary>Monitor event: "CI check results on PR 19"</summary>
+<event>build-and-test (macos-latest, Debug): pass
+build-and-test (macos-latest, Release): pass
+build-and-test (ubuntu-latest, Debug): pass
+build-and-test (ubuntu-latest, Release): pass
+ALL CHECKS COMPLETE</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>be1y05r7c</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/be1y05r7c.output</output-file>
+<status>completed</status>
+<summary>Monitor "CI check results on PR 19" stream ended</summary>
+</task-notification>
+
+---
+
+Ok lets squash merge then start #7
+
+---
+
+<task-notification>
+<task-id>a72e352f789195831</task-id>
+<tool-use-id>toolu_01SUdt1H1TuQwL6v5Y8YpC2L</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a72e352f789195831.output</output-file>
+<status>completed</status>
+<summary>Agent "UI review of TUI mode" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Review: `fix/tui-panel-staleness` (issue #7)
+
+## Verdict
+
+Both fixes are correct and I reproduced both before/after states. The `tui_ingame` flag is the right call — inferring "a game exists" from `d.date &gt; 0.0` was always a proxy for a fact the program actually knows, and replacing an inference with a fact is the better fix even setting the bug aside. I confirmed the replay flow now blanks the panels through the second game's setup questions and repopulates with genuinely new data (Stardate 2100 → 4400, new quadrant, new grid), and that panels are drawn and current at a `[HIT SPACE BAR TO CONTINUE]` prompt at both 80x24 and 100x30. Plain mode is untouched and 5/5 ctest passes. Two things came out of driving this that you should act on: after the Enterprise is **destroyed**, the panels keep showing a healthy green ship at full shields next to "your starship is now an expanding cloud of subatomic particles" — which is the same lying-panel problem as issue #7, just at the other end of the game; and the `condit = IHRED` that `moving.c` sets deliberately before a tractor beam can now be silently reverted by the `newcnd()` inside a panel refresh at a paging prompt, which is the gameplay-visible consequence you asked about. Approve with should-fix items.
+
+## Answers to your questions
+
+**Blanking during setup: right, and the empty bordered boxes are the right presentation.** Keep them. The boxes are a promise — they tell the player where the scan and status *will* be, and the borders keep the message window anchored at the same row so the setup Q&amp;A doesn't jump when the game starts. Filling them with a title card or a hint would be worse: the player is being asked four questions in a row and anything in the panels competes for attention with the question. Dropping the boxes entirely and letting the message window use the full screen would be actively bad, because the layout would then reflow the instant the game began. One small thing you already do right and should keep: the title reverts to plain ` Quadrant ` (no coordinates) when blank, so there's no orphaned "Quadrant 4 - 4" over an empty grid. Verified.
+
+**Panels after a game ENDS: your instinct is right for survivable endings, wrong for death.** I self-destructed at 100x30 and got this, which is the finding I'd most want fixed:
+
+```
+x  1  . . . E . . . . . .   xx Stardate      2600.0
+...                             Condition     GREEN
+x  8  . . . . .   . . . .   xx Shields       DOWN, 100% 2500.0 units
+                                Life Support  ACTIVE
+      ...
+ ************ Entropy of Enterprise maximized *********
+ Your starship is now an expanding cloud of subatomic particles
+ The Federation will be destroyed.
+```
+
+The `E` is still on the grid, Condition is GREEN, energy is 5000.00, shields are at 100%. At the single most dramatic beat in the game, the status panel is contradicting the narration. "Leave the final state visible while the score prints" is a kind idea and it works fine for `quit`, for running out of time, and for winning (Klingons Left 0 is a nice thing to leave on screen) — but when `alive == 0` the panel is describing a ship that no longer exists. There's a clean predicate for it: `finish.c` sets `alive = 0` in both death paths (lines 179 and 310). Setting `tui_ingame = FALSE` when the ship is lost — or, if you'd rather have one rule, blanking at the start of `finish()` for every ending and letting the epilogue own the screen the way plain mode does — resolves it. Severity: should-fix, because it is the same class of bug as issue #7 and it lands at the most memorable moment of a playthrough.
+
+**Refreshing at paging prompts: no flicker, and no spoiler risk.** No flicker by construction — `tui_refresh_panels()` builds into the virtual windows and ends in one `doupdate()`, so ncurses emits only changed cells; holding space through several pages showed no flash in my captures. On the "changing under a prompt is confusing" worry, I checked the one case that would actually matter: `pause(1)`'s `[IMPORTANT ANNOUNCEMENT ARRIVING]`. I read all nine `pause(1)` call sites; for both the supernova (`events.c:91`) and the tractor beam (`events.c:137`) the pause fires *before* `snova()` and before the quadrant change, so the panels at the prompt show the pre-event state. The player is not shown where they're about to be yanked to before reading that they've been yanked. Good as-is.
+
+**`newcnd()` at paging prompts: yes, there is one consequence you've missed.** `moving.c:38` sets `condit = IHRED` on purpose when a tractor beam will interrupt the move:
+
+```c
+	if (d.date+Time &gt;= future[FTBEAM]) {
+		trbeam = 1;
+		condit = IHRED;
+```
+
+`newcnd()` recomputes condition purely from energy and quadrant contents, so it doesn't know about `trbeam` and will hand that RED straight back to GREEN. Any paging prompt between that assignment and the beam firing — and `pause(1)` for the announcement is exactly such a prompt, now that `tui_getch()` refreshes — reverts it. The player sees Condition GREEN at the very moment the game has decided they're in trouble. It's cosmetic (nothing downstream reads that RED; `newcnd()` is called again after the move anyway), and the window already existed via `tui_readline()`, but this branch widens it and it's the direct answer to your question. The deeper issue is that a *display* function is mutating global game state at arbitrary moments in a turn. I'd compute the condition into a local for display and leave `condit` alone, or drop the `newcnd()` call and accept that the panel shows what the game last computed. The comment "srscan does the same before showing Condition" is true but not equivalent: `srscan` runs when the player asks for it, between turns; the panel refresh runs mid-turn.
+
+## Other findings
+
+**Nit 1 — thawing a game shows blank panels while its report prints.** `choose()` calls `report(1)` after `thaw()` has fully loaded the game, but `setup()` hasn't returned yet so `tui_ingame` is still FALSE. If that report is long enough to page (likely at 80x24 with an attack report or casualties), the player gets a `[HIT SPACE BAR]` prompt with empty panels beside a report about a game that is completely loaded. I confirmed the flow works correctly at both sizes with a short report; the window is narrow but real. Setting the flag inside `setup()` on the frozen-game return (`if (choose()) { tui_ingame = TRUE; return; }`) would close it, at the cost of the flag being set in two places.
+
+**Nit 2 — the flag is set in `main()`, which leaves `setup()` able to change state without the panels knowing.** Bracketing `setup()` from the caller is clear and I like that it reads as one obvious pair, but the truth it encodes ("the game state is now valid") belongs to `setup()`. If you take nit 1 you'll be setting it in two places anyway, at which point owning it inside `setup()` (FALSE at the top next to `alldone = gamewon = 0`, TRUE at both exits) is tidier and can't be forgotten by a future caller.
+
+## Separate pre-existing bug found while driving this (not yours, but you're in the neighbourhood)
+
+**`help &lt;command&gt;` displays nothing but blank lines in full-screen mode.** I ran `help move` in the TUI at both 80x24 and 100x30 and got `Spock- "Captain, I've found the following information:"` followed by page after page of empty lines and `[HIT SPACE BAR TO CONTINUE]`. I reproduced it identically on `main`, so it predates this branch — but it means the game's entire built-in manual is invisible to any `-t` player, which for a game of this complexity is severe.
+
+The cause: `sst.doc` has CRLF line endings (`file` reports "ASCII text, with CRLF line terminators"), and `helpme()` strips only the `\n`, leaving a trailing `\r` on every line. In plain mode the terminal prints the text, then CR, then LF — fine. In ncurses, `waddstr` writes the text, the `\r` returns the cursor to column 0, and then `skip(1)`'s `\n` **clears the line from the cursor to end** before wrapping. I confirmed the mechanism with a minimal curses probe:
+
+```c
+waddstr(w, "LINE-A plain");    waddstr(w, "\n");
+waddstr(w, "LINE-B with CR\r"); waddstr(w, "\n");
+waddstr(w, "LINE-C plain");    waddstr(w, "\n");
+```
+renders as `LINE-A plain`, a blank line, `LINE-C plain`.
+
+Worth its own issue. The fix is one line in `helpme()` (strip a trailing `\r` as well as `\n`), or more defensively in `tui_puts()`. It also means any future output line ending in `\r` will silently vanish in TUI mode, which is worth a note in AGENTS.md alongside the existing "all output through `prout`" rule.
+
+## What I exercised
+
+- Read the full diff plus `tui_refresh_panels()`, `main()`'s game loop, `setup()`/`choose()` (including the frozen-game early return), `newcnd()`, and all nine `pause(1)` call sites in `events.c`/`ai.c` to check for spoiler ordering.
+- Built Debug, 5/5 ctest.
+- tmux 100x30: full game → `quit` → panels correctly persist through the `*****` band and the play-again prompt → answered `y` → **panels blank through all four setup questions** → second game starts with genuinely new data (Quadrant 1-6/Stardate 2100 → Quadrant 5-8/Stardate 4400).
+- tmux 80x24: startup paging prompt with blank panels (correct, pre-setup); in-game paging prompt with panels drawn and current.
+- tmux 100x30: `destruct` + password → found the panels showing `E`, GREEN, 5000.00 energy, 100% shields alongside the destruction epilogue.
+- Froze a game and thawed it in the TUI at both 100x30 and 80x24 to check the `choose()`-returns-early path (panels blank at the filename prompt, populated at the first `COMMAND&gt;`).
+- Built `main` in a scratchpad and reproduced the `help move` blanking there to establish it as pre-existing; wrote and ran a minimal ncurses probe to confirm the CR+LF line-clearing mechanism.
+- Grepped every direct assignment to `condit` to find the `moving.c` interaction.
+- No files modified — `git status` shows only your three.</result>
+<usage><subagent_tokens>186478</subagent_tokens><tool_uses>32</tool_uses><duration_ms>474509</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a0e0b43ae60b8a662</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a0e0b43ae60b8a662.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify TUI change builds/tests" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: PASS
+
+### Builds, warnings, tests
+
+Fresh Debug and Release both clean: **Debug 0 warnings, Release 14** (unchanged from main). With `-Wall -Wextra` in Release, **main 30 vs branch 30**, and diffing the sets shows **zero new and zero removed** — the refactor is warning-neutral. `ctest --output-on-failure --no-tests=error`: **5/5 in both build types**, three consecutive runs each, no flakes.
+
+### `condition_now()` equivalence — proved, not assumed
+
+I compiled main's `newcnd()` body verbatim alongside the new function and brute-forced the input space: 9 energies (including 999.0 / 999.999 / 1000.0 / 1000.001 and a negative), 9 galaxy values (0/1/**99/100/101**/999/1000/1099/1100) and 6 newstuf values (0/1/**9/10/11**/99) — **486 combinations, 0 mismatches**.
+
+Your reordering is correct. The original assigned GREEN, then YELLOW, then RED, so the **last** assignment won: RED beats YELLOW. Returning RED **first** produces exactly that precedence, and the boundary cases confirm it (`energy=999 &amp;&amp; galaxy=100` → RED under both). The harness also asserts the new function writes neither `condit` nor any of its inputs, and `newcnd()` is now literally `condit = condition_now();`, so the stored value is unchanged.
+
+### Nothing depended on the `newcnd()` side effect
+
+`tui_refresh_panels()` has four callers (`tui_init`, `tui_readline`, `tui_getch`, `finish`), all TUI-only, so no game logic could ever have relied on it — plain mode never ran it. The game keeps `condit` fresh itself in twelve places (`ai.c`, `battle.c`, `events.c`, `moving.c`, `planets.c`, `reports.c`, `setup.c`), and the only hand-set values are `moving.c:38` (`IHRED` before a tractor beam — the case you were protecting) and `moving.c:231` (`IHDOCKED`). Removing the hidden mutation moves TUI-mode state *closer* to plain mode, never further.
+
+### Plain and `-f` byte-identity — checked hard, as asked
+
+With an `LD_PRELOAD` shim pinning `time()`, comparing branch against a main worktree build:
+
+- regular journey, plain and `-f`: **identical** (3740 B)
+- tournament + movement + shields journey, plain and `-f`: **identical** (3836 B)
+- **20 seeded runs** of a combat/dock/shields journey (15 plain, 5 `-f`): **0 differing**
+- **28 further seeds selected specifically because they reach non-GREEN conditions** (27 hit RED, seed 13 hits RED *and* YELLOW): **0 differing**
+
+So the condition path was exercised in its RED and YELLOW branches, not just GREEN, and plain-mode output is bit-for-bit unchanged.
+
+### TUI behaviour under tmux (100x30)
+
+- **Replay**: after `quit` → `y`, panels go blank with the title reverted to plain `" Quadrant "` through every setup question, then repopulate with the *new* game's data (Quadrant 5-5, stardate 2600.0, versus the previous 3200.0). Issue #7's second symptom is gone.
+- **Destruction epilogue**: panels blank beside "Your starship is now an expanding cloud of subatomic particles" and the score. I ran the identical sequence against **main's** binary for contrast: it shows a healthy `Quadrant 5 - 2`, `Condition GREEN`, full position — precisely the ui-review finding, and precisely what the branch fixes.
+- **Frozen thaw**: `frozen` → filename prompt shows blank panels, and immediately after the thaw the panels are **populated** (Quadrant 2-2, stardate 4400.0) beside `report(1)`'s output; the session exits 0.
+- **`emexit` under the TUI**: exits 1 (by design) with the terminal restored — the `atexit(tui_shutdown)` path still works.
+
+### The paging-prompt fix, isolated
+
+The destruct scenario can't isolate `tui_getch()` (finish's repaint already blanked the panels), so I built a variant with **only** the `tui_getch` refresh removed and drove both binaries with the *same seed* through a `rest 3` that triggers an event announcement:
+
+| | panel stardate at `[ANNOUNCEMENT ARRIVING...]` |
+|---|---|
+| with the fix | **2300.6** (current) |
+| without it | **2300.0** (stale — the pre-fix symptom) |
+
+That is change #1 doing exactly what it claims, demonstrated rather than inferred.
+
+### `tui_ingame` coverage
+
+Every path checked: `setup()` sets FALSE as its third statement and TRUE at the end (before the neutral-zone `attack(0)`, so a starting attack that prompts has populated panels); the frozen path sets TRUE inside `choose()` *before* `report(1)` and then `setup()` returns early via `if (choose()) return;`, so a thawed game is never left FALSE; `finish()` sets FALSE plus an immediate repaint for every ending. The replay loop re-enters `setup()`, so the flag is FALSE again for the next game's questions.
+
+One behaviour worth stating explicitly since it differs from "every ending": a plain **`quit` does not route through `finish()`**, so the panels stay populated at the "play again?" prompt. That is defensible — the ship still exists, you just stopped playing — and the replay case is still covered because `setup()` blanks them. Flagging it only so the "finish.c handles every ending" claim is read accurately.
+
+### Test quality — the new assertions bite
+
+Mutation-tested three ways against copies of the tree: deleting the YELLOW branch → `FAIL low energy is yellow`; swapping the precedence so RED is checked last → `FAIL enemies beat low energy (want R, got Y)` — i.e. the test pins exactly the precedence question you asked about; making `condition_now()` write `condit` → `FAIL condit is left alone`. Zeroing `d.galaxy`/`d.newstuf` in `basestate()` is what makes these deterministic, and driving the "condition red" case through enemies rather than assigning `condit` is what gives it teeth.
+
+### Line endings and save files
+
+`finish.c` 503/503, `setup.c` 733/733, `sst.h` 499/499 — **100% CRLF**, matching main, and every added line ends `^M$`. `tui.c`, `tui.h`, `tuifmt.c`, `tests/test_tuifmt.c` remain pure LF as before. Your python edits kept the CRs.
+
+No test can leave a save behind: a full `ctest` run in both build types leaves **0 `.trk` files** in the repo or the build trees, and no test script mentions `freeze` or `emexit`. The only saves produced during my work (`save1.trk`, `emsave.trk`) were created deliberately in my own scratch directory and removed.
+
+### On the judgment call
+
+Keeping the epilogue repaint in `finish()` rather than relying on the flag alone is right: the flag only changes what the *next* repaint draws, and the epilogue prints before any prompt — I confirmed the stale panels persist on main through the entire death sequence. The explicit `if (tui_active) tui_refresh_panels();` is the minimum that makes the screen honest at the moment it matters.
+
+Cleanup: both build trees, the main worktree, the equivalence harness, three mutation copies, the isolation variant, the `LD_PRELOAD` shims, save fixtures, and all six tmux sessions I created were removed. Repository worktree unchanged: the seven modified files, no untracked additions.</result>
+<usage><subagent_tokens>383007</subagent_tokens><tool_uses>34</tool_uses><duration_ms>1491678</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab2620e37969a3049</task-id>
+<tool-use-id>toolu_01SS41aRcjY12T8KxaPF3nt3</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/ab2620e37969a3049.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review of TUI branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review — fix/tui-panel-staleness (issue #7)
+
+**State reviewed:** branch `fix/tui-panel-staleness` at commit `17d5d91` plus all seven modified files.
+
+### Verified independently
+
+**The `condition_now()` refactor is provably equivalent.** I brute-forced the old inline `newcnd()` body against the new function over 891 combinations spanning every boundary that matters (galaxy 98/99/100/101/999/1000, newstuf 8/9/10/11, energy 999.0/999.9999/1000.0/1000.0001, plus negatives): **zero mismatches**. The reorder preserves RED-beats-YELLOW, and I confirmed the new tests catch an inverted precedence — mutating `condition_now()` to test YELLOW first makes `test_tuifmt` fail.
+
+**The flag lifecycle covers every ending.** There are 20 `finish()` call sites across planets.c, moving.c, setup.c, battle.c and events.c; one assignment at the top of `finish()` covers all of them. The only path that sets `alldone` without `finish()` is `quit` (sst.c:386) — deliberate, see below. The thaw path genuinely needs its own `tui_ingame = TRUE` because `setup()` returns early at setup.c:226 (`if (choose()) return;`), which I confirmed.
+
+**Live behavior on a real pty (tmux, 100x30):** panels blank through the first game's setup questions; populated in play; still populated at the play-again prompt after a plain `quit`; **blank again through the replay's setup questions** — issue #7's second symptom fixed. For the `finish()` path I built a harness that routes the `score` command to `finish(FDEPLETE)`: the panels blank **immediately**, including the title reverting from `" Quadrant 4 - 6 "` to `" Quadrant "`, with `It is stardate ...` printing beside them. That is ui-review's finding closed, and it confirms the explicit repaint is load-bearing — the flag alone would leave the last painted content up.
+
+Also: ctest 5/5, zero build warnings, `-O2 -Wall -Wextra` at 29 warnings versus 29 on main (no new); CRLF intact file-for-file (sst.h 499/499, setup.c 733/733, finish.c 503/503) with the four LF-era files unchanged in kind; `tui_refresh_panels()` still does `wnoutrefresh(wmsg)` + `doupdate()`, so the paging prompt still renders after the `tui_getch()` change — I saw one displayed in the fixed build.
+
+### Findings
+
+**Should-fix (low)**
+
+1. `tuifmt.c:61` — the DOCKED branch of the new ternary has no test. I mutated `switch (condit == IHDOCKED ? IHDOCKED : condition_now())` to `switch (condition_now())` and **the suite still passes**, even though the panel would then show GREEN/RED where `srscan()` shows DOCKED — a break in exactly the parity contract AGENTS.md names tuifmt.c's tests to protect. The behavior is correct today (I saw `Condition     DOCKED` in a live session), so this is regression insurance, not a bug. Three lines, ideally in `test_condition_now()`:
+   ```c
+   condit = IHDOCKED;
+   fmt_status_line(2, buf);
+   check("condition docked", buf, "Condition     DOCKED");
+   ```
+
+**Nit**
+
+2. `tuifmt.c:17` — the `&gt; 99` / `&gt; 9` boundaries are uncovered (mutating to `&gt;= 99` passes the suite). Low value: those constants are copied verbatim from the original `newcnd()` and my 891-combination sweep already pins them against main's behavior. Mentioning only so you can decide once.
+
+### Your questions
+
+**`quit` should not blank — agree.** `finish()` means the game is over and possibly the ship is gone; `quit` means the player stopped while the ship still exists, and it prints no epilogue. Leaving the panels up is a last look at the game you just walked away from, which reads as intentional rather than stale. Blanking there would also be the odd one out: nothing else about `quit` announces an ending. The replay case is covered by `setup()`, which I verified live.
+
+**Owning the flag in setup()/finish() is the right placement.** Those are the two functions that respectively create and retire the state the panels describe, and `finish()` is the single funnel for all 20 endings. Pushing it into `tui.c` would mean the display inferring lifecycle again — which is precisely the `d.date &gt; 0.0` mistake this replaces.
+
+**`condition_now()` in tuifmt.c: keep it.** It is game logic in a formatting file, but the alternative — putting it in setup.c — forces `test_tuifmt` to link setup.c and transitively most of the game, which is the coupling tuifmt.c exists to avoid. The property that actually matters, one definition of the rule, is preserved by `newcnd()` delegating, and the comment states the reason. I'd note in passing that `srscan()` still calls `newcnd()` and therefore still clobbers a hand-set `condit` mid-turn (reports.c:341); that is pre-existing and out of scope, but it means the display-writes-state problem is only half gone from the codebase.
+
+**The explicit repaint in finish() is necessary,** as demonstrated above — not redundant with the flag.
+
+### Not reviewed
+
+Plain-mode byte-identity versus main across seeded runs — I did not rebuild your LD_PRELOAD shim. I covered it instead by proving `condition_now()` equivalent over the full boundary space (the only non-TUI-gated change) and by the journey/eof suites passing.
+
+### Verdict
+
+**Approve** — for exactly this state: commit `17d5d91` plus the modified `finish.c`, `setup.c`, `sst.h`, `tests/test_tuifmt.c`, `tui.c`, `tui.h`, `tuifmt.c` as verified above. The root-cause fix is right, the flag's lifecycle is complete, the refactor is provably behavior-preserving, and the display no longer writes to game state. Finding 1 is worth adding before you commit — it is test-only, so if you add it, a re-run plus a glance at the new assertion is all that is needed rather than a fresh review of the C.</result>
+<usage><subagent_tokens>212974</subagent_tokens><tool_uses>24</tool_uses><duration_ms>505974</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bwfnv8jar</task-id>
+<summary>Monitor event: "CI check results on PR 21"</summary>
+<event>build-and-test (macos-latest, Debug): pass
+build-and-test (macos-latest, Release): pass
+build-and-test (ubuntu-latest, Debug): pass
+build-and-test (ubuntu-latest, Release): pass
+ALL CHECKS COMPLETE</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bwfnv8jar</task-id>
+<tool-use-id>toolu_01VggcyroVD6sHkq6DiumWTC</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/bwfnv8jar.output</output-file>
+<status>completed</status>
+<summary>Monitor "CI check results on PR 21" stream ended</summary>
+</task-notification>
+
+---
+
+Ok lets squash merge
+
+---
+
+Ok lets do that
+
+---
+
+<task-notification>
+<task-id>a72e352f789195831</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a72e352f789195831.output</output-file>
+<status>completed</status>
+<summary>Agent "UI review of TUI mode" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Review: `fix/tui-help-crlf` (issue #20)
+
+## Verdict
+
+Approve. The fix works and the result is a genuine restoration of a feature that was completely dead in full-screen mode — I paged through the entire `MOVE` topic at 100x30 and the `DOCK` and `PHASERS` topics at the minimum 72x24, and the text now renders with indentation intact, blank lines intact, page-number lines correctly suppressed, and clean paging back to `COMMAND&gt;`. The `ABBREV` table, which is the most alignment-sensitive thing in the manual, comes out with its columns square. Your reasoning about `tui_puts()` is correct and I'll confirm it below with the grep that settles it. The unterminated-topic guard is not scope creep. And on the byte-identity question: I think you're right, but for a slightly different reason than the one you gave, and I'd like you to record the exception rather than let it pass silently. One thing I found while testing is worth more attention than anything in this diff: **the same CRLF bug exists on the input side**, and it makes the game unusable with a Windows-authored script.
+
+## The byte-identity question
+
+You're right to ship it. Three arguments, in the order I find them persuasive:
+
+**1. The rule cannot mean what a literal reading says, and the project has already established that.** AGENTS.md's byte-identity clause sits in the `sst -t` section, immediately after "raw `printf`/`putchar`/`fgets` silently bypasses the full-screen mode." Its subject is *the TUI must not leak into plain mode*. Read literally as "plain-mode bytes are frozen", it would have forbidden PR #19, which changed plain mode far more materially than this does — the game now prints `[Transmission ends.]` and exits where it previously looped for ever. That was unambiguously correct. So the operative question isn't "did bytes change" but "did anything a plain-mode player relies on change", and here nothing did.
+
+**2. The removed bytes were never intentional output.** They aren't the game's text; they're an artifact of `sst.doc`'s line endings leaking through a `strlen(buf)-1` that assumed LF. Deleting them makes plain mode print what the author of `sst.doc` wrote, which is a stricter reading of fidelity than preserving them.
+
+**3. It is not actually invisible in plain mode — it's an improvement there too.** `text\r\n` is a no-op on a raw terminal, but `sst | less` on `main` shows `^M` at the end of every help line (`less` only suppresses CR with `-r`/`-R`), as does any editor opening a captured transcript. So the branch improves the plain-mode experience for anyone paging or logging the manual. That's the argument I'd put in the commit body, because it converts "harmless change" into "fix".
+
+I also agree with rejecting the `tui_active`-conditional variant, and I'd reject it more strongly than you did: it would mean the two modes render the manual from *different string data*, which is precisely the divergence the AGENTS.md rule exists to prevent. Conditioning on the display mode to preserve a byte-identity rule whose purpose is to prevent display-mode-conditional behaviour would be self-defeating.
+
+**Should-fix — record the exception instead of leaving it implicit.** This is the one place I'd push back on process rather than substance. The value of a byte-identity rule is that it's mechanical; the moment "this diff is fine because it's invisible" becomes a judgement call made in a PR description, the rule stops being enforceable by anyone who wasn't in the conversation. Two cheap things close it: (a) restate the AGENTS.md clause as what it means — no *unintended* plain-mode change, with intended ones called out in the commit — and (b) pin the new state in `tests/journey.sh`, which already asserts no ESC bytes. A companion assertion that the only CR bytes in a journey are the pager's would have caught this bug in the first place and will catch the next line-ending leak. Your own measurement (main 78 CRs, branch 6, all six from `pause()`) is exactly the assertion.
+
+## Your `tui_puts()` reasoning: confirmed
+
+Correct, and here's the decisive check. Grepping every `\r` that reaches the display:
+
+```
+sst.c:714:		proutn("\r                           \r");
+```
+
+That is the *only* one, and it is load-bearing: `pause()` writes CR, 27 spaces, CR to wipe `[HIT SPACE BAR TO CONTINUE]` in place. Strip CR in `tui_puts()` and those 27 spaces land after the prompt instead of over it, leaving the prompt permanently on screen. I verified the erase currently works in the TUI — paging through `MOVE`, each new page starts clean with no leftover prompt. So a blanket strip there would break it, exactly as you say.
+
+For the record, the durable version of my original suggestion is not "strip in `tui_puts()`" but "stop `pause()` needing a CR at all" — give it a `tui_clearline()` (curses `wmove` + `wclrtoeol`) for TUI mode, after which `tui_puts()` would be free to normalise CRs and the general hazard would be closed. That's a refactor, not this PR. Until then the hazard stands: **any future output line ending in `\r` silently vanishes in TUI mode, with nothing guarding it.** One line in AGENTS.md next to the existing `prout`/`proutn` rule would be enough. I raised this in the #7 review and it's still open.
+
+## Answers to your other questions
+
+**Is the layout right?** Yes, on everything I could find to stress. Indentation preserved (`  Mnemonic:  MOVE`, the `Full command:` continuation lines hanging correctly under each other), blank lines preserved as paragraph breaks, the `Destination Sector / Manual Movement command` two-column example table aligned, and the `ABBREV` table's three columns square across a full page. Page breaks: I checked that every form-feed line *inside* a help topic (17 of them, at doc lines 360–1242) contains nothing but a page number, so `linebuf[0]!=12` discards no real content — the form feeds that do carry text (TABLE OF CONTENTS, INTRODUCTION) are outside every `Mnemonic:` section. Paging through a long topic works: five pages of `MOVE`, each full, no duplicated or dropped lines at the boundaries, clean return to the prompt.
+
+**Anything else reading a CRLF source?** For *output*, no — `sst.doc` is opened in exactly one place (`sst.c:156`) and `helpme()` is the only thing that prints from it. `thaw()` reads binary `.trk`. But see the input-side finding below, which is the same bug wearing a different hat.
+
+**Unterminated topic: not scope creep, and the message question.** Keep it. It's a two-line guard in the loop you were already rewriting, and it fixes an unbounded-output bug in the same family the project just fixed for input exhaustion in #6 — leaving a known infinite loop in a function under edit would be the wrong call. I reproduced it: with `sst.doc` truncated mid-`MOVE`, `main` emits 5 MB in 10 seconds and is still going, while the branch stops at the last available line and returns to `COMMAND&gt;`. On whether it should say something: **minor, yes.** The function already speaks up for both of its other failure modes — `Spock- "Captain, that information is missing from the computer..."` when the file is absent, and `Spock- "Captain, there is no information on that command."` when the topic isn't found. Ending mid-sentence and dropping the player back at a bare prompt is the odd one out, and from the player's seat it reads as if Spock trailed off. One line in the same voice would complete the set — something like `Spock- "Captain, the rest of that entry is missing from the computer."` Low probability of occurrence (a truncated or mangled `sst.doc`), but the cost is one `prout` and the inconsistency is what makes it worth doing.
+
+## Findings
+
+**Should-fix 1 (adjacent, pre-existing) — a CRLF *input* script makes the game unplayable.** This is the mirror image of the bug you just fixed, and I'd argue it belongs in the same PR or an immediate follow-up because the fix is the identical idiom. `scan()` strips only `\n`:
+
+```
+Would you like a regular, tournament, or frozen game?What is "regular^M"?
+Would you like a regular, tournament, or frozen game?What is "short^M"?
+Would you like a regular, tournament, or frozen game?What is "novice^M"?
+```
+
+Every single command is rejected; the session ends at `[Transmission ends.]` having done nothing. Given this repo documents a Windows build (`cl /DWINDOWS *.c`) and any script authored in Notepad, or checked out on Windows with `core.autocrlf`, is CRLF, this is a plausible real trap — and the symptom (`What is "regular^M"?`) is baffling because the `^M` may not even be visible in the player's terminal. Applying the same `while (end &gt; line &amp;&amp; (end[-1]=='\n' || end[-1]=='\r')) *--end = 0;` loop in `scan()` fixes it and changes nothing for LF input, so it costs no byte-identity argument at all.
+
+**Nit 2 — a few help lines exceed the message window at the minimum terminal size.** Twenty-five doc lines run to 71–74 columns; at 72x24 the message window is 70 wide, so e.g. the `PHASERS MANUAL` syntax line wraps as `...&lt;AMOUNT` / `N&gt;`. Cosmetic, pre-existing, invisible at 80 columns, and arguably not worth touching — but this branch is what makes those lines visible for the first time, so it's newly reachable. If you ever want it, widening the message window to the full `COLS` (it's currently inset by one column on each side for no functional reason) buys two columns and removes most of it.
+
+**Nit 3 — the pager eating typed keystrokes bites hardest in `help`.** I hit this by accident: with a `[HIT SPACE BAR TO CONTINUE]` pending from a long help topic, typing `help bogus` had its first four characters swallowed one per pause, and the command loop received ` bogus` and answered `UNRECOGNIZED COMMAND`. Pre-existing (PR #2), unrelated to this diff, and I've flagged it before — but now that `help` actually produces multi-page output, `help` is where players will meet it most often. Worth linking to whatever issue tracks the pager.
+
+## What I exercised
+
+- Read the diff and the whole of `helpme()`, including the topic-search loop, the `i == 23` / `ABBREV` special case, and the `linebuf[0]!=12` page-break filter.
+- Built Debug (no warnings), 5/5 ctest.
+- tmux 100x30: full `help move` topic paged end to end (5 pages), `help commands` (the `ABBREV` table), `help` → unknown topic → `Valid commands:` list → re-prompt.
+- tmux 72x24 (minimum supported): `help dock` paged through, `help phasers` to check the over-wide syntax line.
+- Verified against `main` built in a scratchpad: seeded tournament journey **with** help — 8833 → 8686 bytes, 157 → 10 CRs, and `diff` of both with CRs stripped is empty; seeded journey **without** help — byte-identical, 3925 bytes.
+- Reproduced the unterminated-topic loop with an `sst.doc` truncated mid-`MOVE`: `main` 5 MB in 10 s and still running, branch 2401 bytes and a clean return to the prompt.
+- Audited every form-feed line inside the `Mnemonic:` sections to confirm none carries content; measured the longest help lines against the message-window width.
+- Grepped all `\r` reaching the display to confirm `pause()` is the only one.
+- Tested a CRLF-formatted input script, which produced the input-side finding.
+- No files modified — `git status` shows only your one.</result>
+<usage><subagent_tokens>212590</subagent_tokens><tool_uses>192</tool_uses><duration_ms>412497</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a0e0b43ae60b8a662</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a0e0b43ae60b8a662.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify TUI change builds/tests" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: PASS — with one false positive in the new assertion and a coverage gap you should know about
+
+### The plain-mode question you flagged — confirmed exactly as you described
+
+Reproduced your measurement independently with an `LD_PRELOAD` time shim:
+
+| | bytes | CR bytes | lines ending in CR |
+|---|---|---|---|
+| main, journey **with** help | 8311 | 143 | 133 |
+| branch, same seed | 8178 | 10 | 1 |
+
+**After stripping all CR bytes the two are byte-identical (8168 bytes).** So the only plain-mode difference anywhere is CR bytes — nothing else moved. My numbers differ from yours only because my journey calls `help` twice.
+
+The 10 CRs remaining in the branch are all `pause()`'s: dumping their contexts shows `TO CONTINUE]&lt;CR&gt;` and `&lt;CR&gt;` + spaces, i.e. five `\r&lt;spaces&gt;\r` wipes, exactly as intended.
+
+Seeded journeys **without** help: **7 seeds, 0 differing** — byte-identical to main. LF input through the changed `scan()`: **3 seeds, 0 differing**. So the input-side change is inert for ordinary scripts.
+
+### Builds, warnings, tests
+
+Debug **0 warnings**; Release **13** (down from 14). `-Wall -Wextra` Release: **main 30 → branch 29**, and the set diff shows nothing new and exactly one gone — the `sst.c` `fgets` `-Wunused-result`, precisely as you predicted. `ctest`: **5/5 in both build types**, three consecutive runs each, no flakes. `sst.c` is **872/872 CRLF**, matching the expectation; `journey.sh` and `AGENTS.md` stay LF as on main.
+
+### Truncated `sst.doc`
+
+Cut `sst.doc` before the MOVE topic's `******` terminator:
+
+| | output | elapsed |
+|---|---|---|
+| main | **33.5 MB** (hit my cap, still going) | 5.0 s (timeout) |
+| branch | 4306 bytes | 2.8 s, exits 0 |
+
+The branch prints `Spock- "Captain, the rest of that entry is missing from the computer."` and carries on to a clean farewell. The Spock voice matches the function's other two failure modes.
+
+### CRLF input script
+
+Full game from a CRLF-authored script: main gives **10 rejections** and never even executes `srscan` (no grid in the output); branch gives **0 rejections** and plays the whole game, grid and all, exiting 0.
+
+### TUI help
+
+Under tmux at 100x30 the manual now renders — `MOVE AUTOMATIC &lt;destination&gt;` and the following paragraphs are all visible. Same sequence on main's binary shows the bug: `Spock- "Captain, I've found the following information:"` followed by the pager prompt and **nothing else**.
+
+### Finding 1 — the new assertion false-positives on any journey that pages
+
+You asked me to confirm a paging journey still passes. **It does not.** I copied `journey.sh`, added `help`/`move` to its input (which pages), and ran it against the fixed binary:
+
+```
+FAIL: a line ends with a carriage return -- CRLF leaking from a file the game read
+```
+
+The assertion's comment says pause writes CRs "mid-line, never at the end of one", and that premise is wrong. `pause()` writes `[HIT SPACE BAR TO CONTINUE]\r&lt;27 spaces&gt;\r` and then returns into `skip()`, which writes the `'\n'` for the remaining count — so the wipe's trailing CR does end a physical line. That is the single CR-terminated line in the branch's help journey.
+
+The shipped tests are safe today only because the `journey` input never pages (I measured 0 pause prompts), so this is latent rather than breaking. A wipe-aware filter separates the two cleanly — verified on both corpora:
+
+```sh
+if sed 's/\r *\r$//' "$out" | grep -q "$(printf '\r')$"; then
+```
+
+main's help output: 132 CR-terminated lines still caught. Branch's paging output: **0** — no false positive.
+
+### Finding 2 — none of the three code fixes is covered by a test
+
+I reverted each fix in a copy of the tree and ran the full suite:
+
+| reverted fix | ctest result |
+|---|---|
+| help CR-strip (the actual issue #20 bug) | **5/5 pass** |
+| unterminated-topic guard | **5/5 pass** |
+
+The new CR assertion cannot catch the help bug because the journey never runs `help`. The `scan()` change is likewise uncovered, since every test feeds LF.
+
+The two findings resolve together. With **both** the wipe-aware filter and `help`/`move` added to the journey input, I get exactly the behaviour you want:
+
+- branch binary → `journey OK (6619 bytes)`
+- binary with the help fix reverted → `FAIL: a line ends with a carriage return`
+
+That is a two-line change that turns a prospective guard into real coverage of the bug being fixed. I'd suggest it before merge, but it is a test-quality gap rather than a defect in the fix.
+
+### AGENTS.md and `instructions`
+
+`tests/instructions.sh` passes (`AGENTS.md 6588 bytes`, `## Development workflow` present, `CLAUDE.md` untouched at 174 bytes). The reworded plain-mode clause and the new carriage-return rule read accurately against what I measured — including the note that `pause()` uses a CR deliberately, though per Finding 1 the "mid-line" qualifier is the part the assertion leans on and shouldn't.
+
+### Code review notes (minor, non-blocking)
+
+Both strip loops are correct and defensive — they use `end &gt; linebuf` bounds and handle any mix of trailing `\r`/`\n`, including the empty-buffer case that the old `strlen(...)-1` indexing would have read out of bounds. Declaring `char *end` mid-block is fine for C17. Not stripping in `tui_puts()` is the right call: I confirmed `pause()` at `sst.c:714` is the only deliberate CR writer, and a blanket strip there would silently break its in-place wipe.
+
+Cleanup: both build trees, the main worktree, two mutation copies, two modified `journey.sh` copies, the truncated-doc fixture, the time shim and both tmux sessions I created were removed; no `.trk` files anywhere in the repo. Worktree unchanged: ` M AGENTS.md`, ` M sst.c`, ` M tests/journey.sh`.</result>
+<usage><subagent_tokens>407126</subagent_tokens><tool_uses>19</tool_uses><duration_ms>683225</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a0e0b43ae60b8a662</task-id>
+<tool-use-id>toolu_01Tj4oqwYg3agYw3NhKewGCH</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a0e0b43ae60b8a662.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify TUI change builds/tests" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: PASS — both findings properly closed, and your route was the better one
+
+### Builds and tests
+
+Fresh Debug and Release: **Debug 0 warnings, Release 13** (unchanged). `ctest --output-on-failure --no-tests=error`: **6/6 in both build types**, `help` at 8.2–8.4 s. Full-suite flakiness: 2 more runs per build type, all green. `sh -n`, `dash -n`, `shellcheck -s sh` clean on `tests/help.sh`, and it runs correctly under `dash` and `busybox sh`.
+
+### Finding 1 — false positive gone, teeth intact
+
+The paging journey I built last round now passes: **8/8 runs, zero CR-assertion failures**. And the assertion still discriminates correctly — I built three stubs whose output otherwise satisfies every journey assertion:
+
+| stub | result |
+|---|---|
+| clean output | `journey OK` |
+| a line ending in a genuine stray CR | **`FAIL: a line ends with a carriage return`** |
+| `[HIT SPACE BAR TO CONTINUE]\r&lt;spaces&gt;\r` (pause's wipe) | `journey OK` |
+
+So the `sed 's/\r *\r$//'` filter removes exactly the pager's shape and nothing else, and the rewritten comment now states the mechanism accurately.
+
+### Finding 2 — you chose the right route, and I was wrong to suggest mine
+
+Your reasoning is sound and I can now show it concretely: `help move` in plain mode **pages three times**, and each pager `getch()` swallows a byte of the piped script. My experiment passed only because the three swallowed bytes happened to be ones that left the remaining stream still parseable — I measured it directly (3 pause prompts, srscan grid still present, 0 rejections, three empty `COMMAND&gt;` prompts where the eaten characters landed). That outcome is a function of where the page boundaries fall in that particular topic, so a longer topic, an `sst.doc` edit, or a change to the 23-line budget would flip it. Putting the help cases in their own script where **input exhaustion ends the game** removes the coupling entirely rather than relying on it. Good call.
+
+### The three mutations reproduce exactly
+
+Each fix reverted in its own scratch tree, full `ctest` run:
+
+| reverted fix | result |
+|---|---|
+| help CR-strip | 5/6 — `FAIL: help output still carries sst.doc's carriage returns` |
+| `scan()` CR-strip | 5/6 — `FAIL: CRLF script: no short-range scan` + `FAIL: ...rejected a command it should have understood` |
+| truncated-topic message | 5/6 — `FAIL: truncated manual: said nothing about the missing rest`, plus the status and byte-cap guards firing on the flood |
+
+All three fixes are now genuinely covered. That closes the gap I raised.
+
+### `tests/help.sh` meets the bar
+
+- **Portability**: POSIX throughout — `mktemp -d` with explicit template, `wc -c | tr -d ' '` (verified behind a BSD-style padding `wc` shim), `head -c`, `grep -q`, `command -v timeout`, `dirname`, `cp`, `printf`. `unset CDPATH; cd -- "$(dirname -- "$0")/.."` is the correct idiom; I confirmed it works with `CDPATH=/usr` exported, which is precisely the trap it avoids. The `--` guards and the absolute-path normalisation of `$SST` are right.
+- **Traps**: all five (EXIT INT TERM HUP PIPE). Cleanup verified on every path — success, `exit 5` stub, flooding stub, 20 s-per-case hang, SIGPIPE via `| head -1`, and a SIGTERM to the process group mid-run: **0 leftovers in every case**, and no `/tmp/sst-help.*` anywhere afterwards.
+- **Bounded**: `MAXBYTES=262144` cap, `timeout 20` per case → worst case 60 s against a `TIMEOUT 120` budget, comfortably inside it (unlike `eof`, whose worst case exceeds its own). Failure dump capped at 2048 bytes.
+- **cwd-independent**: passes from an empty directory, from `/tmp`, from `/`, from the repo root via a relative `./tests/help.sh`, and from my scratch dir. Also works with the binary given as a relative path **and** with spaces in both the binary name and the working directory.
+- **Creates nothing in the repo**: `git status` unchanged after every run, `sst.doc` untouched (the truncated fixture is *written* with `printf`, not derived by editing the real file), no `.trk` anywhere. The real `sst.doc` is copied into a temp dir, so the game reading it from cwd can't touch the source tree.
+- **Fails helpfully when misused**: with no `sst.doc` next to the script it reports `FAIL: cannot find sst.doc next to &lt;dir&gt;` rather than producing confusing assertion failures; with no argument and no `./sst` it exits 1 cleanly.
+
+### Not flaky
+
+**24 runs** — 12 via `ctest` (Debug) and 12 direct against the Release binary — **all passed, zero leftovers**. The "each case ends by running out of input" design is what makes it deterministic; the pager has nothing left to steal.
+
+### Plain-mode comparison — no regression
+
+Re-ran last round's measurements against a fresh main worktree build:
+
+- 7 seeded journeys **without** help: **0 differing**, byte-identical.
+- Journey **with** help: main 8311 B / 143 CRs / 133 CR-terminated lines vs branch 8178 B / 10 CRs / 1 CR-terminated line, and **byte-identical once CRs are stripped** (8168 B). The one remaining CR-terminated line is pause's wipe, which is why the filter exists.
+
+Numbers are identical to last round, so nothing shifted.
+
+Cleanup: both build trees, the main worktree, three mutation trees, the stub binaries, the modified journey copy, the time shim, the spaces-in-path and missing-doc fixtures, and the isolated `TMPDIR` were all removed. No stray temp dirs, no `.trk` files, repo worktree unchanged: ` M AGENTS.md`, ` M CMakeLists.txt`, ` M sst.c`, ` M tests/journey.sh`, `?? tests/help.sh`.</result>
+<usage><subagent_tokens>430109</subagent_tokens><tool_uses>17</tool_uses><duration_ms>1013502</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab2620e37969a3049</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/ab2620e37969a3049.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review of TUI branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review — fix/tui-help-crlf (issue #20)
+
+**State reviewed:** branch `fix/tui-help-crlf` at commit `52a9198` plus modified `AGENTS.md`, `CMakeLists.txt`, `sst.c`, `tests/journey.sh` and new `tests/help.sh`.
+
+### Verified independently
+
+**The deliberate plain-mode change is exactly what you describe.** I built a fixed-seed `LD_PRELOAD` time shim and compared main against the branch on the same game: help output goes from **143 CRs to 10**, and the two are **identical after stripping all CRs** (`True`). CR-terminated lines drop from 133 to 1 — the survivor being `pause()`'s own wipe. A journey without `help` is **byte-identical** to main (`cmp` clean). So the change removes stray CR bytes and nothing else.
+
+**All three fixes are now covered.** I mutation-tested each independently: reverting the helpme strip, reverting the unterminated-topic guard, and reverting the scan strip each make the `help` test **fail**. The gap from your first version is genuinely closed. I also confirmed main floods **27 MB in 5 s** on an unterminated topic.
+
+**help.sh** is shellcheck-clean, passes under dash and busybox ash, is cwd-independent (ran it from `/`), leaves zero temp files, and pollutes nothing in the repo. Full suite 6/6, zero build warnings.
+
+### Findings
+
+**Should-fix (this will go red on macOS CI)**
+
+1. `tests/help.sh:114` and `tests/journey.sh:148` — `sed 's/\r *\r$//'` depends on `\r` being interpreted as a carriage return in the regex, which is a GNU/busybox extension. BSD sed (macOS) treats `\r` as a literal `r`. I simulated that semantics: the wipe survives intact (`X \r &lt;spaces&gt; \r`), so the following `grep -q "$CR$"` matches and the assertion **false-fails**. And I measured that the real help capture contains exactly one such line — `[HIT SPACE BAR TO CONTINUE]\r                           \r` — so the `help` test is expected to fail on both macOS legs of your matrix. journey.sh carries the same construct but is dormant today (that journey never pages: 0 wipes measured), so there it is a latent trap rather than an immediate failure. Portable fix, using the idiom help.sh already has at line 121:
+
+   ```sh
+   CR=$(printf '\r')
+   if sed "s/$CR *$CR\$//" "$out" | grep -q "$CR\$"; then
+   ```
+   I verified this behaves identically under GNU and busybox sed and still detects a genuine `\r`-terminated line. I cannot execute macOS, but that is the point: the literal-CR form removes the question entirely at no cost.
+
+**Should-fix**
+
+2. `sst.c:628-638` vs `finish.c:7-11` — **`readinput()` is the right place, not `scan()`**, and here is the case that distinguishes them: `finish.c`'s `readline()` still strips only `'\n'`, so the CRLF-script fix never reaches `plaque()`'s two prompts. A CRLF script that wins the game gets a plaque file literally named `winner\r` and a carriage return embedded in the name written into the plaque. `readinput()` is the single funnel for player input (its whole purpose since #19), and stripping there makes both consumers correct in one place; the existing per-call-site strips can stay as harmless guards.
+
+**Nit**
+
+3. `AGENTS.md:34` — "must not change as a side effect of **TUI work**" scopes the rule more narrowly than intended: this very branch is arguably not TUI work yet changes plain mode. Suggest "as an unintended side effect of any change", which keeps the guard against silent drift without re-creating the too-literal rule.
+
+### On the questions you raised
+
+**The two strip loops are correct.** Both are bounds-guarded (`end &gt; buf`), strip any mix of trailing `\r`/`\n`, and are strictly safer than the `buf[strlen(buf)-1]` they replace.
+
+**The unterminated-topic guard is right**, including breaking rather than returning so `fclose(fp)` still runs, and the message matches the voice of the function's other two failure modes.
+
+**Not stripping in `tui_puts()` is the correct call**, and I confirmed the premise: after your fix the only CRs reaching the display are `pause()`'s wipes (10 bytes across a full help session), and all 133 CR-terminated lines on main came from sst.doc. A blanket strip would silently break the prompt wipe.
+
+**The test design is good.** Own directory per case with the sst.doc that case needs, absolute `$SST` resolved before any `cd`, `srcdir` derived from `$0`, EOF endings so the pager cannot steal a byte from a following command, and per-case dumps on failure.
+
+**The AGENTS.md reword: I agree, and I do not think you are wrong to make it.** The literal old rule was already being violated by #19, which was correct to violate it — a rule nobody can follow is worse than no rule. The reword preserves the real intent (no silent plain-mode drift), and you replaced the vagueness with something genuinely stronger: the carriage-return rule is concrete and now backed by two automated assertions. The `sst | less` argument is decisive on the merits — 143 stray `^M` bytes in the manual were a defect in plain mode too, not an invisible implementation detail. Editing a rule you are departing from is fine when the departure is narrower than the rule, disclosed, and leaves the codebase with more enforcement than before; all three hold here.
+
+### Not reviewed
+
+macOS behavior of BSD sed and of the game itself — no macOS host. Finding 1 is precisely the item that hinges on it, which is why I would remove the dependency rather than test it.
+
+### Verdict
+
+**Request changes** — for finding 1, which I expect to turn this PR's own CI red on both macOS legs, and which is a one-line change to a construct you already use correctly elsewhere in the same file. Finding 2 is worth doing in the same pass since you asked the question and the answer has a concrete consequence; finding 3 is optional. Everything else — the C fixes, the mutation-proven coverage, the plain-mode measurements and the AGENTS.md reasoning — I verified and endorse. Fix those and send it back; I expect a fast approval.</result>
+<usage><subagent_tokens>238021</subagent_tokens><tool_uses>12</tool_uses><duration_ms>356615</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab2620e37969a3049</task-id>
+<tool-use-id>toolu_01MZ5WM6j7ELqZSmprM8ZaVV</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/ab2620e37969a3049.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review of TUI branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>I re-audited the refactor rather than just the diff hunks, since `readinput()`'s contract changed.
+
+**Contract audit.** `readinput()` now strips before returning. Its only callers are `scan()` and `plaque()` (×2), and both previously did the identical strip themselves, so deleting their copies is exactly neutral — I confirmed no other caller exists and no leftover reference to the removed `readline()`. Empty-buffer, no-trailing-newline (full buffer), and bare-Enter cases all behave as before thanks to the `end &gt; buf` guard.
+
+**Re-derived measurements, fixed-seed `LD_PRELOAD` shim:** help output 143 → 10 CRs, **identical after stripping all CRs**; journey without help **byte-identical to main** (`cmp` clean); CRLF script gives **0** rejections. Warnings 28 vs main's 29 — the one that disappeared is the `fgets` `warn_unused_result`, i.e. genuinely fixed by the truncated-topic guard, with zero new. 6/6 ctest, zero build warnings.
+
+**Finding 1 is properly fixed.** Both scripts now build the CR with `CR=$(printf '\r')`, and help.sh:29 even carries the reason as a comment. I re-ran my BSD-semantics fixture against the new form: the pager's wipe is stripped and the genuine leak is still caught (1 remaining, as wanted), regardless of how the local sed treats a regex `\r`. The macOS failure mode is gone by construction, not by luck. Both scripts stay shellcheck-clean and pass under dash and busybox with zero leftovers.
+
+**Mutation matrix re-run after the refactor** — all three caught, each with its own case-specific message: reverting the helpme strip → `help output still carries sst.doc's carriage returns`; weakening the readinput strip to `\n` only → `CRLF script: no short-range scan`; dropping the truncated-topic guard → `truncated manual: exited with status 13`.
+
+### Findings
+
+**Should-fix (documentation, one phrase)**
+
+1. `AGENTS.md:33` — the first bullet still routes readers to "the `readline()` helper in `finish.c`", which **this diff deletes**. (That parenthetical was my suggestion back in the PR #3 review; it is now false.) An agent following the rule would go looking for a function that no longer exists, in the file this repo runs a ctest to keep authoritative. Now accurate: `scan()`/`getch()`/`readinput()`. You are already editing this bullet.
+
+**Nit**
+
+2. `finish.c:5-6` — a double blank line is left where `readline()` was removed.
+
+3. `tui.c:138` — `strcat(buf, "\n")` with the comment "scan() expects fgets-style input" is now immediately undone by `readinput()`. Not a bug (tui_readline's standalone fgets-like contract is still honest), but the comment's stated reason no longer holds and a future reader may puzzle over it.
+
+### On the refactor you chose
+
+Removing the `readline()` wrapper rather than leaving the strips as guards was the better call, and it is what makes finding 2 genuinely closed rather than papered over: there is now exactly one definition of "a line of player input has nothing trailing", at the one place all player input passes through. The net −8 lines in finish.c is the good kind.
+
+No, I do not need another verifier round. These were the changes I specified, I re-derived the plain-mode numbers and the mutation matrix myself rather than relying on your re-run, and the refactor's blast radius is three call sites which I audited directly.
+
+**Verdict: Approve** — for exactly this state: commit `52a9198` plus the modified `AGENTS.md`, `CMakeLists.txt`, `finish.c`, `sst.c`, `tests/journey.sh` and the new `tests/help.sh` as verified above. I recommend folding finding 1 in before you commit; it is documentation-only, so a fresh review of the C is not needed for it — just make sure `instructions.sh` and the suite still pass after the edit. Findings 2 and 3 are optional.</result>
+<usage><subagent_tokens>252344</subagent_tokens><tool_uses>7</tool_uses><duration_ms>272974</duration_ms></usage>
+</task-notification>

@@ -1,0 +1,32 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "f4e248cb9d18",
+  "strategy": "manual-commit",
+  "branch": "fix/tui-help-crlf",
+  "checkpoints_count": 9,
+  "files_touched": [
+    "AGENTS.md",
+    "CMakeLists.txt",
+    "finish.c",
+    "sst.c",
+    "tests/help.sh",
+    "tests/journey.sh",
+    "tui.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/f4/e248cb9d18/0/metadata.json",
+      "transcript": "/f4/e248cb9d18/0/full.jsonl",
+      "compact_transcript": "/f4/e248cb9d18/0/transcript.jsonl",
+      "content_hash": "/f4/e248cb9d18/0/content_hash.txt",
+      "prompt": "/f4/e248cb9d18/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1045,
+    "cache_creation_tokens": 2827287,
+    "cache_read_tokens": 178599263,
+    "output_tokens": 426358,
+    "api_call_count": 558
+  }
+}
