@@ -136,7 +136,8 @@ int tui_readline(char *buf, int buflen) {
 		buf[0] = 0;
 		return FALSE;	/* no more input is coming */
 	}
-	strcat(buf, "\n");	/* scan() expects fgets-style input */
+	strcat(buf, "\n");	/* keep the fgets-like contract; readinput()
+				   strips it again */
 	return TRUE;
 }
 

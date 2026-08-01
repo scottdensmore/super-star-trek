@@ -30,10 +30,19 @@ without `-DCMAKE_BUILD_TYPE=...` fails. Feature flags `-DSCORE -DCAPTURE
 ## TUI mode (`sst -t`)
 
 - All game output must go through `prout`/`proutn`/`proutf`/`prouts` and all
-  input through `scan()`/`getch()` (or the `readline()` helper in `finish.c`)
-  — raw `printf`/`putchar`/`fgets` silently bypasses the full-screen mode. Plain mode (no `-t`) must stay byte-identical;
-  verify with a piped scripted journey (e.g.
+  input through `scan()`/`getch()`/`readinput()` — raw `printf`/`putchar`/
+  `fgets` silently bypasses the full-screen mode.
+- Plain mode (no `-t`) must not change as an unintended side effect of any
+  change; verify with a piped scripted journey (e.g.
   `printf 'regular\nshort\nnovice\nxyz\nsrscan\nquit\nn\n' | ./build/sst`).
+  If a change alters plain-mode output on purpose, say so in the commit
+  and explain why.
+- Text the game prints must not end in a carriage return. `sst.doc` is
+  CRLF, so anything read from it needs both stripped: under curses a
+  trailing `\r` returns the cursor to column 0 and the newline then
+  erases the line. `pause()` writes a CR deliberately, to wipe its own
+  prompt in place -- the one exception, and the reason the test scripts
+  filter that shape before checking.
 - The panel formatters in `tuifmt.c` must mirror `srscan()` in `reports.c`
   exactly — it is the spec, including sensor-damage masking and the `-f`
   coordinate transposition (x is the column). Keep `tests/test_tuifmt.c` in
