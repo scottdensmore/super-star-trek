@@ -1,0 +1,182 @@
+<task-notification>
+<task-id>be1y05r7c</task-id>
+<summary>Monitor event: "CI check results on PR 19"</summary>
+<event>build-and-test (macos-latest, Debug): pass
+build-and-test (macos-latest, Release): pass
+build-and-test (ubuntu-latest, Debug): pass
+build-and-test (ubuntu-latest, Release): pass
+ALL CHECKS COMPLETE</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>be1y05r7c</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/be1y05r7c.output</output-file>
+<status>completed</status>
+<summary>Monitor "CI check results on PR 19" stream ended</summary>
+</task-notification>
+
+---
+
+Ok lets squash merge then start #7
+
+---
+
+<task-notification>
+<task-id>a72e352f789195831</task-id>
+<tool-use-id>toolu_01SUdt1H1TuQwL6v5Y8YpC2L</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a72e352f789195831.output</output-file>
+<status>completed</status>
+<summary>Agent "UI review of TUI mode" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Review: `fix/tui-panel-staleness` (issue #7)
+
+## Verdict
+
+Both fixes are correct and I reproduced both before/after states. The `tui_ingame` flag is the right call — inferring "a game exists" from `d.date &gt; 0.0` was always a proxy for a fact the program actually knows, and replacing an inference with a fact is the better fix even setting the bug aside. I confirmed the replay flow now blanks the panels through the second game's setup questions and repopulates with genuinely new data (Stardate 2100 → 4400, new quadrant, new grid), and that panels are drawn and current at a `[HIT SPACE BAR TO CONTINUE]` prompt at both 80x24 and 100x30. Plain mode is untouched and 5/5 ctest passes. Two things came out of driving this that you should act on: after the Enterprise is **destroyed**, the panels keep showing a healthy green ship at full shields next to "your starship is now an expanding cloud of subatomic particles" — which is the same lying-panel problem as issue #7, just at the other end of the game; and the `condit = IHRED` that `moving.c` sets deliberately before a tractor beam can now be silently reverted by the `newcnd()` inside a panel refresh at a paging prompt, which is the gameplay-visible consequence you asked about. Approve with should-fix items.
+
+## Answers to your questions
+
+**Blanking during setup: right, and the empty bordered boxes are the right presentation.** Keep them. The boxes are a promise — they tell the player where the scan and status *will* be, and the borders keep the message window anchored at the same row so the setup Q&amp;A doesn't jump when the game starts. Filling them with a title card or a hint would be worse: the player is being asked four questions in a row and anything in the panels competes for attention with the question. Dropping the boxes entirely and letting the message window use the full screen would be actively bad, because the layout would then reflow the instant the game began. One small thing you already do right and should keep: the title reverts to plain ` Quadrant ` (no coordinates) when blank, so there's no orphaned "Quadrant 4 - 4" over an empty grid. Verified.
+
+**Panels after a game ENDS: your instinct is right for survivable endings, wrong for death.** I self-destructed at 100x30 and got this, which is the finding I'd most want fixed:
+
+```
+x  1  . . . E . . . . . .   xx Stardate      2600.0
+...                             Condition     GREEN
+x  8  . . . . .   . . . .   xx Shields       DOWN, 100% 2500.0 units
+                                Life Support  ACTIVE
+      ...
+ ************ Entropy of Enterprise maximized *********
+ Your starship is now an expanding cloud of subatomic particles
+ The Federation will be destroyed.
+```
+
+The `E` is still on the grid, Condition is GREEN, energy is 5000.00, shields are at 100%. At the single most dramatic beat in the game, the status panel is contradicting the narration. "Leave the final state visible while the score prints" is a kind idea and it works fine for `quit`, for running out of time, and for winning (Klingons Left 0 is a nice thing to leave on screen) — but when `alive == 0` the panel is describing a ship that no longer exists. There's a clean predicate for it: `finish.c` sets `alive = 0` in both death paths (lines 179 and 310). Setting `tui_ingame = FALSE` when the ship is lost — or, if you'd rather have one rule, blanking at the start of `finish()` for every ending and letting the epilogue own the screen the way plain mode does — resolves it. Severity: should-fix, because it is the same class of bug as issue #7 and it lands at the most memorable moment of a playthrough.
+
+**Refreshing at paging prompts: no flicker, and no spoiler risk.** No flicker by construction — `tui_refresh_panels()` builds into the virtual windows and ends in one `doupdate()`, so ncurses emits only changed cells; holding space through several pages showed no flash in my captures. On the "changing under a prompt is confusing" worry, I checked the one case that would actually matter: `pause(1)`'s `[IMPORTANT ANNOUNCEMENT ARRIVING]`. I read all nine `pause(1)` call sites; for both the supernova (`events.c:91`) and the tractor beam (`events.c:137`) the pause fires *before* `snova()` and before the quadrant change, so the panels at the prompt show the pre-event state. The player is not shown where they're about to be yanked to before reading that they've been yanked. Good as-is.
+
+**`newcnd()` at paging prompts: yes, there is one consequence you've missed.** `moving.c:38` sets `condit = IHRED` on purpose when a tractor beam will interrupt the move:
+
+```c
+	if (d.date+Time &gt;= future[FTBEAM]) {
+		trbeam = 1;
+		condit = IHRED;
+```
+
+`newcnd()` recomputes condition purely from energy and quadrant contents, so it doesn't know about `trbeam` and will hand that RED straight back to GREEN. Any paging prompt between that assignment and the beam firing — and `pause(1)` for the announcement is exactly such a prompt, now that `tui_getch()` refreshes — reverts it. The player sees Condition GREEN at the very moment the game has decided they're in trouble. It's cosmetic (nothing downstream reads that RED; `newcnd()` is called again after the move anyway), and the window already existed via `tui_readline()`, but this branch widens it and it's the direct answer to your question. The deeper issue is that a *display* function is mutating global game state at arbitrary moments in a turn. I'd compute the condition into a local for display and leave `condit` alone, or drop the `newcnd()` call and accept that the panel shows what the game last computed. The comment "srscan does the same before showing Condition" is true but not equivalent: `srscan` runs when the player asks for it, between turns; the panel refresh runs mid-turn.
+
+## Other findings
+
+**Nit 1 — thawing a game shows blank panels while its report prints.** `choose()` calls `report(1)` after `thaw()` has fully loaded the game, but `setup()` hasn't returned yet so `tui_ingame` is still FALSE. If that report is long enough to page (likely at 80x24 with an attack report or casualties), the player gets a `[HIT SPACE BAR]` prompt with empty panels beside a report about a game that is completely loaded. I confirmed the flow works correctly at both sizes with a short report; the window is narrow but real. Setting the flag inside `setup()` on the frozen-game return (`if (choose()) { tui_ingame = TRUE; return; }`) would close it, at the cost of the flag being set in two places.
+
+**Nit 2 — the flag is set in `main()`, which leaves `setup()` able to change state without the panels knowing.** Bracketing `setup()` from the caller is clear and I like that it reads as one obvious pair, but the truth it encodes ("the game state is now valid") belongs to `setup()`. If you take nit 1 you'll be setting it in two places anyway, at which point owning it inside `setup()` (FALSE at the top next to `alldone = gamewon = 0`, TRUE at both exits) is tidier and can't be forgotten by a future caller.
+
+## Separate pre-existing bug found while driving this (not yours, but you're in the neighbourhood)
+
+**`help &lt;command&gt;` displays nothing but blank lines in full-screen mode.** I ran `help move` in the TUI at both 80x24 and 100x30 and got `Spock- "Captain, I've found the following information:"` followed by page after page of empty lines and `[HIT SPACE BAR TO CONTINUE]`. I reproduced it identically on `main`, so it predates this branch — but it means the game's entire built-in manual is invisible to any `-t` player, which for a game of this complexity is severe.
+
+The cause: `sst.doc` has CRLF line endings (`file` reports "ASCII text, with CRLF line terminators"), and `helpme()` strips only the `\n`, leaving a trailing `\r` on every line. In plain mode the terminal prints the text, then CR, then LF — fine. In ncurses, `waddstr` writes the text, the `\r` returns the cursor to column 0, and then `skip(1)`'s `\n` **clears the line from the cursor to end** before wrapping. I confirmed the mechanism with a minimal curses probe:
+
+```c
+waddstr(w, "LINE-A plain");    waddstr(w, "\n");
+waddstr(w, "LINE-B with CR\r"); waddstr(w, "\n");
+waddstr(w, "LINE-C plain");    waddstr(w, "\n");
+```
+renders as `LINE-A plain`, a blank line, `LINE-C plain`.
+
+Worth its own issue. The fix is one line in `helpme()` (strip a trailing `\r` as well as `\n`), or more defensively in `tui_puts()`. It also means any future output line ending in `\r` will silently vanish in TUI mode, which is worth a note in AGENTS.md alongside the existing "all output through `prout`" rule.
+
+## What I exercised
+
+- Read the full diff plus `tui_refresh_panels()`, `main()`'s game loop, `setup()`/`choose()` (including the frozen-game early return), `newcnd()`, and all nine `pause(1)` call sites in `events.c`/`ai.c` to check for spoiler ordering.
+- Built Debug, 5/5 ctest.
+- tmux 100x30: full game → `quit` → panels correctly persist through the `*****` band and the play-again prompt → answered `y` → **panels blank through all four setup questions** → second game starts with genuinely new data (Quadrant 1-6/Stardate 2100 → Quadrant 5-8/Stardate 4400).
+- tmux 80x24: startup paging prompt with blank panels (correct, pre-setup); in-game paging prompt with panels drawn and current.
+- tmux 100x30: `destruct` + password → found the panels showing `E`, GREEN, 5000.00 energy, 100% shields alongside the destruction epilogue.
+- Froze a game and thawed it in the TUI at both 100x30 and 80x24 to check the `choose()`-returns-early path (panels blank at the filename prompt, populated at the first `COMMAND&gt;`).
+- Built `main` in a scratchpad and reproduced the `help move` blanking there to establish it as pre-existing; wrote and ran a minimal ncurses probe to confirm the CR+LF line-clearing mechanism.
+- Grepped every direct assignment to `condit` to find the `moving.c` interaction.
+- No files modified — `git status` shows only your three.</result>
+<usage><subagent_tokens>186478</subagent_tokens><tool_uses>32</tool_uses><duration_ms>474509</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a0e0b43ae60b8a662</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a0e0b43ae60b8a662.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify TUI change builds/tests" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: PASS
+
+### Builds, warnings, tests
+
+Fresh Debug and Release both clean: **Debug 0 warnings, Release 14** (unchanged from main). With `-Wall -Wextra` in Release, **main 30 vs branch 30**, and diffing the sets shows **zero new and zero removed** — the refactor is warning-neutral. `ctest --output-on-failure --no-tests=error`: **5/5 in both build types**, three consecutive runs each, no flakes.
+
+### `condition_now()` equivalence — proved, not assumed
+
+I compiled main's `newcnd()` body verbatim alongside the new function and brute-forced the input space: 9 energies (including 999.0 / 999.999 / 1000.0 / 1000.001 and a negative), 9 galaxy values (0/1/**99/100/101**/999/1000/1099/1100) and 6 newstuf values (0/1/**9/10/11**/99) — **486 combinations, 0 mismatches**.
+
+Your reordering is correct. The original assigned GREEN, then YELLOW, then RED, so the **last** assignment won: RED beats YELLOW. Returning RED **first** produces exactly that precedence, and the boundary cases confirm it (`energy=999 &amp;&amp; galaxy=100` → RED under both). The harness also asserts the new function writes neither `condit` nor any of its inputs, and `newcnd()` is now literally `condit = condition_now();`, so the stored value is unchanged.
+
+### Nothing depended on the `newcnd()` side effect
+
+`tui_refresh_panels()` has four callers (`tui_init`, `tui_readline`, `tui_getch`, `finish`), all TUI-only, so no game logic could ever have relied on it — plain mode never ran it. The game keeps `condit` fresh itself in twelve places (`ai.c`, `battle.c`, `events.c`, `moving.c`, `planets.c`, `reports.c`, `setup.c`), and the only hand-set values are `moving.c:38` (`IHRED` before a tractor beam — the case you were protecting) and `moving.c:231` (`IHDOCKED`). Removing the hidden mutation moves TUI-mode state *closer* to plain mode, never further.
+
+### Plain and `-f` byte-identity — checked hard, as asked
+
+With an `LD_PRELOAD` shim pinning `time()`, comparing branch against a main worktree build:
+
+- regular journey, plain and `-f`: **identical** (3740 B)
+- tournament + movement + shields journey, plain and `-f`: **identical** (3836 B)
+- **20 seeded runs** of a combat/dock/shields journey (15 plain, 5 `-f`): **0 differing**
+- **28 further seeds selected specifically because they reach non-GREEN conditions** (27 hit RED, seed 13 hits RED *and* YELLOW): **0 differing**
+
+So the condition path was exercised in its RED and YELLOW branches, not just GREEN, and plain-mode output is bit-for-bit unchanged.
+
+### TUI behaviour under tmux (100x30)
+
+- **Replay**: after `quit` → `y`, panels go blank with the title reverted to plain `" Quadrant "` through every setup question, then repopulate with the *new* game's data (Quadrant 5-5, stardate 2600.0, versus the previous 3200.0). Issue #7's second symptom is gone.
+- **Destruction epilogue**: panels blank beside "Your starship is now an expanding cloud of subatomic particles" and the score. I ran the identical sequence against **main's** binary for contrast: it shows a healthy `Quadrant 5 - 2`, `Condition GREEN`, full position — precisely the ui-review finding, and precisely what the branch fixes.
+- **Frozen thaw**: `frozen` → filename prompt shows blank panels, and immediately after the thaw the panels are **populated** (Quadrant 2-2, stardate 4400.0) beside `report(1)`'s output; the session exits 0.
+- **`emexit` under the TUI**: exits 1 (by design) with the terminal restored — the `atexit(tui_shutdown)` path still works.
+
+### The paging-prompt fix, isolated
+
+The destruct scenario can't isolate `tui_getch()` (finish's repaint already blanked the panels), so I built a variant with **only** the `tui_getch` refresh removed and drove both binaries with the *same seed* through a `rest 3` that triggers an event announcement:
+
+| | panel stardate at `[ANNOUNCEMENT ARRIVING...]` |
+|---|---|
+| with the fix | **2300.6** (current) |
+| without it | **2300.0** (stale — the pre-fix symptom) |
+
+That is change #1 doing exactly what it claims, demonstrated rather than inferred.
+
+### `tui_ingame` coverage
+
+Every path checked: `setup()` sets FALSE as its third statement and TRUE at the end (before the neutral-zone `attack(0)`, so a starting attack that prompts has populated panels); the frozen path sets TRUE inside `choose()` *before* `report(1)` and then `setup()` returns early via `if (choose()) return;`, so a thawed game is never left FALSE; `finish()` sets FALSE plus an immediate repaint for every ending. The replay loop re-enters `setup()`, so the flag is FALSE again for the next game's questions.
+
+One behaviour worth stating explicitly since it differs from "every ending": a plain **`quit` does not route through `finish()`**, so the panels stay populated at the "play again?" prompt. That is defensible — the ship still exists, you just stopped playing — and the replay case is still covered because `setup()` blanks them. Flagging it only so the "finish.c handles every ending" claim is read accurately.
+
+### Test quality — the new assertions bite
+
+Mutation-tested three ways against copies of the tree: deleting the YELLOW branch → `FAIL low energy is yellow`; swapping the precedence so RED is checked last → `FAIL enemies beat low energy (want R, got Y)` — i.e. the test pins exactly the precedence question you asked about; making `condition_now()` write `condit` → `FAIL condit is left alone`. Zeroing `d.galaxy`/`d.newstuf` in `basestate()` is what makes these deterministic, and driving the "condition red" case through enemies rather than assigning `condit` is what gives it teeth.
+
+### Line endings and save files
+
+`finish.c` 503/503, `setup.c` 733/733, `sst.h` 499/499 — **100% CRLF**, matching main, and every added line ends `^M$`. `tui.c`, `tui.h`, `tuifmt.c`, `tests/test_tuifmt.c` remain pure LF as before. Your python edits kept the CRs.
+
+No test can leave a save behind: a full `ctest` run in both build types leaves **0 `.trk` files** in the repo or the build trees, and no test script mentions `freeze` or `emexit`. The only saves produced during my work (`save1.trk`, `emsave.trk`) were created deliberately in my own scratch directory and removed.
+
+### On the judgment call
+
+Keeping the epilogue repaint in `finish()` rather than relying on the flag alone is right: the flag only changes what the *next* repaint draws, and the epilogue prints before any prompt — I confirmed the stale panels persist on main through the entire death sequence. The explicit `if (tui_active) tui_refresh_panels();` is the minimum that makes the screen honest at the moment it matters.
+
+Cleanup: both build trees, the main worktree, the equivalence harness, three mutation copies, the isolation variant, the `LD_PRELOAD` shims, save fixtures, and all six tmux sessions I created were removed. Repository worktree unchanged: the seven modified files, no untracked additions.</result>
+<usage><subagent_tokens>383007</subagent_tokens><tool_uses>34</tool_uses><duration_ms>1491678</duration_ms></usage>
+</task-notification>
