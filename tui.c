@@ -115,13 +115,28 @@ void tui_puts_slow(char *s) {
 	}
 }
 
-void tui_readline(char *buf, int buflen) {
+int tui_readline(char *buf, int buflen) {
+	int got;
+
 	tui_refresh_panels();
 	echo();
-	if (wgetnstr(wmsg, buf, buflen-2) == ERR)
-		buf[0] = 0;
+	got = wgetnstr(wmsg, buf, buflen-2) != ERR;
 	noecho();
+	/* cbreak() turns off canonical mode, and with it the tty's own
+	   end-of-file handling, so Ctrl-D arrives as a plain character
+	   rather than as ERR. A line holding nothing else still means end
+	   of input. wgetnstr only returns on Enter, so unlike a normal
+	   terminal the Ctrl-D has to be followed by one; ending the
+	   session properly on the keystroke alone would mean replacing
+	   wgetnstr with our own line editor. */
+	if (got && buf[0] == '\004' && buf[1] == 0)
+		got = FALSE;
+	if (!got) {
+		buf[0] = 0;
+		return FALSE;	/* no more input is coming */
+	}
 	strcat(buf, "\n");	/* scan() expects fgets-style input */
+	return TRUE;
 }
 
 int tui_getch(void) {

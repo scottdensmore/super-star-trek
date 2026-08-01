@@ -432,6 +432,7 @@ void skip(int);
 void prout(char *s);
 void proutn(char *s);
 void proutf(const char *fmt, ...);
+void readinput(char *buf, int buflen);
 void stars(void);
 void newqad(int);
 int ja(void);

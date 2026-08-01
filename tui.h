@@ -20,7 +20,8 @@ int tui_terminal_capable(void);	/* TERM is known and can address the cursor */
 void tui_shutdown(void);
 void tui_puts(char *s);
 void tui_puts_slow(char *s);
-void tui_readline(char *buf, int buflen);	/* fgets-like: keeps '\n' */
+int tui_readline(char *buf, int buflen);	/* fgets-like: keeps '\n';
+						   FALSE when input has ended */
 int tui_getch(void);
 void tui_clearmsg(void);
 int tui_pageheight(void);	/* usable message-window lines for paging */

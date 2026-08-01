@@ -569,6 +569,35 @@ void chew2(void) {
 	*linep = 0;
 }
 
+/* Read one line of whatever the player is being asked for.
+ *
+ * The input stream ending means no answer is ever coming, so it ends
+ * the session the same way quitting does. Without that the game keeps
+ * asking a question nobody is left to answer, filling the terminal --
+ * or a CI runner's disk -- with prompts. */
+void readinput(char *buf, int buflen) {
+	int got;
+
+	if (tui_active)
+		got = tui_readline(buf, buflen);
+	else
+		got = fgets(buf, buflen, stdin) != NULL;
+	if (got) return;
+
+	tui_shutdown();
+	linecount = 0;		/* don't page on the way out */
+	skip(1);
+	/* Say which ending this is. A player scripting the game can tell
+	   the script ran out from the game finishing, and the journey test
+	   relies on it to catch a script that stops short. */
+	prout("[Transmission ends.]");
+	skip(2);
+	stars();		/* the sign-off the quit path prints too */
+	skip(1);
+	prout("May the Great Bird of the Galaxy roost upon your home planet.");
+	exit(0);
+}
+
 int scan(void) {
 	int i;
 	char *cp;
@@ -585,13 +614,8 @@ int scan(void) {
 			chew();
 			return IHEOL;
 		}
-//		gets(line);
-		// We should really be using fgets
-		if (tui_active)
-			tui_readline(line, sizeof(line));
-		else
-			fgets(line,sizeof(line),stdin);
-		if (line[strlen(line)-1] == '\n')
+		readinput(line, sizeof(line));
+		if (line[0] != 0 && line[strlen(line)-1] == '\n')
 			line[strlen(line)-1] = '\0';
 		linep = line;
 	}
