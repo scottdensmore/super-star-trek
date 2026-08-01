@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "6f9691a21a80",
+  "strategy": "manual-commit",
+  "branch": "fix/eof-ends-session",
+  "checkpoints_count": 8,
+  "files_touched": [
+    "CMakeLists.txt",
+    "finish.c",
+    "osx.c",
+    "sst.c",
+    "sst.h",
+    "tests/eof.sh",
+    "tests/journey.sh",
+    "tui.c",
+    "tui.h"
+  ],
+  "sessions": [
+    {
+      "metadata": "/6f/9691a21a80/0/metadata.json",
+      "transcript": "/6f/9691a21a80/0/full.jsonl",
+      "compact_transcript": "/6f/9691a21a80/0/transcript.jsonl",
+      "content_hash": "/6f/9691a21a80/0/content_hash.txt",
+      "prompt": "/6f/9691a21a80/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 118,
+    "cache_creation_tokens": 557491,
+    "cache_read_tokens": 29898295,
+    "output_tokens": 43069,
+    "api_call_count": 63
+  }
+}

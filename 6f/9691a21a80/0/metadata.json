@@ -1,0 +1,99 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "6f9691a21a80",
+  "session_id": "f543190f-4027-47a1-8fe2-512c2d383260",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-01T01:50:22.652014127Z",
+  "branch": "fix/eof-ends-session",
+  "checkpoints_count": 8,
+  "save_step_count": 5,
+  "files_touched": [
+    "CMakeLists.txt",
+    "finish.c",
+    "osx.c",
+    "sst.c",
+    "sst.h",
+    "tests/eof.sh",
+    "tests/journey.sh",
+    "tui.c",
+    "tui.h"
+  ],
+  "agent": "Claude Code",
+  "model": "",
+  "turn_id": "c171b009fbe7",
+  "checkpoint_transcript_start": 1941,
+  "transcript_lines_at_start": 1941,
+  "compact_transcript_start": 475,
+  "token_usage": {
+    "input_tokens": 118,
+    "cache_creation_tokens": 557491,
+    "cache_read_tokens": 29898295,
+    "output_tokens": 43069,
+    "api_call_count": 63
+  },
+  "session_metrics": {
+    "turn_count": 40
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-01T01:50:21.560776605Z",
+    "agent_lines": 196,
+    "agent_removed": 17,
+    "human_added": 0,
+    "human_modified": 1,
+    "human_removed": 0,
+    "total_committed": 197,
+    "total_lines_changed": 214,
+    "agent_percentage": 99.53271028037383,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 155,
+      "agent_lines_removed": 19
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 185,
+      "agent_lines_removed": 18
+    },
+    {
+      "checkpoint_number": 4,
+      "user_lines_added": 1,
+      "user_lines_removed": 1,
+      "agent_lines_added": 185,
+      "agent_lines_removed": 18,
+      "user_added_per_file": {
+        "tests/eof.sh": 1
+      },
+      "user_removed_per_file": {
+        "tests/eof.sh": 1
+      }
+    },
+    {
+      "checkpoint_number": 5,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 198,
+      "agent_lines_removed": 18
+    },
+    {
+      "checkpoint_number": 6,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 198,
+      "agent_lines_removed": 18
+    }
+  ]
+}

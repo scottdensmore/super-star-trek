@@ -1,0 +1,274 @@
+<task-notification>
+<task-id>b792ass20</task-id>
+<summary>Monitor event: "CI check results on PR 18"</summary>
+<event>build-and-test (macos-latest, Debug): pass
+build-and-test (macos-latest, Release): pass
+build-and-test (ubuntu-latest, Debug): pass
+build-and-test (ubuntu-latest, Release): pass
+ALL CHECKS COMPLETE</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b792ass20</task-id>
+<tool-use-id>toolu_016C6nFZiRk3C3PJDDQPQit9</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/b792ass20.output</output-file>
+<status>completed</status>
+<summary>Monitor "CI check results on PR 18" stream ended</summary>
+</task-notification>
+
+---
+
+ok lets squash merge
+
+---
+
+Ok lets do that one next
+
+---
+
+<task-notification>
+<task-id>a72e352f789195831</task-id>
+<tool-use-id>toolu_01RRrKCtxngMVyuFEcM7ppxZ</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a72e352f789195831.output</output-file>
+<status>completed</status>
+<summary>Agent "UI review of TUI mode" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Review: `fix/eof-ends-session` (issue #6)
+
+## Verdict
+
+The fix is right and the design decisions you're second-guessing are, with one exception, the ones I'd have made. Centralising every player read into `readinput()` is the correct shape, the two `buf[strlen(buf)-1]` out-of-bounds reads were real latent bugs worth fixing on the way past, and the six-case `eof.sh` is a good test — I confirmed all six fail against `main` (status 13, output at the 256 KB ceiling, no farewell) and pass here, and that `main` floods 20 MB in under 5 s where the branch now emits 1180 bytes. I also confirmed plain mode and `-f` mode are byte-identical to `main` on a seeded tournament journey. Two things need attention before this ships: **Ctrl-D does not end the session in full-screen mode** (I reproduced it — ncurses in `cbreak()`+`echo()` treats `^D` as an ordinary character, so the player gets `UNRECOGNIZED COMMAND` and a command list instead of a sign-off), which means the branch's headline interactive behaviour only holds in one of the two modes and `eof.sh` case 6 gives false confidence because it silently runs the plain fallback. And **this fix quietly disarms `tests/journey.sh`**: I verified that removing the final answer from the journey script — the exact truncation the byte ceiling was invented to catch — now passes with `journey OK`. Needs changes.
+
+## Answers to your questions
+
+**Farewell + exit 0 mid-game — right call, but the sign-off is visually incomplete.** Keep the farewell. For an interactive Ctrl-D it is exactly right, and inventing a second ending for a game this small would be worse than reusing the one it has. But compare what the player actually sees:
+
+```
+COMMAND&gt;                                     COMMAND&gt;
+May the Great Bird of the Galaxy roost...
+                                             ******************************************************
+
+                                             Do you want to play again?
+                                             May the Great Bird of the Galaxy roost...
+   (EOF)                                        (quit)
+```
+
+The `*****` band is this game's established "the session is over" punctuation — it's what `stars()` exists for — and its absence makes the EOF exit read as though the game fell over rather than signed off. Mirroring the quit path's `skip(2); stars(); skip(1);` before the farewell costs one line and makes both endings look like endings. That is my main answer to "does it read like they quit deliberately": right now it reads like *less* than quitting, not like quitting.
+
+**A distinguishing marker: yes, but in the game's voice, not as an exit status.** The game already has a bracketed system-message register — `[ANNOUNCEMENT ARRIVING...]`, `[IMPORTANT ANNOUNCEMENT ARRIVING -- HIT SPACE BAR TO CONTINUE]`, `[CONTINUE?]`, `[HIT SPACE BAR TO CONTINUE]`. A single line in that register before the farewell fits perfectly, tells a scripting player what happened, and gives a harness something to grep:
+
+```
+[Transmission ends.]
+
+******************************************************
+
+May the Great Bird of the Galaxy roost upon your home planet.
+```
+
+Only emit it when a game is actually in progress (i.e. not at the very first prompt or at the play-again prompt, where "input ran out" and "the player is done" are the same thing).
+
+**Exit status — keep 0.** Every CLI whose idiom this borrows exits 0 on end-of-input: `python`, `bc`, `sqlite3`, `ftp`, `mail`. A player doing `sst &lt; moves.txt` inside a Makefile or a `set -e` script should not get a build failure because their game ended. And for a harness, exit status is the *wrong* channel anyway: the harness needs to distinguish "finished as scripted" from "ran out early", and both are legitimately non-failures of the program. The marker line above carries that information precisely; a non-zero status would conflate "input ended" with "the game crashed", which is worse for a harness, not better. Which brings me to:
+
+**Should-fix 1 — `tests/journey.sh` no longer detects an under-supplied script.** I removed the trailing `n` from the journey's input (leaving the game one answer short at "Do you want to play again?") and ran the suite: `journey OK (3940 bytes)`. Before this branch, that same truncation was the runaway loop, caught by exit status and the byte ceiling. Now it exits 0, prints the farewell, and every `want` still matches. That matters because the desync class `journey.sh`'s own header warns about — a `[HIT SPACE BAR]` prompt eating a byte and shifting every subsequent command — now terminates in a way the test calls success. The remedy pairs naturally with the marker above: assert the marker is *absent*, or assert the game reached the normal ending (the `*****` band followed by `Do you want to play again?` immediately before the farewell). Either is one added check. Without it, this branch makes the suite weaker than it was, which is an odd outcome for a bug fix.
+
+**Should-fix 2 — Ctrl-D does not end the session under `-t`.** `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c`, `tui_readline()`. Reproduced under tmux at 100x30: `tui_init()` sets `cbreak()`, which disables canonical mode and with it the tty's `VEOF` handling, so `wgetnstr()` never returns `ERR` for `^D` — it echoes a literal `^D` into the line and hands back a string. The player sees:
+
+```
+ COMMAND&gt; ^D
+ UNRECOGNIZED COMMAND. LEGAL COMMANDS ARE:
+    SRSCAN    MOVE      PHASERS   CALL
+    ...
+```
+
+I pressed it three times; the game never left. So the branch's stated interactive behaviour holds in plain mode only, and the two modes now disagree about what Ctrl-D means. Minimal fix inside `tui_readline()`: after `wgetnstr()`, treat a line consisting solely of `\004` as end of input and return `FALSE`. (The existing `ERR` branch is still worth keeping — it covers the terminal going away — it just isn't the path Ctrl-D takes.)
+
+**Should-fix 3 — `eof.sh` case 6 does not test what its name says.** With piped stdin, `-t` falls back to the classic display (PR #18), so "eof at the command prompt, -t" executes exactly the same code as case 3 plus argument parsing. I confirmed it: the capture opens with `Full-screen mode needs a terminal -- using the classic display.` and contains zero escape bytes. The comment is honest about this, but the case name is not, and the net effect is that the one EOF path that is actually broken (should-fix 2) is the one with no coverage. Either rename it to something like "eof at the command prompt, -t falls back" so nobody reads it as TUI coverage, or drive the real thing through a tmux/expect harness.
+
+## Other findings
+
+**Minor 4 — `eof.sh` reuses one `rc` file across all six cases, so a stale status can be read as a pass.** `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/eof.sh`, `check_eof()`. `status=$(cat "$rc" ...)` falls back to `no-status` if the file is missing, which is the right instinct — but because `$rc` is never removed between cases, a case whose subshell dies before `echo $? &gt; "$rc"` runs (SIGPIPE while `head` is tearing down) silently inherits the previous case's `0`. One line: `rm -f "$rc"` before the subshell, or per-case filenames.
+
+**Minor 5 — `getch()` and `readinput()` now implement two different policies for "input ran out", undocumented.** `readinput()` ends the session; `getch()` returns `'\0'` and lets play continue. I think the split is *correct* — if `getch()` also exited, an EOF arriving during a paged end-of-game score printout would truncate the player's score — but nothing says so, and the next person to touch this will reasonably try to "fix the inconsistency". One sentence in the `osx.c` comment ("pause() deliberately keeps going, so end-of-game output isn't cut short; the session ends at the next prompt") closes it. On your scope-creep question: not scope creep. `read()`'s return was unchecked and the function returned an uninitialised stack byte — that's UB in the same code path as the bug, and leaving it would have made the EOF behaviour nondeterministic. It belongs here.
+
+**Minor 6 — at EOF the pager flushes through its prompts and mangles the transcript.** With `printf 'regular\nshort\nnovice\nxyz\nhelp move\n'` I get three `[HIT SPACE BAR TO CONTINUE]` prompts blowing past in an instant, each followed by the `\r`-overwrite trick landing the next line of help text on top of the prompt: `[HIT SPACE BAR TO CONTINUE]                           example, to move to sector 2 - 9 in the current quadrant, the`. On a real terminal the `\r` mostly hides this; in a captured log it's garbage. Pre-existing and arguably improved by your change (it was UB before), but if you take minor 5's suggestion, having `pause()` skip printing its prompt at all when input has ended would clean this up and cost nothing.
+
+**Nit 7 — `linecount = 0` before the sign-off is a good catch, worth keeping.** Without it, `skip(1)` on a full page would fire `pause(0)`, printing a spurious `[HIT SPACE BAR TO CONTINUE]` immediately before the farewell. Just flagging that it's load-bearing so it doesn't get "cleaned up" later.
+
+**Nit 8 — stray whitespace-only change in `sst.h`.** The diff shows `void proutf(const char *fmt, ...);` removed and re-added with different trailing whitespace. Unrelated to the change; drop it.
+
+## EOF points: what's covered, what isn't
+
+Your six cases cover the realistic ones and none of them is unrealistic. Auditing every read: `scan()` is now the single funnel, so the setup prompts (game type, tournament number, length, skill, password), the command prompt, `helpme`'s "Help on what command?", `freeze`/`thaw` filenames, `dstrct()`'s self-destruct password, `deathray`, and the `ja()` "Please answer with Y or N" loop all inherit the fix for free — I traced each. `ja()` deserves a note: at EOF it emits at most one extra "Please answer" before exiting, because `scan()` returns `IHEOL` without reading when `linep != line`; case 5 covers exactly that path. `finish.c`'s plaque prompts now route through `readline()`→`readinput()` (they were the ones doing a raw `fgets` plus the `buf[-1]` read), though they're only reachable by winning at Expert/Emeritus so they'll stay untested — that's fine. `emexit` still `exit(1)`s after a forced freeze, untouched and correct. The genuinely missing point is **EOF during `pause()`**, which is minor 5/6 rather than a hole in the suite.
+
+One EOF consequence worth a thought, not a finding: a player who fat-fingers Ctrl-D mid-game loses the game outright, with no offer to freeze — even though the game has both a `freeze` command and an `emexit` that force-saves to `emsave.trk`. Doing the `emexit` thing on mid-game EOF would be kind. I'm *not* recommending it, because `eof.sh` and `journey.sh` run with `WORKING_DIRECTORY` set to the source tree and would start littering `emsave.trk` into the repo on every test run. Worth recording the trade-off somewhere so it isn't rediscovered.
+
+## What I exercised
+
+- Read the full diff (`sst.c`, `sst.h`, `finish.c`, `osx.c`, `tui.c`, `tui.h`, `CMakeLists.txt`) and all of `tests/eof.sh`; audited every remaining `fgets`/`getch`/`read` against stdin, and traced `dstrct()`, `ja()`, `freeze()`, `helpme()`, `plaque()` to confirm they funnel through `readinput()`.
+- Built Debug, ran the suite: 5/5 pass (`tuifmt`, `journey`, `journey-tui`, `eof`, `instructions`).
+- **Falsification of the TDD claim:** built `main` in a scratchpad and ran `tests/eof.sh` against it — 18/18 checks fail (status 13, ≥256 KB, no farewell). Same script against the branch: `eof OK`.
+- **Byte-identity:** seeded tournament journey (`tournament 4242`, twelve commands, quit) against `main` in both plain and `-f` modes — identical, 3846 bytes each.
+- **Runaway measurement:** `main` emits 20 MB in under 5 s on the truncated-input case; the branch emits 1180 bytes.
+- **Regression in `journey.sh`:** ran the journey with the final answer removed — `journey OK (3940 bytes)`, i.e. the truncation is no longer detected.
+- Interactive tmux at 100x30: Ctrl-D in plain mode (clean sign-off, `EXIT=0`); Ctrl-D in `-t` mode three times (game does not exit, prints `UNRECOGNIZED COMMAND` and the command list, process still alive) — inspected the pane and `ps` to confirm.
+- EOF sign-off compared byte-for-byte against the normal quit tail (`cat -A`); EOF after a paging command (`help move`) to inspect the `getch()`-at-EOF behaviour; EOF under `-t` with `TERM=dumb` to confirm the fallback path and zero escape bytes.
+- No files modified — `git status` shows only your seven plus the new test.</result>
+<usage><subagent_tokens>149941</subagent_tokens><tool_uses>19</tool_uses><duration_ms>408350</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a0e0b43ae60b8a662</task-id>
+<tool-use-id>toolu_01ReeZv3B3as749R66NkveP4</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/a0e0b43ae60b8a662.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify TUI change builds/tests" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: PASS
+
+### Builds and warnings
+
+Fresh Debug and Release both clean. **Debug 0 warnings.** Release drops from 17 to **14** (the `finish.c` and `osx.c` warnings and one of the two `sst.c` `fgets` warnings are gone; the survivor is the unrelated `helpme()` read). With `-Wall -Wextra` I reproduced your numbers exactly: **Release 33 → 30**, and diffing the sets shows **zero new warnings** and exactly three fixed — `finish.c` fgets, `osx.c` read, `sst.c` fgets. Debug `-Wall -Wextra` is 8 on both branches, unchanged.
+
+### Tests
+
+`ctest --output-on-failure --no-tests=error`: **5/5 in both build types**, three consecutive full runs each with zero failures. `eof` takes 19.0–19.3 s, `journey`/`journey-tui` ~2.8 s each.
+
+### EOF matrix — 36 exhaustion points, no loops found
+
+I stopped input at every prompt I could reach, including all the ones you named. **Every case exits 0, prints "[Transmission ends.]" and the farewell, and produces 0.5–3.3 KB:** first prompt, mid-setup, password prompt, command prompt, after a command, play-again, the **Y/N loop** (garbage answer then EOF — `ja()` funnels through `scan()`, so it terminates), **freeze filename**, **frozen-game filename**, tournament number, **self-destruct password**, **deathray confirm**, course/move, computer/request, help topic, phasers, shields, probe, cloak, capture, rest, warp, photons, abandon, orbit, sensors, commands, a long multi-command run, tournament "score recorded?" and the freeze filename behind it, plus `-t` and `-f -t` fallback paths. No hang, no flood, nothing at the 30 s timeout.
+
+**`emexit` is the one case that exits 1 with no farewell — and that is correct, pre-existing, and not an EOF path**: `case 24` in `sst.c` deliberately does `clearscreen(); freeze(TRUE); exit(1);`. Worth knowing it writes `emsave.trk` into the cwd, so no test should ever invoke it while `WORKING_DIRECTORY` is the source tree; none does today, and I confirmed no `.trk` file was left in the repo.
+
+**The `osx.c` design decision checks out empirically.** I drove a genuine self-destruct to death with input ending immediately after the password: the pager prompt appears with nothing left to read, `getch()` returns `'\0'`, play continues, **the full score prints** (`TOTAL SCORE -300`), and only then does the "play again?" prompt reach `readinput()` and end the session cleanly. That is exactly the behaviour the comment claims, and it would have been truncated had `getch()` quit instead.
+
+### The flood, measured
+
+Same truncated input, output capped at 64 MB with a 5 s wall clock:
+
+| | bytes | elapsed |
+|---|---|---|
+| **main** | 67,108,864 (hit my cap, still going) | 1.1 s |
+| **branch** | 1,575 | 2.7 s |
+
+So main sustains roughly 60 MB/s of prompts — your 2.6 GB accident is entirely consistent — and the branch replaces it with a 1.5 KB clean exit.
+
+### Byte-identity, verified independently
+
+Using an `LD_PRELOAD` shim pinning `time()` so both binaries generate the same galaxy, on a full journey that never runs out of input:
+
+- plain mode: **byte-identical (3740 bytes)**
+- `-f`: **byte-identical (3740 bytes)**
+- seeded tournament journey, plain and `-f`: **byte-identical (3022 bytes)**
+
+### `tests/eof.sh` robustness
+
+Matches the standard the other scripts set. `sh -n`, `dash -n`, `shellcheck -s sh` clean; passes under `dash` and `busybox sh`. Constructs are all POSIX/BSD-safe: `mktemp -d` with an explicit template, `wc -c | tr -d ' '`, `head -c`, `grep -q`, `command -v timeout`, `printf`. Traps cover **EXIT INT TERM HUP PIPE**. Cleanup verified on every path — success, `exit 7` stub (12 FAIL lines), flooding stub (12 FAIL lines, capped), 30 s-per-case hang, and SIGPIPE via `| head -1`: **zero leftovers in every case**. cwd-independent (runs from an empty dir and from `/`) and **creates no files**. Reusing `out.txt`/`rc.txt` across cases is safe because of the explicit `rm -f` plus the "no-status" fallback, and the comment explains why.
+
+One small note, not a defect: the worst case is 6 × 30 s = **180 s**, which exceeds the test's `TIMEOUT 120`, so a pathological hang gets killed by CTest rather than reported by the script. It still fails loudly either way, and on macOS (no coreutils `timeout`) CTest's 120 s is the only bound regardless. Bumping the CTest timeout to 200 or the per-case timeout to 15 would make the script's own diagnosis the one you see.
+
+### The new journey assertion
+
+Cannot false-positive: `"Transmission ends"` exists in exactly one place in the codebase (`sst.c:594`), and across **10 full legitimate journeys** it appeared **0 times**. And it has teeth: I ran a copy of `journey.sh` with the final `quit\nn\n` removed, and it now fails with `FAIL: the game ran out of input before the journey ended` — the disarming ui-review found is genuinely closed.
+
+### Ctrl-D on real ptys
+
+Plain mode: **Ctrl-D alone** ends the session — "[Transmission ends.]", the band, farewell, EXITCODE=0. TUI mode: Ctrl-D alone leaves the game running (0 occurrences of the marker), and **Ctrl-D then Enter** ends it cleanly with the farewell visible on the restored screen — i.e. `tui_shutdown()` before the messages works. Exactly as documented in the `tui.c` comment.
+
+### Line endings
+
+Every file kept its original style: `finish.c` 497/497 CRLF, `sst.c` 853/853 CRLF, **`sst.h` 498/498 CRLF**, while `osx.c`, `tui.c`, `tui.h`, `CMakeLists.txt` and both test scripts stay pure LF — matching main file-for-file, no mixed endings anywhere. The `sst.h` change is a **pure single-line addition with CRLF intact** (`+void readinput(char *buf, int buflen);^M$`); your redo landed correctly.
+
+### On the `stars()` band — I think you called it right
+
+Measured: normal quit averages **2717 ms**, EOF exit averages **2716 ms**, and both emit exactly **54 asterisks**. The two endings are now indistinguishable in both output and cost, which is the whole argument for keeping it — an EOF exit that skipped the band would be a visibly different, cheaper-looking ending, and the next person would wonder which code path they were on. The 19 s `eof` test is 6 × 2.7 s of that same busy-wait; it sits well inside the 120 s budget and is dwarfed by nothing else in the suite. If the cost ever becomes annoying the right fix is `prouts()` itself (a `clock()` spin loop is a poor way to pace output), not a special-cased ending — and that is a separate change.
+
+Cleanup: all six build trees, the main worktree, the `LD_PRELOAD` shim, stub binaries, the truncated `journey.sh` copy, working directories, and both tmux sessions I created were removed; no stray `/tmp/sst-*` dirs remain. Repository worktree unchanged: the eight modified files plus untracked `tests/eof.sh`.</result>
+<usage><subagent_tokens>337888</subagent_tokens><tool_uses>36</tool_uses><duration_ms>1375868</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab2620e37969a3049</task-id>
+<tool-use-id>toolu_01H3M2prTA4Mpbv4pkFActDk</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/ab2620e37969a3049.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review of TUI branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review — fix/eof-ends-session (issue #6)
+
+**State reviewed:** branch `fix/eof-ends-session` at commit `1b7eb70` plus all eight modified files and the new `tests/eof.sh`.
+
+### Verified independently
+
+The fix works and the numbers hold. On the same input, main floods 100 MB in 3 seconds; the branch produces **1250 bytes and exits 0** in 2.70 s. `ctest` 5/5 in Debug with zero build warnings. Optimized-build warnings go **32 → 29 with zero new** (the fixed class is `read` `warn_unused_result`, i.e. the osx.c uninitialised-byte bug). `sst.h` is 498/498 CRLF. All player input now funnels through `readinput()` (sst.c:584) and `getch()` (osx.c:51) — the only other reads are `sscanf` on the in-memory line buffer and `fgets` from save files.
+
+The two behavioral claims I could not take on trust both check out. **getch() at EOF**: I drove a self-destruct with input ending mid-sequence; the game traversed a paging prompt at EOF without looping, kept printing, and ended at the next real prompt — exactly what the osx.c comment claims. **Ctrl-D under `-t`**: on a real pty via tmux, Ctrl-D alone does nothing (wgetnstr waits for Enter) and Ctrl-D + Enter ends the session with the marker, the farewell and exit 0 — the documented limitation reproduced precisely. `eof.sh` is shellcheck-clean, passes under dash and busybox ash, and leaves zero temp files across success, SIGPIPE and missing-binary paths.
+
+### Findings
+
+**Should-fix**
+
+1. `tests/eof.sh:69-71` — nothing asserts the `[Transmission ends.]` marker is *present*. I deleted `prout("[Transmission ends.]")` from a scratch copy of sst.c and **all five ctest tests passed**. That silently re-disarms the new guard at `tests/journey.sh:161-167`, which only checks the marker's *absence* and so passes trivially once the marker no longer exists — the same disarming failure mode ui-review caught in your first version, one level up. Fix, inside `check_eof`:
+
+   ```sh
+   if ! grep -q "Transmission ends" "$out"; then
+   	fail "$what: no end-of-input marker; journey.sh's guard depends on it"
+   fi
+   ```
+   I confirmed the marker is present in all six cases today, so this passes as written.
+
+**Nits**
+
+2. `tests/eof.sh:105-108` — on failure you get only the FAIL lines, and the EXIT trap then deletes the work directory, so a CI failure leaves no evidence to read (journey.sh dumps 8 KB). Demonstrated with a missing binary: two FAIL lines and nothing else. Suggest retaining the failing case's capture and dumping a bounded tail before exit.
+
+3. `sst.c:583` — `buf[0] = '\0'` immediately before `exit(0)` is a dead store; harmless, but it reads as though a caller might observe it.
+
+### Your judgment calls
+
+**`exit(0)` from inside `scan()` — acceptable here; don't unwind.** I checked what gets skipped. There is no heap state to release, `exit()` flushes and closes stdout, and `atexit(tui_shutdown)` plus the explicit `tui_shutdown()` covers the terminal. Both file-writing paths read their filename via `scan()` *before* `fopen`, so no write is in flight. The single corner is `plaque()`, which opens the file before asking for the name — an input end there leaves an empty plaque file, closed cleanly by `exit()`, where main would have re-prompted forever. Unwinding instead would mean threading a sentinel through ~40 `scan()` call sites and auditing each for partial state: far more risk than this buys, and `emexit`'s `exit(1)` at sst.c:335 is existing precedent.
+
+**Keep the stars() band.** Parity is the right principle: an ending that looks cheaper than quitting invites "did it crash?", and the marker already carries the distinction for anything that needs to tell them apart. The 2.7 s is `prouts()`' `clock()` spin, not the ending — special-casing the band would manufacture exactly the asymmetry the marker exists to make explicit.
+
+**`exit(0)` + marker over a non-zero status: right.** The precedent argument is sound, and a non-zero status would additionally break `set -e` harnesses whose input legitimately ends.
+
+**The Ctrl-D limitation is the right trade.** Recognising a lone `\004` line is a real improvement over "UNRECOGNIZED COMMAND", the comment states the constraint accurately, and replacing `wgetnstr` with a hand-rolled line editor is not something to attach to an EOF fix.
+
+### Not reviewed
+
+Byte-identical plain-mode output vs main — I did not rebuild your LD_PRELOAD time shim; the galaxy is clock-seeded, so I verified via the journey suite and code inspection of the untouched output paths instead.
+
+### Verdict
+
+**Request changes** — for finding 1 only. Everything else is sound: the design is right, the C is correct, two genuine latent bugs (`buf[-1]`, the uninitialised `getch` byte) are fixed along the way, and the tests are portable and clean. But the guard you correctly identified as "the important one" can itself still be disarmed silently, I demonstrated it end to end, and the fix is one `grep` in a file you are already touching. Add it, re-run `ctest`, and send it back — I expect a fast approval.</result>
+<usage><subagent_tokens>175164</subagent_tokens><tool_uses>16</tool_uses><duration_ms>444632</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab2620e37969a3049</task-id>
+<tool-use-id>toolu_017S198K5TDAm14fE22s891a</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/ab2620e37969a3049.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review of TUI branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>I re-verified the three changes and re-ran the falsification that produced the original finding.
+
+**Finding 1** (`tests/eof.sh:76-81`) — the marker assertion is in, with a comment stating why it exists. I rebuilt my own marker-deletion stub from scratch: the `eof` test now **fails on all six cases** with `no end-of-input marker; journey.sh's guard depends on it`, where that same stub previously passed 5/5. The mutual dependency is now closed in both directions — journey.sh checks absence, eof.sh checks presence.
+
+**Nit 2** (`tests/eof.sh:18,80-85`) — the per-case dump works and is correctly attributable: the `before=$fails` comparison fires only for the case that failed, and the stub run shows each FAIL followed by its own `--- last 2048 bytes of "&lt;case&gt;" ---` block. `DUMPBYTES=2048` is defined with a rationale. Placing the dump inside `check_eof` rather than at exit is the right call given the shared `$out` is overwritten each case.
+
+**Nit 3** (`sst.c:576-596`) — the dead `buf[0] = '\0'` is gone; `readinput()` now goes straight from `if (got) return;` to the teardown sequence. Nothing else in the function changed.
+
+Re-verified on the updated state: zero build warnings, ctest 5/5 (eof at 19 s, dominated by the six stars() bands as expected), a mid-game EOF still ends cleanly with the farewell, `eof.sh` shellcheck-clean and passing under dash and busybox ash, and zero temp leftovers across success, missing-binary (rc=1) and SIGPIPE paths. `tests/journey.sh:165` is untouched.
+
+Nothing new surfaced.
+
+**Verdict: Approve** — for exactly this state: commit `1b7eb70` plus the modified `CMakeLists.txt`, `finish.c`, `osx.c`, `sst.c`, `sst.h`, `tests/journey.sh`, `tui.c`, `tui.h` and the new `tests/eof.sh` as re-verified above. Carry forward the one item outside my reach: plain-mode byte-identity vs main, which I checked by code inspection and the journey suite rather than rebuilding your LD_PRELOAD time shim. If anything changes beyond these files, the new state needs a fresh look.</result>
+<usage><subagent_tokens>183345</subagent_tokens><tool_uses>6</tool_uses><duration_ms>200236</duration_ms></usage>
+</task-notification>
