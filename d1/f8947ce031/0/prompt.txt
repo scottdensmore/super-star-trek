@@ -180,3 +180,61 @@ Keeping the epilogue repaint in `finish()` rather than relying on the flag alone
 Cleanup: both build trees, the main worktree, the equivalence harness, three mutation copies, the isolation variant, the `LD_PRELOAD` shims, save fixtures, and all six tmux sessions I created were removed. Repository worktree unchanged: the seven modified files, no untracked additions.</result>
 <usage><subagent_tokens>383007</subagent_tokens><tool_uses>34</tool_uses><duration_ms>1491678</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>ab2620e37969a3049</task-id>
+<tool-use-id>toolu_01SS41aRcjY12T8KxaPF3nt3</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d86b7c48-94c1-4f1f-91bb-6b8ea7c3920d/tasks/ab2620e37969a3049.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review of TUI branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Review — fix/tui-panel-staleness (issue #7)
+
+**State reviewed:** branch `fix/tui-panel-staleness` at commit `17d5d91` plus all seven modified files.
+
+### Verified independently
+
+**The `condition_now()` refactor is provably equivalent.** I brute-forced the old inline `newcnd()` body against the new function over 891 combinations spanning every boundary that matters (galaxy 98/99/100/101/999/1000, newstuf 8/9/10/11, energy 999.0/999.9999/1000.0/1000.0001, plus negatives): **zero mismatches**. The reorder preserves RED-beats-YELLOW, and I confirmed the new tests catch an inverted precedence — mutating `condition_now()` to test YELLOW first makes `test_tuifmt` fail.
+
+**The flag lifecycle covers every ending.** There are 20 `finish()` call sites across planets.c, moving.c, setup.c, battle.c and events.c; one assignment at the top of `finish()` covers all of them. The only path that sets `alldone` without `finish()` is `quit` (sst.c:386) — deliberate, see below. The thaw path genuinely needs its own `tui_ingame = TRUE` because `setup()` returns early at setup.c:226 (`if (choose()) return;`), which I confirmed.
+
+**Live behavior on a real pty (tmux, 100x30):** panels blank through the first game's setup questions; populated in play; still populated at the play-again prompt after a plain `quit`; **blank again through the replay's setup questions** — issue #7's second symptom fixed. For the `finish()` path I built a harness that routes the `score` command to `finish(FDEPLETE)`: the panels blank **immediately**, including the title reverting from `" Quadrant 4 - 6 "` to `" Quadrant "`, with `It is stardate ...` printing beside them. That is ui-review's finding closed, and it confirms the explicit repaint is load-bearing — the flag alone would leave the last painted content up.
+
+Also: ctest 5/5, zero build warnings, `-O2 -Wall -Wextra` at 29 warnings versus 29 on main (no new); CRLF intact file-for-file (sst.h 499/499, setup.c 733/733, finish.c 503/503) with the four LF-era files unchanged in kind; `tui_refresh_panels()` still does `wnoutrefresh(wmsg)` + `doupdate()`, so the paging prompt still renders after the `tui_getch()` change — I saw one displayed in the fixed build.
+
+### Findings
+
+**Should-fix (low)**
+
+1. `tuifmt.c:61` — the DOCKED branch of the new ternary has no test. I mutated `switch (condit == IHDOCKED ? IHDOCKED : condition_now())` to `switch (condition_now())` and **the suite still passes**, even though the panel would then show GREEN/RED where `srscan()` shows DOCKED — a break in exactly the parity contract AGENTS.md names tuifmt.c's tests to protect. The behavior is correct today (I saw `Condition     DOCKED` in a live session), so this is regression insurance, not a bug. Three lines, ideally in `test_condition_now()`:
+   ```c
+   condit = IHDOCKED;
+   fmt_status_line(2, buf);
+   check("condition docked", buf, "Condition     DOCKED");
+   ```
+
+**Nit**
+
+2. `tuifmt.c:17` — the `&gt; 99` / `&gt; 9` boundaries are uncovered (mutating to `&gt;= 99` passes the suite). Low value: those constants are copied verbatim from the original `newcnd()` and my 891-combination sweep already pins them against main's behavior. Mentioning only so you can decide once.
+
+### Your questions
+
+**`quit` should not blank — agree.** `finish()` means the game is over and possibly the ship is gone; `quit` means the player stopped while the ship still exists, and it prints no epilogue. Leaving the panels up is a last look at the game you just walked away from, which reads as intentional rather than stale. Blanking there would also be the odd one out: nothing else about `quit` announces an ending. The replay case is covered by `setup()`, which I verified live.
+
+**Owning the flag in setup()/finish() is the right placement.** Those are the two functions that respectively create and retire the state the panels describe, and `finish()` is the single funnel for all 20 endings. Pushing it into `tui.c` would mean the display inferring lifecycle again — which is precisely the `d.date &gt; 0.0` mistake this replaces.
+
+**`condition_now()` in tuifmt.c: keep it.** It is game logic in a formatting file, but the alternative — putting it in setup.c — forces `test_tuifmt` to link setup.c and transitively most of the game, which is the coupling tuifmt.c exists to avoid. The property that actually matters, one definition of the rule, is preserved by `newcnd()` delegating, and the comment states the reason. I'd note in passing that `srscan()` still calls `newcnd()` and therefore still clobbers a hand-set `condit` mid-turn (reports.c:341); that is pre-existing and out of scope, but it means the display-writes-state problem is only half gone from the codebase.
+
+**The explicit repaint in finish() is necessary,** as demonstrated above — not redundant with the flag.
+
+### Not reviewed
+
+Plain-mode byte-identity versus main across seeded runs — I did not rebuild your LD_PRELOAD shim. I covered it instead by proving `condition_now()` equivalent over the full boundary space (the only non-TUI-gated change) and by the journey/eof suites passing.
+
+### Verdict
+
+**Approve** — for exactly this state: commit `17d5d91` plus the modified `finish.c`, `setup.c`, `sst.h`, `tests/test_tuifmt.c`, `tui.c`, `tui.h`, `tuifmt.c` as verified above. The root-cause fix is right, the flag's lifecycle is complete, the refactor is provably behavior-preserving, and the display no longer writes to game state. Finding 1 is worth adding before you commit — it is test-only, so if you add it, a re-run plus a glance at the new assertion is all that is needed rather than a fresh review of the C.</result>
+<usage><subagent_tokens>212974</subagent_tokens><tool_uses>24</tool_uses><duration_ms>505974</duration_ms></usage>
+</task-notification>
