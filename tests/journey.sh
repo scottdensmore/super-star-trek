@@ -158,6 +158,14 @@ if [ -n "$BUILD_TYPE" ] && [ "$BUILD_TYPE" != "Debug" ]; then
 	fi
 fi
 
+# The game has to finish because the journey finished, not because the
+# script ran dry. Both endings print the farewell, so without this a
+# journey that stops short -- an input desync, a prompt that stopped
+# consuming -- would read as a pass.
+if grep -q "Transmission ends" "$out"; then
+	fail "the game ran out of input before the journey ended"
+fi
+
 # The farewell has to be the end of the game, not merely present.
 last=$(grep -v '^[[:space:]]*$' "$out" | tail -n 1)
 case "$last" in

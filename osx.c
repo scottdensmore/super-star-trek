@@ -43,7 +43,13 @@ int getch(void) {
 	newstate.c_lflag &= ~ICANON;
 	newstate.c_lflag &= ~ECHO;
 	tcsetattr(0, TCSANOW,  &newstate);
-	read(0, &chbuf, 1);
+	/* At end of input there is no keypress to report; say so rather
+	   than handing back whatever was on the stack. Play continues
+	   here, unlike readinput(), which ends the session: this is the
+	   paging prompt, and quitting from it would cut off end-of-game
+	   output mid-score. The session ends at the next real prompt. */
+	if (read(0, &chbuf, 1) != 1)
+		chbuf[0] = '\0';
 	tcsetattr(0, TCSANOW, &oldstate);
         return chbuf[0];
 }

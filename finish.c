@@ -3,13 +3,11 @@
 #include <string.h>
 #include <time.h>
 
-/* Read one line of user input, in whichever mode is active. */
+/* Read one line of user input, without the trailing newline. */
 static void readline(char *buf, int buflen) {
-	if (tui_active)
-		tui_readline(buf, buflen);
-	else
-		fgets(buf, buflen, stdin);
-	buf[strlen(buf)-1] = '\0';
+	readinput(buf, buflen);
+	if (buf[0] != 0 && buf[strlen(buf)-1] == '\n')
+		buf[strlen(buf)-1] = '\0';
 }
 
 void dstrct() {
