@@ -23,6 +23,60 @@ int condition_now(void) {
 	return IHGREEN;
 }
 
+/* Classify a cell the panel is about to draw, by the character itself.
+ *
+ * Taking the character rather than the quadrant contents is what keeps
+ * colour honest: a cell the sensors are hiding has already become '-'
+ * by the time it gets here, so there is nothing left to leak. */
+int cell_class(char c) {
+	switch (c) {
+		case IHK: case IHC: case IHS: case IHR: case IHT:
+			return CELL_HOSTILE;
+		case IHE: case IHF:	return CELL_SHIP;
+		case IHB:		return CELL_BASE;
+		case IHSTAR:		return CELL_STAR;
+		case IHP:		return CELL_PLANET;
+		case IHWEB:		return CELL_WEB;
+		case IHQUEST:		return CELL_THING;
+		/* A black hole (IHBLANK) is deliberately absent: it shows as
+		   empty space on a short-range scan, which is the whole trap.
+		   Marking it would change what the game tells the player, not
+		   how it looks. */
+		case '-':		return CELL_HIDDEN;
+		default:		return CELL_PLAIN;
+	}
+}
+
+/* Whether a status line is worth reading twice: the fields that tell a
+ * player something is wrong, and the two that say it is not. */
+int status_class(int i) {
+	switch (i) {
+		case 2:		/* condition */
+			if (condit == IHDOCKED) return STAT_DOCKED;
+			switch (condition_now()) {
+				case IHRED:	return STAT_BAD;
+				case IHYELLOW:	return STAT_WARN;
+				default:	return STAT_GOOD;
+			}
+		case 4:		/* life support */
+			if (damage[DLIFSUP] == 0.0) return STAT_GOOD;
+			return condit == IHDOCKED ? STAT_WARN : STAT_BAD;
+		case 8:		/* shields */
+			if (damage[DSHIELD] != 0) return STAT_BAD;
+			return shldup ? STAT_GOOD : STAT_WARN;
+		case 10:	/* time left */
+			/* The one number nothing else warns about: running the
+			   clock out loses the game, and no event or line of
+			   prose ever mentions it approaching. */
+			if (intime <= 0.0) return STAT_PLAIN;
+			if (d.remtime < 0.10*intime) return STAT_BAD;
+			if (d.remtime < 0.20*intime) return STAT_WARN;
+			return STAT_PLAIN;
+		default:
+			return STAT_PLAIN;
+	}
+}
+
 void fmt_quad_line(int i, char *buf) {
 	char *cp = buf;
 	int j, row;
