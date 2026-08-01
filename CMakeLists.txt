@@ -60,6 +60,9 @@ set_tests_properties(journey-tui PROPERTIES
 add_test(NAME eof COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/eof.sh $<TARGET_FILE:sst>)
 set_tests_properties(eof PROPERTIES TIMEOUT 150)
 
+add_test(NAME help COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/help.sh $<TARGET_FILE:sst>)
+set_tests_properties(help PROPERTIES TIMEOUT 120)
+
 add_test(NAME instructions
          COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/instructions.sh
                  ${CMAKE_CURRENT_SOURCE_DIR})

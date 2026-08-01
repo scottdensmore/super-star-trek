@@ -175,10 +175,23 @@ static void helpme(void) {
 
 	do {
 		if (linebuf[0]!=12) { // ignore page break lines 
-			linebuf[strlen(linebuf)-1] = '\0'; // No \n at end
+			/* sst.doc has CRLF endings. Dropping only the \n
+			   leaves a \r, and in the full-screen display that
+			   returns the cursor to column 0 so the following
+			   newline wipes the line that was just drawn --
+			   which is why help used to come out blank there. */
+			char *end = linebuf + strlen(linebuf);
+			while (end > linebuf && (end[-1] == '\n' || end[-1] == '\r'))
+				*--end = '\0';
 			prout(linebuf);
 		}
-		fgets(linebuf,132,fp);
+		/* A topic with no ****** terminator would otherwise
+		   reprint its last line for ever. Say so, the way the
+		   other two ways this can fail already do. */
+		if (fgets(linebuf,132,fp) == NULL) {
+			prout("Spock- \"Captain, the rest of that entry is missing from the computer.\"");
+			break;
+		}
 	} while (strstr(linebuf, "******")==NULL);
 	fclose(fp);
 }
@@ -582,7 +595,16 @@ void readinput(char *buf, int buflen) {
 		got = tui_readline(buf, buflen);
 	else
 		got = fgets(buf, buflen, stdin) != NULL;
-	if (got) return;
+	if (got) {
+		/* Hand the line back with nothing trailing. \r as well as
+		   \n: a script written on Windows would otherwise have
+		   every command rejected, and the carriage return behind
+		   that does not show up in the error the player is given. */
+		char *end = buf + strlen(buf);
+		while (end > buf && (end[-1] == '\n' || end[-1] == '\r'))
+			*--end = '\0';
+		return;
+	}
 
 	tui_shutdown();
 	linecount = 0;		/* don't page on the way out */
@@ -615,8 +637,6 @@ int scan(void) {
 			return IHEOL;
 		}
 		readinput(line, sizeof(line));
-		if (line[0] != 0 && line[strlen(line)-1] == '\n')
-			line[strlen(line)-1] = '\0';
 		linep = line;
 	}
 	// Skip leading white space

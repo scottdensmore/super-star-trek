@@ -141,6 +141,16 @@ if tr -cd '\033' < "$out" | grep -q .; then
 	fail "escape sequences leaked into plain-mode output"
 fi
 
+# A line ending in a carriage return is a line-ending leak from a file
+# the game read. Harmless-looking in plain mode, but under curses the
+# CR sends the cursor home and the newline then wipes the line -- which
+# is how the whole in-game manual once came out blank. The pager's own
+# "\r<spaces>\r" wipe does end a line, so drop that shape first.
+CR=$(printf '\r')
+if sed "s/$CR *$CR\$//" "$out" | grep -q "$CR\$"; then
+	fail "a line ends with a carriage return -- CRLF leaking from a file the game read"
+fi
+
 # Asking for -t without a terminal must say so, not silently ignore the
 # flag: without this the fallback notice could be deleted and the test
 # would still pass.

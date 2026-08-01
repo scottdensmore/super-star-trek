@@ -3,13 +3,6 @@
 #include <string.h>
 #include <time.h>
 
-/* Read one line of user input, without the trailing newline. */
-static void readline(char *buf, int buflen) {
-	readinput(buf, buflen);
-	if (buf[0] != 0 && buf[strlen(buf)-1] == '\n')
-		buf[strlen(buf)-1] = '\0';
-}
-
 void dstrct() {
 	/* Finish with a BANG! */
 	chew();
@@ -447,7 +440,7 @@ void plaque(void) {
 	
 	while (fp == NULL) {
 		proutf("File or device name for your plaque:");
-		readline(winner, 128);
+		readinput(winner, 128);
 		fp = fopen(winner, "w");
 		if (fp==NULL) {
 			proutf("Invalid name.\n");
@@ -455,7 +448,7 @@ void plaque(void) {
 	}
 
 	proutf("Enter name to go on plaque (up to 30 characters):");
-	readline(winner, 128);
+	readinput(winner, 128);
 	winner[30] = '\0';
 	nskip = 64 - strlen(winner)/2;
 
