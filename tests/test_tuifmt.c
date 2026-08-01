@@ -14,6 +14,14 @@ static void check(const char *what, const char *got, const char *want) {
 	}
 }
 
+static void checkint(const char *what, int got, int want) {
+	if (got != want) {
+		failures++;
+		printf("FAIL %s\n  want: %d ('%c')\n  got:  %d ('%c')\n",
+		       what, want, want, got, got);
+	}
+}
+
 static void clearquad(char fill) {
 	int i, j;
 	for (i = 0; i <= 10; i++)
@@ -24,6 +32,8 @@ static void clearquad(char fill) {
 static void basestate(void) {
 	clearquad(IHDOT);
 	memset(damage, 0, sizeof(damage));
+	memset(d.galaxy, 0, sizeof(d.galaxy));
+	memset(d.newstuf, 0, sizeof(d.newstuf));
 	coordfixed = 0;
 	condit = IHGREEN;
 	quadx = 5; quady = 3;
@@ -127,12 +137,47 @@ static void test_status_lines(void) {
 	check("time left", buf, "Time Left     12.35");
 }
 
+/* condition_now() answers without writing to the game state, so a
+ * panel repaint mid-turn cannot undo a condition the game set itself. */
+static void test_condition_now(void) {
+	char buf[FMTBUFLEN];
+	basestate();
+	checkint("quiet quadrant is green", condition_now(), IHGREEN);
+
+	energy = 999.0;
+	checkint("low energy is yellow", condition_now(), IHYELLOW);
+
+	d.galaxy[quadx][quady] = 100;
+	checkint("enemies beat low energy", condition_now(), IHRED);
+
+	energy = 2871.0;
+	checkint("enemies alone are red", condition_now(), IHRED);
+	d.galaxy[quadx][quady] = 0;
+
+	d.newstuf[quadx][quady] = 10;
+	checkint("newly-arrived enemies are red", condition_now(), IHRED);
+	d.newstuf[quadx][quady] = 0;
+
+	/* Reading it must not have written it. */
+	condit = IHDOCKED;
+	(void)condition_now();
+	checkint("condit is left alone", condit, IHDOCKED);
+
+	/* Docked is where the ship is, not something to recompute --
+	   srscan shows DOCKED here, so the panel has to as well. */
+	fmt_status_line(2, buf);
+	check("condition docked", buf, "Condition     DOCKED");
+}
+
 static void test_status_variants(void) {
 	char buf[FMTBUFLEN];
 	basestate();
-	condit = IHRED;
+	/* The panel works the condition out from the game the way srscan
+	   does, so drive it with enemies rather than assigning condit. */
+	d.galaxy[quadx][quady] = 100;
 	fmt_status_line(2, buf);
 	check("condition red", buf, "Condition     RED");
+	d.galaxy[quadx][quady] = 0;
 
 	shldup = TRUE;
 	fmt_status_line(8, buf);
@@ -155,6 +200,7 @@ int main(void) {
 	test_quad_masks_when_sensors_damaged();
 	test_quad_coordfixed_masks_around_ship();
 	test_quad_coordfixed_flips_rows();
+	test_condition_now();
 	test_status_lines();
 	test_status_variants();
 	if (failures) {

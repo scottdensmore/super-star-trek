@@ -12,6 +12,9 @@ void fmt_status_line(int i, char *buf);	/* i=1..10, srscan status fields */
 
 /* Curses backend (tui.c) */
 EXTERN int tui_active;	/* TUI mode is on and curses is running */
+EXTERN int tui_ingame;	/* a game is set up, so the panels have something
+			   to show; false through the setup questions,
+			   including a second game's */
 
 int stdio_is_terminal(void);	/* osx.c; stdin and stdout are both ttys */
 

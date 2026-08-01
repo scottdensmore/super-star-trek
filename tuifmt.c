@@ -7,6 +7,22 @@
  * so the panels never show the player more than a scan would.
  * Kept free of curses calls so they can be unit tested. */
 
+/* The condition the ship is in, worked out without writing it down.
+ *
+ * newcnd() stores the same answer in the global, which is fine when
+ * the player asks for a scan between turns. The panel repaints in the
+ * middle of one, and moving.c sets RED by hand before a tractor beam
+ * takes hold -- a refresh that recomputed the global would hand that
+ * back to GREEN just as the game decided the player was in trouble.
+ * It lives here so the formatters stay testable on their own. */
+int condition_now(void) {
+	if (d.galaxy[quadx][quady] > 99 || d.newstuf[quadx][quady] > 9)
+		return IHRED;
+	if (energy < 1000.0)
+		return IHYELLOW;
+	return IHGREEN;
+}
+
 void fmt_quad_line(int i, char *buf) {
 	char *cp = buf;
 	int j, row;
@@ -42,7 +58,9 @@ void fmt_status_line(int i, char *buf) {
 			sprintf(buf, "Stardate      %.1f", d.date);
 			break;
 		case 2:
-			switch (condit) {
+			/* Docked is a fact about where the ship is, not a
+			   condition to recompute. */
+			switch (condit == IHDOCKED ? IHDOCKED : condition_now()) {
 				case IHRED: cp = "RED"; break;
 				case IHGREEN: cp = "GREEN"; break;
 				case IHYELLOW: cp = "YELLOW"; break;
