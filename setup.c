@@ -1,5 +1,6 @@
 #include <time.h>
 #include "sst.h"
+#include "tui.h"
 
 void prelim(void) {
 	skip(2);
@@ -215,6 +216,9 @@ void setup(void) {
 	int i,j, krem, klumper;
 	int ix, iy;
 	alldone = gamewon = 0;
+	/* Blank the panels through the setup questions: until this
+	   finishes, the only game state around is the last game's. */
+	tui_ingame = FALSE;
 #ifdef DEBUG
 	idebug = 0;
 #endif
@@ -407,6 +411,7 @@ void setup(void) {
 	skip(1);
 	newqad(0);
 	if (nenhere) shldup=1.0;
+	tui_ingame = TRUE;	/* the panels have a game to show now */
 	if (neutz) attack(0);	// bad luck to start in a Romulan Neutral Zone
 }
 
@@ -442,6 +447,7 @@ int choose(void) {
 			randomize();
 			Rand(); Rand(); Rand(); Rand();
 			if (!alldone) thawed = 1; // No plaque if not finished
+			tui_ingame = TRUE;	/* loaded; report(1) may page */
 			report(1);
 			return TRUE;
 		}
@@ -528,10 +534,7 @@ void dropin(int iquad, int *ix, int *iy) {
 }
 
 void newcnd(void) {
-	condit = IHGREEN;
-	if (energy < 1000.0) condit = IHYELLOW;
-	if (d.galaxy[quadx][quady] > 99 || d.newstuf[quadx][quady] > 9)
-		condit = IHRED;
+	condit = condition_now();
 }
 
 

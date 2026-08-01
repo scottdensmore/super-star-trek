@@ -83,9 +83,10 @@ void tui_refresh_panels(void) {
 	werase(wstat);
 	box(wstat, 0, 0);
 	mvwaddstr(wstat, 0, 2, " Status ");
-	if (d.date > 0.0) {	/* nothing to show until the game is set up */
-		if (condit != IHDOCKED)
-			newcnd();	/* srscan does the same before showing Condition */
+	/* Nothing to show before a game is set up or after one ends; the
+	   formatters work the condition out for themselves, so nothing
+	   here writes to the game state. */
+	if (tui_ingame) {
 		mvwprintw(wquad, 0, 2, " Quadrant %d - %d ", quadx, quady);
 		for (i = 0; i <= 10; i++) {
 			fmt_quad_line(i, buf);
@@ -140,7 +141,10 @@ int tui_readline(char *buf, int buflen) {
 }
 
 int tui_getch(void) {
-	wrefresh(wmsg);
+	/* Same as before a typed answer: a paging prompt is a moment the
+	   player is looking at the screen, so the panels beside the text
+	   should not be older than it. */
+	tui_refresh_panels();
 	return wgetch(wmsg);
 }
 

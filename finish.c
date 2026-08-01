@@ -75,6 +75,12 @@ void kaboom(void) {
 void finish(FINTYPE ifin) {
 	int igotit = 0;
 	alldone = 1;
+	/* However this ended, the panels now describe a game that is
+	   over -- and after a destruction they would describe a ship
+	   that no longer exists. Let the epilogue have the screen. */
+	tui_ingame = FALSE;
+	if (tui_active) tui_refresh_panels();	/* clear them now, not at
+						   the next prompt */
 	skip(3);
 	proutf("It is stardate %.1f .\n\n", d.date);
 	switch (ifin) {
