@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "e5295c4c139b",
+  "strategy": "manual-commit",
+  "branch": "test/tui-ci-coverage",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "CMakeLists.txt",
+    "tests/tui.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/e5/295c4c139b/0/metadata.json",
+      "transcript": "/e5/295c4c139b/0/full.jsonl",
+      "compact_transcript": "/e5/295c4c139b/0/transcript.jsonl",
+      "content_hash": "/e5/295c4c139b/0/content_hash.txt",
+      "prompt": "/e5/295c4c139b/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1457,
+    "cache_creation_tokens": 4013457,
+    "cache_read_tokens": 230364731,
+    "output_tokens": 596606,
+    "api_call_count": 778
+  }
+}
