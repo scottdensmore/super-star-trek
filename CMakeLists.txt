@@ -66,8 +66,13 @@ set_tests_properties(help PROPERTIES TIMEOUT 120)
 # The only test that drives curses itself, through a pty that tmux
 # provides. It reports SKIPPED rather than passing where tmux is
 # missing, so a machine without it cannot look like coverage.
+# The timeout is far above the ~11s it takes to pass: every check
+# inside polls before giving up, so a broadly broken TUI spends its
+# time timing out one poll at a time. Better that it reaches the end
+# and names each failure than that ctest kills it and reports only
+# that something hung.
 add_test(NAME tui COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/tui.sh $<TARGET_FILE:sst>)
-set_tests_properties(tui PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 180)
+set_tests_properties(tui PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300)
 
 add_test(NAME instructions
          COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/instructions.sh
