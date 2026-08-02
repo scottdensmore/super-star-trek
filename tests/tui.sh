@@ -2,9 +2,17 @@
 # Drives the full-screen display through a real terminal.
 #
 # Everything else in the suite talks to the game through pipes, which
-# is enough for the fallback path but never exercises curses itself.
+# reaches the no-terminal fallback but never exercises curses itself.
 # This one runs the game inside tmux so there is a genuine pty, and
 # reads the screen back the way a player would see it.
+#
+# It covers the ways into a running game -- answering the setup
+# questions, giving the answers on the command line, thawing a saved
+# game, and starting a second game after quitting -- because each of
+# them arrives at the panels differently. It also covers the two
+# refusals only a real terminal can produce: one curses cannot drive,
+# and one too small for the panels. Both have to fall back to the
+# classic display and keep playing.
 #
 # The size matters. 80x24 is what most terminal emulators open at and
 # 72x24 is the smallest the TUI accepts; at both the message window is
@@ -66,10 +74,20 @@ cleanup() {
 	tm kill-server 2>/dev/null
 	rm -f "${TMUX_TMPDIR:-/tmp}/tmux-$(id -u)/$socket"
 }
-trap 'cleanup' EXIT
-trap 'cleanup; exit 130' INT
-trap 'cleanup; exit 143' TERM
-trap 'cleanup; exit 129' HUP
+
+# The saved-game cases write a .trk file, which the game puts in the
+# directory it is playing in. That must not be the source tree.
+work=$(mktemp -d "${TMPDIR:-/tmp}/sst-tui.XXXXXX")
+if [ -z "${work:-}" ] || [ ! -d "$work" ]; then
+	echo "FAIL: could not create a temporary directory" >&2
+	exit 1
+fi
+
+finish() { cleanup; rm -rf "$work"; }
+trap 'finish' EXIT
+trap 'finish; exit 130' INT
+trap 'finish; exit 143' TERM
+trap 'finish; exit 129' HUP
 
 fails=0
 fail() {
@@ -79,9 +97,30 @@ fail() {
 
 screen() { tm capture-pane -t "$pane" -p 2>/dev/null; }
 
+# The same, with whatever has scrolled off. Only meaningful once the
+# game has fallen back to the classic display: curses runs on the
+# alternate screen, which keeps no history.
+scrollback() { tm capture-pane -t "$pane" -p -S - 2>/dev/null; }
+
+wait_scrollback() {
+	i=0
+	while [ "$i" -lt 80 ]; do
+		if scrollback | grep -qF "$1"; then return 0; fi
+		i=$((i + 1))
+		sleep 0.1
+	done
+	return 1
+}
+
 dump() {
 	printf '  --- screen ---\n' >&2
 	screen | sed 's/^/  | /' >&2
+}
+
+# For failures where the evidence may be exactly what scrolled away.
+dump_scrollback() {
+	printf '  --- screen, with scrollback ---\n' >&2
+	scrollback | sed 's/^/  | /' >&2
 }
 
 # Wait until the screen shows $1, up to about eight seconds. Polling
@@ -117,21 +156,109 @@ want() {
 	screen | grep -qF "$2" || { fail "$1"; dump; }
 }
 
+# Wait for $2, or fail with $1 and the screen attached. Bare
+# `wait_for ... || fail ...` reports the message and nothing else,
+# which in a CI log is the least useful half of the story.
+expect() {
+	wait_for "$2" || { fail "$1"; dump; }
+}
+
+# The same for a regular expression.
+expect_re() {
+	i=0
+	while [ "$i" -lt 80 ]; do
+		screen | grep -qE "$2" && return 0
+		i=$((i + 1))
+		sleep 0.1
+	done
+	fail "$1"
+	dump
+}
+
+# And the same confined to the status panel, which starts one column
+# past the quadrant panel. The game prints "Stardate" into the message
+# window too -- in the briefing, and in any `status` or `srscan` -- so
+# an unconfined search would quietly start passing on that instead.
+expect_status() {
+	i=0
+	while [ "$i" -lt 80 ]; do
+		screen | cut -c30- | grep -qF "$2" && return 0
+		i=$((i + 1))
+		sleep 0.1
+	done
+	fail "$1"
+	dump
+}
+
+# The quadrant panel's title carries coordinates only while a game is
+# set up; without one the box keeps its bare " Quadrant " label, so a
+# fixed-string match for that would pass on the empty frame it is
+# supposed to catch.
+#
+# Matched on the first line of the screen, which is where that border
+# sits. Anywhere would also match the message window: the briefing ends
+# by saying which quadrant the Enterprise is currently in, so an
+# unanchored search passes even with the panel title gone.
+#
+# Polled for the same reason wait_gone is: the prompt is written before
+# the panels beside it are redrawn, so a single look the moment
+# COMMAND> appears can catch them still blank.
+want_quadtitle() {
+	i=0
+	while [ "$i" -lt 40 ]; do
+		screen | head -1 | grep -qE ' Quadrant [0-9]+ - [0-9]+ ' &&
+			return 0
+		i=$((i + 1))
+		sleep 0.1
+	done
+	fail "$1"
+	dump
+}
+
 unwanted() {
 	if screen | grep -qF "$2"; then fail "$1"; dump; fi
 }
+
+# Wait for $2 to leave the screen. A prompt is printed before the
+# panels beside it are redrawn, so asking the instant the text appears
+# can catch the previous game still framed for a few milliseconds --
+# a race that would report a bug nobody has. Something that is meant to
+# be gone goes within the timeout; something that is not, never does.
+wait_gone() {
+	i=0
+	while [ "$i" -lt 40 ]; do
+		screen | grep -qF "$2" || return 0
+		i=$((i + 1))
+		sleep 0.1
+	done
+	fail "$1"
+	dump
+}
+
+# Long-range scan says something the always-on panels never do, so
+# waiting for it proves a command was read whole. Damaged sensors
+# answer differently and that proves it just as well -- what a
+# truncated command gets is UNRECOGNIZED.
+LRSCAN='[Ll]ong-range scan for Quadrant|LONG-RANGE SENSORS DAMAGED'
 
 # tmux takes a shell command line, not an argument list, so the path
 # has to survive being quoted into one.
 sstq=$(printf "%s" "$SST" | sed "s/'/'\\\\''/g")
 
 # Start the game on a terminal $1 wide by $2 tall, passing $3 (if any)
-# on the command line. It reads sst.doc from the current directory, and
-# dies with the session.
+# on the command line and running it under $4 (if any, an `env ...`
+# prefix). It reads sst.doc from the current directory, and dies with
+# the session.
+
+# Where the game plays. The source tree by default, because `help`
+# reads sst.doc from the current directory; the saved-game cases below
+# move it to a scratch directory, which they can because they never
+# ask for help.
+startdir="$srcdir"
 start() {
 	cleanup
-	tm new-session -d -x "$1" -y "$2" -s "$session" -c "$srcdir" \
-		"'$sstq' -t ${3:-}; sleep 30" 2>/dev/null || {
+	tm new-session -d -x "$1" -y "$2" -s "$session" -c "$startdir" \
+		"${4:-} '$sstq' -t ${3:-}; sleep 30" 2>/dev/null || {
 		echo "FAIL: could not start a ${1}x${2} tmux session" >&2
 		exit 1
 	}
@@ -179,7 +306,7 @@ done
 # Carrying on from the 72x24 game above: the rest of setup, then the
 # briefing, which does page.
 tm send-keys -t "$pane" 'short' Enter
-wait_for 'Novice, Fair, Good, Expert' || fail "setup did not reach the skill question"
+expect "setup did not reach the skill question" 'Novice, Fair, Good, Expert'
 tm send-keys -t "$pane" 'novice' Enter
 sleep 0.5
 tm send-keys -t "$pane" 'xyz' Enter
@@ -222,15 +349,11 @@ while [ "$i" -lt 16 ]; do
 done
 
 # Spaces get it moving again -- however many pages the entry runs to.
-to_command || fail "the manual never finished paging"
+to_command || { fail "the manual never finished paging"; dump; }
 
-# The game is still listening. Long-range scan says something the
-# always-on panels never do, so this cannot pass on their text.
+# The game is still listening.
 tm send-keys -t "$pane" 'lrscan' Enter
-if ! wait_for 'Long-range scan for Quadrant'; then
-	fail "the game did not carry on after the paging prompt"
-	dump
-fi
+expect_re "the game did not carry on after the paging prompt" "$LRSCAN"
 
 # --- setup answered on the command line ------------------------------
 # The same bug reaches further than the banner. With the setup answers
@@ -243,24 +366,179 @@ fi
 # decides how much further past the threshold it goes, and rand()
 # differing between C libraries can blunt that but not invert it. A
 # pause before the player has touched the keyboard is wrong either way.
+#
+# Played in the temporary directory: the replay below answers the
+# score-recording question, and answering it the other way would write
+# a save file into whatever directory the game is running in.
+startdir="$work"
+argv_ok=""
 start 80 24 'tournament 5 long emeritus xyz'
 if ! wait_for 'COMMAND'; then
 	fail "argv setup: the game never reached its command prompt"
 	dump
 else
+	argv_ok=yes
 	unwanted "argv setup: paused before the player had typed anything" "CONTINUE"
 	unwanted "argv setup: paused before the player had typed anything" "HIT SPACE BAR"
-	# Long-range scan rather than short: its heading appears only in
+	# Long-range scan rather than short: what it says appears only in
 	# the message window, so waiting for it proves the command was
 	# read whole. Sampling the screen after a fixed sleep instead
 	# would pass on a slow machine that had not repainted yet.
 	tm send-keys -t "$pane" 'lrscan' Enter
-	if ! wait_for 'Long-range scan for Quadrant'; then
-		fail "argv setup: the first command was not accepted"
-		dump
-	fi
+	expect_re "argv setup: the first command was not accepted" "$LRSCAN"
 	unwanted "argv setup: the first command lost a character" "UNRECOGNIZED"
 fi
+
+# --- a second game gets its own panels -------------------------------
+# Carrying the same session on through quit and into a replay. The
+# panels are wired to a flag that says a game is set up; getting that
+# wrong showed the next player the last player's quadrant, or an empty
+# frame around a game that was running (#21).
+replay_case() {
+	tm send-keys -t "$pane" 'quit' Enter
+	if ! wait_for 'score recorded'; then
+		fail "replay: quit did not reach the end-of-game questions"
+		dump
+		return
+	fi
+	# Nothing is asserted about the panels here: `quit` sets alldone
+	# by hand rather than going through finish(), so it never clears
+	# the flag, and the game you just left stays framed behind these
+	# questions. finish() blanks them deliberately -- the two paths
+	# disagree, but that is the game's business, not this test's.
+	#
+	# Answered "no" deliberately: "yes" writes a save file and stops
+	# to ask what to call it, stranding the test at that prompt.
+	tm send-keys -t "$pane" 'n' Enter
+	expect "replay: never asked about another game" 'play again'
+	tm send-keys -t "$pane" 'y' Enter
+	if ! wait_for 'regular, tournament, or frozen'; then
+		fail "replay: the second game never started"
+		dump
+		return
+	fi
+	# And still blank through the second game's setup questions, which
+	# is where the last captain's quadrant used to be framed above
+	# someone else's answers (#21). setup() is what clears it.
+	wait_gone "replay: the last game is still on the panels during setup" "Stardate"
+	# No banner this time, so nothing has overflowed the window -- but
+	# the pager stays armed from the first game, and a pause here
+	# would eat this answer just the same.
+	unwanted "replay: paused before the second game's first question" "CONTINUE"
+
+	tm send-keys -t "$pane" 'regular' Enter
+	expect "replay: the second game lost the first answer" 'Short, Medium, or Long'
+	tm send-keys -t "$pane" 'short' Enter
+	expect "replay: setup did not reach the skill question" 'Novice, Fair, Good, Expert'
+	tm send-keys -t "$pane" 'novice' Enter
+	sleep 0.5
+	tm send-keys -t "$pane" 'xyz' Enter
+	if ! to_command; then
+		fail "replay: the second game never reached its prompt"
+		dump
+		return
+	fi
+	# And back on for the new one.
+	want_quadtitle "replay: the quadrant panel is not showing a quadrant"
+	expect_status "replay: the status panel is empty" "Stardate"
+}
+
+# Only if there is a game to quit out of; otherwise 'quit' goes into
+# whatever prompt is up and buries the real failure in noise.
+[ -n "$argv_ok" ] && replay_case
+startdir="$srcdir"
+
+# --- a game frozen and thawed again -----------------------------------
+# Thawing is its own way into a running game: it sets the flag the
+# panels key off and then prints a report that can page, all before the
+# player has typed anything. Played in a temporary directory because
+# freezing writes a save file next to wherever the game is running.
+startdir="$work"
+start 80 24 'tournament 9 short novice pw'
+if ! to_command; then
+	fail "freeze: the game never reached its command prompt"
+	dump
+else
+	# Freezing says nothing on success, as it always has, so the file
+	# is the only evidence there is. -s, not -f: the file exists from
+	# the fopen(), but the whole 4KB payload lands in one flush at the
+	# fclose(), and starting the next session kills this one. Waiting
+	# for the game to answer again makes sure that has happened.
+	tm send-keys -t "$pane" 'freeze sav' Enter
+	i=0
+	while [ "$i" -lt 40 ] && [ ! -s "$work/sav.trk" ]; do
+		i=$((i + 1))
+		sleep 0.1
+	done
+	tm send-keys -t "$pane" 'lrscan' Enter
+	expect_re "freeze: the game stopped answering after freezing" "$LRSCAN"
+	if [ ! -s "$work/sav.trk" ]; then
+		fail "freeze: no save file was written"
+	else
+		start 80 24 'frozen sav'
+		if ! to_command; then
+			fail "thaw: the thawed game never reached its prompt"
+			dump
+		else
+			expect_status "thaw: the panels are not showing the thawed game" "Stardate"
+			want_quadtitle "thaw: the quadrant panel has no quadrant"
+			# The report printed on thawing can page, and this is
+			# the same before-the-player-has-typed moment that #17
+			# was about.
+			tm send-keys -t "$pane" 'lrscan' Enter
+			expect_re "thaw: the first command was not accepted" "$LRSCAN"
+			unwanted "thaw: the first command lost a character" "UNRECOGNIZED"
+
+			# Everything else here would still pass if the panels
+			# were painted once and never again, which is most of
+			# what the full-screen display is for. Warp factor is
+			# the cheapest thing to move: nothing else changes, no
+			# time passes, nothing shoots back. Done in this game
+			# rather than the emeritus one above because a setup
+			# attack there can leave the warp engines too damaged
+			# to accept the command at all.
+			want "the warp factor is not on the status panel" "Warp Factor   5.0"
+			tm send-keys -t "$pane" 'warp 4' Enter
+			expect "the status panel did not follow the game" "Warp Factor   4.0"
+		fi
+	fi
+fi
+startdir="$srcdir"
+
+# --- terminals the full-screen display cannot use --------------------
+# Only a pty reaches these. The piped journey covers the no-terminal
+# case; the terminfo probe and the size check need a real terminal that
+# curses can ask about and still turn down. Each has to fall back to the
+# classic display and keep playing rather than exit, hang, or draw a
+# screen that never fills in.
+#
+# $1 description, $2 cols, $3 rows, $4 expected notice, $5 env prefix.
+fallback() {
+	start "$2" "$3" '' "$5"
+	# Searched through the scrollback: the notice prints before the
+	# banner, and on a 20-row terminal there is not much room between
+	# them. A line added to the preamble later would push it off the
+	# visible screen and turn this into a mystery.
+	if ! wait_scrollback "$4"; then
+		fail "$1: no notice that the full-screen display was refused"
+		dump_scrollback
+		return
+	fi
+	unwanted "$1: drew the panels on a terminal it had refused" " Quadrant "
+	if ! wait_for 'regular, tournament, or frozen'; then
+		fail "$1: the classic display did not carry on to a prompt"
+		dump
+		return
+	fi
+	tm send-keys -t "$pane" 'regular' Enter
+	expect "$1: the classic display did not take an answer" 'Short, Medium, or Long'
+}
+
+# TERM=dumb is what Emacs' shell buffer sets: curses starts happily on
+# it and then cannot address the cursor, so the game would look hung.
+fallback "TERM=dumb" 80 24 "cannot do full-screen mode" 'env TERM=dumb'
+# Smaller than the panels need. 72x24 is the floor; 70x20 is under it.
+fallback "undersized terminal" 70 20 "Terminal too small" ''
 
 if [ "$fails" -ne 0 ]; then
 	printf '\n%d check(s) failed.\n' "$fails" >&2
