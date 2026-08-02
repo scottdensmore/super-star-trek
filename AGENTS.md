@@ -47,11 +47,27 @@ without `-DCMAKE_BUILD_TYPE=...` fails. Feature flags `-DSCORE -DCAPTURE
   exactly — it is the spec, including sensor-damage masking and the `-f`
   coordinate transposition (x is the column). Keep `tests/test_tuifmt.c` in
   sync (`ctest --test-dir build`).
-- Testing the TUI needs a pty: use tmux —
-  `tmux new-session -d -x 100 -y 30 -s t './build/sst -t; sleep 30'`, drive
-  with `tmux send-keys -t t 'cmd' Enter` (input is line-based; keys need
-  Enter), inspect with `tmux capture-pane -t t -p`. Never redirect the game's
-  stdout in the session — it breaks curses rendering.
+- Testing the TUI needs a pty: use tmux, and always on your own socket via
+  `-L`, with `-f /dev/null` so the config does not follow — `tmux -f /dev/null
+  -L sst new-session -d -x 100 -y 30 -s t './build/sst -t; sleep 30'`, drive
+  with `tmux -f /dev/null -L sst send-keys -t t 'cmd' Enter` (input is
+  line-based; keys need Enter), inspect with `capture-pane -t t -p`, and clean
+  up with `kill-server` on that same socket. Without `-f /dev/null` a setting
+  as ordinary as `base-index 1` renames the pane out from under you and every
+  capture comes back empty. The default socket is where the
+  human running you keeps their own work: on 2026-08-01 a review agent tidied up
+  after a TUI check with a bare `tmux kill-server` and destroyed a week-old
+  session of eight panes, including the agent's own parent. `-L` is what makes
+  that mistake impossible rather than merely discouraged — never issue a bare
+  `tmux kill-server`, and never `kill-session` a session you did not create.
+  Never redirect the game's stdout in the session — it breaks curses rendering.
+  `tests/tui.sh` does all of this automatically and is the place to add
+  coverage; it skips without tmux, but fails rather than skipping when `$CI` is
+  set.
+- Check the TUI at 80x24 and 72x24, not just at a comfortable size. 72x24 is
+  the smallest it accepts and 80x24 is what most terminals open at; the
+  message window is only ten lines at both, which is where the paging bugs
+  live.
 
 ## Development workflow
 

@@ -63,6 +63,12 @@ set_tests_properties(eof PROPERTIES TIMEOUT 150)
 add_test(NAME help COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/help.sh $<TARGET_FILE:sst>)
 set_tests_properties(help PROPERTIES TIMEOUT 120)
 
+# The only test that drives curses itself, through a pty that tmux
+# provides. It reports SKIPPED rather than passing where tmux is
+# missing, so a machine without it cannot look like coverage.
+add_test(NAME tui COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/tui.sh $<TARGET_FILE:sst>)
+set_tests_properties(tui PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 180)
+
 add_test(NAME instructions
          COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/instructions.sh
                  ${CMAKE_CURRENT_SOURCE_DIR})

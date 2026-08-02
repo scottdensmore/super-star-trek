@@ -26,11 +26,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install ncurses
+      # tmux gives tests/tui.sh the pty that curses needs. Without it
+      # that test reports SKIPPED and the job still goes green, so the
+      # only coverage of the full-screen display would quietly be none.
+      - name: Install ncurses and tmux
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libncurses-dev
+          sudo apt-get install -y --no-install-recommends libncurses-dev tmux
+
+      - name: Install tmux
+        if: runner.os == 'macOS'
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+        run: brew list tmux >/dev/null 2>&1 || brew install tmux
 
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
