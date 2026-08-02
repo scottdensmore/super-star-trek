@@ -13,6 +13,11 @@
 
 static char line[128], *linep = line;
 static int linecount;	/* for paging */
+/* The game has asked the player for a line at least once. Until then
+   it is still introducing itself -- and with the setup answers given
+   on the command line it reaches the briefing without the player
+   having touched the keyboard at all. See skip(). */
+static int prompted;
 
 static void clearscreen(void);
 
@@ -591,6 +596,8 @@ void chew2(void) {
 void readinput(char *buf, int buflen) {
 	int got;
 
+	prompted = TRUE;
+
 	if (tui_active)
 		got = tui_readline(buf, buflen);
 	else
@@ -734,7 +741,22 @@ void pause(int i) {
 void skip(int i) {
 	while (i-- > 0) {
 		linecount++;
-		if (linecount >= (tui_active ? tui_pageheight() : 23))
+		/* Paging holds output back so it cannot scroll away unread.
+		   Until the game has asked for a line there is nobody to hold
+		   it for, and the keystroke such a pause waits for is the
+		   first one the player will type, which it eats. That is not
+		   a corner: the startup banner overflows the message window
+		   on a 24-line terminal, and setup answers given on the
+		   command line run straight into the briefing, so it was the
+		   ordinary first move in -t. Letting that text scroll instead
+		   is what any terminal too small to hold it would do anyway.
+
+		   The gate is deliberately not conditional on tui_active: the
+		   reasoning holds in either display. It changes nothing in the
+		   plain one only because scan() zeroes linecount often enough
+		   that nothing printed before the first prompt comes near 23
+		   lines -- worth rechecking if the preamble ever grows. */
+		if (prompted && linecount >= (tui_active ? tui_pageheight() : 23))
 			pause(0);
 		else if (tui_active)
 			tui_puts("\n");
