@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "73e4cfdebf89",
+  "strategy": "manual-commit",
+  "branch": "fix/tui-briefing-paging",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "battle.c",
+    "setup.c",
+    "sst.c",
+    "tests/journey.sh",
+    "tests/tui.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/73/e4cfdebf89/0/metadata.json",
+      "transcript": "/73/e4cfdebf89/0/full.jsonl",
+      "compact_transcript": "/73/e4cfdebf89/0/transcript.jsonl",
+      "content_hash": "/73/e4cfdebf89/0/content_hash.txt",
+      "prompt": "/73/e4cfdebf89/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1575,
+    "cache_creation_tokens": 4925435,
+    "cache_read_tokens": 247700245,
+    "output_tokens": 647003,
+    "api_call_count": 843
+  }
+}
