@@ -780,11 +780,25 @@ void prout(char *s) {
 
 void proutf(const char *fmt, ...) {
 	char buf[512];
+	char *p, *nl;
 	va_list ap;
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	proutn(buf);
+	/* A line at a time, so the newlines written inside the string
+	   count towards paging like any others. Handing the whole
+	   thing to proutn() moves the screen on without moving the
+	   pager, which is how the briefing -- the one place the game
+	   states the mission and the deadline -- came to scroll away
+	   unread in a ten-line message window. */
+	p = buf;
+	while ((nl = strchr(p, '\n')) != NULL) {
+		*nl = '\0';
+		proutn(p);
+		skip(1);
+		p = nl + 1;
+	}
+	if (*p != '\0') proutn(p);
 }
 
 void prouts(char *s) {

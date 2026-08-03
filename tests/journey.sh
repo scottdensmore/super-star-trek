@@ -160,12 +160,23 @@ case " $GAME_ARGS " in
 	*" -t "*) want "no fallback notice for -t" "classic display" ;;
 esac
 
-# A release build must never show the Debug-only setup chatter. Not
-# anchored: the first such line lands on the end of a prompt line.
-if [ -n "$BUILD_TYPE" ] && [ "$BUILD_TYPE" != "Debug" ]; then
-	if grep -q 'DEBUG:' "$out"; then
-		fail "debug output leaked into a $BUILD_TYPE build"
-	fi
+# No build may show the developer chatter to a player who did not ask
+# for it -- the "debug" password is what asks. This once printed in
+# every debug build and, in one case, in release builds too; harmless-
+# looking until proutf began counting the newlines it writes, at which
+# point it started costing whole pages of the briefing and of a fight.
+# Not anchored: the first such line lands on the end of a prompt line.
+#
+# Opportunistic, because this journey plays a random galaxy: whether
+# any base placement needs a second try is chance. It printed in ten of
+# twelve games measured, so it does bite -- but a seeded journey (#12)
+# is what would make it certain, and the combat check below needs one
+# to bite at all, since nothing here takes a hit.
+if grep -q 'DEBUG:' "$out"; then
+	fail "developer chatter printed for a player who did not ask for it"
+fi
+if grep -qE 'Hit [0-9][^ ]* energy|Prob = [0-9]+ \(' "$out"; then
+	fail "combat diagnostics printed for a player who did not ask for them"
 fi
 
 # The game has to finish because the journey finished, not because the
