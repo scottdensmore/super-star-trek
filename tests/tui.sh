@@ -156,6 +156,26 @@ want() {
 	screen | grep -qF "$2" || { fail "$1"; dump; }
 }
 
+# Like to_command, but reports in $saw whether $1 was on screen at any
+# point along the way. For text meant to arrive and then scroll on:
+# looking only once the prompt is back asks whether it is *still*
+# there, which depends on how much the game had to say afterwards.
+saw=""
+to_command_seeing() {
+	saw=""
+	i=0
+	while [ "$i" -lt 40 ]; do
+		screen | grep -qF "$1" && saw=yes
+		screen | grep -qF 'COMMAND' && return 0
+		if screen | grep -qE 'CONTINUE|HIT SPACE BAR'; then
+			tm send-keys -t "$pane" Space
+		fi
+		i=$((i + 1))
+		sleep 0.25
+	done
+	return 1
+}
+
 # Wait for $2, or fail with $1 and the screen attached. Bare
 # `wait_for ... || fail ...` reports the message and nothing else,
 # which in a CI log is the least useful half of the story.
@@ -310,11 +330,31 @@ expect "setup did not reach the skill question" 'Novice, Fair, Good, Expert'
 tm send-keys -t "$pane" 'novice' Enter
 sleep 0.5
 tm send-keys -t "$pane" 'xyz' Enter
-if ! to_command; then
+
+# The briefing is the only place the game states the mission and the
+# deadline, and at novice skill it is the tutorial. It is longer than
+# the ten-line window, so it has to stop and let itself be read --
+# it used to print in one go and leave the player looking at its last
+# four lines, because the newlines inside it were not counted.
+#
+# Only checked at this size. Both sizes in the loop above are 24 rows,
+# so the message window is ten lines in each and the width has nothing
+# to do with it.
+expect "the briefing scrolled past its opening" 'The Federation is being attacked by'
+# And it waits there to be read, rather than the opening merely
+# flickering past on the way to the prompt.
+sleep 0.5
+want "the briefing did not wait to be read" "SPACE BAR"
+want "the briefing's opening did not stay on screen" 'The Federation is being attacked by'
+
+if ! to_command_seeing 'Good Luck!'; then
 	fail "the game never reached its command prompt"
 	dump
 	exit 1
 fi
+# The rest of it arrived after the pause: the second half is reachable,
+# not just the first half held.
+[ -n "$saw" ] || fail "the rest of the briefing never arrived"
 
 # A manual entry runs well past the ten-line message window, so it has
 # to page -- the fix must only have quietened the pauses nobody asked

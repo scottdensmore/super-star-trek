@@ -282,12 +282,19 @@ void setup(void) {
 				if (distq < 6.0*(6-inbase) && Rand() < 0.75) {
 					contflag = TRUE;
 #ifdef DEBUG
-					proutf("DEBUG: Abandoning base #%d at %d-%d\n", i, ix, iy);
+					/* Only for someone who asked, via the "debug"
+					   password. It used to print for every debug
+					   build, which was merely noisy until the
+					   newlines inside it started counting towards
+					   paging -- at which point it cost the player a
+					   whole screen of the briefing. */
+					if (idebug)
+						proutf("DEBUG: Abandoning base #%d at %d-%d\n", i, ix, iy);
 #endif
 					break;
 				}
 #ifdef DEBUG
-				else if (distq < 6.0 * (6-inbase)) {
+				else if (idebug && distq < 6.0 * (6-inbase)) {
 					proutf("DEBUG: saving base #%d, close to #%d\n", i, j);
 				}
 #endif

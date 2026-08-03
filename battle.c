@@ -639,7 +639,14 @@ void attack(int k) {
 		if (hit > hitmax) hitmax = hit;
 		hittot += hit;
 		fry(hit);
-		proutf("Hit %g energy %g\n", hit, energy);
+#ifdef DEBUG
+		/* A diagnostic that has been printing into every game,
+		   release builds included, on every enemy hit. Behind the
+		   "debug" password with the rest of them now: it was noise
+		   before and costs a page of the fight since proutf started
+		   counting the newlines it writes. */
+		if (idebug) proutf("Hit %g energy %g\n", hit, energy);
+#endif
 		energy -= hit;
 	}
 	if (energy <= 0) {
@@ -1433,7 +1440,7 @@ void
 	x *= 2.5;  /* would originally have been equivalent of 1.4, but we want command to work more often, more humanely */
 	i = x;
 #ifdef DEBUG
-	proutf("Prob = %d (%.4f)\n", i, x);
+	if (idebug) proutf("Prob = %d (%.4f)\n", i, x);
 //	i = 100; // For testing, of course!
 #endif
 	if (i > 100*Rand())
