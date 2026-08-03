@@ -74,6 +74,17 @@ set_tests_properties(help PROPERTIES TIMEOUT 120)
 add_test(NAME tui COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/tui.sh $<TARGET_FILE:sst>)
 set_tests_properties(tui PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300)
 
+# The journey that passes game time: movement, combat, docking, and
+# the events and pauses that come with them. Seeded per game so a
+# failure is reproducible; see the script for why some of its
+# assertions are made of the whole battery rather than of one game.
+# About 50 seconds here, the slowest test in the suite by four times --
+# nearly all of it the busy-wait that types the game's dramatic lines
+# out slowly. The timeout leaves six times that for a slower runner.
+add_test(NAME tournament
+         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/tournament.sh $<TARGET_FILE:sst> $<CONFIG>)
+set_tests_properties(tournament PROPERTIES TIMEOUT 300)
+
 add_test(NAME instructions
          COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/instructions.sh
                  ${CMAKE_CURRENT_SOURCE_DIR})
