@@ -7,10 +7,11 @@
 # catches the input-exhausted reprompt loop, which floods stdout.
 #
 # Only commands that pass no game time are used. Anything that advances
-# the clock can schedule an event, and an event's [HIT SPACE BAR]
-# prompt eats a byte of the piped script and desynchronizes every
-# command after it. A navigation/combat journey needs a seeded
-# tournament game instead.
+# the clock can schedule an event, and an event pauses for a keystroke.
+# This journey stays short and deterministic in a random galaxy by
+# avoiding all of that; tests/tournament.sh plays the journeys that do
+# pass time, in seeded tournament games where the events are
+# reproducible.
 #
 # Usage: journey.sh /path/to/sst [build-type]
 
@@ -170,8 +171,9 @@ esac
 # Opportunistic, because this journey plays a random galaxy: whether
 # any base placement needs a second try is chance. It printed in ten of
 # twelve games measured, so it does bite -- but a seeded journey (#12)
-# is what would make it certain, and the combat check below needs one
-# to bite at all, since nothing here takes a hit.
+# is what would make it certain; tests/tournament.sh plays seeded
+# games and does pin both of these. The combat check below cannot bite
+# here at all, since nothing in this journey takes a hit.
 if grep -q 'DEBUG:' "$out"; then
 	fail "developer chatter printed for a player who did not ask for it"
 fi
