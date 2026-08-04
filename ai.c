@@ -369,7 +369,7 @@ static int checkdest(int iqx, int iqy, int flag, int *ipage) {
 	
 
 
-void scom(int *ipage) {
+void scom(int *ipage, int *irep) {
 	int i, i2, j, ideltax, ideltay, ibqx, ibqy, sx, sy, ifindit, iwhichb;
 	int iqx, iqy;
 	int basetbl[6];
@@ -530,7 +530,29 @@ void scom(int *ipage) {
 			return;
 		}
 	}
-	/* Check for intelligence report */
+	/* Check for intelligence report.
+	 *
+	 * Not twice for the same quadrant in one pass through events(): a
+	 * single warp jump can schedule the Super-commander's move more
+	 * than once, and each of those rolled the 20% again and printed
+	 * the same two lines. Reading the same sentence twice in a row
+	 * does not look like two reports, it looks like the game
+	 * stuttering. A report of somewhere he has since moved to is a
+	 * different matter and still worth having, so this remembers the
+	 * quadrant rather than merely that it spoke.
+	 *
+	 * The starch test below looks like it should have stopped this --
+	 * don't tell the captain what his chart already shows -- but it
+	 * cannot, because printing the report never marks the chart.
+	 * Marking it is the other fix and a bigger one: the chart says
+	 * what a quadrant holds, and the report says only where the
+	 * Super-commander is.
+	 *
+	 * Below the roll, not above it. Rand() draws from the same
+	 * sequence as everything else in the game, so skipping the draw
+	 * would shift every later one and quietly play out a different
+	 * galaxy -- eight of forty seeded games diverged when this guard
+	 * sat one block higher. */
 	if (
 #ifdef DEBUG
 		idebug==0 &&
@@ -539,8 +561,10 @@ void scom(int *ipage) {
 		 (!REPORTS) ||
 		 starch[d.isx][d.isy] > 0))
 		return;
+	if (*irep == 10*d.isx + d.isy) return;
 	if (*ipage==0) pause(1);
 	*ipage = 1;
+	*irep = 10*d.isx + d.isy;
 	prout("Lt. Uhura-  \"Captain, Starfleet Intelligence reports");
 	proutn("   the Super-commander is in");
 	cramlc(1, d.isx, d.isy);

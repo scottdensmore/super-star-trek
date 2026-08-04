@@ -11,7 +11,10 @@ static int ixhold = 0, iyhold = 0;
 
 void events(void) {
 
-	int ictbeam=0, ipage=0, istract=0, line, i, j, k, l;
+	/* irep: which quadrant the Super-commander was last reported in
+	   during this pass, so the same one is not announced twice however
+	   many times his move gets scheduled inside it. See scom(). */
+	int ictbeam=0, ipage=0, irep=0, istract=0, line, i, j, k, l;
 	double fintim = d.date + Time, datemin, xtime, repair, yank;
 
 
@@ -339,7 +342,7 @@ void events(void) {
 				future[FSCMOVE] = d.date+0.2777;
 				if (ientesc+istract==0 &&
 				    isatb!=1 &&
-				    (iscate!=1 || justin==1)) scom(&ipage);
+				    (iscate!=1 || justin==1)) scom(&ipage, &irep);
 				break;
 			case FDSPROB: /* Move deep space probe */
 				future[FDSPROB] = d.date + 0.01;

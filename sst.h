@@ -482,7 +482,7 @@ void huh(void);
 void pause(int);
 void nova(int, int);
 void snova(int, int);
-void scom(int *);
+void scom(int *, int *);
 void hittem(double *);
 void prouts(char *);
 int isit(char *);
