@@ -3,7 +3,20 @@
 #include "tui.h"
 
 void prelim(void) {
-	skip(2);
+	/* The banner is ten lines of ship and title and five of air. In
+	   full-screen mode at 24 rows the message window is eleven rows --
+	   ten of paging plus the one the prompt lands on -- so the air is
+	   precisely what pushes the Enterprise off the top and leaves the
+	   player looking at its nacelle. Spend it where there is room and
+	   not otherwise: fifteen lines of banner and a question need
+	   sixteen rows, which is a page height of fifteen.
+
+	   Plain mode is always roomy: it pages at 23 lines, where fifteen
+	   fits, and tui_pageheight() has nothing to report until curses is
+	   running anyway. */
+	int roomy = !tui_active || tui_pageheight() >= 15;
+
+	if (roomy) skip(2);
     prout("__________________           __");
     prout("\\_________________|)____.---'--`---.____");
     prout("              ||    \\----.________.----/");
@@ -12,11 +25,11 @@ void prelim(void) {
     prout("           |___         \\");
     prout("               `--------'");
     prout("  THE USS ENTERPRISE --- NCC-1701");
-    skip(1);
+    if (roomy) skip(1);
 	prout("-SUPER- STAR TREK");
-	skip(1);
+	if (roomy) skip(1);
 	prout("Latest update-21 Sept 78");
-	skip(1);
+	if (roomy) skip(1);
 }
 
 void freeze(int boss) {
