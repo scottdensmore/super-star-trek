@@ -1,0 +1,91 @@
+
+
+__________________           __
+\_________________|)____.---'--`---.____
+              ||    \----.________.----/
+              ||     / /    `--'
+            __||____/ /_
+           |___         \
+               `--------'
+  THE USS ENTERPRISE --- NCC-1701
+
+-SUPER- STAR TREK
+
+Latest update-21 Sept 78
+
+Would you like a regular, tournament, or frozen game?Would you like a Short, Medium, or Long game? Are you a Novice, Fair, Good, Expert, or Emeritus player?Please type in a secret password (9 characters maximum)-
+
+
+It is stardate 4100. The Federation is being attacked by
+a deadly Klingon invasion force. As captain of the United
+Starship U.S.S. Enterprise, it is your mission to seek out
+and destroy this invasion force of 3 battle cruisers.
+You have an initial allotment of 7 stardates to complete
+your mission.  As you proceed you may be given more time.
+
+You will have 4 supporting starbases.
+Starbase locations-   8 - 2   2 - 8   3 - 2   7 - 7
+
+The Enterprise is currently in Quadrant 1 - 7  Sector 1 - 7
+
+Good Luck!
+
+
+COMMAND> 
+    1 2 3 4 5 6 7 8 9 10
+ 1  . * . . . * E . . .  Stardate      4100.0
+ 2  . . . * . . . . . .  Condition     GREEN
+ 3  * . . . . . . . . .  Position      1 - 7, 1 - 7
+ 4  . . . . . * * . . .  Life Support  ACTIVE
+ 5  . . . . . . . . . .  Warp Factor   5.0
+ 6  . . . . . . . . . .  Energy        5000.00
+ 7  . . . . . . . . . .  Torpedoes     10
+ 8  . . . . . . * . . .  Shields       DOWN, 100% 2500.0 units
+ 9  . . . . . . . . . .  Klingons Left 3
+10  . . . * . * . . . .  Time Left     7.00
+
+COMMAND> 
+---WORKING---
+SELF-DESTRUCT-SEQUENCE-ACTIVATED
+   10
+       9
+          8
+             7
+                6
+ENTER-CORRECT-PASSWORD-TO-CONTINUE-
+SELF-DESTRUCT-SEQUENCE-OTHERWISE-
+SELF-DESTRUCT-SEQUENCE-WILL-BE-ABORTED
+PASSWORD-ACCEPTED
+                   5
+                      4
+                         3
+                            2
+                              1
+
+
+******************************************************
+************ Entropy of Enterprise maximized *********
+******************************************************
+
+
+
+
+It is stardate 4100.0 .
+
+Your starship is now an expanding cloud of subatomic particles
+The Federation will be destroyed.
+
+[HIT SPACE BAR TO CONTINUE]                           
+
+Your score --
+     1 ship lost or destroyed              -100
+Penalty for getting yourself killed        -200
+
+
+TOTAL SCORE                                -300
+
+
+******************************************************
+
+Do you want your score recorded?Do you want to play again?
+May the Great Bird of the Galaxy roost upon your home planet.

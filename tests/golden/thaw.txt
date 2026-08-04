@@ -1,0 +1,70 @@
+
+
+__________________           __
+\_________________|)____.---'--`---.____
+              ||    \----.________.----/
+              ||     / /    `--'
+            __||____/ /_
+           |___         \
+               `--------'
+  THE USS ENTERPRISE --- NCC-1701
+
+-SUPER- STAR TREK
+
+Latest update-21 Sept 78
+
+Would you like a regular, tournament, or frozen game?
+You are now playing a thawed medium good game.
+This is tournament game 9.
+Your secret password is "pw"
+0 of 25 Klingon ships have been destroyed.
+The Super Commander has not been destroyed.
+There are 3 bases.
+You have 3 deep space probes.
+
+
+COMMAND> 
+You are now playing a thawed medium good game.
+This is tournament game 9.
+0 of 25 Klingon ships have been destroyed.
+The Super Commander has not been destroyed.
+There are 3 bases.
+You have 3 deep space probes.
+
+
+COMMAND> 
+    1 2 3 4 5 6 7 8 9 10
+ 1  . . . * . . . . . .  Stardate      2900.0
+ 2  . . . . . . . . . .  Condition     GREEN
+ 3  * . . . . . . * .    Position      5 - 3, 6 - 8
+ 4  . . . . . . . . . .  Life Support  ACTIVE
+ 5  . . . . . . . . . .  Warp Factor   5.0
+ 6  . . . .   . . E . .  Energy        5000.00
+ 7  . . . . . . . . . .  Torpedoes     10
+ 8  . . . . . . . . . .  Shields       DOWN, 100% 2500.0 units
+ 9  . . . . . . . . . .  Klingons Left 25
+10  . . * * . . . . . .  Time Left     14.00
+
+COMMAND> 
+STAR CHART FOR THE KNOWN GALAXY
+
+      1    2    3    4    5    6    7    8
+    ----------------------------------------
+  -
+1 -  ...  ...  ...  ...  ...  ...  ...  ...  -
+2 -  ...  ...  ...  ...  ...  ...  ...  ...  -
+3 -  ...  ...  ...  ...  ...  ...  .1.  ...  -
+4 -  ...  ...  ...  ...  ...  ...  ...  ...  -
+5 -  ...  ...    5  ...  ...  ...  ...  ...  -
+6 -  ...  ...  ...  ...  .1.  ...  ...  ...  -
+7 -  ...  ...  ...  ...  ...  ...  ...  ...  -
+8 -  ...  ...  .1.  ...  ...  ...  ...  ...  -
+
+Enterprise is currently in Quadrant 5 - 3
+
+COMMAND> 
+
+******************************************************
+
+Do you want your score recorded?Do you want to play again?
+May the Great Bird of the Galaxy roost upon your home planet.

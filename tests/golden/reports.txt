@@ -1,0 +1,123 @@
+
+
+__________________           __
+\_________________|)____.---'--`---.____
+              ||    \----.________.----/
+              ||     / /    `--'
+            __||____/ /_
+           |___         \
+               `--------'
+  THE USS ENTERPRISE --- NCC-1701
+
+-SUPER- STAR TREK
+
+Latest update-21 Sept 78
+
+Would you like a regular, tournament, or frozen game?Would you like a Short, Medium, or Long game? Are you a Novice, Fair, Good, Expert, or Emeritus player?Please type in a secret password (9 characters maximum)-
+
+
+It is stardate 4800. The Federation is being attacked by
+a deadly Klingon invasion force. As captain of the United
+Starship U.S.S. Enterprise, it is your mission to seek out
+and destroy this invasion force of 2 battle cruisers.
+You have an initial allotment of 7 stardates to complete
+your mission.  As you proceed you may be given more time.
+
+You will have 4 supporting starbases.
+Starbase locations-   4 - 5   3 - 3   7 - 8   8 - 8
+
+The Enterprise is currently in Quadrant 3 - 2  Sector 7 - 9
+
+Good Luck!
+
+
+COMMAND> 
+    1 2 3 4 5 6 7 8 9 10
+ 1  . . . . . * . . . .  Stardate      4800.0
+ 2  . . . . . . * * . .  Condition     GREEN
+ 3  . . . . . . . . . .  Position      3 - 2, 7 - 9
+ 4  . . . . . . . . . .  Life Support  ACTIVE
+ 5    . . . . . . . . .  Warp Factor   5.0
+ 6  . . . . . * . . . .  Energy        5000.00
+ 7  .   . . . . . . E .  Torpedoes     10
+ 8  . . . . . . . . . *  Shields       DOWN, 100% 2500.0 units
+ 9  . . . . . . . . . .  Klingons Left 2
+10  . . . . . . . . . .  Time Left     7.00
+
+COMMAND> 
+Long-range scan for Quadrant 3 - 2
+    4    4    7
+    7    5   16
+    1    3    9
+
+COMMAND> 
+ Stardate      4800.0
+ Condition     GREEN
+ Position      3 - 2, 7 - 9
+ Life Support  ACTIVE
+ Warp Factor   5.0
+ Energy        5000.00
+ Torpedoes     10
+ Shields       DOWN, 100% 2500.0 units
+ Klingons Left 2
+ Time Left     7.00
+
+COMMAND> 
+STAR CHART FOR THE KNOWN GALAXY
+
+      1    2    3    4    5    6    7    8
+    ----------------------------------------
+  -
+1 -  ...  ...  ...  ...  ...  ...  ...  ...  -
+2 -    4    4    7  ...  ...  ...  ...  ...  -
+3 -    7    5   16  ...  ...  ...  ...  ...  -
+4 -    1    3    9  ...  .1.  ...  ...  ...  -
+5 -  ...  ...  ...  ...  ...  ...  ...  ...  -
+6 -  ...  ...  ...  ...  ...  ...  ...  ...  -
+7 -  ...  ...  ...  ...  ...  ...  ...  .1.  -
+8 -  ...  ...  ...  ...  ...  ...  ...  .1.  -
+
+Enterprise is currently in Quadrant 3 - 2
+
+COMMAND> All devices functional.
+
+COMMAND> 
+You are now playing a short novice game.
+This is tournament game 7.
+0 of 2 Klingon ships have been destroyed.
+There are 4 bases.
+You have 4 deep space probes.
+
+
+COMMAND> Time or arrival date? Remaining energy will be 4998.5.
+Minimum warp needed is 1.50
+and we will arrive at stardate 4801.99.
+New warp factor to try? 
+
+COMMAND> 
+ Stardate      4800.0
+
+COMMAND> 
+
+Your score so far --
+
+
+TOTAL SCORE                                   0
+REMEMBER--The score doesn't really matter until the mission is accomplished!
+
+COMMAND>    SRSCAN    MOVE      PHASERS   CALL
+   STATUS    IMPULSE   PHOTONS   ABANDON
+   LRSCAN    WARP      SHIELDS   DESTRUCT
+   CHART     REST      DOCK      QUIT
+   DAMAGES   REPORT    SENSORS   ORBIT
+   TRANSPORT MINE      CRYSTALS  SHUTTLE
+   PLANETS   REQUEST   DEATHRAY  FREEZE
+   COMPUTER  EMEXIT    PROBE     COMMANDS
+   SCORE     CLOAK     CAPTURE   HELP     
+
+COMMAND> 
+
+******************************************************
+
+Do you want your score recorded?Do you want to play again?
+May the Great Bird of the Galaxy roost upon your home planet.

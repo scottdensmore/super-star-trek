@@ -99,6 +99,14 @@ add_test(NAME tournament
          COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/tournament.sh $<TARGET_FILE:sst> $<CONFIG>)
 set_tests_properties(tournament PROPERTIES TIMEOUT 300)
 
+# Byte-for-byte recordings of fixed journeys. The rest of the suite
+# asks whether things happened; this one asks whether anything changed,
+# which is the only question that covers the game's arithmetic. It
+# needs the seeded generator to be the game's own, which it is.
+add_test(NAME golden
+         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/golden.sh $<TARGET_FILE:sst>)
+set_tests_properties(golden PROPERTIES TIMEOUT 120)
+
 add_test(NAME instructions
          COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/instructions.sh
                  ${CMAKE_CURRENT_SOURCE_DIR})

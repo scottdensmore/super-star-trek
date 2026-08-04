@@ -1,0 +1,100 @@
+
+
+__________________           __
+\_________________|)____.---'--`---.____
+              ||    \----.________.----/
+              ||     / /    `--'
+            __||____/ /_
+           |___         \
+               `--------'
+  THE USS ENTERPRISE --- NCC-1701
+
+-SUPER- STAR TREK
+
+Latest update-21 Sept 78
+
+Would you like a regular, tournament, or frozen game?Would you like a Short, Medium, or Long game? Are you a Novice, Fair, Good, Expert, or Emeritus player?Please type in a secret password (9 characters maximum)-
+
+
+It is stardate 4100. The Federation is being attacked by
+a deadly Klingon invasion force. As captain of the United
+Starship U.S.S. Enterprise, it is your mission to seek out
+and destroy this invasion force of 4 battle cruisers.
+You have an initial allotment of 7 stardates to complete
+your mission.  As you proceed you may be given more time.
+
+You will have 3 supporting starbases.
+Starbase locations-   7 - 4   7 - 1   3 - 7
+
+The Enterprise is currently in Quadrant 2 - 5  Sector 6 - 1
+
+Good Luck!
+
+
+COMMAND> 
+Energy will be expended into space.
+900.00 expended on empty space.
+
+COMMAND> 
+Torpedo track- 5.8 - 2.0   5.6 - 3.0   5.4 - 4.0   
+***Star at Sector 5 - 4 novas.
+
+COMMAND> 
+ Stardate      4100.0
+ Condition     GREEN
+ Position      2 - 5, 6 - 1
+ Life Support  ACTIVE
+ Warp Factor   5.0
+ Energy        4100.00
+ Torpedoes     9
+ Shields       DOWN, 100% 2500.0 units
+ Klingons Left 4
+ Time Left     7.00
+
+COMMAND> Starbase in Quadrant 3 - 7 responds--Enterprise dematerializes.
+1st attempt to re-materialize Enterprise . . . . . fails.
+2nd attempt to re-materialize Enterprise . . . . . fails.
+3rd attempt to re-materialize Enterprise . . . . . succeeds.
+Docked.
+
+Lt. Uhura-  "Captain, we made it!"
+
+COMMAND> Already docked.
+
+COMMAND> 
+ Stardate      4100.0
+ Condition     DOCKED
+ Position      3 - 7, 5 - 3
+ Life Support  ACTIVE
+ Warp Factor   5.0
+ Energy        5000.00
+ Torpedoes     10
+ Shields       DOWN, 100% 2500.0 units
+ Klingons Left 4
+ Time Left     7.00
+
+COMMAND> All devices functional.
+
+COMMAND> 
+STAR CHART FOR THE KNOWN GALAXY
+
+      1    2    3    4    5    6    7    8
+    ----------------------------------------
+  -
+1 -  ...  ...  ...  ...  ...  ...  ...  ...  -
+2 -  ...  ...  ...  ...  ...  ...  ...  ...  -
+3 -  ...  ...  ...  ...  ...  ...  .1.  ...  -
+4 -  ...  ...  ...  ...  ...  ...  ...  ...  -
+5 -  ...  ...  ...  ...  ...  ...  ...  ...  -
+6 -  ...  ...  ...  ...  ...  ...  ...  ...  -
+7 -  .1.  ...  ...  .1.  ...  ...  ...  ...  -
+8 -  ...  ...  ...  ...  ...  ...  ...  ...  -
+
+Enterprise is currently in Quadrant 3 - 7
+
+COMMAND> 
+
+******************************************************
+
+Do you want your score recorded?Do you want to play again?
+May the Great Bird of the Galaxy roost upon your home planet.

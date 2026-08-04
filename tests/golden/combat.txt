@@ -1,0 +1,141 @@
+
+
+__________________           __
+\_________________|)____.---'--`---.____
+              ||    \----.________.----/
+              ||     / /    `--'
+            __||____/ /_
+           |___         \
+               `--------'
+  THE USS ENTERPRISE --- NCC-1701
+
+-SUPER- STAR TREK
+
+Latest update-21 Sept 78
+
+Would you like a regular, tournament, or frozen game?Would you like a Short, Medium, or Long game? Are you a Novice, Fair, Good, Expert, or Emeritus player?Please type in a secret password (9 characters maximum)-
+
+
+Stardate 3200.
+
+153 Klingons,
+an unknown number of Romulans
+and one (GULP) Super-Commander.
+28 stardates
+5 starbases in   7 - 2   1 - 3   8 - 5   4 - 7   1 - 8
+
+The Enterprise is currently in Quadrant 2 - 5  Sector 6 - 1
+
+Good Luck!
+  YOU'LL NEED IT.
+
+LT. UHURA- "Captain, an urgent message.
+  I'll put it on audio."  CLICK
+
+INTRUDER! YOU HAVE VIOLATED THE ROMULAN NEUTRAL ZONE.
+LEAVE AT ONCE, OR YOU WILL BE DESTROYED!
+
+COMMAND> Shields already up.
+
+COMMAND> 
+Weapons Officer Sulu-  "High-speed shield control enabled, sir."
+
+Shields lowered.
+
+82.53 unit hit on Romulan at Sector 7 - 10
+
+Shields raised.
+
+Enemy attack reduces shield strength to 96%   torpedoes left 10
+
+COMMAND> 
+Long-range scan for Quadrant 2 - 5
+  503  309  102
+    7    4    7
+  308    8  409
+
+COMMAND> 
+Helmsman Sulu- "Aye, Sir."
+
+Enemy attack reduces shield strength to 91%   torpedoes left 10
+
+Entering Quadrant 2 - 6
+
+COMMAND> 
+    1 2 3 4 5 6 7 8 9 10
+ 1  . . . . * . . . . .  Stardate      3200.4
+ 2  . . . . . . . . . .  Condition     GREEN
+ 3  * . . . . . * . . .  Position      2 - 6, 6 - 1
+ 4  . . . . * . . . * .  Life Support  ACTIVE
+ 5  . . . . . * . . . .  Warp Factor   5.0
+ 6  E . . . . . . . . .  Energy        4350.00
+ 7  . . . .   . .   . .  Torpedoes     10
+ 8  . . . . . . . . . .  Shields       UP, 91% 2263.2 units
+ 9  . . . . . . . . . .  Klingons Left 153
+10  . . . . . . . . . *  Time Left     27.60
+
+COMMAND> 
+Torpedo track- 5.8 - 2.0   5.6 - 3.0   5.3 - 4.0   
+5.1 - 5.0   4.9 - 6.0   
+
+***RED ALERT!  RED ALERT!
+***Incipient supernova detected at Sector 5 - 6
+
+***Emergency automatic override attempts to hurl Enterprise
+safely out of quadrant.
+Warp factor set to 6.4
+
+Entering Quadrant 3 - 7
+
+[ANNOUNCEMENT ARRIVING...]
+[2J[0;0HLt. Uhura-  "Captain, Starfleet Intelligence reports
+   the Super-commander is in Quadrant 2 - 3."
+
+COMMAND> 
+Long-range scan for Quadrant 3 - 7
+ 1000  207  604
+  409    2    3
+  202   14  504
+
+COMMAND> 
+Helmsman Sulu- "Aye, Sir."
+
+Entering Quadrant 2 - 7
+
+COMMAND> 
+    1 2 3 4 5 6 7 8 9 10
+ 1  . . K . . .   . . .  Stardate      3201.1
+ 2  . . . * . . . . . .  Condition     RED
+ 3  . . . . . . . . K .  Position      2 - 7, 8 - 4
+ 4  . . . . . . . . . .  Life Support  ACTIVE
+ 5  . * . . . . * . . .  Warp Factor   6.4
+ 6  . . . . . . . . . .  Energy        2863.18
+ 7  . * . .   * . . . .  Torpedoes     9
+ 8  . . . E . . . . . .  Shields       UP, 91% 2263.2 units
+ 9  . . . . * . . . . .  Klingons Left 153
+10  . . . . . . . . . *  Time Left     26.93
+
+COMMAND> 
+Torpedo track- 7.0 - 4.3   6.0 - 4.6   5.0 - 4.9   
+4.0 - 5.2   3.0 - 5.4   2.0 - 5.7   1.0 - 6.0   
+Torpedo missed.
+***Klingon escapes to Quadrant 2 - 8 (and regains strength).
+
+Enemy attack reduces shield strength to 88%   torpedoes left 8
+
+COMMAND> All devices functional.
+
+COMMAND> 
+
+Your score so far --
+     7 stars destroyed by your action       -35
+
+
+TOTAL SCORE                                 -35
+
+COMMAND> 
+
+******************************************************
+
+Do you want your score recorded?Do you want to play again?
+May the Great Bird of the Galaxy roost upon your home planet.
