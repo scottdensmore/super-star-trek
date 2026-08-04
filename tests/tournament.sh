@@ -52,11 +52,20 @@ if [ ! -x "$SST" ]; then
 fi
 
 # Enough seeds that the galaxy-dependent assertions below have room to
-# land on any platform, few enough to stay quick. A game costs about
+# land on any platform, few enough to stay quick.
+#
+# Position in this list picks the route -- they alternate -- so the list
+# cannot be sorted or trimmed from the middle without changing which
+# game each seed plays. 10 is in it for a particular reason: on this
+# platform it is the one seed in sixty that made the Super-commander
+# report stutter, so the check for that has something to bite on rather
+# than being an absence nobody has seen fail.
+#
+# A game costs about
 # four seconds, nearly all of it the busy-wait in prouts() that types
 # the game's dramatic lines out slowly, so twelve of them take about a
 # minute.
-SEEDS="1 2 3 5 7 11 13 17 19 23 29 31"
+SEEDS="1 10 3 5 7 11 13 17 19 23 29 31"
 
 MAXBYTES=262144
 DUMPBYTES=3000
@@ -286,6 +295,24 @@ for seed in $SEEDS; do
 	fi
 	if grep -qE 'Hit [0-9][^ ]* energy|Prob = [0-9]+ \(' "$out"; then
 		fail "seed $seed: combat diagnostics printed for a player who did not ask"
+	fi
+
+	# The Super-commander's position is reported at most once per turn.
+	# It used to be announced twice, byte for byte, when one warp jump
+	# scheduled his move more than once -- which reads as the game
+	# stuttering rather than as two reports. These journeys draw the
+	# report often enough for the check to mean something: ten of them
+	# across the fighting route as this was written.
+	# Back to back, which is two lines apart: the report and the line
+	# introducing it, nothing else between. The same quadrant reported
+	# again a turn later is six lines apart at the closest -- a second
+	# report, not a stutter -- so two is the whole of the window.
+	if awk '/Super-commander is in/ {
+			if ($0 == prev && NR - prevline <= 2) bad = 1
+			prev = $0; prevline = NR
+		}
+		END { exit !bad }' "$out"; then
+		fail "seed $seed: the same intelligence report printed twice running"
 	fi
 
 	# Plain mode must stay plain. One escape sequence is the game's
