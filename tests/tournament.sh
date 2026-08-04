@@ -59,11 +59,10 @@ fi
 # cannot be sorted or trimmed from the middle without changing which
 # game each seed plays. The seeds themselves are chosen, not arbitrary:
 # between them they dock, cross quadrants, exchange fire, fire a
-# torpedo, lose warp drive and fill a screen, several times over each,
-# and 4 is the one that made the Super-commander report stutter before
-# it was fixed. Since the generator is the game's own now rather than
-# the C library's, a seed picked here behaves the same everywhere --
-# which is what makes choosing them worth the trouble.
+# torpedo, lose warp drive and fill a screen, several times over each.
+# Since the generator is the game's own now rather than the C library's,
+# a seed picked here behaves the same everywhere -- which is what makes
+# choosing them worth the trouble.
 #
 # A game costs about
 # four seconds, nearly all of it the busy-wait in prouts() that types
@@ -316,14 +315,28 @@ for seed in $SEEDS; do
 	# The Super-commander's position is reported at most once per turn.
 	# It used to be announced twice, byte for byte, when one warp jump
 	# scheduled his move more than once -- which reads as the game
-	# stuttering rather than as two reports. The battery draws the
-	# report six times as this was written -- three of them in seed 4,
-	# which is the one that stuttered before the fix -- so the check
-	# has something to bite on.
+	# stuttering rather than as two reports.
+	#
 	# Back to back, which is two lines apart: the report and the line
 	# introducing it, nothing else between. The same quadrant reported
 	# again a turn later is six lines apart at the closest -- a second
 	# report, not a stutter -- so two is the whole of the window.
+	#
+	# Be clear about what this is worth. The battery draws four of
+	# these reports, one of them a game with two, so the awk has real
+	# lines to compare -- but none of them is a duplicate, so nothing
+	# currently makes it fail. Seed 4 did, against a build with the
+	# fix reverted, and stopped when the Super-commander's pursuit was
+	# corrected. Not because his move is scheduled twice any less
+	# often: that is a fixed 0.2777-stardate period and seed 4 still
+	# schedules it twice in one pass. It is that the axis bug used to
+	# leave him sitting still -- with no x component his own quadrant
+	# was the destination, checkdest() accepted it, and the two
+	# reports in the pass named the same place. Moving every turn,
+	# they name different ones. 190 seeds across both routes produced
+	# no duplicate afterwards. The guard in scom() is live code with
+	# no other coverage, so the check stays; a seed that exercises it
+	# again would be worth swapping in.
 	if awk '/Super-commander is in/ {
 			if ($0 == prev && NR - prevline <= 2) bad = 1
 			prev = $0; prevline = NR
