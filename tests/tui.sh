@@ -235,6 +235,21 @@ want_quadtitle() {
 	dump
 }
 
+# wait_gone confined to the status panel's columns, for the same reason
+# expect_status is: the game writes "Stardate" into the message window
+# too, and waiting for it to leave the whole screen would be waiting on
+# the wrong thing.
+wait_gone_status() {
+	i=0
+	while [ "$i" -lt 40 ]; do
+		screen | cut -c30- | grep -qF -- "$2" || return 0
+		i=$((i + 1))
+		sleep 0.1
+	done
+	fail "$1"
+	dump
+}
+
 unwanted() {
 	if screen | grep -qF "$2"; then fail "$1"; dump; fi
 }
@@ -435,17 +450,20 @@ fi
 # wrong showed the next player the last player's quadrant, or an empty
 # frame around a game that was running (#21).
 replay_case() {
+	# Up before they are down: without this the blank-panel check
+	# below would also pass on a run where curses had quietly fallen
+	# back to the classic display.
+	expect_status "replay: the panels were not up before quitting" "Stardate"
 	tm send-keys -t "$pane" 'quit' Enter
 	if ! wait_for 'score recorded'; then
 		fail "replay: quit did not reach the end-of-game questions"
 		dump
 		return
 	fi
-	# Nothing is asserted about the panels here: `quit` sets alldone
-	# by hand rather than going through finish(), so it never clears
-	# the flag, and the game you just left stays framed behind these
-	# questions. finish() blanks them deliberately -- the two paths
-	# disagree, but that is the game's business, not this test's.
+	# The panels are blank behind these questions. Quitting is an
+	# ending like any other, and the ended game has no business still
+	# being framed above the score.
+	wait_gone_status "replay: the quit game is still on the panels" "Stardate"
 	#
 	# Answered "no" deliberately: "yes" writes a save file and stops
 	# to ask what to call it, stranding the test at that prompt.

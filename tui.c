@@ -168,6 +168,16 @@ int tui_init(void) {
 	return TRUE;
 }
 
+/* However a game ended, the panels are now describing one that is
+ * over -- and after a destruction, a ship that no longer exists. Every
+ * ending goes through here rather than clearing the flag itself, so a
+ * fourth one cannot quietly forget to. */
+void tui_gameover(void) {
+	tui_ingame = FALSE;
+	if (tui_active) tui_refresh_panels();	/* now, not at the next
+						   prompt */
+}
+
 void tui_shutdown(void) {
 	if (!tui_active) return;
 	tui_active = FALSE;

@@ -349,6 +349,10 @@ static void makemoves(void) {
                 listCommands(TRUE);
                 break;
             case 24: // Emergency exit
+                /* The panels are the game, so hiding the screen has to
+                   take them with it -- clearscreen() only wipes the
+                   message window. */
+                tui_gameover();
                 clearscreen(); // Hide screen
                 freeze(TRUE); // forced save
                 exit(1); // And quick exit
@@ -403,6 +407,7 @@ static void makemoves(void) {
                 break;
             case 35:
                 alldone = 1; // quit the game
+                tui_gameover();
 #ifdef DEBUG
                 if (idebug) score(0);
 #endif
@@ -481,6 +486,11 @@ int main(int argc, char **argv) {
 	while (TRUE) { /* Play a game */
 		setup();
 		if (alldone) {
+			/* A saved game can be a finished one: alldone rides
+			   along in `a`, which freeze and thaw write and read
+			   whole. The panels went up when it loaded, so take
+			   them down before the epilogue prints. */
+			tui_gameover();
 			score(0);
 			alldone = 0;
 		}

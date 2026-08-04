@@ -1,4 +1,5 @@
 #include "sst.h"
+#include "tui.h"
 #include <math.h>
 
 /* Where a commander's base attack was pointed before the
@@ -714,6 +715,7 @@ void snova(int insx, int insy) {
 			skip(1);
 			stars();
 			alldone=1;
+			tui_gameover();
 		}
 	}
 	/* destroy any Klingons in supernovaed quadrant */

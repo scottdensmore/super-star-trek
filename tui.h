@@ -64,6 +64,7 @@ int stdio_is_terminal(void);	/* osx.c; stdin and stdout are both ttys */
 int tui_init(void);		/* returns TRUE if the TUI started */
 int tui_terminal_capable(void);	/* TERM is known and can address the cursor */
 void tui_shutdown(void);
+void tui_gameover(void);	/* the game has ended; clear the panels */
 void tui_puts(char *s);
 void tui_puts_slow(char *s);
 int tui_readline(char *buf, int buflen);	/* fgets-like: keeps '\n';
