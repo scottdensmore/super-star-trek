@@ -15,6 +15,11 @@ translation unit per binary defines `INCLUDED` before including `sst.h` to
 instantiate the globals (`sst.c` for the game; a test's own file, e.g.
 `tests/test_tuifmt.c`, for test binaries that don't link `sst.c`).
 
+Display state (`tui_active`, `tui_ingame`) deliberately sits outside that
+mechanism — plain `extern` in `tui.h`, defined in `tui.c` — so `tui.h`
+stays self-contained for `osx.c`, which cannot include `sst.h`. Put new
+display flags there, not in `sst.h`.
+
 ## Build and run
 
 ```sh

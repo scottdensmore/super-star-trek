@@ -1,6 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+/* tui.h, not sst.h: the declarations getch() needs are in the first,
+   and the second declares a pause(int) that collides with the POSIX
+   pause(void) that <unistd.h> below brings in. */
+#include "tui.h"
 #ifndef WINDOWS
 #include <sys/ioctl.h>
 #include <termios.h>
@@ -33,8 +37,6 @@ int stdio_is_terminal(void) {
 int getch(void) {
     char chbuf[1];
     struct termios oldstate, newstate;
-    extern int tui_active;
-    int tui_getch(void);
     if (tui_active)
         return tui_getch();
     fflush(stdout);
