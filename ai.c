@@ -466,7 +466,7 @@ void scom(int *ipage, int *irep) {
 
 	/* try moving in both x and y directions */
 	iqx = d.isx + ideltax;
-	iqy = d.isy + ideltax;
+	iqy = d.isy + ideltay;
 	if (checkdest(iqx, iqy, flag, ipage)) {
 		/* failed -- try some other maneuvers */
 		if (ideltax==0 || ideltay==0) {

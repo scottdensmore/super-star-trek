@@ -16,9 +16,10 @@
 # What it will not catch is a change that alters no output. Adding a
 # unit to the torpedo damage still destroys the same Klingon and prints
 # the same line, and nothing here notices; changing it enough that the
-# Klingon survives shows up at once, and so does the one-character fix
-# to the Super-commander's pursuit in #42. These are recordings of what
-# the game does, not proofs of what it should.
+# Klingon survives shows up at once. The one-character fix to the
+# Super-commander's pursuit (#42) showed up here as four lines of the
+# combat recording, which was the whole of its visible effect. These
+# are recordings of what the game does, not proofs of what it should.
 #
 # It only works because a tournament number now names the same galaxy
 # on every machine (see Rand() in sst.c). Before that these recordings

@@ -87,10 +87,6 @@ Warp factor set to 6.4
 
 Entering Quadrant 3 - 7
 
-[ANNOUNCEMENT ARRIVING...]
-[2J[0;0HLt. Uhura-  "Captain, Starfleet Intelligence reports
-   the Super-commander is in Quadrant 2 - 3."
-
 COMMAND> 
 Long-range scan for Quadrant 3 - 7
  1000  207  604
