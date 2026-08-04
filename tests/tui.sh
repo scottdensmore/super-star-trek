@@ -449,6 +449,46 @@ else
 	fi
 fi
 
+# --- the display follows the terminal ---------------------------------
+# The windows used to be sized once and never again, so a terminal
+# dragged mid-game left the panels at their old size with the rest of
+# the screen empty beside them. Worse, curses reports a resize the same
+# way it reports a keypress, so a drag could answer "hit space bar to
+# continue" and page away text nobody had read.
+start 80 24 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "resize: the game never reached its command prompt"
+	dump
+else
+	tm resize-window -t "$session" -x 120 -y 40
+	sleep 0.5
+	tm send-keys -t "$pane" 'lrscan' Enter
+	expect_re "resize: the game stopped answering after a resize" "$LRSCAN"
+	# The status panel is the right-hand one, so its border ends the
+	# top line. On a 120-column terminal that line has to reach well
+	# past where an 80-column one ended.
+	if [ "$(screen | head -1 | wc -c)" -lt 100 ]; then
+		fail "resize: the panels kept their old width"
+		dump
+	fi
+
+	# Shrinking follows too, and the game keeps answering.
+	tm resize-window -t "$session" -x 72 -y 24
+	sleep 0.5
+	tm send-keys -t "$pane" 'lrscan' Enter
+	expect_re "resize: the game stopped answering after shrinking" "$LRSCAN"
+	if [ "$(screen | head -1 | wc -c)" -gt 90 ]; then
+		fail "resize: the panels kept their old width after shrinking"
+		dump
+	fi
+fi
+
+# Nothing here asserts what the screen looks like *during* a pause that
+# a resize interrupts. The windows are rebuilt at the next prompt
+# rather than under the blocking read, so until the player answers, the
+# pane can be left holding whatever the terminal emulator put there --
+# which on this one is nothing at all, on `main` as much as here.
+
 # --- the panel says why the grid is masked ---------------------------
 # srscan() heads its grid with SHORT-RANGE SENSORS DAMAGED. The panel
 # has no line to spare for a heading, so it captions the box instead;

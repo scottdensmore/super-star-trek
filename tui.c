@@ -117,6 +117,75 @@ static void draw_status_line(int row, int line, const char *s) {
 	if (a != A_NORMAL) wattroff(wstat, a);
 }
 
+/* The size the windows were last built for, so a read that comes back
+ * empty can be told apart from one interrupted by the terminal
+ * changing shape. */
+static int builtlines, builtcols;
+
+/* Lay the three windows out for the terminal as it is now. Called
+ * again after a resize, so it deletes what was there first.
+ *
+ * A terminal that has shrunk below the 72x24 the display asks for at
+ * startup is not torn down mid-game: the panels keep their size and
+ * the screen clips, which is ugly but leaves the player where they
+ * were. Ending curses under them to say the window is too small would
+ * be a worse answer to a mouse drag. */
+static void make_windows(void) {
+	int msgh, statw, msgw;
+
+	builtlines = LINES;
+	builtcols = COLS;
+	msgh = LINES-PANELH > 1 ? LINES-PANELH : 1;
+	statw = COLS-QUADW > 1 ? COLS-QUADW : 1;
+	msgw = COLS-2 > 1 ? COLS-2 : 1;
+	if (wmsg == NULL) {
+		wquad = newwin(PANELH, QUADW, 0, 0);
+		wstat = newwin(PANELH, statw, 0, QUADW);
+		wmsg = newwin(msgh, msgw, PANELH, 1);
+	} else {
+		/* Resized rather than remade, because the message window
+		   holds the conversation and a fresh one would be empty --
+		   including the prompt the player is being asked to answer
+		   at that very moment, which would leave the game looking
+		   hung. The panels are redrawn from the game state either
+		   way. */
+		wresize(wstat, PANELH, statw);
+		wresize(wmsg, msgh, msgw);
+	}
+	/* Set every time, not only on the first: keypad in particular is
+	   what turns a resize into KEY_RESIZE rather than into whatever
+	   bytes the terminal sent, and losing it would let the next drag
+	   answer a paging prompt. */
+	scrollok(wmsg, TRUE);
+	keypad(wmsg, TRUE);
+}
+
+/* Whether the terminal changed shape since the windows were built.
+ * Asked of the terminal rather than of LINES and COLS: those are only
+ * brought up to date when curses processes the resize, and a read that
+ * came back empty needs the answer before that has happened. */
+static int resized(void) {
+	return is_term_resized(builtlines, builtcols);
+}
+
+/* Adopt a new terminal size if there is one. Called before every
+ * repaint rather than only where a resize is reported, because the
+ * report does not always come: a terminal dragged while the game is
+ * blocked reading a line gives curses nothing to hand back, and the
+ * next thing that happens is a repaint.
+ *
+ * The message window's contents are lost -- curses cannot reflow them
+ * and the game keeps no transcript -- so the panels come back and the
+ * conversation carries on from wherever it had got to. */
+static void sync_size(void) {
+	if (!resized()) return;
+	resize_term(0, 0);	/* adopt whatever the terminal is now */
+	make_windows();
+	touchwin(wmsg);		/* the panels redraw themselves; this does not */
+	wnoutrefresh(wmsg);
+}
+
+
 /* Whether this terminal can actually run the full-screen interface.
  *
  * initscr() is no good for asking: given a TERM it doesn't know it
@@ -157,11 +226,7 @@ int tui_init(void) {
 	cbreak();
 	noecho();
 	start_colour();
-	wquad = newwin(PANELH, QUADW, 0, 0);
-	wstat = newwin(PANELH, COLS-QUADW, 0, QUADW);
-	wmsg = newwin(LINES-PANELH, COLS-2, PANELH, 1);
-	scrollok(wmsg, TRUE);
-	keypad(wmsg, TRUE);
+	make_windows();
 	tui_active = TRUE;
 	atexit(tui_shutdown);
 	tui_refresh_panels();
@@ -188,6 +253,7 @@ void tui_refresh_panels(void) {
 	char buf[FMTBUFLEN];
 	int i;
 
+	sync_size();
 	werase(wquad);
 	box(wquad, 0, 0);
 	mvwaddstr(wquad, 0, 2, " Quadrant ");
@@ -239,9 +305,19 @@ int tui_readline(char *buf, int buflen) {
 	int got;
 
 	tui_refresh_panels();
-	echo();
-	got = wgetnstr(wmsg, buf, buflen-2) != ERR;
-	noecho();
+	for (;;) {
+		echo();
+		got = wgetnstr(wmsg, buf, buflen-2) != ERR;
+		noecho();
+		/* A resize interrupts the read, and ERR is also how the end
+		   of input arrives -- so without telling them apart, dragging
+		   the window would end the session. Read again instead. The
+		   windows are not rebuilt here: doing that under a blocking
+		   read leaves curses repainting a screen it is still reading
+		   from, and the player watching it blank. The next prompt
+		   picks up the new size. */
+		if (got || !resized()) break;
+	}
 	/* cbreak() turns off canonical mode, and with it the tty's own
 	   end-of-file handling, so Ctrl-D arrives as a plain character
 	   rather than as ERR. A line holding nothing else still means end
@@ -261,11 +337,21 @@ int tui_readline(char *buf, int buflen) {
 }
 
 int tui_getch(void) {
+	int c;
+
 	/* Same as before a typed answer: a paging prompt is a moment the
 	   player is looking at the screen, so the panels beside the text
 	   should not be older than it. */
 	tui_refresh_panels();
-	return wgetch(wmsg);
+	for (;;) {
+		c = wgetch(wmsg);
+		/* Not a keystroke, whatever curses calls it. Handing it back
+		   would let a window drag answer "hit space bar to continue"
+		   and page away text the player never read. Like the line
+		   read above, the new size is taken at the next prompt
+		   rather than in the middle of this one. */
+		if (c != KEY_RESIZE) return c;
+	}
 }
 
 void tui_clearmsg(void) {
