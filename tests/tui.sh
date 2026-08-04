@@ -16,9 +16,12 @@
 #
 # The size matters. 80x24 is what most terminal emulators open at and
 # 72x24 is the smallest the TUI accepts; at both the message window is
-# only ten lines, so the startup banner overflows it -- which is how
+# only ten lines. The startup banner used to overflow it, which is how
 # the pager came to be waiting for a keystroke before the game had
-# asked the player anything, and to eat the first letter of the answer.
+# asked the player anything, and to eat the first letter of the answer;
+# the banner gives up its blank lines at these sizes now and fits
+# exactly, which the checks in the loop below hold it to. Ten lines of
+# paging but eleven rows: the prompt lands on the last one.
 #
 # Usage: tui.sh /path/to/sst
 # Exits 77 (ctest SKIP_RETURN_CODE) when there is no tmux to run in.
@@ -105,7 +108,7 @@ scrollback() { tm capture-pane -t "$pane" -p -S - 2>/dev/null; }
 wait_scrollback() {
 	i=0
 	while [ "$i" -lt 80 ]; do
-		if scrollback | grep -qF "$1"; then return 0; fi
+		if scrollback | grep -qF -- "$1"; then return 0; fi
 		i=$((i + 1))
 		sleep 0.1
 	done
@@ -129,7 +132,7 @@ dump_scrollback() {
 wait_for() {
 	i=0
 	while [ "$i" -lt 80 ]; do
-		if screen | grep -qF "$1"; then return 0; fi
+		if screen | grep -qF -- "$1"; then return 0; fi
 		i=$((i + 1))
 		sleep 0.1
 	done
@@ -153,7 +156,7 @@ to_command() {
 }
 
 want() {
-	screen | grep -qF "$2" || { fail "$1"; dump; }
+	screen | grep -qF -- "$2" || { fail "$1"; dump; }
 }
 
 # Like to_command, but reports in $saw whether $1 was on screen at any
@@ -165,7 +168,7 @@ to_command_seeing() {
 	saw=""
 	i=0
 	while [ "$i" -lt 40 ]; do
-		screen | grep -qF "$1" && saw=yes
+		screen | grep -qF -- "$1" && saw=yes
 		screen | grep -qF 'COMMAND' && return 0
 		if screen | grep -qE 'CONTINUE|HIT SPACE BAR'; then
 			tm send-keys -t "$pane" Space
@@ -187,7 +190,7 @@ expect() {
 expect_re() {
 	i=0
 	while [ "$i" -lt 80 ]; do
-		screen | grep -qE "$2" && return 0
+		screen | grep -qE -- "$2" && return 0
 		i=$((i + 1))
 		sleep 0.1
 	done
@@ -202,7 +205,7 @@ expect_re() {
 expect_status() {
 	i=0
 	while [ "$i" -lt 80 ]; do
-		screen | cut -c30- | grep -qF "$2" && return 0
+		screen | cut -c30- | grep -qF -- "$2" && return 0
 		i=$((i + 1))
 		sleep 0.1
 	done
@@ -236,7 +239,7 @@ want_quadtitle() {
 }
 
 unwanted() {
-	if screen | grep -qF "$2"; then fail "$1"; dump; fi
+	if screen | grep -qF -- "$2"; then fail "$1"; dump; fi
 }
 
 # Wait for $2 to leave the screen. A prompt is printed before the
@@ -247,7 +250,7 @@ unwanted() {
 wait_gone() {
 	i=0
 	while [ "$i" -lt 40 ]; do
-		screen | grep -qF "$2" || return 0
+		screen | grep -qF -- "$2" || return 0
 		i=$((i + 1))
 		sleep 0.1
 	done
@@ -310,6 +313,20 @@ for size in 80x24 72x24; do
 
 	unwanted "$size: paused with [HIT SPACE BAR] before asking anything" "HIT SPACE BAR"
 	unwanted "$size: paused with [CONTINUE?] before asking anything" "[CONTINUE?]"
+
+	# The whole ship, not the nacelle. Ten lines of banner fit the
+	# window exactly, but only once the blank lines around its three
+	# closing titles are given up; with them the top of the drawing
+	# scrolls away before the player has ever seen it.
+	#
+	# Two lines, because the unfixed banner loses exactly five: the
+	# first is the top of the drawing, the second is the last line it
+	# loses. The closing titles never scroll and are no test of this.
+	want "$size: the top of the banner scrolled away" "__________________"
+	want "$size: the third line of the drawing scrolled away" "||    \----.________.----/"
+	# A pattern that opens with a dash, so the day a helper stops
+	# passing -- to grep, something says so.
+	want "$size: the banner has no title" "-SUPER- STAR TREK"
 
 	# With a pager waiting, its getch() swallowed the leading
 	# character and the game saw "egular".
@@ -394,6 +411,27 @@ to_command || { fail "the manual never finished paging"; dump; }
 # The game is still listening.
 tm send-keys -t "$pane" 'lrscan' Enter
 expect_re "the game did not carry on after the paging prompt" "$LRSCAN"
+
+# --- and keeps its spacing where there is room -----------------------
+# The other half of the same rule. The banner only gives its blank
+# lines up when the window is too small for them; on a terminal that
+# can afford them they are still there, which is what stops the fix
+# from being "delete the spacing".
+start 80 30
+if ! wait_for 'regular, tournament, or frozen'; then
+	fail "80x30: the game never asked its first question"
+	dump
+else
+	want "80x30: the top of the banner is missing" "__________________"
+	# The line after the ship's name is blank at this size and not at
+	# 24 rows. awk rather than grep: the assertion is about a line
+	# being empty, which grep cannot say on its own.
+	if ! screen | awk '/THE USS ENTERPRISE/ {getline; if ($0 ~ /^[[:space:]]*$/) ok = 1}
+	                   END {exit !ok}'; then
+		fail "80x30: the banner gave up its spacing on a terminal with room for it"
+		dump
+	fi
+fi
 
 # --- setup answered on the command line ------------------------------
 # The same bug reaches further than the banner. With the setup answers
