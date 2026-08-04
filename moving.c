@@ -531,7 +531,14 @@ void warp(int i) {
 		if (damage[DWARPEN] > 10.0) {
 			chew();
 			skip(1);
-			prout("Engineer Scott- \"The warp engines are damaged, Sir.\""); // Was "Impulse" 10/2013
+			/* Say what can be done, not only what cannot. Warp out
+			   is recoverable -- impulse still moves the ship, and
+			   a starbase repairs it -- but the refusal on its own
+			   reads as "you cannot move", and a player who does
+			   not already know about impulse has been given no
+			   reason to think otherwise. */
+			prout("Engineer Scott- \"The warp engines are damaged, Sir."); // Was "Impulse" 10/2013
+			prout("  We can still make way on impulse power.\"");
 			return;
 		}
 		if (damage[DWARPEN] > 0.0 && warpfac > 4.0) {

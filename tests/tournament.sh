@@ -211,6 +211,7 @@ any_docked=0
 any_moved=0
 any_fought=0
 any_fired=0
+any_impulse_hint=0
 any_paged=0
 
 saw() { grep -qF "$1" "$out"; }
@@ -296,6 +297,17 @@ for seed in $SEEDS; do
 	if grep -qE 'Hit [0-9][^ ]* energy|Prob = [0-9]+ \(' "$out"; then
 		fail "seed $seed: combat diagnostics printed for a player who did not ask"
 	fi
+
+	# Refusing to warp says what can still be done. A crippled ship is
+	# recoverable -- impulse moves it, a starbase repairs it -- and the
+	# refusal on its own read as "you cannot move". Checked wherever it
+	# happens; that it happens at all is asked of the battery below,
+	# since not every galaxy costs the ship its warp drive.
+	if grep -q 'The warp engines are damaged, Sir' "$out" &&
+	   ! grep -q 'impulse power' "$out"; then
+		fail "seed $seed: warp was refused without mentioning impulse"
+	fi
+	grep -q 'impulse power' "$out" && any_impulse_hint=1
 
 	# The Super-commander's position is reported at most once per turn.
 	# It used to be announced twice, byte for byte, when one warp jump
@@ -399,6 +411,7 @@ fi
 [ "$any_moved" = 1 ] || fail "no game moved between quadrants"
 [ "$any_fought" = 1 ] || fail "no game exchanged fire with an enemy"
 [ "$any_fired" = 1 ] || fail "no game fired a torpedo"
+[ "$any_impulse_hint" = 1 ] || fail "no game lost warp drive and was told about impulse"
 [ "$any_paged" = 1 ] || fail "no game paused for a keystroke"
 
 if [ "$fails" -ne 0 ]; then
