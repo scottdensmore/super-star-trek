@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "9a29c2f59757",
+  "strategy": "manual-commit",
+  "branch": "feat/banner-fits-80x24",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "setup.c",
+    "tests/tui.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/9a/29c2f59757/0/metadata.json",
+      "transcript": "/9a/29c2f59757/0/full.jsonl",
+      "compact_transcript": "/9a/29c2f59757/0/transcript.jsonl",
+      "content_hash": "/9a/29c2f59757/0/content_hash.txt",
+      "prompt": "/9a/29c2f59757/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2000,
+    "cache_creation_tokens": 6203670,
+    "cache_read_tokens": 355911529,
+    "output_tokens": 818546,
+    "api_call_count": 1067
+  }
+}
