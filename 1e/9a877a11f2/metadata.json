@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "1e9a877a11f2",
+  "strategy": "manual-commit",
+  "branch": "fix/sc-report-once",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "ai.c",
+    "events.c",
+    "sst.h",
+    "tests/tournament.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/1e/9a877a11f2/0/metadata.json",
+      "transcript": "/1e/9a877a11f2/0/full.jsonl",
+      "compact_transcript": "/1e/9a877a11f2/0/transcript.jsonl",
+      "content_hash": "/1e/9a877a11f2/0/content_hash.txt",
+      "prompt": "/1e/9a877a11f2/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2093,
+    "cache_creation_tokens": 6259983,
+    "cache_read_tokens": 387525990,
+    "output_tokens": 848181,
+    "api_call_count": 1116
+  }
+}
