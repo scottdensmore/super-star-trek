@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "d09754b5b6d4",
+  "strategy": "manual-commit",
+  "branch": "test/promotion-rule",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "finish.c",
+    "rules.c",
+    "rules.h",
+    "tests/test_rules.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d0/9754b5b6d4/0/metadata.json",
+      "transcript": "/d0/9754b5b6d4/0/full.jsonl",
+      "compact_transcript": "/d0/9754b5b6d4/0/transcript.jsonl",
+      "content_hash": "/d0/9754b5b6d4/0/content_hash.txt",
+      "prompt": "/d0/9754b5b6d4/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2458,
+    "cache_creation_tokens": 8952583,
+    "cache_read_tokens": 536073967,
+    "output_tokens": 1018449,
+    "api_call_count": 1308
+  }
+}
