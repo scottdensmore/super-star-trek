@@ -1,0 +1,54 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "0604134058e8",
+  "session_id": "f543190f-4027-47a1-8fe2-512c2d383260",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-04T14:31:38.099529176Z",
+  "branch": "feat/portable-seeded-rng",
+  "checkpoints_count": 2,
+  "save_step_count": 1,
+  "files_touched": [
+    "osx.c",
+    "setup.c",
+    "sst.c",
+    "sst.doc",
+    "sst.h",
+    "tests/tournament.sh",
+    "tests/tui.sh"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5",
+  "turn_id": "97863421cc43",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 2276,
+    "cache_creation_tokens": 7105599,
+    "cache_read_tokens": 456277749,
+    "output_tokens": 924963,
+    "api_call_count": 1212
+  },
+  "session_metrics": {
+    "turn_count": 72
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-04T14:31:36.00839855Z",
+    "agent_lines": 42,
+    "agent_removed": 11,
+    "human_added": 0,
+    "human_modified": 22,
+    "human_removed": 2,
+    "total_committed": 64,
+    "total_lines_changed": 77,
+    "agent_percentage": 68.83116883116884,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}

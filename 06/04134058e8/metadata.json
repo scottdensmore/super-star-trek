@@ -1,0 +1,32 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "0604134058e8",
+  "strategy": "manual-commit",
+  "branch": "feat/portable-seeded-rng",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "osx.c",
+    "setup.c",
+    "sst.c",
+    "sst.doc",
+    "sst.h",
+    "tests/tournament.sh",
+    "tests/tui.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/06/04134058e8/0/metadata.json",
+      "transcript": "/06/04134058e8/0/full.jsonl",
+      "compact_transcript": "/06/04134058e8/0/transcript.jsonl",
+      "content_hash": "/06/04134058e8/0/content_hash.txt",
+      "prompt": "/06/04134058e8/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2276,
+    "cache_creation_tokens": 7105599,
+    "cache_read_tokens": 456277749,
+    "output_tokens": 924963,
+    "api_call_count": 1212
+  }
+}
