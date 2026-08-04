@@ -26,7 +26,7 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     cmake_print_variables(CMAKE_C_FLAGS)
 endif()
 
-add_executable(sst sst.c ai.c battle.c events.c finish.c moving.c osx.c planets.c reports.c setup.c tui.c tuifmt.c)
+add_executable(sst sst.c ai.c battle.c events.c finish.c moving.c osx.c planets.c reports.c rules.c setup.c tui.c tuifmt.c)
 
 set(CURSES_NEED_NCURSES TRUE)
 find_package(Curses REQUIRED)
@@ -45,6 +45,12 @@ enable_testing()
 add_executable(test_tuifmt tests/test_tuifmt.c tuifmt.c)
 target_link_libraries(test_tuifmt PRIVATE m)
 add_test(NAME tuifmt COMMAND test_tuifmt)
+
+# The game's rules, asked directly. Expectations come from sst.doc --
+# see tests/test_rules.c and the note at the top of rules.h.
+add_executable(test_rules tests/test_rules.c rules.c)
+target_link_libraries(test_rules PRIVATE m)
+add_test(NAME rules COMMAND test_rules)
 
 add_test(NAME journey
          COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/journey.sh $<TARGET_FILE:sst> $<CONFIG>)
