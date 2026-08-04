@@ -1,5 +1,6 @@
 #define INCLUDED	// Define externs here
 #include "sst.h"
+#include <stdint.h>
 #include "tui.h"
 #include <ctype.h>
 #include <stdarg.h>
@@ -571,8 +572,51 @@ double expran(double avrage) {
 	return -avrage*log(1e-7 + Rand());
 }
 
+/* The game's random numbers, which are its own rather than the C
+ * library's.
+ *
+ * sst.doc promises that a tournament number is all two players need to
+ * share to play the same galaxy, and that identical actions in it lead
+ * to identical results. rand() cannot keep that promise across a room:
+ * glibc and the BSD libc that macOS uses produce entirely different
+ * sequences from the same seed, so tournament 42 has never been the
+ * same game on a Mac as on a Linux box.
+ *
+ * This is PCG-XSH-RR with a fixed increment (O'Neill, 2014): a 64-bit
+ * step, a xorshift down to 32 bits and a rotate. Written in unsigned
+ * arithmetic of stated width, so it computes the same sequence
+ * everywhere a C17 compiler does.
+ *
+ * Seeding a game from the clock still gives an unpredictable one; what
+ * changes is that a tournament number now means the same thing on
+ * every machine. It also means a different galaxy from the one that
+ * number used to give here -- unavoidable, and the number was never
+ * portable to begin with. */
+static uint64_t rngstate = 0x853c49e6748fea9bULL;
+
+static uint32_t rngnext(void) {
+	uint64_t old = rngstate;
+	uint32_t xorshifted, rot;
+
+	rngstate = old * 6364136223846793005ULL + 1442695040888963407ULL;
+	xorshifted = (uint32_t)(((old >> 18) ^ old) >> 27);
+	rot = (uint32_t)(old >> 59);
+	return (xorshifted >> rot) | (xorshifted << ((32 - rot) & 31));
+}
+
+void sst_srand(unsigned int seed) {
+	rngstate = seed;
+	(void)rngnext();	/* let the seed spread before it is used */
+}
+
+void randomize(void) {
+	sst_srand((unsigned int)time(NULL));
+}
+
 double Rand(void) {
-	return rand()/(1.0 + (double)RAND_MAX);
+	/* 2^32 exactly, so the result lands in [0,1) with no rounding
+	   surprises and the same bits on every machine. */
+	return rngnext() / 4294967296.0;
 }
 
 void iran8(int *i, int *j) {

@@ -525,9 +525,8 @@ fi
 #
 # The briefing's fixed text is already longer than the window, so the
 # case does not rest on the galaxy that gets generated; the seed only
-# decides how much further past the threshold it goes, and rand()
-# differing between C libraries can blunt that but not invert it. A
-# pause before the player has touched the keyboard is wrong either way.
+# decides how much further past the threshold it goes. A pause before
+# the player has touched the keyboard is wrong either way.
 #
 # Played in the temporary directory: the replay below answers the
 # score-recording question, and answering it the other way would write

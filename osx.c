@@ -1,6 +1,4 @@
-#include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
 /* tui.h, not sst.h: the declarations getch() needs are in the first,
    and the second declares a pause(int) that collides with the POSIX
    pause(void) that <unistd.h> below brings in. */
@@ -11,9 +9,9 @@
 #include <unistd.h>
 #endif
 
-void randomize(void) {
-	srand((int)time(NULL));
-}
+/* randomize() used to live here, next to srand(). The game has its own
+   generator now (see Rand() in sst.c), and seeding it is not a
+   platform matter, so it moved there. */
 
 #ifndef WINDOWS
 int max(int a, int b) {

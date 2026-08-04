@@ -1122,7 +1122,13 @@ A point worth noting is that 'FREEZE' does not save the seed for the
 random number generator, so that identical actions after restarting
 the same frozen game can lead to different results.  However,
 identical actions after starting a given tournament game always lead
-to the same results.
+to the same results.  The game carries its own random number
+generator for this, so a tournament number names the same galaxy on
+every machine -- two players comparing scores need share nothing but
+the number.  This was not so before 2026: the generator was the C
+library's, and a tournament number gave one galaxy on Linux and
+another on a Mac, so numbers noted down before then no longer bring
+back the same game.
                                                                        20
  ***********
  * REQUEST *
