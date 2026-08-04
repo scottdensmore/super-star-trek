@@ -16,9 +16,10 @@
 # in one buffer, which is what the check below is for.
 #
 # Every game is a `tournament <n>`, which seeds the generator with the
-# number, so a failure here is reproducible rather than a flake. What
-# the seed produces is not portable, though -- rand() differs between C
-# libraries -- so the two kinds of assertion below are kept apart:
+# number, so a failure here is reproducible rather than a flake -- and
+# reproducible everywhere, since the generator is the game's own rather
+# than the C library's. What is still not certain is what any one
+# galaxy contains, so the two kinds of assertion below are kept apart:
 #
 #   per journey   things true of any game whatever the galaxy holds:
 #                 it ends cleanly, it stays in sync, it prints no
@@ -27,10 +28,10 @@
 #   across the battery
 #                 things that need a particular galaxy: that some game
 #                 docked, some fought, some destroyed a Klingon, some
-#                 filled a screen. Any one seed may do none of these --
-#                 calling for help can get the ship dismantled in
-#                 transit, which ends that game early and correctly --
-#                 so they are asked of the run as a whole.
+#                 filled a screen. Any one seed may legitimately do none
+#                 of these -- calling for help can get the ship
+#                 dismantled in transit, which ends that game early and
+#                 correctly -- so they are asked of the run as a whole.
 #
 # Usage: tournament.sh /path/to/sst [build-type]
 
@@ -56,16 +57,19 @@ fi
 #
 # Position in this list picks the route -- they alternate -- so the list
 # cannot be sorted or trimmed from the middle without changing which
-# game each seed plays. 10 is in it for a particular reason: on this
-# platform it is the one seed in sixty that made the Super-commander
-# report stutter, so the check for that has something to bite on rather
-# than being an absence nobody has seen fail.
+# game each seed plays. The seeds themselves are chosen, not arbitrary:
+# between them they dock, cross quadrants, exchange fire, fire a
+# torpedo, lose warp drive and fill a screen, several times over each,
+# and 4 is the one that made the Super-commander report stutter before
+# it was fixed. Since the generator is the game's own now rather than
+# the C library's, a seed picked here behaves the same everywhere --
+# which is what makes choosing them worth the trouble.
 #
 # A game costs about
 # four seconds, nearly all of it the busy-wait in prouts() that types
 # the game's dramatic lines out slowly, so twelve of them take about a
 # minute.
-SEEDS="1 10 3 5 7 11 13 17 19 23 29 31"
+SEEDS="7 4 12 6 16 9 19 20 11 21 1 23"
 
 MAXBYTES=262144
 DUMPBYTES=3000
@@ -312,9 +316,10 @@ for seed in $SEEDS; do
 	# The Super-commander's position is reported at most once per turn.
 	# It used to be announced twice, byte for byte, when one warp jump
 	# scheduled his move more than once -- which reads as the game
-	# stuttering rather than as two reports. These journeys draw the
-	# report often enough for the check to mean something: ten of them
-	# across the fighting route as this was written.
+	# stuttering rather than as two reports. The battery draws the
+	# report six times as this was written -- three of them in seed 4,
+	# which is the one that stuttered before the fix -- so the check
+	# has something to bite on.
 	# Back to back, which is two lines apart: the report and the line
 	# introducing it, nothing else between. The same quadrant reported
 	# again a turn later is six lines apart at the closest -- a second
@@ -344,8 +349,8 @@ for seed in $SEEDS; do
 	# then be stopped inside the quadrant. Entering one is the only
 	# line that means a boundary was crossed.
 	saw "Entering Quadrant" && any_moved=1
-	# Either being shot at or shooting something counts: whether a
-	# given galaxy does one, the other or both is not portable.
+	# Either being shot at or shooting something counts: which of the
+	# two a given galaxy produces is its own business.
 	saw "unit hit from" && any_fought=1
 	# From the score sheet, which every quit prints. The bare
 	# "*** ... destroyed" line also covers a starbase lost to the
@@ -403,10 +408,10 @@ else
 		fail "damaged save: the game did not carry on and start another"
 fi
 
-# Asked of the battery, not of any one game: which galaxy a seed builds
-# is not portable, but that none of a dozen of them contained a
-# starbase to dock at or a Klingon to shoot would mean the journey
-# stopped exercising what it is here for.
+# Asked of the battery, not of any one game: any single galaxy may
+# contain no base within reach or no enemy worth shooting, but that
+# none of a dozen did would mean the journey stopped exercising what it
+# is here for.
 [ "$any_docked" = 1 ] || fail "no game docked at a starbase"
 [ "$any_moved" = 1 ] || fail "no game moved between quadrants"
 [ "$any_fought" = 1 ] || fail "no game exchanged fire with an enemy"

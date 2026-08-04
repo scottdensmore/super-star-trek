@@ -477,7 +477,7 @@ int choose(void) {
 			}
 			tourn = (int)aaitem;
 			thingx = -1;
-			srand((unsigned int)(int)aaitem);
+			sst_srand((unsigned int)(int)aaitem);
 			break;
 		}
 		if (isit("frozen")) {

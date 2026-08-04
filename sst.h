@@ -463,6 +463,8 @@ void crmshp(void);
 void cramlc(int, int, int);
 double expran(double);
 double Rand(void);
+void sst_srand(unsigned int);
+void randomize(void);
 void iran8(int *, int *);
 void iran10(int *, int *);
 double square(double);
@@ -503,7 +505,6 @@ void probe(void);
 int min(int, int);
 int max(int, int);
 #endif
-void randomize(void);
 int getch(void);
 
 #ifdef CLOAKING
