@@ -409,10 +409,44 @@ static void test_promotion_penalties(void) {
 	skill = SNOVICE;
 	d.killk = 4;
 	promotion_compute(&p, 10.0);
-	checkint("four kills earns it with a clean record", p.earned, 1);
+	checkint("four kills earns it before a starbase is lost", p.earned, 1);
 	d.basekl = 1;
 	promotion_compute(&p, 10.0);
 	checkint("but not after destroying a starbase", p.earned, 0);
+
+#ifdef CLOAKING
+	/* "100 points for each violation of the Treaty of Algeron"
+	   -- sst.doc:1374 -- is a penalty like any other, and raises this
+	   bar like any other. It did not, until #53. */
+	nothing_happened();
+	skill = SNOVICE;
+	ncviol = 1;
+	promotion_compute(&p, 10.0);
+	checkrate("an Algeron violation is a hundred", p.penalties, 100.0);
+
+	nothing_happened();
+	skill = SNOVICE;
+	d.killk = 4;
+	promotion_compute(&p, 10.0);
+	checkint("four kills earns it before any violation", p.earned, 1);
+	ncviol = 1;
+	promotion_compute(&p, 10.0);
+	checkint("but not after cloaking in the Neutral Zone", p.earned, 0);
+
+	/* And it is counted with the rest rather than after them: ninety-
+	   nine points of other penalty is under the floor on its own, and
+	   a violation carries the whole lot over it. Counted afterwards
+	   the ninety-nine would vanish and the bar would come out at 100
+	   rather than 199. */
+	nothing_happened();
+	skill = SNOVICE;
+	nhelp = 2;		/*  90 */
+	casual = 9;		/*   9 */
+	ncviol = 1;		/* 100 */
+	promotion_compute(&p, 10.0);
+	checkrate("a violation carries the rest over the floor",
+		  p.penalties, 199.0);
+#endif
 }
 
 /* "100 points for each starship you lose" -- sst.doc:1373 -- counts
