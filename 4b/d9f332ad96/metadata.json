@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "4bd9f332ad96",
+  "strategy": "manual-commit",
+  "branch": "test/golden-masters",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "AGENTS.md",
+    "CMakeLists.txt",
+    "tests/golden.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/4b/d9f332ad96/0/metadata.json",
+      "transcript": "/4b/d9f332ad96/0/full.jsonl",
+      "compact_transcript": "/4b/d9f332ad96/0/transcript.jsonl",
+      "content_hash": "/4b/d9f332ad96/0/content_hash.txt",
+      "prompt": "/4b/d9f332ad96/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2323,
+    "cache_creation_tokens": 7139715,
+    "cache_read_tokens": 476367533,
+    "output_tokens": 947846,
+    "api_call_count": 1237
+  }
+}
