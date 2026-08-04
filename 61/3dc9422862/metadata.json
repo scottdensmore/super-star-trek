@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "613dc9422862",
+  "strategy": "manual-commit",
+  "branch": "fix/supercommander-diagonal",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "ai.c",
+    "tests/golden.sh",
+    "tests/golden/combat.txt",
+    "tests/tournament.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/61/3dc9422862/0/metadata.json",
+      "transcript": "/61/3dc9422862/0/full.jsonl",
+      "compact_transcript": "/61/3dc9422862/0/transcript.jsonl",
+      "content_hash": "/61/3dc9422862/0/content_hash.txt",
+      "prompt": "/61/3dc9422862/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2369,
+    "cache_creation_tokens": 7165682,
+    "cache_read_tokens": 496316393,
+    "output_tokens": 965039,
+    "api_call_count": 1261
+  }
+}
