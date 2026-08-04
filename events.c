@@ -247,7 +247,7 @@ void events(void) {
 				proutn("Lt. Uhura-  \"Captain, the starbase in");
 				cramlc(1, batx, baty);
 				skip(1);
-				prout("   reports that it is under atttack and that it can");
+				prout("   reports that it is under attack and that it can");
 				proutn("   hold out only until stardate ");
 				cramf(future[FCDBAS],1,1);
 				prout(".\"");
