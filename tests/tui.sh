@@ -23,7 +23,7 @@
 # exactly, which the checks in the loop below hold it to. Ten lines of
 # paging but eleven rows: the prompt lands on the last one.
 #
-# Usage: tui.sh /path/to/sst
+# Usage: tui.sh /path/to/sst [build-type]
 # Exits 77 (ctest SKIP_RETURN_CODE) when there is no tmux to run in.
 #
 # Needs a sleep that takes a fraction, which GNU and BSD both have but
@@ -32,6 +32,7 @@
 set -u
 
 SST="${1:-./sst}"
+BUILD_TYPE="${2:-}"
 case "$SST" in
 	/*) ;;
 	*) SST="$(pwd)/$SST" ;;
@@ -445,6 +446,34 @@ else
 	                   END {exit !ok}'; then
 		fail "80x30: the banner gave up its spacing on a terminal with room for it"
 		dump
+	fi
+fi
+
+# --- the panel says why the grid is masked ---------------------------
+# srscan() heads its grid with SHORT-RANGE SENSORS DAMAGED. The panel
+# has no line to spare for a heading, so it captions the box instead;
+# without it the dashes are a field of nothing with no reason given.
+#
+# Only in a debug build, because damaging a device on purpose is what
+# the debug command is for. Everything the caption depends on is in
+# tests/test_tuifmt.c, which runs in both.
+if [ "$BUILD_TYPE" = "Debug" ]; then
+	start 80 24 'tournament 7 short novice debug'
+	if ! to_command; then
+		fail "sensors: the game never reached its command prompt"
+		dump
+	else
+		unwanted "sensors: the caption is shown with the sensors working" \
+			"SENSORS DAMAGED"
+		# debugme(): three questions declined, then selective damage,
+		# then one answer per device. S. R. Sensors is the first.
+		tm send-keys -t "$pane" 'debug' Enter
+		for a in n n n y y n n n n n n n n n n n n n n n n n; do
+			tm send-keys -t "$pane" "$a" Enter
+			sleep 0.1
+		done
+		expect "sensors: the grid gives no reason for its dashes" \
+			"SENSORS DAMAGED"
 	fi
 fi
 

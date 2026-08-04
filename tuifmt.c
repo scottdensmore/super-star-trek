@@ -15,6 +15,15 @@
  * takes hold -- a refresh that recomputed the global would hand that
  * back to GREEN just as the game decided the player was in trouble.
  * It lives here so the formatters stay testable on their own. */
+/* Whether the grid is hiding anything, which is the one condition
+ * srscan() prints a heading for. The panel has no room for a heading,
+ * so tui.c captions the box instead -- but the test belongs here, next
+ * to the masking it describes, so the two cannot drift apart. Docking
+ * lends the ship the starbase's sensors, hence the second half. */
+int sensors_masked(void) {
+	return damage[DSRSENS] != 0.0 && condit != IHDOCKED;
+}
+
 int condition_now(void) {
 	if (d.galaxy[quadx][quady] > 99 || d.newstuf[quadx][quady] > 9)
 		return IHRED;
@@ -80,7 +89,7 @@ int status_class(int i) {
 void fmt_quad_line(int i, char *buf) {
 	char *cp = buf;
 	int j, row;
-	int goodscan = damage[DSRSENS] == 0.0 || condit == IHDOCKED;
+	int goodscan = !sensors_masked();
 
 	if (i == 0) {
 		strcpy(buf, "    1 2 3 4 5 6 7 8 9 10");
