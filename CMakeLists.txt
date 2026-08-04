@@ -8,6 +8,19 @@ project(sst
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSCORE -DCAPTURE -DCLOAKING")
 
+# Warnings are on for everyone, so a new one is visible where it is
+# introduced. They are only fatal where that can be enforced without
+# breaking somebody's build on a compiler version nobody here has
+# tried: CI turns SST_WERROR on, a contributor gets the warning and a
+# working build.
+option(SST_WERROR "Treat compiler warnings as errors (CI does)" OFF)
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
+    if(SST_WERROR)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+    endif()
+endif()
+
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DDEBUG")
     cmake_print_variables(CMAKE_C_FLAGS)

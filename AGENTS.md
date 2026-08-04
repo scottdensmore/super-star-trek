@@ -24,7 +24,9 @@ cmake --build build
 ```
 
 Note: `CMakeLists.txt` compares `CMAKE_BUILD_TYPE` directly, so configuring
-without `-DCMAKE_BUILD_TYPE=...` fails. Feature flags `-DSCORE -DCAPTURE
+without `-DCMAKE_BUILD_TYPE=...` fails. `-Wall -Wextra` is always on; CI
+also configures with `-DSST_WERROR=ON`, so pass that locally to see what
+CI will refuse. Feature flags `-DSCORE -DCAPTURE
 -DCLOAKING` are always enabled.
 
 ## TUI mode (`sst -t`)
