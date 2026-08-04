@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "c6521f03b865",
+  "strategy": "manual-commit",
+  "branch": "fix/quit-clears-panels",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "events.c",
+    "finish.c",
+    "sst.c",
+    "tests/tui.sh",
+    "tui.c",
+    "tui.h"
+  ],
+  "sessions": [
+    {
+      "metadata": "/c6/521f03b865/0/metadata.json",
+      "transcript": "/c6/521f03b865/0/full.jsonl",
+      "compact_transcript": "/c6/521f03b865/0/transcript.jsonl",
+      "content_hash": "/c6/521f03b865/0/content_hash.txt",
+      "prompt": "/c6/521f03b865/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2042,
+    "cache_creation_tokens": 6222386,
+    "cache_read_tokens": 369721957,
+    "output_tokens": 828166,
+    "api_call_count": 1089
+  }
+}
