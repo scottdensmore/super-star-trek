@@ -61,3 +61,40 @@ void score_compute(struct scoring *s, int inGame, double elapsed)
 #endif
 	if (alive == 0) s->total -= 200;	/* sst.doc:1371 */
 }
+
+void promotion_compute(struct promotion *p, double elapsed)
+{
+	/* "if you have lost 100 or more points in penalties, the required
+	   kill rate goes up" -- sst.doc:1383-1385. Below a hundred the
+	   game rounds the whole thing away rather than scaling it.
+
+	   Which penalties count is where the code and the manual part
+	   company. The manual says "points in penalties", and the score
+	   sheet lists eight kinds; this counts six of them. Losing your
+	   ship is folded in below. The death penalty is moot -- a dead
+	   captain is not promoted -- but a Treaty of Algeron violation
+	   costs a hundred points and does not raise this bar at all. See
+	   the note in tests/test_rules.c. */
+	p->penalties = 5.0*d.starkl		/* sst.doc:1377 */
+		     + casual			/* sst.doc:1378 */
+		     + 10.0*d.nplankl		/* sst.doc:1376 */
+		     + 45.0*nhelp		/* sst.doc:1375 */
+		     + 100.0*d.basekl;		/* sst.doc:1372 */
+	if (ship == IHF) p->penalties += 100.0;		/* sst.doc:1373 */
+	else if (ship == 0) p->penalties += 200.0;
+	if (p->penalties < 100.0) p->penalties = 0.0;
+
+	/* "Normally, the required kill rate is 0.1 * skill * (skill + 1.0)
+	   + 0.1, where skill ranges from 1 for Novice to 5 for Emeritus."
+	   -- sst.doc:1385-1387. The penalty term is the "goes up" part;
+	   its size is the code's own, the manual only says it rises. */
+	p->needed = 0.1*skill*(skill + 1.0) + 0.1 + 0.008*p->penalties;
+
+	/* A game won in under five stardates is promoted without being
+	   asked for a rate -- which the manual does not mention, and
+	   which the division below could not survive anyway when a game
+	   is won on the stardate it began. */
+	p->achieved = elapsed < 5.0 ? 0.0
+		    : (d.killk + d.killc + d.nsckill)/elapsed;
+	p->earned = elapsed < 5.0 || p->achieved >= p->needed;
+}
