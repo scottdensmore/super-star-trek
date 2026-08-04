@@ -1,0 +1,52 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "c39258e0a38b",
+  "session_id": "f543190f-4027-47a1-8fe2-512c2d383260",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-04T18:41:46.236094709Z",
+  "branch": "test/rules-from-the-manual",
+  "checkpoints_count": 3,
+  "save_step_count": 1,
+  "files_touched": [
+    "CMakeLists.txt",
+    "finish.c",
+    "rules.c",
+    "rules.h",
+    "tests/test_rules.c"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5",
+  "turn_id": "a1f9202999bb",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 2424,
+    "cache_creation_tokens": 8051015,
+    "cache_read_tokens": 520648209,
+    "output_tokens": 998581,
+    "api_call_count": 1290
+  },
+  "session_metrics": {
+    "turn_count": 76
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-04T18:41:43.832221787Z",
+    "agent_lines": 370,
+    "agent_removed": 23,
+    "human_added": 37,
+    "human_modified": 10,
+    "human_removed": 0,
+    "total_committed": 417,
+    "total_lines_changed": 440,
+    "agent_percentage": 89.31818181818181,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}

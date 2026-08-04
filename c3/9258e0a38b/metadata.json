@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "c39258e0a38b",
+  "strategy": "manual-commit",
+  "branch": "test/rules-from-the-manual",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "CMakeLists.txt",
+    "finish.c",
+    "rules.c",
+    "rules.h",
+    "tests/test_rules.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/c3/9258e0a38b/0/metadata.json",
+      "transcript": "/c3/9258e0a38b/0/full.jsonl",
+      "compact_transcript": "/c3/9258e0a38b/0/transcript.jsonl",
+      "content_hash": "/c3/9258e0a38b/0/content_hash.txt",
+      "prompt": "/c3/9258e0a38b/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2424,
+    "cache_creation_tokens": 8051015,
+    "cache_read_tokens": 520648209,
+    "output_tokens": 998581,
+    "api_call_count": 1290
+  }
+}
