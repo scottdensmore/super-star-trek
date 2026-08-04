@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "ea9895838b10",
+  "strategy": "manual-commit",
+  "branch": "docs/windows-build",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "README.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ea/9895838b10/0/metadata.json",
+      "transcript": "/ea/9895838b10/0/full.jsonl",
+      "compact_transcript": "/ea/9895838b10/0/transcript.jsonl",
+      "content_hash": "/ea/9895838b10/0/content_hash.txt",
+      "prompt": "/ea/9895838b10/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1945,
+    "cache_creation_tokens": 6174460,
+    "cache_read_tokens": 338505937,
+    "output_tokens": 802010,
+    "api_call_count": 1038
+  }
+}
