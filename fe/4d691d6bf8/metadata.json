@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "fe4d691d6bf8",
+  "strategy": "manual-commit",
+  "branch": "chore/osx-tui-hooks",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "AGENTS.md",
+    "osx.c",
+    "tui.c",
+    "tui.h"
+  ],
+  "sessions": [
+    {
+      "metadata": "/fe/4d691d6bf8/0/metadata.json",
+      "transcript": "/fe/4d691d6bf8/0/full.jsonl",
+      "compact_transcript": "/fe/4d691d6bf8/0/transcript.jsonl",
+      "content_hash": "/fe/4d691d6bf8/0/content_hash.txt",
+      "prompt": "/fe/4d691d6bf8/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1920,
+    "cache_creation_tokens": 6161065,
+    "cache_read_tokens": 330947427,
+    "output_tokens": 797178,
+    "api_call_count": 1025
+  }
+}
