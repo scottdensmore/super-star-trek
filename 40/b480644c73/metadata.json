@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "40b480644c73",
+  "strategy": "manual-commit",
+  "branch": "fix/algeron-raises-promotion-bar",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "rules.c",
+    "tests/test_rules.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/40/b480644c73/0/metadata.json",
+      "transcript": "/40/b480644c73/0/full.jsonl",
+      "compact_transcript": "/40/b480644c73/0/transcript.jsonl",
+      "content_hash": "/40/b480644c73/0/content_hash.txt",
+      "prompt": "/40/b480644c73/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2488,
+    "cache_creation_tokens": 8973081,
+    "cache_read_tokens": 550961414,
+    "output_tokens": 1030456,
+    "api_call_count": 1324
+  }
+}
