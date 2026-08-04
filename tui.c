@@ -15,6 +15,9 @@
 #define PANELH (13)		/* border + header + 10 grid rows + border */
 #define QUADW (29)		/* border + 25-char grid line + padding */
 
+int tui_active;		/* declared in tui.h; see the note there */
+int tui_ingame;
+
 static WINDOW *wquad, *wstat, *wmsg;
 static int use_colour;
 

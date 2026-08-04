@@ -2,7 +2,12 @@
  *
  * The pure formatting functions live in tuifmt.c so they can be unit
  * tested without curses; the curses backend itself lives in tui.c.
+ *
+ * Self-contained on purpose: including this must not oblige a file to
+ * include sst.h as well. See the note on tui_active below.
  */
+#ifndef SST_TUI_H
+#define SST_TUI_H
 
 #define FMTBUFLEN (48)	/* enough for any panel line */
 #define STATLABEL (14)	/* width fmt_status_line pads its labels to;
@@ -41,8 +46,16 @@ int cell_class(char c);			/* colour class of a shown cell */
 int status_class(int i);		/* colour class of a status line */
 
 /* Curses backend (tui.c) */
-EXTERN int tui_active;	/* TUI mode is on and curses is running */
-EXTERN int tui_ingame;	/* a game is set up, so the panels have something
+
+/* Plain extern, and defined in tui.c, rather than going through the
+ * EXTERN/INCLUDED trick that instantiates the game state: these two
+ * describe the display, not the game, and keeping them out of it is
+ * what lets this header stand on its own. osx.c needs that -- it wants
+ * POSIX pause(void) from <unistd.h>, and sst.h declares a pause(int)
+ * that collides with it.
+ */
+extern int tui_active;	/* TUI mode is on and curses is running */
+extern int tui_ingame;	/* a game is set up, so the panels have something
 			   to show; false through the setup questions,
 			   including a second game's */
 
@@ -59,3 +72,5 @@ int tui_getch(void);
 void tui_clearmsg(void);
 int tui_pageheight(void);	/* usable message-window lines for paging */
 void tui_refresh_panels(void);
+
+#endif	/* SST_TUI_H */
