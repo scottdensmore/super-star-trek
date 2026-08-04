@@ -84,7 +84,8 @@ set_tests_properties(help PROPERTIES TIMEOUT 120)
 # time timing out one poll at a time. Better that it reaches the end
 # and names each failure than that ctest kills it and reports only
 # that something hung.
-add_test(NAME tui COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/tui.sh $<TARGET_FILE:sst>)
+add_test(NAME tui
+         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/tui.sh $<TARGET_FILE:sst> $<CONFIG>)
 set_tests_properties(tui PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300)
 
 # The journey that passes game time: movement, combat, docking, and

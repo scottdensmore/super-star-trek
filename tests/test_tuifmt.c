@@ -98,6 +98,30 @@ static void test_quad_masks_when_sensors_damaged(void) {
 	check("docked row unmasked", buf, " 1  K . . . . . . . . .");
 }
 
+/* The caption tui.c puts on the panel and the masking the formatter
+ * does have to agree, so they ask the same function. */
+static void test_sensors_masked(void) {
+	basestate();
+	checkint("undamaged sensors hide nothing", sensors_masked(), 0);
+
+	damage[DSRSENS] = 1.0;
+	checkint("damaged sensors hide cells", sensors_masked(), 1);
+
+	condit = IHDOCKED;
+	checkint("docked borrows the starbase's sensors", sensors_masked(), 0);
+
+	/* And it really is the same test the grid uses. */
+	basestate();
+	damage[DSRSENS] = 1.0;
+	{
+		char buf[FMTBUFLEN];
+		quad[1][1] = IHK;
+		fmt_quad_line(1, buf);
+		check("masked while sensors_masked() says so", buf,
+			  " 1  - - - - - - - - - -");
+	}
+}
+
 static void test_quad_coordfixed_masks_around_ship(void) {
 	char buf[FMTBUFLEN];
 	basestate();
@@ -321,6 +345,7 @@ int main(void) {
 	test_quad_header();
 	test_quad_row();
 	test_quad_masks_when_sensors_damaged();
+	test_sensors_masked();
 	test_quad_coordfixed_masks_around_ship();
 	test_quad_coordfixed_flips_rows();
 	test_condition_now();

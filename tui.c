@@ -199,6 +199,14 @@ void tui_refresh_panels(void) {
 	   here writes to the game state. */
 	if (tui_ingame) {
 		mvwprintw(wquad, 0, 2, " Quadrant %d - %d ", quadx, quady);
+		/* srscan() heads the grid with SHORT-RANGE SENSORS DAMAGED;
+		   the panel has no line to spare for that, so it says the
+		   same thing on the bottom border. Without it the dashes
+		   are a field of nothing with no reason given. Seventeen
+		   columns inside a twenty-nine-column box, so it fits at
+		   the 72x24 minimum as well as anywhere else. */
+		if (sensors_masked())
+			mvwaddstr(wquad, PANELH-1, 2, " SENSORS DAMAGED ");
 		for (i = 0; i <= 10; i++) {
 			fmt_quad_line(i, buf);
 			draw_quad_line(i+1, buf);

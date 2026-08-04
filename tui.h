@@ -42,6 +42,7 @@ enum statusclass {
 /* Panel formatters (tuifmt.c). Both read the global game state. */
 void fmt_quad_line(int i, char *buf);	/* i=0 header, 1..10 grid rows */
 void fmt_status_line(int i, char *buf);	/* i=1..10, srscan status fields */
+int sensors_masked(void);		/* the grid is hiding cells */
 int cell_class(char c);			/* colour class of a shown cell */
 int status_class(int i);		/* colour class of a status line */
 
