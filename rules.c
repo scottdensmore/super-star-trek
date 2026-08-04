@@ -68,13 +68,9 @@ void promotion_compute(struct promotion *p, double elapsed)
 	   kill rate goes up" -- sst.doc:1383-1385. Below a hundred the
 	   game rounds the whole thing away rather than scaling it.
 
-	   Which penalties count is where the code and the manual part
-	   company. The manual says "points in penalties", and the score
-	   sheet lists eight kinds; this counts six of them. Losing your
-	   ship is folded in below. The death penalty is moot -- a dead
-	   captain is not promoted -- but a Treaty of Algeron violation
-	   costs a hundred points and does not raise this bar at all. See
-	   the note in tests/test_rules.c. */
+	   Every kind of penalty the score sheet lists, save one: the two
+	   hundred for getting yourself killed, which cannot matter here
+	   because a dead captain is not promoted. */
 	p->penalties = 5.0*d.starkl		/* sst.doc:1377 */
 		     + casual			/* sst.doc:1378 */
 		     + 10.0*d.nplankl		/* sst.doc:1376 */
@@ -82,6 +78,9 @@ void promotion_compute(struct promotion *p, double elapsed)
 		     + 100.0*d.basekl;		/* sst.doc:1372 */
 	if (ship == IHF) p->penalties += 100.0;		/* sst.doc:1373 */
 	else if (ship == 0) p->penalties += 200.0;
+#ifdef CLOAKING
+	p->penalties += 100.0*ncviol;		/* sst.doc:1374 */
+#endif
 	if (p->penalties < 100.0) p->penalties = 0.0;
 
 	/* "Normally, the required kill rate is 0.1 * skill * (skill + 1.0)
