@@ -338,6 +338,7 @@ void torpedo(double course, double r, int inx, int iny, double *hit) {
 					prout("   torpedo neutralized.");
 					return;
 				}
+				FALLTHROUGH;	/* otherwise it takes the hit */
 			case IHR: /* Hit a regular enemy */
 			case IHK:
 				/* find the enemy */
@@ -1183,6 +1184,7 @@ void phasers(void) {
 				prout("Manual-fire-must-be-used");
 				skip(1);
 			}
+			FALLTHROUGH;	/* forced manual is manual */
 		case MANUAL:
 			rpow = 0.0;
 			for (k = 1; k <= nenhere;) {
@@ -1428,6 +1430,11 @@ void
 
 	/* if there is more than one Klingon, find out which one */
 	k = selectklingon();
+	if (k == 0)
+	{
+		proutf("Uhura- \"Getting no response, sir.\"\n");
+		return;
+	}
 	Time = 0.05;   // This action will take some time
 	ididit = TRUE; //  So any others can strike back
 
@@ -1481,9 +1488,13 @@ void
  **	surrender (Tom Almy mod)
  */
 
-int selectklingon()
+int selectklingon(void)
 {
-	int		i;
+	/* 0 means nothing here worth asking, which capture() checks for.
+	   Its own klhere test means the loop below always finds someone
+	   in practice; this is so a quadrant of nothing but Romulans
+	   cannot return whatever happened to be on the stack. */
+	int		i = 0;
 
 	if (nenhere < 2)
 		i = 1;

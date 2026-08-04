@@ -254,7 +254,7 @@ void finish(FINTYPE ifin) {
 			break;
 		case FSSC:
 			prout("The Galileo is instantly annihilated by the supernova.");
-			// no break;
+			FALLTHROUGH;	/* and so is everyone aboard */
 		case FPNOVA:
 			prout("You and your mining party are atomized.");
 			skip(1);

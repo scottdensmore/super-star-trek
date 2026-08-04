@@ -117,7 +117,10 @@ fail() {
 #
 # Movement is manual rather than automatic because automatic needs the
 # computer, and a damaged one turns those four numbers into a prompt
-# for two others.
+# for two others. One of the jumps is deliberately too short to take a
+# single step, which is a path of its own: the loop that walks the ship
+# across the quadrant never runs, and the enemy-distance sums after it
+# used to read whatever the stack held.
 #
 # Both end in more `n`s than the two the quit path needs. A game that
 # ends early -- the ship destroyed in a fight, or lost calling for help
@@ -160,6 +163,8 @@ move manual 0 1
 srscan
 photons 1 5 5
 lrscan
+move manual 0.04 0
+srscan
 move manual -1 0
 srscan
 photons 1 5 5
@@ -325,6 +330,39 @@ for seed in $SEEDS; do
 		printf '\n' >&2
 	fi
 done
+
+# --- a damaged save file is refused, not played ----------------------
+# Every read from a saved game used to be unchecked, so a file that
+# stopped short was loaded into the game state and played anyway --
+# with, in the worst shape, a password that had never been read. It now
+# says so and asks again, which is how a file that was not there at all
+# already behaved.
+save="$work/damaged"
+mkdir -p "$save"
+(cd "$save" && printf 'tournament 7\nshort\nnovice\npw\nfreeze sav\nquit\nn\nn\n' |
+	run "$SST" >/dev/null 2>&1)
+if [ ! -s "$save/sav.trk" ]; then
+	fail "damaged save: could not write a save file to damage"
+else
+	# Everything but the password: the shape a freeze interrupted
+	# part-way through leaves behind, and the one that used to be
+	# played without complaint.
+	whole=$(wc -c < "$save/sav.trk" | tr -d ' ')
+	head -c $((whole - 8)) "$save/sav.trk" > "$save/short.trk"
+	(cd "$save" && printf 'frozen short\nregular\nshort\nnovice\npw\nquit\nn\nn\nn\n' |
+		run "$SST" 2>&1) | head -c "$MAXBYTES" > "$out"
+	grep -q "Can't read game file" "$out" ||
+		fail "damaged save: a file that stops short was accepted"
+	# And nothing of it is left behind: the length and skill questions
+	# come back, so the game the player goes on to ask for is the one
+	# they get.
+	grep -q 'Short, Medium, or Long' "$out" ||
+		fail "damaged save: the refused file's settings were kept"
+	grep -q 'Novice, Fair, Good, Expert' "$out" ||
+		fail "damaged save: the refused file's skill was kept"
+	grep -q 'COMMAND>' "$out" ||
+		fail "damaged save: the game did not carry on and start another"
+fi
 
 # Asked of the battery, not of any one game: which galaxy a seed builds
 # is not portable, but that none of a dozen of them contained a

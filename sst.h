@@ -365,6 +365,27 @@ char *device[ndevice+1] = {
 
 #define ALGERON (2311) /* Date of the Treaty of Algeron */
 
+/* Says a switch case is meant to fall into the next one. Comments
+   saying so were already there in places, but the compiler cannot read
+   them, and a fallthrough nobody meant is worth a warning. Outside the
+   TRUE guard below on purpose: that guard is about TRUE, and curses
+   defines TRUE, so hiding this behind it would make these five markers
+   vanish the first time an include moved.
+
+   Asked of the compiler rather than assumed from __GNUC__: a GCC older
+   than 7 defines that and then warns about an attribute it does not
+   know, which -Werror would turn into a broken build. */
+#ifndef FALLTHROUGH
+#if defined(__has_attribute)
+#if __has_attribute(fallthrough)
+#define FALLTHROUGH __attribute__((fallthrough))
+#endif
+#endif
+#endif
+#ifndef FALLTHROUGH
+#define FALLTHROUGH ((void)0)
+#endif
+
 #ifndef TRUE
 #define TRUE (1)
 #endif

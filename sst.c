@@ -100,7 +100,8 @@ static char *commands[] = {
  
 };
 
-#define NUMCOMMANDS (sizeof(commands)/sizeof(char *))
+/* Signed, because every loop below counts through it with an int. */
+#define NUMCOMMANDS ((int)(sizeof(commands)/sizeof(char *)))
 
 static void listCommands(int x) {
 	prout("   SRSCAN    MOVE      PHASERS   CALL\n"

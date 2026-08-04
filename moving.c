@@ -45,6 +45,16 @@ void lmove(void) {
 	y = secty;
 	n = 10.0*dist*bigger+0.5;
 
+	/* Where the ship ends up, which the enemy-distance sums at
+	   label100 measure from. The loop below overwrites these as it
+	   steps, and the blocked-in-flight path leaves them on the
+	   obstacle deliberately -- but a move too short to take a single
+	   step does not run the loop at all, and then the ship is exactly
+	   where it started. That case used to read whatever the stack
+	   held. */
+	ix = sectx;
+	iy = secty;
+
 	if (n > 0) {
 		for (l = 1; l <= n; l++) {
 			ix = (x += deltax) + 0.5;
@@ -929,7 +939,10 @@ void probe(void) {
 void help(void) {
 	/* There's more than one way to move in this game! */
 	double ddist, xdist, probf;
-	int line, l, ix, iy;
+	/* The base search below always picks one: it starts from a
+	   distance nothing can exceed, and the caller has already turned
+	   back if there are no bases left. */
+	int line = 1, l, ix, iy;
 
 	chew();
 	/* Test for conditions which prevent calling for help */

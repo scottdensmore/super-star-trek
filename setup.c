@@ -67,7 +67,7 @@ void freeze(int boss) {
 
 void thaw(void) {
 	FILE *fp;
-	int key;
+	int key, ok;
 
 	passwd[0] = '\0';
 	if ((key = scan()) == IHEOL) {
@@ -88,23 +88,43 @@ void thaw(void) {
 		skip(1);
 		return;
 	}
-	fread(&d, sizeof(d), 1, fp);
-	fread(&snapsht, sizeof(snapsht), 1, fp);
-	fread(quad, sizeof(quad), 1, fp);
-	fread(kx, sizeof(kx), 1, fp);
-	fread(ky, sizeof(ky), 1, fp);
-	fread(starch, sizeof(starch), 1, fp);
-	fread(kpower, sizeof(kpower), 1, fp);
-	fread(kdist, sizeof(kdist), 1, fp);
-	fread(kavgd, sizeof(kavgd), 1, fp);
-	fread(damage, sizeof(damage), 1, fp);
-	fread(future, sizeof(future), 1, fp);
-	fread(&a, sizeof(a), 1, fp);
-	fread(passwd, sizeof(passwd), 1, fp);
+	/* A file that stops short used to be read into the game state and
+	   played on regardless. Say so instead, and put back what the
+	   partial read had already overwritten: choose() reads an empty
+	   password as "no game loaded" and asks again, but it reads the
+	   length and skill out of `a`, so leaving those behind would
+	   silently hand the player the damaged file's game rather than
+	   the one they went on to ask for -- and skip the two questions
+	   whose answers they were about to type.
+
+	   Note this only catches a file that is too short. One of the
+	   right length whose contents are nonsense still loads; that
+	   needs something to check against, which the format has not
+	   got. */
+	ok = fread(&d, sizeof(d), 1, fp) == 1;
+	ok = ok && fread(&snapsht, sizeof(snapsht), 1, fp) == 1;
+	ok = ok && fread(quad, sizeof(quad), 1, fp) == 1;
+	ok = ok && fread(kx, sizeof(kx), 1, fp) == 1;
+	ok = ok && fread(ky, sizeof(ky), 1, fp) == 1;
+	ok = ok && fread(starch, sizeof(starch), 1, fp) == 1;
+	ok = ok && fread(kpower, sizeof(kpower), 1, fp) == 1;
+	ok = ok && fread(kdist, sizeof(kdist), 1, fp) == 1;
+	ok = ok && fread(kavgd, sizeof(kavgd), 1, fp) == 1;
+	ok = ok && fread(damage, sizeof(damage), 1, fp) == 1;
+	ok = ok && fread(future, sizeof(future), 1, fp) == 1;
+	ok = ok && fread(&a, sizeof(a), 1, fp) == 1;
+	ok = ok && fread(passwd, sizeof(passwd), 1, fp) == 1;
 
 	fclose(fp);
 
-	/* I hope that's enough! */
+	if (!ok) {
+		proutn("Can't read game file ");
+		proutn(citem);
+		prout(" -- it stops short.");
+		memset(&a, 0, sizeof(a));
+		memset(&d, 0, sizeof(d));
+		*passwd = 0;
+	}
 }
 
 void abandn(void) {

@@ -1,9 +1,17 @@
 #include "sst.h"
 #include <math.h>
 
+/* Where a commander's base attack was pointed before the
+   Super-commander's attack displaced it. They live out here because
+   the event that saves them and the event that puts them back are
+   scheduled separately and arrive in different calls -- as locals
+   they were read back from a call that had never set them. Zero is
+   what batx/baty use for "no attack", so it is the safe start. */
+static int ixhold = 0, iyhold = 0;
+
 void events(void) {
 
-	int ictbeam=0, ipage=0, istract=0, line, i, j, k, l, ixhold, iyhold;
+	int ictbeam=0, ipage=0, istract=0, line, i, j, k, l;
 	double fintim = d.date + Time, datemin, xtime, repair, yank;
 
 
@@ -256,11 +264,22 @@ void events(void) {
 			case FSCDBAS: /* Supercommander destroys base */
 				future[FSCDBAS] = 1e30;
 				isatb = 2;
-				if (d.galaxy[d.isx][d.isy]%100 < 10) break; /* WAS RETURN! */
+				if (d.galaxy[d.isx][d.isy]%100 < 10) {
+					/* The base is already gone, so this
+					   attack displaced no commander attack
+					   and there is nothing to put back. Said
+					   explicitly: whatever these held is from
+					   an older attack, and restoring a base
+					   that has since been destroyed leaves
+					   batx pointing at it forever. */
+					ixhold = iyhold = 0;
+					break;	/* WAS RETURN! */
+				}
 				ixhold = batx;
 				iyhold = baty;
 				batx = d.isx;
 				baty = d.isy;
+				FALLTHROUGH;	/* the attack destroys it too */
 			case FCDBAS: /* Commander succeeds in destroying base */
 				if (line==FCDBAS) {
 					future[FCDBAS] = 1e30;
@@ -378,7 +397,7 @@ void events(void) {
 
 void waiting(void) {
 	int key;
-	double temp, delay, origTime;
+	double temp, delay;
 
 	ididit = 0;
 	for (;;) {
@@ -391,7 +410,7 @@ void waiting(void) {
 		huh();
 		return;
 	}
-	origTime = delay = aaitem;
+	delay = aaitem;
 	if (delay <= 0.0) return;
 	if (delay >= d.remtime || nenhere != 0) {
 		prout("Are you sure? ");

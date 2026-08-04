@@ -41,8 +41,9 @@ jobs:
           HOMEBREW_NO_AUTO_UPDATE: 1
         run: brew list tmux >/dev/null 2>&1 || brew install tmux
 
+      # -Werror only here: see SST_WERROR in CMakeLists.txt.
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DSST_WERROR=ON
 
       - name: Build
         run: cmake --build build

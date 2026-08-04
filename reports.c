@@ -305,7 +305,7 @@ void srscan(int l) {
 					 "  energy, torpedoes, shields, klingons, time.");
 				return;
 			}
-			// no "break"
+			FALLTHROUGH;	/* a request is a status report of one line */
 		case 3: // STATUS
 			chew();
 			leftside = FALSE;
@@ -344,6 +344,11 @@ void srscan(int l) {
 						case IHGREEN: cp = "GREEN"; break;
 						case IHYELLOW: cp = "YELLOW"; break;
 						case IHDOCKED: cp = "DOCKED"; break;
+						/* Unreachable, but a condition nobody
+						   set would otherwise print whatever
+						   the stack held. fmt_status_line()
+						   in tuifmt.c says the same. */
+						default: cp = "----"; break;
 					}
 					proutf(" Condition     %s", cp);
 #ifdef CLOAKING
