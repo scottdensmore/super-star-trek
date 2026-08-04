@@ -1,5 +1,6 @@
 #include "sst.h"
 #include "tui.h"
+#include "rules.h"
 #include <string.h>
 #include <time.h>
 
@@ -330,32 +331,22 @@ void finish(FINTYPE ifin) {
 }
 
 void score(int inGame) {
-	double timused = d.date - indate;
-    int ithperd, iwon, klship;
-    int dnromrem = d.nromrem; // Leave global value alone
+	/* The arithmetic is in rules.c, where a test can ask it what the
+	   manual's fifteen rules add up to. What is left here is the
+	   telling of it. */
+	struct scoring s;
+	int ithperd, iwon, klship, dnromrem;
 
     if (!inGame) pause(0);
 
 	iskill = skill;
-	if ((timused == 0 || d.remkl != 0) && timused < 5.0) timused = 5.0;
-	perdate = (d.killc + d.killk + d.nsckill)/timused;
-	ithperd = 500*perdate + 0.5;
-	iwon = 0;
-	if (gamewon) iwon = 100*skill;
-	if (ship == IHE) klship = 0;
-	else if (ship == IHF) klship = 1;
-	else klship = 2;
-	if (gamewon == 0 || inGame) dnromrem = 0; // None captured if no win or if still in the game
-	iscore = 10*d.killk + 50*d.killc + ithperd + iwon
-			 - 100*d.basekl - 100*klship - 45*nhelp -5*d.starkl - casual
-		 + 20*d.nromkl + 200*d.nsckill - 10*d.nplankl + dnromrem;
-#ifdef CLOAKING
-	iscore -= 100*ncviol;
-#endif
-#ifdef CAPTURE
-	iscore += 3*kcaptured;
-#endif
-	if (alive == 0) iscore -= 200;
+	score_compute(&s, inGame, d.date - indate);
+	perdate = s.perdate;
+	ithperd = s.killrate;
+	iwon = s.winbonus;
+	klship = s.shipslost;
+	dnromrem = s.surrendered;
+	iscore = s.total;
 	skip(2);
     if (inGame) prout("Your score so far --");
     else prout("Your score --");
