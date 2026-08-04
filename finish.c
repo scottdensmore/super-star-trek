@@ -91,17 +91,12 @@ void finish(FINTYPE ifin) {
 #endif
 			gamewon=1;
 			if (alive) {
-                double badpt;
+                struct promotion promo;
 
-				badpt = 5.*d.starkl + casual + 10.*d.nplankl +
-						45.*nhelp+100.*d.basekl;
-				if (ship == IHF) badpt += 100.0;
-				else if (ship == 0) badpt += 200.0;
-				if (badpt < 100.0) badpt = 0.0;	// Close enough!
-				if (d.date-indate < 5.0 ||
-					// killsPerDate >= RateMax
-					(d.killk+d.killc+d.nsckill)/(d.date-indate) >=
-					0.1*skill*(skill+1.0) + 0.1 + 0.008*badpt) {
+				/* The threshold is in rules.c, where a test can
+				   ask it what the manual requires. */
+				promotion_compute(&promo, d.date - indate);
+				if (promo.earned) {
 					skip(1);
 					prout("In fact, you have done so well that Starfleet Command");
 					switch (skill) {

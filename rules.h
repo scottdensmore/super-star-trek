@@ -30,4 +30,21 @@ struct scoring {
  * stardates the game has run, before the minimum the manual applies. */
 void score_compute(struct scoring *s, int inGame, double elapsed);
 
+/* Whether Starfleet promotes the captain a grade, and what it asked
+ * of them.
+ *
+ * Spec: sst.doc, "In addition to your score, you may also be promoted",
+ * lines 1380-1387.
+ */
+struct promotion {
+	double penalties;	/* points lost, as the threshold counts them */
+	double needed;		/* the kill rate the next rank asks for */
+	double achieved;	/* the kill rate earned; 0 for a game under
+				   five stardates, which is not asked */
+	int earned;		/* Starfleet promotes */
+};
+
+/* elapsed is the stardates the game ran. */
+void promotion_compute(struct promotion *p, double elapsed);
+
 #endif	/* SST_RULES_H */

@@ -18,6 +18,18 @@
 
 static int failures = 0;
 
+/* Rates and penalties are doubles the manual states exactly, so an
+ * exact comparison would be right in principle -- but 0.1*2*3 + 0.1 is
+ * not 0.7 in binary. A millionth is far tighter than any rule here. */
+static void checkrate(const char *what, double got, double want) {
+	/* Inverted on purpose: written the other way round, a NaN
+	   compares false against everything and slips through. */
+	if (!(got - want <= 1e-6 && want - got <= 1e-6)) {
+		failures++;
+		printf("FAIL %s\n  want: %g\n  got:  %g\n", what, want, got);
+	}
+}
+
 static void checkint(const char *what, int got, int want) {
 	if (got != want) {
 		failures++;
@@ -284,6 +296,165 @@ static void test_score_adds_up(void) {
 		 40 + 50 + 40 - 100 - 90 - 15 - 25 + 250);
 }
 
+/* "Normally, the required kill rate is 0.1 * skill * (skill + 1.0) +
+ * 0.1, where skill ranges from 1 for Novice to 5 for Emeritus."
+ * -- sst.doc:1385-1387 */
+static void test_promotion_threshold(void) {
+	struct promotion p;
+	int grade[] = { SNOVICE, SFAIR, SGOOD, SEXPERT, SEMERITUS };
+	/* 0.1*s*(s+1) + 0.1, worked out from the manual by hand rather
+	   than by running the game: 0.3, 0.7, 1.3, 2.1, 3.1. */
+	double want[] = { 0.3, 0.7, 1.3, 2.1, 3.1 };
+	int i;
+
+	for (i = 0; i < 5; i++) {
+		nothing_happened();
+		skill = grade[i];
+		promotion_compute(&p, 10.0);
+		checkrate("the rate this rating asks for", p.needed, want[i]);
+	}
+}
+
+/* "You may also be promoted one grade in rank if you play well enough.
+ * Promotion is based primarily on your Klingon/stardate kill rate."
+ * -- sst.doc:1380-1382 */
+static void test_promotion_is_earned_by_the_rate(void) {
+	struct promotion p;
+
+	/* Novice asks 0.3 a stardate. Two kills in ten is 0.2. */
+	nothing_happened();
+	skill = SNOVICE;
+	d.killk = 2;
+	promotion_compute(&p, 10.0);
+	checkrate("two kills in ten stardates", p.achieved, 0.2);
+	checkint("and that is short of what Novice asks", p.earned, 0);
+
+	/* Four in ten is 0.4, comfortably past it. */
+	nothing_happened();
+	skill = SNOVICE;
+	d.killk = 4;
+	promotion_compute(&p, 10.0);
+	checkint("four in ten earns it", p.earned, 1);
+
+	/* Commanders and the Super-Commander are Klingon ships too. */
+	nothing_happened();
+	skill = SNOVICE;
+	d.killc = 2;
+	d.nsckill = 2;
+	promotion_compute(&p, 10.0);
+	checkint("commanders count towards the rate", p.earned, 1);
+	/* Two and two rather than three and one so that dropping either
+	   term leaves 0.2 against a bar of 0.3, which is a difference
+	   nobody has to squint at. */
+
+	/* Nothing here sits on the boundary on purpose. Exactly three
+	   kills in ten stardates ought to meet a bar of 0.3 and does not:
+	   0.1*1*2 + 0.1 comes to 0.30000000000000004 in binary while 3/10
+	   comes to slightly under, so the comparison goes the other way.
+	   The manual says what the bar is, not what happens to a captain
+	   who lands precisely on it, so neither does this. */
+}
+
+/* "if you have lost 100 or more points in penalties, the required kill
+ * rate goes up" -- sst.doc:1383-1385 */
+static void test_promotion_penalties(void) {
+	struct promotion p;
+
+	/* Ninety-nine points of penalty is under the hundred the manual
+	   names, so the bar does not move: two calls for help (90) and
+	   nine casualties (9). */
+	nothing_happened();
+	skill = SNOVICE;
+	nhelp = 2;
+	casual = 9;
+	promotion_compute(&p, 10.0);
+	checkrate("under a hundred points, nothing counts", p.penalties, 0.0);
+	checkrate("so the bar is where it was", p.needed, 0.3);
+
+	/* Above the floor the points are counted at the rates the score
+	   sheet uses, so each one has to be worth what it says: five a
+	   star, one a casualty, ten a planet, forty-five a call for help.
+	   Chosen to clear a hundred between them and not otherwise. */
+	nothing_happened();
+	skill = SNOVICE;
+	d.starkl = 4;		/*  20 */
+	casual = 10;		/*  10 */
+	d.nplankl = 5;		/*  50 */
+	nhelp = 1;		/*  45 */
+	promotion_compute(&p, 10.0);
+	checkrate("each penalty counted at its own rate", p.penalties, 125.0);
+
+	/* And calls for help are worth forty-five apiece on their own. */
+	nothing_happened();
+	skill = SNOVICE;
+	nhelp = 3;
+	promotion_compute(&p, 10.0);
+	checkrate("three calls for help", p.penalties, 135.0);
+
+	/* A destroyed starbase is a hundred on its own. */
+	nothing_happened();
+	skill = SNOVICE;
+	d.basekl = 1;
+	promotion_compute(&p, 10.0);
+	checkrate("a starbase is a hundred", p.penalties, 100.0);
+	checkint("which raises the bar", p.needed > 0.3, 1);
+	/* By how much is the code's own: the manual says the rate "goes
+	   up" and stops there. Recorded rather than derived, so that the
+	   scale cannot drift unnoticed -- 0.3 plus 0.008 a point. */
+	checkrate("and by 0.008 a point, which sst.doc does not state",
+		  p.needed, 1.1);
+
+	/* And a rate that would have earned promotion no longer does. */
+	nothing_happened();
+	skill = SNOVICE;
+	d.killk = 4;
+	promotion_compute(&p, 10.0);
+	checkint("four kills earns it with a clean record", p.earned, 1);
+	d.basekl = 1;
+	promotion_compute(&p, 10.0);
+	checkint("but not after destroying a starbase", p.earned, 0);
+}
+
+/* "100 points for each starship you lose" -- sst.doc:1373 -- counts
+ * towards the penalties as much as anything else does. */
+static void test_promotion_counts_lost_ships(void) {
+	struct promotion p;
+
+	nothing_happened();
+	skill = SNOVICE;
+	ship = IHF;
+	promotion_compute(&p, 10.0);
+	checkrate("the Enterprise lost is a hundred", p.penalties, 100.0);
+
+	nothing_happened();
+	skill = SNOVICE;
+	ship = 0;
+	promotion_compute(&p, 10.0);
+	checkrate("both ships lost is two hundred", p.penalties, 200.0);
+}
+
+/* Not in the manual: a game that ends inside five stardates is
+ * promoted without being asked for a rate at all. Recorded here as a
+ * characterization, because sst.doc says nothing about it and the
+ * division could not be done anyway on a game won the day it began. */
+static void test_promotion_short_game(void) {
+	struct promotion p;
+
+	nothing_happened();
+	skill = SEMERITUS;	/* the hardest bar there is */
+	promotion_compute(&p, 4.9);
+	checkint("a game won inside five stardates is promoted", p.earned, 1);
+	checkrate("and is not asked for a rate", p.achieved, 0.0);
+
+	nothing_happened();
+	skill = SEMERITUS;
+	promotion_compute(&p, 0.0);
+	checkint("even one won on the day it began", p.earned, 1);
+	/* And the division that would have been nought over nought never
+	   happens: a NaN here would sail through a careless comparison. */
+	checkrate("with no rate to divide", p.achieved, 0.0);
+}
+
 int main(void) {
 	test_score_gains();
 	test_score_surrender();
@@ -292,6 +463,11 @@ int main(void) {
 	test_score_kill_rate();
 	test_score_win_bonus();
 	test_score_adds_up();
+	test_promotion_threshold();
+	test_promotion_is_earned_by_the_rate();
+	test_promotion_penalties();
+	test_promotion_counts_lost_ships();
+	test_promotion_short_game();
 	if (failures) {
 		printf("%d test(s) FAILED\n", failures);
 		return 1;
