@@ -1,0 +1,3 @@
+# The golden fixtures are compared byte for byte, so a clone that
+# rewrote their line endings would fail every journey.
+tests/golden/*.txt -text

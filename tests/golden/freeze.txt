@@ -1,0 +1,51 @@
+
+
+__________________           __
+\_________________|)____.---'--`---.____
+              ||    \----.________.----/
+              ||     / /    `--'
+            __||____/ /_
+           |___         \
+               `--------'
+  THE USS ENTERPRISE --- NCC-1701
+
+-SUPER- STAR TREK
+
+Latest update-21 Sept 78
+
+Would you like a regular, tournament, or frozen game?Would you like a Short, Medium, or Long game? Are you a Novice, Fair, Good, Expert, or Emeritus player?Please type in a secret password (9 characters maximum)-
+
+
+Stardate 2900.
+
+25 Klingons,
+an unknown number of Romulans
+and one (GULP) Super-Commander.
+14 stardates
+3 starbases in   8 - 3   6 - 5   3 - 7
+
+The Enterprise is currently in Quadrant 5 - 3  Sector 6 - 8
+
+Good Luck!
+  YOU'LL NEED IT.
+
+COMMAND> 
+    1 2 3 4 5 6 7 8 9 10
+ 1  . . . * . . . . . .  Stardate      2900.0
+ 2  . . . . . . . . . .  Condition     GREEN
+ 3  * . . . . . . * .    Position      5 - 3, 6 - 8
+ 4  . . . . . . . . . .  Life Support  ACTIVE
+ 5  . . . . . . . . . .  Warp Factor   5.0
+ 6  . . . .   . . E . .  Energy        5000.00
+ 7  . . . . . . . . . .  Torpedoes     10
+ 8  . . . . . . . . . .  Shields       DOWN, 100% 2500.0 units
+ 9  . . . . . . . . . .  Klingons Left 25
+10  . . * * . . . . . .  Time Left     14.00
+
+COMMAND> 
+COMMAND> 
+
+******************************************************
+
+Do you want your score recorded?Do you want to play again?
+May the Great Bird of the Galaxy roost upon your home planet.
