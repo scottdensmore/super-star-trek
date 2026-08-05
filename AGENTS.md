@@ -249,5 +249,5 @@ skip them.
   saying which mechanism you looked for and why it was not there — or, for
   the commit that creates the reviewer, that it did not yet exist. Say it
   in the pull request body and in the summary of the work — in the summary
-  alone when there is no pull request. A reviewer who shares the author's memory
-  of what was intended is the one thing this section exists to prevent.
+  alone when there is no pull request. A reviewer who shares the author's
+  memory of what was intended is the one thing this section exists to prevent.
