@@ -164,6 +164,41 @@ play() {
 	fi
 }
 
+# Asserts that a recording still contains the lines it exists for.
+#
+# Everything else here compares a fixture with itself, which cannot
+# notice a journey that quietly stopped doing the thing it was written
+# to do -- it would simply be re-recorded doing something else, and
+# match from then on. The `won` journey is one seed away from being an
+# ordinary fight that ends in a quit, so it says out loud what a win
+# prints. Checks the fixture, not the run, so that a careless
+# --update fails here too.
+#
+# $1 fixture name, then one or more lines it must contain.
+covers() {
+	name="$1"
+	shift
+	f="$golden/$name.txt"
+	if [ ! -f "$f" ]; then
+		fail "$name: no recording to check for content"
+		return
+	fi
+	missed=0
+	for want in "$@"; do
+		if ! grep -qF -- "$want" "$f"; then
+			fail "$name: the recording no longer contains \"$want\""
+			missed=1
+		fi
+	done
+	# Once, not once per line. Worth saying at all because --update
+	# has already written the file by the time this runs: the summary
+	# below calls it unfit to record, and it is on disk anyway.
+	if [ "$missed" -ne 0 ] && [ "$UPDATE" = "--update" ]; then
+		printf '  (%s was written anyway -- git checkout %s to undo)\n' \
+			"$name.txt" "tests/golden/$name.txt" >&2
+	fi
+}
+
 if [ "$UPDATE" = "--update" ]; then
 	mkdir -p "$golden"
 fi
@@ -173,13 +208,19 @@ fi
 # to be realistic: between them they read every report, compute an
 # arrival time, cross quadrants, take and give fire, destroy Klingons
 # with aimed torpedoes, spend a ship dry and have a starbase fill it up
-# again, freeze and thaw, and end a game with the score sheet that goes
-# with it.
+# again, freeze and thaw, end a game with the score sheet that goes
+# with it, and win one.
 #
 # Still unrecorded, and worth adding when someone finds a seed that
 # does it: a device taking damage and being repaired. None of the
 # journeys below manages to get the ship hurt, so `damages` says "All
 # devices functional." in every one of them.
+#
+# Still unrecorded on the winning path, all of them dearer than the
+# win below: the Commodore Emeritus citation and the plaque behind it,
+# which need a win at better than Good; the captured-Klingon transfer
+# line; a win that earns no promotion; and the TUI's own end of game,
+# since tests/tui.sh never wins one either.
 
 # Everything that reports without passing time. Pins the wording and
 # the numbers of the whole read-only surface.
@@ -293,6 +334,59 @@ n
 n
 ' freeze
 
+# A game that is won. Every other journey here quits or dies, so the
+# whole FWON epilogue in finish.c went unrecorded: the Romulan
+# surrender, the promotion prose, and the win bonus on the score sheet.
+# That was not only a gap in the wording -- #52 and #54 both changed
+# arithmetic that runs on no other path, and this suite said nothing
+# about either.
+#
+# Winning means the galaxy's last Klingon dead, which sounds beyond a
+# script until you count them: a short novice game has two to four.
+# tournament 23 puts all three -- two Klingons and a Commander -- in
+# quadrant 5 - 7, which is why the whole game is one move and one
+# phaser burst. Change the seed and it stops winning, so the assertion
+# below checks the recording still shows a win rather than trusting it.
+# The `torpedoes` journey names this seed too, and opens identically --
+# same square, same first three starbases -- because those are drawn
+# before the answers can matter. Length and skill are typed after the
+# seed is set (setup.c:480, 505) and then decide how much the layout
+# draws (setup.c:547), so from the Klingon count onward the two part
+# company: 3 battle cruisers here against 139 there. A seed names a
+# game, not a galaxy.
+#
+# Two answers at the end, and two is all the game asks for: whether to
+# record the score, and whether to play again. The journeys above pass
+# a third that is never read. The two pauses on this path eat nothing
+# either, which is the part worth knowing: readinput() is fgets, so
+# stdio has already drawn the whole pipe into its buffer, and the raw
+# read() behind getch() finds nothing left. Give the pause a keystroke
+# of its own here and the score question eats it instead, and answers
+# slide by one. That holds while a script fits in one stdio buffer,
+# which every journey here does several times over; a much longer one
+# would leave bytes in the pipe for the pause to eat, and would need
+# its answers counted again.
+#
+# Two things about the recording itself. A supernova announcement
+# arrives mid-journey and pauses, so this is the only fixture with a
+# real screen-clear escape in it -- read it with `cat -v` or it wipes
+# what came before off your terminal. And the score sheet's Romulan
+# line sits one column left of every other line, because the plural
+# format string in finish.c is a space short (#62); that is the game's
+# bug, recorded as it is, not a spec worth copying.
+play won 'tournament 23
+short
+novice
+pw
+srscan
+move automatic 5 7 5 5
+srscan
+shields up
+phasers automatic 1500
+n
+n
+'
+
 # An ending, with the score sheet that goes with it.
 play ending 'tournament 21
 short
@@ -305,6 +399,18 @@ n
 n
 n
 '
+
+# The epilogue the `won` journey exists to put on the record. The
+# promotion line is the one #54 changed and this suite could not see;
+# the total is what would notice #52-style arithmetic drift without
+# somebody reading the diff by eye.
+covers won \
+	'Romulan ships surrender to Starfleet Command.' \
+	'You have smashed the Klingon invasion fleet and saved' \
+	'promotes you one step in rank from "Novice" to "Fair".' \
+	'2 Romulan ships surrendered' \
+	'Bonus for winning Novice game' \
+	'TOTAL SCORE                                 797'
 
 if [ "$UPDATE" = "--update" ]; then
 	if [ "$fails" -ne 0 ]; then
