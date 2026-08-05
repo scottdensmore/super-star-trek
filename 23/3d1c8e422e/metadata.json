@@ -1,0 +1,32 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "233d1c8e422e",
+  "strategy": "manual-commit",
+  "branch": "fix/osx-prototypes",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "AGENTS.md",
+    "CMakeLists.txt",
+    "osx.c",
+    "osx.h",
+    "sst.c",
+    "sst.h",
+    "tui.h"
+  ],
+  "sessions": [
+    {
+      "metadata": "/23/3d1c8e422e/0/metadata.json",
+      "transcript": "/23/3d1c8e422e/0/full.jsonl",
+      "compact_transcript": "/23/3d1c8e422e/0/transcript.jsonl",
+      "content_hash": "/23/3d1c8e422e/0/content_hash.txt",
+      "prompt": "/23/3d1c8e422e/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 96,
+    "cache_creation_tokens": 61166,
+    "cache_read_tokens": 3044044,
+    "output_tokens": 20677,
+    "api_call_count": 51
+  }
+}
