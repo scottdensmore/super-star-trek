@@ -84,6 +84,8 @@ CI will refuse. Feature flags `-DSCORE -DCAPTURE
   message window is only ten lines at both, which is where the paging bugs
   live.
 
+## The golden recordings
+
 A failing `golden` test means a journey's output changed. Work out why
 and say so in the commit -- the fixture diff is the evidence a reviewer
 needs. Never re-record with `tests/golden.sh <sst> --update` to turn CI
