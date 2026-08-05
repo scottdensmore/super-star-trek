@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "f7ac5148fb3a",
+  "strategy": "manual-commit",
+  "branch": "docs/which-reviews-bind",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "AGENTS.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/f7/ac5148fb3a/0/metadata.json",
+      "transcript": "/f7/ac5148fb3a/0/full.jsonl",
+      "compact_transcript": "/f7/ac5148fb3a/0/transcript.jsonl",
+      "content_hash": "/f7/ac5148fb3a/0/content_hash.txt",
+      "prompt": "/f7/ac5148fb3a/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 903,
+    "cache_creation_tokens": 1088057,
+    "cache_read_tokens": 139461672,
+    "output_tokens": 286004,
+    "api_call_count": 484
+  }
+}
