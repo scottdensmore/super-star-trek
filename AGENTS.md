@@ -117,11 +117,13 @@ Every coding agent working in this repository must follow this workflow.
 
 5. **Inspect the complete diff.** Review the branch diff plus all staged,
    unstaged, and untracked files. Remove accidental or unrelated changes while
-   preserving work that belongs to the user.
+   preserving work that belongs to the user. What you drop because it was
+   unrelated is often worth filing; see step 9.
 
 6. **Run `ui-review` before verification.** After the main agent completes an
    implementation pass, invoke the `ui-review` sub-agent. The `ui-review`
-   sub-agent must act as an expert in games and CLI games.
+   sub-agent must act as an expert in games and CLI games. Address every
+   actionable finding before moving on, as with the two steps below.
 
 7. **Run `verifier` before code review.** Invoke the `verifier` sub-agent to
    run the builds, static checks, tests, and journey coverage appropriate for
@@ -138,17 +140,53 @@ Every coding agent working in this repository must follow this workflow.
    tests and the `verifier`, then obtain a fresh `code-review` approval for
    the changed state.
 
-9. **Commit after approval.** Commit only after verification and code review
-   are complete. Use Conventional Commits:
+9. **File what you found outside the slice.** Work turns up problems that
+   belong to no slice in particular: a defect the change did not cause, a
+   test that cannot fail, a comment that is no longer true. Open a GitHub
+   issue for each as you find it, without waiting to be asked — a finding
+   that lives only in a session summary is a finding nobody will act on.
+   Standing here at step 9 makes this the last check that nothing was left
+   unfiled, not the moment to begin. The main agent files them; the review
+   sub-agents only report.
 
-   ```text
-   <type>(<scope>): <imperative summary>
-   ```
+   - Search the open issues first. If it is already filed, add what you
+     learned to that issue instead of opening a second one.
+   - File a real defect — anything that would mislead a player or a
+     maintainer — and a coverage gap, meaning a test that cannot fail or
+     that asserts less than it appears to. Leave style preferences and
+     speculative ideas out; they belong in the pull request body. When it
+     is genuinely unclear, file it: a wrong issue costs one close.
+   - **Do not fix it in this slice.** An unrelated fix buried in an
+     unrelated diff is how both the fix and the finding go unreviewed. Fix
+     it here only if it belongs to the slice.
+   - That is not license to file what steps 6-8 require you to fix. A
+     `ui-review`, `verifier` or `code-review` finding about *this* change is
+     resolved here; filing it is not resolving it. What gets filed is what
+     those reviews turn up about code the change did not touch, and
+     whatever you meet while reading for some other purpose.
+   - Give the issue what the next person needs: what is wrong, why it
+     matters, where it was found, and how to see it, citing `sst.doc` or a
+     file and line where one applies.
+   - Where the work depends on the unfixed behavior, name the issue in a
+     comment beside it. Write that comment as part of the implementation,
+     so it reaches the reviewer rather than arriving after approval.
+   - Say which issues were filed, in the pull request body and in the
+     summary of the work — in the summary alone when there is no pull
+     request. An agent that cannot open issues says so plainly and lists
+     the findings in the same places, marked as unfiled, so a human can
+     file them. Silence is the one outcome this step exists to prevent.
 
-   Keep the subject at 72 characters or fewer, describe why in the body when
-   useful, and do not combine unrelated work.
+10. **Commit after approval.** Commit only after verification and code review
+    are complete. Use Conventional Commits:
 
-10. **Create pull requests from the reviewed state.**
+    ```text
+    <type>(<scope>): <imperative summary>
+    ```
+
+    Keep the subject at 72 characters or fewer, describe why in the body when
+    useful, and do not combine unrelated work.
+
+11. **Create pull requests from the reviewed state.**
     - Confirm that local verification remains valid.
     - Rerun `code-review` only if the reviewed state changed after the
       pre-commit review.
@@ -162,12 +200,12 @@ Every coding agent working in this repository must follow this workflow.
     - Open a normal, ready-for-review pull request by default. Do not open
       draft pull requests unless the user explicitly asks for a draft.
 
-11. **Merge only clean, passing pull requests.** Merge only after GitHub
+12. **Merge only clean, passing pull requests.** Merge only after GitHub
     reports a clean merge state and every configured check passes. Never
     bypass a failing or pending required check. Self-merges are allowed when
     these conditions are met. Use squash merge for short-lived development
     branches to keep `main` linear, then delete the merged branch.
 
-Note: steps 6-8 name Claude Code sub-agents defined in `.claude/agents/`.
+Note: steps 6-8 invoke Claude Code sub-agents defined in `.claude/agents/`.
 Agents without sub-agent support should perform the equivalent review,
 verification, and code-review passes themselves before committing.
