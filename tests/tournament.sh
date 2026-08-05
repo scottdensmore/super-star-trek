@@ -64,11 +64,27 @@ fi
 # a seed picked here behaves the same everywhere -- which is what makes
 # choosing them worth the trouble.
 #
+# The last two are appended rather than placed, and appending is what
+# keeps every seed before them on the route it already played. They are
+# here for the galaxy checks further down, which the first twelve leave
+# half asleep:
+#
+#   14  opens in quadrant 3 - 5, which holds a starbase. Every other
+#       opening quadrant here holds none, so without it the starbases
+#       term of the long-range digits is multiplied by nothing and the
+#       middle digit of sst.doc:438 is asserted against a constant
+#       zero. Changing that term to any other weight passed the whole
+#       battery before this seed was added.
+#   3   opens in quadrant 1 - 1, the galaxy's corner, where five of the
+#       nine scanned cells are outside it. The others are inland or on
+#       one edge, so the corner -- both bounds clamped at once -- went
+#       unscanned.
+#
 # A game costs about
 # four seconds, nearly all of it the busy-wait in prouts() that types
-# the game's dramatic lines out slowly, so twelve of them take about a
-# minute.
-SEEDS="7 4 12 6 16 9 19 20 11 21 1 23"
+# the game's dramatic lines out slowly, so fourteen of them take about
+# seventy seconds.
+SEEDS="7 4 12 6 16 9 19 20 11 21 1 23 14 3"
 
 MAXBYTES=262144
 DUMPBYTES=3000
@@ -127,6 +143,20 @@ fail() {
 # same as "untouched". The docking route no longer fires at all, which
 # is where the risk was worst.
 #
+# Both routes scan short-range and then long-range before anything
+# else. The two are free of time and energy (sst.doc:352, 461), so no
+# turn passes between them: they describe the same quadrant, on a turn
+# too early for anything to have damaged the sensors that draw them.
+# That pairing is what lets the galaxy checks below read the same
+# quadrant twice and compare the two accounts.
+#
+# Free of time is not free of effect, though. A long-range scan is how
+# the star chart learns a neighbourhood, so `chart` later in these
+# routes now prints numbers where it used to print dots. Nothing here
+# asserts on the chart, and more of it is known than before rather than
+# less -- but a chart-shaped surprise further down is this line's
+# doing, not the game's.
+#
 # Movement is manual rather than automatic because automatic needs the
 # computer, and a damaged one turns those four numbers into a prompt
 # for two others. One of the jumps is deliberately too short to take a
@@ -141,6 +171,7 @@ fail() {
 # answer rather than running out of input. While the ship is alive they
 # are never read, because the game exits on the second one.
 ROUTE_DOCK='srscan
+lrscan
 call
 dock
 status
@@ -164,6 +195,7 @@ n
 '
 
 ROUTE_FIGHT='srscan
+lrscan
 shields up
 phasers automatic 200
 lrscan
@@ -216,6 +248,8 @@ any_fought=0
 any_fired=0
 any_impulse_hint=0
 any_paged=0
+any_scanpair=0
+any_barrier=0
 
 saw() { grep -qF "$1" "$out"; }
 
@@ -357,6 +391,249 @@ for seed in $SEEDS; do
 		fail "seed $seed: a line ends with a carriage return"
 	fi
 
+	# --- the galaxy the manual describes ---------------------------
+	# `grep -o` appears twice below. It is not in POSIX, and this file
+	# is careful about that elsewhere -- but GNU, BSD and busybox all
+	# have it, which is every grep the suite runs under, and `head -c`
+	# above already leans the same way.
+	#
+	# Every expected value below comes from sst.doc and none from the
+	# game's own source. That distinction is the whole point: a number
+	# taken out of setup.c and checked against setup.c agrees with
+	# itself whatever either of them says, which is what the note at
+	# the top of tests/test_rules.c warns against. Where the manual
+	# gives no number, nothing is asserted.
+
+	# sst.doc:173, "in the this galaxy there are from two to five
+	# starbases". The briefing states a count and then lists that many
+	# quadrants, so the two can disagree with each other as well as
+	# with the manual, and both are worth asking about.
+	bases=$(sed -n 's/^\([0-9][0-9]*\) starbases in .*/\1/p' "$out" | head -1)
+	if [ -z "$bases" ]; then
+		fail "seed $seed: the briefing printed no starbase count"
+	else
+		if [ "$bases" -lt 2 ] || [ "$bases" -gt 5 ]; then
+			fail "seed $seed: $bases starbases, where sst.doc:173 promises two to five"
+		fi
+		listed=$(sed -n 's/^[0-9][0-9]* starbases in //p' "$out" | head -1 |
+			grep -oE '[0-9]+ - [0-9]+' | wc -l | tr -d ' ')
+		[ "$listed" = "$bases" ] ||
+			fail "seed $seed: the briefing counts $bases starbases and then lists $listed"
+	fi
+
+	# sst.doc:161, the Super-commander "is reserved for the Good,
+	# Expert, and Emeritus games". These are emeritus, so he is
+	# promised rather than merely permitted, and the briefing is where
+	# the promise is made. The other half of that gate -- that a novice
+	# game has none -- is asked once after the battery.
+	#
+	# What this cannot see is sst.doc:162, "there is just one
+	# Super-commander in a game": the briefing says "one" from a bare
+	# `if (d.nscrem)`, so it would say it just the same if there were
+	# two. Counting them needs a seam into the game state that no
+	# journey has, and it is left unchecked rather than pretended at.
+	scs=$(grep -c 'one (GULP) Super-Commander' "$out")
+	[ "$scs" = 1 ] ||
+		fail "seed $seed: an emeritus briefing announced the Super-commander $scs times, where sst.doc:161-162 reserves him for this game and allows just one"
+
+	# sst.doc:123-125, "eight rows of eight quadrants each". Asked of
+	# every coordinate the game printed, wherever the journey went,
+	# rather than of the starting one alone.
+	# The pattern takes a sign, or an underflowed coordinate is not
+	# matched at all and the count stays comfortably at zero -- which
+	# is the failure this is most interested in.
+	strays=$(grep -oE 'Quadrant -?[0-9]+ - -?[0-9]+' "$out" |
+		awk '$2 < 1 || $2 > 8 || $4 < 1 || $4 > 8 { c++ } END { print c+0 }')
+	[ "$strays" = 0 ] ||
+		fail "seed $seed: $strays quadrant coordinates fall outside the 8 by 8 galaxy of sst.doc:123-125"
+
+	# sst.doc:130-131, quadrants are "ten rows of ten sectors each".
+	# The short-range scan is that grid drawn out, so it has ten rows
+	# under a header numbering ten columns. Read from the first scan
+	# of the game, before anything can damage the sensors and mask it.
+	# Counting stops at the first line that is not a grid row, which
+	# is what confines it to this scan. Without that it counts
+	# row-shaped lines out of every later scan too, and a game drawing
+	# nine rows a dozen times over still reaches ten -- an assertion
+	# that reads like this one and cannot fail. A build whose srscan
+	# drew nine rows is what showed it up.
+	#
+	# There is no guard here for a pager prompt landing mid-grid:
+	# pause() writes its prompt with proutn and wipes it with carriage
+	# returns, so it would arrive as a prefix of a row rather than as a
+	# line of its own, and skipping "that line" would throw away a row
+	# and undercount. It cannot happen on turn one anyway -- chew()
+	# zeroes the line count and the scan is eleven lines -- and if it
+	# ever did, the row count below is what would say so.
+	srows=$(awk '/^    1 2 3 4 5 6 7 8 9 10$/ && !s { s=1; next }
+		s && /^[ 0-9][0-9]  / { n++; next }
+		s { exit }
+		END { print n+0 }' "$out")
+	[ "$srows" = 10 ] ||
+		fail "seed $seed: the first short-range scan draws $srows rows, where sst.doc:130-131 says ten"
+
+	# sst.doc:436-439 gives the long-range scan's digits: thousands a
+	# supernova, hundreds Klingons, tens starbases, ones stars. The
+	# scan prints the galaxy's own words (lrscan() in reports.c), so
+	# this reads the packing itself -- the thing #58 set out to check
+	# -- against the manual's description of what it means, rather
+	# than against the code that writes it.
+	#
+	# The short-range scan of the same quadrant is the other account:
+	# it draws what is there, and the manual says which of it the
+	# long-range scan may count. Klingons and command ships alike
+	# (sst.doc:442-444); Romulans not at all (sst.doc:448-449), planets
+	# not at all (sst.doc:453-455) -- so an R or a P in the grid must
+	# leave the digits alone.
+	#
+	# How much the two halves are worth differs, and it is worth being
+	# straight about it. newqad() fills the quadrant by decoding the
+	# same galaxy word that the long-range scan prints, so for
+	# Klingons, starbases and stars this weighs an encoding against
+	# its own decoding, with the manual supplying the weights -- it
+	# would catch a digit that moved or a weight that changed, not a
+	# miscount shared by both. The exclusions are the independent
+	# half: Romulans and planets come from d.newstuf, by a path the
+	# galaxy word knows nothing about, so their staying out of the
+	# digits is a genuine second opinion.
+	#
+	# The Super-commander is counted with the Klingons, and that one is
+	# this test's reading rather than the manual's word: sst.doc:159-160
+	# introduces him as a "special commander", and sst.doc:442-444 says
+	# the scanner does not tell a Klingon from a command ship, which
+	# leaves him on the Klingon side of the only distinction the manual
+	# draws. Read as it is, not as the manual settling the question.
+	# None of the opening quadrants holds one, so the S in the count
+	# below is defensive and untested -- what exercises it is a galaxy
+	# that opens on him, which no seed here does.
+	#
+	# A Tholian is the same kind of reading and does get exercised:
+	# seeds 20 and 1 open with a T in the grid, and counting it into
+	# no digit at all is this test's choice, since the manual never
+	# mentions Tholians. It follows the same rule as the rest -- the
+	# long-range scan counts what sst.doc:437-439 names, and nothing
+	# it does not.
+	#
+	# Skipped rather than guessed at when either scan is unavailable:
+	# damaged short-range sensors mask the grid with '-', and damaged
+	# long-range ones print no numbers to read. Neither should happen
+	# on the first turn, which is why the battery asks below that this
+	# has not quietly stopped running.
+	grid=$(awk '/^    1 2 3 4 5 6 7 8 9 10$/ && !s { s=1; next }
+		s && /^[ 0-9][0-9]  / { g = g substr($0, 5, 19); next }
+		s { exit }
+		END { print g }' "$out")
+	# Read from the turn that follows the short-range grid, and no
+	# further. The two scans are consecutive commands, so the heading
+	# belonging with this grid arrives before the next prompt; giving
+	# up at the second one is what stops the search from running on
+	# and finding a docked scan of somewhere else, hours of game time
+	# later, whenever the opening long-range scan did not print. That
+	# stale pairing reads as the galaxy's arithmetic being wrong, so
+	# it is worth refusing rather than reporting.
+	lrsection=$(awk '/^    1 2 3 4 5 6 7 8 9 10$/ && st == 0 { st = 1; next }
+		st == 1 && /^[ 0-9][0-9]  / { next }
+		st == 1 { st = 2 }
+		st == 2 && /COMMAND>/ { if (++prompts > 1) exit; next }
+		st == 2 && /[Ll]ong-range scan for Quadrant/ { print; st = 3; next }
+		st == 3 && n < 3 { n++; print; if (n == 3) exit }' "$out")
+	lrhead=$(printf '%s\n' "$lrsection" | sed -n '1p')
+	lrblock=$(printf '%s\n' "$lrsection" | sed -n '2,4p')
+	centre=$(printf '%s\n' "$lrblock" | awk 'NR == 2 { print $2 }')
+	# Which quadrant each scan is of. The short-range one says so in
+	# the status column beside its grid; the long-range one in its
+	# heading, read from the token after "Quadrant" rather than from a
+	# fixed field, because docked the line reads "Starbase's
+	# long-range scan for ..." and every field shifts along.
+	srquad=$(awk '/^    1 2 3 4 5 6 7 8 9 10$/ && !s { s=1; next }
+		s && /Position/ { print; exit }
+		s && !/^[ 0-9][0-9]  / { exit }' "$out" |
+		tr ',' ' ' |
+		awk '{ for (i = 1; i < NF - 2; i++) if ($i == "Position") print $(i+1) "-" $(i+3) }')
+	lrquad=$(printf '%s\n' "$lrhead" | awk '{ for (i = 1; i < NF - 2; i++)
+		if ($i == "Quadrant") print $(i+1) "-" $(i+3) }')
+	# A masked grid is any '-' in it, and a centre that is not a plain
+	# number means the block read was not the one wanted. Both are
+	# asked with `case` rather than with tr: a set of one dash is
+	# exactly the argument some tr implementations read as an option.
+	case "$grid" in
+		*-*) masked=1 ;;
+		*) masked=0 ;;
+	esac
+	case "$centre" in
+		'' | *[!0-9]*) centre='' ;;
+	esac
+	# And the two scans must name the same quadrant. The search above
+	# is already bounded to this turn, so this is the cheap check that
+	# it found the heading belonging to this grid rather than nothing
+	# at all -- an opening long-range scan can be missing, its sensors
+	# damaged by an attack on the way in, which a start inside the
+	# Romulan Neutral Zone can arrange. Belt to that bound's braces,
+	# and worth keeping: between them, an unpaired grid is skipped
+	# instead of being compared against somebody else's quadrant and
+	# reported as the galaxy's arithmetic being wrong.
+	if [ -n "$grid" ] && [ -n "$centre" ] && [ "$masked" = 0 ] &&
+	   [ -n "$srquad" ] && [ "$srquad" = "$lrquad" ]; then
+		# sst.doc:433-434, the scan covers "your quadrant and all
+		# adjacent quadrants": three rows of three. Asked first, and
+		# the two checks below are held behind it, because both read
+		# cells out of that block by position: a block of another
+		# shape makes them describe something else, and the digit
+		# arithmetic is a confusing way to be told the block was
+		# malformed.
+		shape=$(printf '%s\n' "$lrblock" |
+			awk 'NF != 3 { bad = 1 } END { print NR ":" bad+0 }')
+		if [ "$shape" != "3:0" ]; then
+			fail "seed $seed: the long-range scan is not the three by three block of sst.doc:433-434 (rows:malformed = $shape)"
+		else
+			klingons=$(printf '%s' "$grid" | tr -cd 'KCS' | wc -c | tr -d ' ')
+			starbases=$(printf '%s' "$grid" | tr -cd 'B' | wc -c | tr -d ' ')
+			stars=$(printf '%s' "$grid" | tr -cd '*' | wc -c | tr -d ' ')
+			want=$((klingons * 100 + starbases * 10 + stars))
+			if [ "$centre" -ne "$want" ]; then
+				fail "seed $seed: the long-range scan reads $centre where the quadrant holds K=$klingons B=$starbases stars=$stars -- sst.doc:436-439 makes that $want"
+			fi
+
+			# sst.doc:457-459, the -1s "indicate the negative
+			# energy barrier at the edge of the galaxy, which you
+			# are not permitted to cross". How many there should
+			# be follows from where the ship is, without needing
+			# to know which way round the block is printed: the
+			# scan covers the quadrant and its neighbours, so a
+			# row or column at the galaxy's edge loses three of
+			# the nine cells, and a corner loses five. This is the
+			# only check here that reads the bounds arithmetic in
+			# lrscan() rather than the contents of a quadrant.
+			qx=${lrquad%-*}
+			qy=${lrquad#*-}
+			# Each half on its own: asking of the two stuck
+			# together lets a number and an empty string through
+			# as a number, which is the shape a malformed heading
+			# would take.
+			case "$qx:$qy" in
+				*[!0-9]:* | *:*[!0-9]* | :* | *:) ;;
+				*)
+					case "$qx" in 1 | 8) ax=2 ;; *) ax=3 ;; esac
+					case "$qy" in 1 | 8) ay=2 ;; *) ay=3 ;; esac
+					offgalaxy=$((9 - ax * ay))
+					# An inland quadrant asks that there
+					# are no barrier cells, which is worth
+					# asking but is also what this check
+					# looks like when it has stopped
+					# meaning anything. The battery wants
+					# one game that really stood at an
+					# edge.
+					[ "$offgalaxy" = 0 ] || any_barrier=1
+					barriers=$(printf '%s\n' "$lrblock" |
+						tr ' ' '\n' | grep -c '^-1$')
+					[ "$barriers" = "$offgalaxy" ] ||
+						fail "seed $seed: the long-range scan of quadrant $qx - $qy shows $barriers barrier cells where the 8 by 8 galaxy leaves $offgalaxy outside it (sst.doc:457-459)"
+					;;
+			esac
+		fi
+		any_scanpair=1
+	fi
+
 	saw "Condition     DOCKED" && any_docked=1
 	# "Course laid in" is printed before the ship moves, and it can
 	# then be stopped inside the quadrant. Entering one is the only
@@ -387,6 +664,53 @@ for seed in $SEEDS; do
 		printf '\n' >&2
 	fi
 done
+
+# --- the other half of the Super-commander's skill gate ---------------
+# sst.doc:161 reserves him for the Good, Expert and Emeritus games.
+# The battery above is emeritus and asks that he is announced; this
+# asks that a novice game is left alone, which is the half that a
+# battery of hard games cannot see. One game, and a short one, because
+# only the briefing is being read.
+#
+# "YOU'LL NEED IT", not the "(GULP) Super-Commander" line the battery
+# looks for: that line lives inside the branch setup.c takes for every
+# skill but novice, so a novice game cannot print it however many
+# Super-commanders it has, and a check for it would pass while seeing
+# nothing. The taunt after "Good Luck!" is outside the branch and is
+# the one thing a novice game shows for `d.nscrem`. A binary built
+# with the skill gate removed is what found that out.
+novice="$work/novice.txt"
+(cd "$work" && printf 'tournament 7\nshort\nnovice\npw\nquit\nn\nn\nn\n' |
+	run "$SST" 2>&1) | head -c "$MAXBYTES" > "$novice"
+# "Good Luck!" ends every briefing, long or short, where the wording
+# above it does not: a novice game is told about "a deadly Klingon
+# invasion force" and never about "Klingons", so the obvious grep for
+# the plural passes on a battery game and fails on this one.
+if ! grep -q 'Good Luck' "$novice"; then
+	fail "novice briefing: the game did not get as far as briefing the player"
+elif [ "$(grep -v '^[[:space:]]*$' "$novice" | tail -1)" != \
+       "May the Great Bird of the Galaxy roost upon your home planet." ]; then
+	# Cheap, and it is what tells a desynchronised run from a game
+	# that simply had nothing to report: "Good Luck" is printed on
+	# the way past either way.
+	fail "novice briefing: the game did not end cleanly"
+else
+	grep -q "YOU'LL NEED IT" "$novice" || grep -q 'Super-Commander' "$novice" &&
+		fail "novice briefing: a Super-commander, where sst.doc:161 reserves him for Good and above"
+
+	# The same promise as the battery's, read off the other briefing.
+	# A novice game words it "You will have N supporting starbases."
+	# (setup.c takes a different branch for it), so the emeritus check
+	# above never sees this wording at all -- and sst.doc:173 makes no
+	# distinction between the two.
+	nbases=$(sed -n 's/^You will have \([0-9][0-9]*\) supporting starbases\..*/\1/p' \
+		"$novice" | head -1)
+	if [ -z "$nbases" ]; then
+		fail "novice briefing: no starbase count"
+	elif [ "$nbases" -lt 2 ] || [ "$nbases" -gt 5 ]; then
+		fail "novice briefing: $nbases starbases, where sst.doc:173 promises two to five"
+	fi
+fi
 
 # --- a damaged save file is refused, not played ----------------------
 # Every read from a saved game used to be unchecked, so a file that
@@ -431,6 +755,23 @@ fi
 [ "$any_fired" = 1 ] || fail "no game fired a torpedo"
 [ "$any_impulse_hint" = 1 ] || fail "no game lost warp drive and was told about impulse"
 [ "$any_paged" = 1 ] || fail "no game paused for a keystroke"
+# The long-range digits are checked only where both scans came out
+# clean, so this is what stops that check from skipping every game and
+# reporting nothing. Every seed manages it today -- the pair is drawn
+# on the first two commands, before a shot is fired -- but a galaxy
+# that opens under attack could legitimately cost one its sensors, so
+# the battery is asked for one rather than for all fourteen.
+[ "$any_scanpair" = 1 ] ||
+	fail "no game produced a short- and long-range scan of the same quadrant"
+# And one of them stood at the galaxy's edge, where the barrier check
+# has something to count. Every seed away from an edge asks only that
+# no barrier cell appears, which passes just as well when the check has
+# quietly stopped working. Three of these seeds open on an edge today
+# -- 21, 23, and 3, which is the corner and so the only one that puts
+# both bounds to work at once. A reshuffled list that lost them would
+# take the check with it, and nothing else would say so.
+[ "$any_barrier" = 1 ] ||
+	fail "no game scanned from the galaxy's edge, so the barrier check counted nothing"
 
 if [ "$fails" -ne 0 ]; then
 	printf '\n%d check(s) failed.\n' "$fails" >&2
