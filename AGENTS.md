@@ -115,6 +115,51 @@ Every coding agent working in this repository must follow this workflow.
    - Run focused tests while iterating.
    - Refactor only while the relevant tests remain green.
 
+   A test written against behavior that already exists — a recording, a
+   check of something the game has always done — never has that failing
+   first run to show for itself, and that is where tests which assert
+   nothing come from. Prove it can fail some other way.
+
+   - Break what it checks, watch the test report it, and write down what
+     was broken both in the commit and in a comment beside the assertion.
+     The commit is invisible to whoever next edits the test.
+   - Where the test compares against a literal in its own file, changing
+     the literal proves it in a second. What follows is for tests that run
+     the whole game and read what it printed.
+   - Break it outside the repository. Copy the working tree — the current
+     one, uncommitted test and all — somewhere else, leave `build/`
+     behind, and configure a fresh one there: a copied `build/` still
+     names the original source directory in its cache, so building in the
+     copy compiles the original's sources — your break never reaches the
+     binary, and the test passes for the wrong reason. It prints a
+     cache-path error and exits 0 while it does it, and a regeneration
+     can rewrite the original's build files on the way past. Every test
+     here takes the binary as an argument, so the run is
+     `tests/tournament.sh <copy>/build/sst Debug`, or `ctest --test-dir
+     <copy>/build` for the compiled ones. A `git worktree` will not do: it
+     holds `HEAD`, not the test you have just written.
+   - Break the game, not the test — and break it somewhere the test's
+     expectation does not come from. A break that both sides of the
+     comparison descend from cancels out: setup writes the galaxy word
+     wrong, the code that reads it back fills the quadrant to match, both
+     scans agree, and nothing moves. Rounding, clamping and sensor masking
+     swallow a break the same way. Prefer a path where the expected value
+     comes from somewhere independent — `sst.doc`, a literal, a subsystem
+     that does not share the representation.
+   - A green run means one of two things: the test is blind, or the break
+     was. Rule out the second before touching the test.
+   - Where a test reaches its subject only on some of the data it runs
+     over — one seed, one galaxy, one game that happened to dock — assert
+     that the case it needs really occurred. Otherwise the day the data
+     stops providing it, the test keeps passing and says nothing.
+
+   Three assertions in #64 passed against builds that broke them: one
+   counted rows from scans it was not looking at, one searched for a line
+   the game does not print at the skill it ran at, and one multiplied a
+   term that was zero in every galaxy the battery then played — a seed
+   whose opening quadrant holds a starbase had to be added before that
+   assertion meant anything. All three read convincingly.
+
 5. **Inspect the complete diff.** Review the branch diff plus all staged,
    unstaged, and untracked files. Remove accidental or unrelated changes while
    preserving work that belongs to the user. What you drop because it was
@@ -161,7 +206,8 @@ Every coding agent working in this repository must follow this workflow.
    - **Do not fix it in this slice.** An unrelated fix buried in an
      unrelated diff is how both the fix and the finding go unreviewed. Fix
      it here only if it belongs to the slice.
-   - That is not license to file what steps 6-8 require you to fix. A
+   - That is not license to file what steps 4 and 6-8 require you to fix.
+     A test of your own that cannot fail is fixed here, under step 4. A
      `ui-review`, `verifier` or `code-review` finding about *this* change is
      resolved here; filing it is not resolving it. What gets filed is what
      those reviews turn up about code the change did not touch, and
