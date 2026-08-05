@@ -1,4 +1,5 @@
 #include "sst.h"
+#include "rules.h"
 
 static void getcd(int, int);
 
@@ -472,7 +473,7 @@ void impuls(void) {
 	if (energy > 30.0) {
 		getcd(FALSE, 0);
 		if (direc == -1.0) return;
-		power = 20.0 + 100.0*dist;
+		power = impulse_energy(dist);
 	}
 	else
 		power = 30.0;
@@ -494,7 +495,7 @@ void impuls(void) {
 		return;
 	}
 	/* Make sure enough time is left for the trip */
-	Time = dist/0.095;
+	Time = impulse_time(dist);
 	if (Time >= d.remtime) {
 		prout("First Officer Spock- \"Captain, our speed under impulse");
 		prout("power is only 0.95 sectors per stardate. Are you sure");
@@ -505,7 +506,7 @@ void impuls(void) {
 	lmove();
 	ididit = 1;
 	if (alldone) return;
-	power = 20.0 + 100.0*dist;
+	power = impulse_energy(dist);
 	energy -= power;
 //	Time = dist/0.095; Don't recalculate because lmove may have
 //	adjusted it for tractor beaming
@@ -554,7 +555,7 @@ void warp(int i) {
 		if (direc == -1.0) return;
 
 		/* Make sure starship has enough energy for the trip */
-		power = (dist+0.05)*warpfac*warpfac*warpfac*(shldup+1);
+		power = warp_energy(dist+0.05, warpfac, shldup);
 
 
 		if (power >= energy) {
@@ -582,7 +583,7 @@ void warp(int i) {
 		}
 						
 		/* Make sure enough time is left for the trip */
-		Time = 10.0*dist/wfacsq;
+		Time = warp_time(dist, warpfac);
 		if (Time >= 0.8*d.remtime) {
 			skip(1);
 			prout("First Officer Spock- \"Captain, I compute that such");
@@ -647,9 +648,9 @@ void warp(int i) {
 	/* Activate Warp Engines and pay the cost */
 	lmove();
 	if (alldone) return;
-	energy -= dist*warpfac*warpfac*warpfac*(shldup+1);
+	energy -= warp_energy(dist, warpfac, shldup);
 	if (energy <= 0) finish(FNRG);
-	Time = 10.0*dist/wfacsq;
+	Time = warp_time(dist, warpfac);
 	if (twarp) timwrp();
 	if (blooey) {
 		damage[DWARPEN] = damfac*(3.0*Rand()+1.0);
@@ -786,10 +787,10 @@ void atover(int igrab) {
 		cramf(warpfac, 1, 1);
 		skip(1);
 		power = 0.75*energy;
-		dist = power/(warpfac*warpfac*warpfac*(shldup+1));
+		dist = power/warp_energy(1.0, warpfac, shldup);
 		distreq = 1.4142+Rand();
 		if (distreq < dist) dist = distreq;
-		Time = 10.0*dist/wfacsq;
+		Time = warp_time(dist, warpfac);
 		direc = 12.0*Rand();	/* How dumb! */
 		justin = 0;
 		inorbit = 0;

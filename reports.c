@@ -1,4 +1,5 @@
 #include "sst.h"
+#include "rules.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -487,8 +488,8 @@ void eta(void) {
 	}
 	while (TRUE) {
 		chew();
-		ttime = (10.0*dist)/square(twarp);
-		tpower = dist*twarp*twarp*twarp*(shldup+1);
+		ttime = warp_time(dist, twarp);
+		tpower = warp_energy(dist, twarp, shldup);
 		if (tpower >= energy) { // Suggestion from Ethan Staffin -- give amount needed
 			prout("Insufficient energy, sir: we would need ");
 			cramf(tpower, 1, 1);
