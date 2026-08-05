@@ -3,7 +3,7 @@
   "checkpoint_id": "233d1c8e422e",
   "strategy": "manual-commit",
   "branch": "fix/osx-prototypes",
-  "checkpoints_count": 1,
+  "checkpoints_count": 3,
   "files_touched": [
     "AGENTS.md",
     "CMakeLists.txt",
@@ -20,13 +20,20 @@
       "compact_transcript": "/23/3d1c8e422e/0/transcript.jsonl",
       "content_hash": "/23/3d1c8e422e/0/content_hash.txt",
       "prompt": "/23/3d1c8e422e/0/prompt.txt"
+    },
+    {
+      "metadata": "/23/3d1c8e422e/1/metadata.json",
+      "transcript": "/23/3d1c8e422e/1/full.jsonl",
+      "compact_transcript": "/23/3d1c8e422e/1/transcript.jsonl",
+      "content_hash": "/23/3d1c8e422e/1/content_hash.txt",
+      "prompt": "/23/3d1c8e422e/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 96,
-    "cache_creation_tokens": 61166,
-    "cache_read_tokens": 3044044,
-    "output_tokens": 20677,
-    "api_call_count": 51
+    "input_tokens": 2675,
+    "cache_creation_tokens": 10038291,
+    "cache_read_tokens": 598603448,
+    "output_tokens": 1092417,
+    "api_call_count": 1423
   }
 }
