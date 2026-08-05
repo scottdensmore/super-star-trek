@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "e8109e9f053f",
+  "strategy": "manual-commit",
+  "branch": "test/galaxy-vs-manual",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "tests/tournament.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/e8/109e9f053f/0/metadata.json",
+      "transcript": "/e8/109e9f053f/0/full.jsonl",
+      "compact_transcript": "/e8/109e9f053f/0/transcript.jsonl",
+      "content_hash": "/e8/109e9f053f/0/content_hash.txt",
+      "prompt": "/e8/109e9f053f/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 638,
+    "cache_creation_tokens": 555708,
+    "cache_read_tokens": 74190739,
+    "output_tokens": 198115,
+    "api_call_count": 343
+  }
+}
