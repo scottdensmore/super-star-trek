@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "3664d97bc0cc",
+  "strategy": "manual-commit",
+  "branch": "docs/correct-a-wrong-premise",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "AGENTS.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/36/64d97bc0cc/0/metadata.json",
+      "transcript": "/36/64d97bc0cc/0/full.jsonl",
+      "compact_transcript": "/36/64d97bc0cc/0/transcript.jsonl",
+      "content_hash": "/36/64d97bc0cc/0/content_hash.txt",
+      "prompt": "/36/64d97bc0cc/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 938,
+    "cache_creation_tokens": 1111804,
+    "cache_read_tokens": 150142982,
+    "output_tokens": 298029,
+    "api_call_count": 503
+  }
+}
