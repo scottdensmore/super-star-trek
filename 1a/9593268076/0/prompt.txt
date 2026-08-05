@@ -1,0 +1,95 @@
+Ok lets merge the prs in order
+
+---
+
+Ok lets do 17 then 13
+
+---
+
+Continue
+
+---
+
+Ok what is next?
+
+---
+
+Yep file them and start 13
+
+---
+
+Lets merge all the open PRs in order. Then asses where we are at and what is next
+
+---
+
+Ok lets do 25 then 12
+
+---
+
+try again.. connected now
+
+---
+
+try again
+
+---
+
+try again
+
+---
+
+try one more time
+
+---
+
+Lets merge and start 12
+
+---
+
+merge 30 and files those issues
+
+---
+
+Ok lets do 14
+
+---
+
+Finish everything that is left to be done. You can merge the PRs when they are
+  green. Don't stop until you are done. You can use a dynamic workflow to figure out how to do this. File PRs as you find
+  things to address them later. You can use a dynamic workflow to do the work.
+
+---
+
+So what should we focus on first to get the game in a good and verifiable state
+
+---
+
+Ok lets do the protable RNG and then he golden masters
+
+---
+
+We should also add an issue so we can make sure that we have unit tests for all the rules and logic of the game. Then lets move to 42
+
+---
+
+Are you saying 50 is not worth the effort?
+
+---
+
+Yep... we should follow the strong... this is what would have happened if we dit this TDD
+
+---
+
+Ok lets do 50
+
+---
+
+Ok lets do the promotion rule
+
+---
+
+Ok lets fix 53
+
+---
+
+lets do more 50 rule slices

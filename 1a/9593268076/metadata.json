@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.8.42",
+  "checkpoint_id": "1a9593268076",
+  "strategy": "manual-commit",
+  "branch": "test/rules-energy-and-movement",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "battle.c",
+    "moving.c",
+    "rules.c",
+    "rules.h",
+    "tests/test_rules.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/1a/9593268076/0/metadata.json",
+      "transcript": "/1a/9593268076/0/full.jsonl",
+      "compact_transcript": "/1a/9593268076/0/transcript.jsonl",
+      "content_hash": "/1a/9593268076/0/content_hash.txt",
+      "prompt": "/1a/9593268076/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2543,
+    "cache_creation_tokens": 9931428,
+    "cache_read_tokens": 577763213,
+    "output_tokens": 1053943,
+    "api_call_count": 1353
+  }
+}
