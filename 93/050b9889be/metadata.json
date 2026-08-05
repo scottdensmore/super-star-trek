@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "93050b9889be",
+  "strategy": "manual-commit",
+  "branch": "docs/cross-agent-reviewers",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "AGENTS.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/93/050b9889be/0/metadata.json",
+      "transcript": "/93/050b9889be/0/full.jsonl",
+      "compact_transcript": "/93/050b9889be/0/transcript.jsonl",
+      "content_hash": "/93/050b9889be/0/content_hash.txt",
+      "prompt": "/93/050b9889be/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 769,
+    "cache_creation_tokens": 1003779,
+    "cache_read_tokens": 103546496,
+    "output_tokens": 240779,
+    "api_call_count": 413
+  }
+}
