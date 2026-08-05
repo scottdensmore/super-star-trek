@@ -15,7 +15,13 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DSCORE -DCAPTURE -DCLOAKING")
 # working build.
 option(SST_WERROR "Treat compiler warnings as errors (CI does)" OFF)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
+    # -Wmissing-prototypes is what keeps a definition and its
+    # declaration in agreement: it fires on any non-static function
+    # defined without a prototype in scope, which is the only way a
+    # signature can drift apart from the header the callers read. It
+    # is the standing check for osx.c, the one file that cannot
+    # include sst.h.
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wmissing-prototypes")
     if(SST_WERROR)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
     endif()
