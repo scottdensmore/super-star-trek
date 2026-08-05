@@ -97,3 +97,39 @@ void promotion_compute(struct promotion *p, double elapsed)
 		    : (d.killk + d.killc + d.nsckill)/elapsed;
 	p->earned = elapsed < 5.0 || p->achieved >= p->needed;
 }
+
+/* "Warp drive requires (distance)*(warp factor cubed) units of energy
+ * to travel at a speed of (warp factor squared)/10 quadrants per
+ * stardate." -- sst.doc:1467-1468, with distances in quadrants per
+ * sst.doc:1456. The same two exponents are given as ratios in the
+ * WARP FACTOR section: warp 10 "is 100 times as fast and uses 1000
+ * times as much energy" as warp 1 -- sst.doc:598-599.
+ *
+ * "Shields ... double the power requirements of moving under warp
+ * drive." -- sst.doc:1464-1465, and sst.doc:579. */
+double warp_energy(double quadrants, double factor, double shieldsup)
+{
+	return quadrants*factor*factor*factor*(shieldsup ? 2 : 1);
+}
+
+double warp_time(double quadrants, double factor)
+{
+	return 10.0*quadrants/(factor*factor);
+}
+
+/* "The impulse engines require 20 units of energy to engage, plus 10
+ * units per sector (100 units per quadrant) traveled. It does not cost
+ * extra to move with the shields up." -- sst.doc:626-628, restated at
+ * sst.doc:1469-1470. Hence no shields argument: there is nothing for
+ * it to change. */
+double impulse_energy(double quadrants)
+{
+	return 20.0 + 100.0*quadrants;
+}
+
+/* "They move you at a speed of 0.95 sectors per stardate"
+ * -- sst.doc:620, which is 0.095 quadrants. */
+double impulse_time(double quadrants)
+{
+	return quadrants/0.095;
+}

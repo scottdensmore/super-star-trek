@@ -30,6 +30,15 @@ static void checkrate(const char *what, double got, double want) {
 	}
 }
 
+/* For a number the manual gives only approximately. */
+static void checkclose(const char *what, double got, double want, double tol) {
+	if (!(got - want <= tol && want - got <= tol)) {
+		failures++;
+		printf("FAIL %s\n  want: %g (within %g)\n  got:  %g\n",
+		       what, want, tol, got);
+	}
+}
+
 static void checkint(const char *what, int got, int want) {
 	if (got != want) {
 		failures++;
@@ -489,6 +498,99 @@ static void test_promotion_short_game(void) {
 	checkrate("with no rate to divide", p.achieved, 0.0);
 }
 
+/* "Warp drive requires (distance)*(warp factor cubed) units of energy"
+ * -- sst.doc:1467, distances in quadrants per sst.doc:1456. The WARP
+ * FACTOR section says the same thing as a ratio: warp 10 "uses 1000
+ * times as much energy" as warp 1 -- sst.doc:598-599.
+ *
+ * Both are worth asserting. The ratios say the exponent is three; only
+ * the closed form says what a jump actually costs, and without it a
+ * change that doubled the price of every warp jump in the game would
+ * pass this file unremarked. */
+static void test_warp_costs_the_cube_of_the_factor(void) {
+	double one = warp_energy(1.0, 1.0, 0);
+	double ten = warp_energy(1.0, 10.0, 0);
+
+	checkrate("a quadrant at warp 1 costs one unit", one, 1.0);
+	checkrate("two quadrants at warp 3 cost fifty-four",
+		  warp_energy(2.0, 3.0, 0), 54.0);
+	checkrate("warp 10 costs a thousand times warp 1", ten, one*1000.0);
+	/* And in between, since a ratio at one point does not pin a curve:
+	   warp 2 is eight times warp 1, not four and not sixteen. */
+	checkrate("warp 2 costs eight times warp 1",
+		  warp_energy(1.0, 2.0, 0), one*8.0);
+	/* Distance is simply a multiplier. */
+	checkrate("twice as far costs twice as much",
+		  warp_energy(2.0, 3.0, 0), warp_energy(1.0, 3.0, 0)*2.0);
+}
+
+/* "You may move with your shields up, but this doubles the energy
+ * required." -- sst.doc:579, and again at 648. */
+static void test_warp_with_shields_up_costs_double(void) {
+	checkrate("shields up doubles the bill",
+		  warp_energy(1.5, 4.0, 1), warp_energy(1.5, 4.0, 0)*2.0);
+}
+
+/* "to travel at a speed of (warp factor squared)/10 quadrants per
+ * stardate" -- sst.doc:1468; warp 10 is "100 times as fast" as warp 1
+ * -- sst.doc:599. */
+static void test_warp_speed_is_the_square_of_the_factor(void) {
+	double one = warp_time(1.0, 1.0);
+
+	checkrate("a quadrant at warp 1 takes ten stardates", one, 10.0);
+	checkrate("warp 5 covers two and a half quadrants a stardate",
+		  warp_time(1.0, 5.0), 0.4);
+	checkrate("warp 10 is a hundred times as fast", warp_time(1.0, 10.0),
+		  one/100.0);
+	checkrate("warp 2 is four times as fast", warp_time(1.0, 2.0), one/4.0);
+	checkrate("twice as far takes twice as long",
+		  warp_time(2.0, 5.0), warp_time(1.0, 5.0)*2.0);
+}
+
+/* "The impulse engines require 20 units of energy to engage, plus 10
+ * units per sector (100 units per quadrant) traveled. It does not cost
+ * extra to move with the shields up." -- sst.doc:626-628 */
+static void test_impulse_energy(void) {
+	checkrate("engaging alone costs twenty", impulse_energy(0.0), 20.0);
+	checkrate("a quadrant costs a hundred more",
+		  impulse_energy(1.0), 20.0 + 100.0);
+	checkrate("a sector costs ten more", impulse_energy(0.1), 20.0 + 10.0);
+	checkrate("three quadrants", impulse_energy(3.0), 20.0 + 300.0);
+	/* Nothing here takes a shields argument, which is the manual's
+	   "it does not cost extra to move with the shields up" said in
+	   the only way C can say it. */
+}
+
+/* "They move you at a speed of 0.95 sectors per stardate"
+ * -- sst.doc:620 */
+static void test_impulse_speed(void) {
+	/* 0.95 sectors is 0.095 quadrants, so a stardate buys that far. */
+	checkrate("a stardate carries you 0.95 sectors",
+		  impulse_time(0.095), 1.0);
+	checkrate("a whole quadrant takes rather longer",
+		  impulse_time(1.0), 1.0/0.095);
+
+	/* "which is the equivalent of a warp factor of about 0.975"
+	   -- sst.doc:621. About: the two agree to within a twentieth of a
+	   stardate over a whole quadrant, which is what "about" is doing. */
+	checkclose("impulse is about warp 0.975", impulse_time(1.0),
+		   warp_time(1.0, 0.975), 0.05);
+}
+
+/* "It costs 50 units of energy to raise shields, nothing to lower
+ * them." -- sst.doc:646. "it costs you 200 units of energy to activate
+ * this control" -- sst.doc:660.
+ *
+ * The manual prints both numbers twice -- again at sst.doc:1464-1466 --
+ * so holding the constants to them is two sources agreeing rather than
+ * a mirror. Their other worth is that the citation now sits at the
+ * call site instead of a bare 50.0 in the middle of battle.c. */
+static void test_shield_costs(void) {
+	checkrate("raising shields costs fifty", SHIELD_RAISE_COST, 50.0);
+	checkrate("the high-speed control costs two hundred",
+		  FAST_SHIELD_COST, 200.0);
+}
+
 int main(void) {
 	test_score_gains();
 	test_score_surrender();
@@ -502,6 +604,12 @@ int main(void) {
 	test_promotion_penalties();
 	test_promotion_counts_lost_ships();
 	test_promotion_short_game();
+	test_warp_costs_the_cube_of_the_factor();
+	test_warp_with_shields_up_costs_double();
+	test_warp_speed_is_the_square_of_the_factor();
+	test_impulse_energy();
+	test_impulse_speed();
+	test_shield_costs();
 	if (failures) {
 		printf("%d test(s) FAILED\n", failures);
 		return 1;

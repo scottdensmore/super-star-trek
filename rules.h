@@ -47,4 +47,31 @@ struct promotion {
 /* elapsed is the stardates the game ran. */
 void promotion_compute(struct promotion *p, double elapsed);
 
+/* What it costs to move, and how long it takes.
+ *
+ * Distances are in quadrants throughout, which is what the game's dist
+ * holds; the manual talks in sectors where it is clearer to, and ten
+ * sectors make a quadrant. The arguments are called quadrants and
+ * factor rather than dist and warpfac because sst.h turns both of
+ * those names into struct members -- a parameter called dist would
+ * expand to a.dist and not compile.
+ *
+ * Spec: sst.doc:1467-1468 states both warp formulas outright, with
+ * sst.doc:579 and 598-599 saying the same thing in words; impulse is
+ * at sst.doc:620 and 626-628, restated at sst.doc:1469-1470.
+ */
+double warp_energy(double quadrants, double factor, double shieldsup);
+double warp_time(double quadrants, double factor);
+double impulse_energy(double quadrants);
+double impulse_time(double quadrants);
+
+/* "It costs 50 units of energy to raise shields, nothing to lower
+ * them." -- sst.doc:646, restated at sst.doc:1464. */
+#define SHIELD_RAISE_COST	(50.0)
+
+/* "it costs you 200 units of energy to activate this control"
+ * -- sst.doc:660, the high-speed shield control that lets phasers be
+ * fired with the shields up. Restated at sst.doc:1465-1466. */
+#define FAST_SHIELD_COST	(200.0)
+
 #endif	/* SST_RULES_H */

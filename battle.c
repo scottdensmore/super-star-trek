@@ -1,4 +1,5 @@
 	#include "sst.h"
+#include "rules.h"
 
 #ifdef CLOAKING
 void cloak(void) {
@@ -152,7 +153,7 @@ void sheild(int i) {
 			}
 			shldup = 1;
 			shldchg = 1;
-			if (condit != IHDOCKED) energy -= 50.0;
+			if (condit != IHDOCKED) energy -= SHIELD_RAISE_COST;
 			prout("Shields raised.");
 			if (energy <= 0) {
 				skip(1);
@@ -1030,7 +1031,7 @@ void phasers(void) {
 			chew();
 			return;
 		}
-		if (energy <= 200.0) {
+		if (energy <= FAST_SHIELD_COST) {
 			prout("Insufficient energy to activate high-speed shield control.");
 			chew();
 			return;
@@ -1107,7 +1108,7 @@ void phasers(void) {
 			}
 			if (key != IHREAL && nenhere != 0) {
 				proutn("Phasers locked on target. Energy available =");
-				cramf(ifast?energy-200.0:energy,1,2);
+				cramf(ifast?energy-FAST_SHIELD_COST:energy,1,2);
 				skip(1);
 			}
 			do {
@@ -1117,13 +1118,13 @@ void phasers(void) {
 					key = scan();
 				}
 				rpow = aaitem;
-				if (rpow >= (ifast?energy-200:energy)) {
+				if (rpow >= (ifast?energy-FAST_SHIELD_COST:energy)) {
 					proutn("Energy available= ");
-					cramf(ifast?energy-200:energy, 1,2);
+					cramf(ifast?energy-FAST_SHIELD_COST:energy, 1,2);
 					skip(1);
 					key = IHEOL;
 				}
-			} while (rpow >= (ifast?energy-200:energy));
+			} while (rpow >= (ifast?energy-FAST_SHIELD_COST:energy));
 			if (rpow<=0) {
 				/* chicken out */
 				ididit = 0;
@@ -1134,7 +1135,7 @@ void phasers(void) {
 				no = 1;
 			}
 			if (ifast) {
-				energy -= 200; /* Go and do it! */
+				energy -= FAST_SHIELD_COST; /* Go and do it! */
 				if (checkshctrl(rpow)) return;
 			}
 			chew();
@@ -1192,7 +1193,7 @@ void phasers(void) {
 				int ienm = quad[ii][jj];
 				if (msgflag) {
 					proutn("Energy available= ");
-					cramf(energy-.006-(ifast?200:0), 0, 2);
+					cramf(energy-.006-(ifast?FAST_SHIELD_COST:0), 0, 2);
 					skip(1);
 					msgflag = 0;
 					rpow = 0.0;
@@ -1248,7 +1249,7 @@ void phasers(void) {
 				rpow += aaitem;
 				/* If total requested is too much, inform and start over */
 				
-				if (rpow >= (ifast?energy-200:energy)) {
+				if (rpow >= (ifast?energy-FAST_SHIELD_COST:energy)) {
 					prout("Available energy exceeded -- try again.");
 					chew();
 					key = IHEOL;
@@ -1271,7 +1272,7 @@ void phasers(void) {
 			energy -= rpow;
 			chew();
 			if (ifast) {
-				energy -= 200.0;
+				energy -= FAST_SHIELD_COST;
 				if (checkshctrl(rpow)) return;
 			}
 			hittem(hits);
