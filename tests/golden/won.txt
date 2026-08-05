@@ -1,0 +1,120 @@
+
+
+__________________           __
+\_________________|)____.---'--`---.____
+              ||    \----.________.----/
+              ||     / /    `--'
+            __||____/ /_
+           |___         \
+               `--------'
+  THE USS ENTERPRISE --- NCC-1701
+
+-SUPER- STAR TREK
+
+Latest update-21 Sept 78
+
+Would you like a regular, tournament, or frozen game?Would you like a Short, Medium, or Long game? Are you a Novice, Fair, Good, Expert, or Emeritus player?Please type in a secret password (9 characters maximum)-
+
+
+It is stardate 4700. The Federation is being attacked by
+a deadly Klingon invasion force. As captain of the United
+Starship U.S.S. Enterprise, it is your mission to seek out
+and destroy this invasion force of 3 battle cruisers.
+You have an initial allotment of 7 stardates to complete
+your mission.  As you proceed you may be given more time.
+
+You will have 3 supporting starbases.
+Starbase locations-   3 - 8   5 - 7   2 - 2
+
+The Enterprise is currently in Quadrant 5 - 1  Sector 3 - 5
+
+Good Luck!
+
+
+COMMAND> 
+    1 2 3 4 5 6 7 8 9 10
+ 1  . . . . . . . . . .  Stardate      4700.0
+ 2  . * . . . . . . . .  Condition     GREEN
+ 3  . . . . E . . . . .  Position      5 - 1, 3 - 5
+ 4  . . . . . . .   . .  Life Support  ACTIVE
+ 5  . . . . . . . . . .  Warp Factor   5.0
+ 6  . . . . . . . . . .  Energy        5000.00
+ 7  . . . . . . . . . .  Torpedoes     10
+ 8  . . . . . . . . . .  Shields       DOWN, 100% 2500.0 units
+ 9  . . . . . . . . . .  Klingons Left 3
+10  . . . . . . . . . .  Time Left     7.00
+
+COMMAND> 
+Ensign Chekov- "Course laid in, Captain."
+
+Entering Quadrant 5 - 7
+
+[IMPORTANT ANNOUNCEMENT ARRIVING -- HIT SPACE BAR TO CONTINUE]
+[2J[0;0H
+Message from Starfleet Command       Stardate 4702.4
+     Supernova in Quadrant 7 - 2; caution advised.
+
+COMMAND> 
+    1 2 3 4 5 6 7 8 9 10
+ 1  . . . . . . * . . .  Stardate      4702.4
+ 2  . . . * . . . . . .  Condition     RED
+ 3  . K . . . . . B . .  Position      5 - 7, 5 - 5
+ 4  . . . . . . . K . .  Life Support  ACTIVE
+ 5  . . . . E . . * . .  Warp Factor   5.0
+ 6  . . . . .   . . . .  Energy        4249.58
+ 7  . . * . * . . . . .  Torpedoes     10
+ 8  . . . . . . . . . .  Shields       DOWN, 100% 2500.0 units
+ 9  . . . * . . . . . .  Klingons Left 3
+10  . . . C . . . . . .  Time Left     4.60
+
+COMMAND> Shields raised.
+
+97.51 unit hit on the Enterprise from Klingon at Sector 4 - 8
+73.85 unit hit on the Enterprise from Klingon at Sector 3 - 2
+183.62 unit hit on the Enterprise from Commander at Sector 10 - 4
+
+Energy left 3844.60    shields up, 84%   torpedoes left 10
+
+COMMAND> 
+Weapons Officer Sulu-  "High-speed shield control enabled, sir."
+
+Shields lowered.
+
+164.46 unit hit on Klingon at Sector 4 - 8
+***Klingon at Sector 4 - 8 destroyed.
+124.13 unit hit on Klingon at Sector 3 - 2
+***Klingon at Sector 3 - 2 destroyed.
+396.59 unit hit on Commander at Sector 10 - 4
+***Commander at Sector 10 - 4 destroyed.
+
+
+
+It is stardate 4702.4 .
+
+The remaining 2 Romulan ships surrender to Starfleet Command.
+You have smashed the Klingon invasion fleet and saved
+the Federation.
+
+In fact, you have done so well that Starfleet Command
+promotes you one step in rank from "Novice" to "Fair".
+
+LIVE LONG AND PROSPER.
+
+[HIT SPACE BAR TO CONTINUE]                           
+
+Your score --
+     2 Romulan ships surrendered             2
+     2 ordinary Klingon ships destroyed      20
+     1 Klingon Commander ship destroyed      50
+  1.25 Klingon ships per stardate           625
+
+Bonus for winning Novice game               100
+
+
+TOTAL SCORE                                 797
+
+
+******************************************************
+
+Do you want your score recorded?Do you want to play again?
+May the Great Bird of the Galaxy roost upon your home planet.
