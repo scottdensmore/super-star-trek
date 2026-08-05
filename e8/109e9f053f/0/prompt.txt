@@ -7,3 +7,7 @@ Ok what is next we should work on?
 ---
 
 Lets pick up 58
+
+---
+
+Try and rerun the mutations. If Bash keeps failing, lets try and debug that
