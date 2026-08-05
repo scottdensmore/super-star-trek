@@ -166,11 +166,13 @@ Every coding agent working in this repository must follow this workflow.
    unrelated is often worth filing; see step 9.
 
 6. **Run `ui-review` before verification.** After the main agent completes an
-   implementation pass, invoke the `ui-review` sub-agent. The `ui-review`
+   implementation pass, invoke the `ui-review` sub-agent whenever the change
+   can alter what the game shows a player or asks of them. The `ui-review`
    sub-agent must act as an expert in games and CLI games. Address every
-   actionable finding before moving on, as with the two steps below. If you
-   are not Claude Code, read "The review sub-agents" after this list before
-   running this step or the two that follow.
+   actionable finding before moving on, as with the two steps below. Read
+   "The review sub-agents" after this list for when this pass binds, what
+   to say when it does not, and — if you are not Claude Code — how to get
+   any of these three passes at all.
 
 7. **Run `verifier` before code review.** Invoke the `verifier` sub-agent to
    run the builds, static checks, tests, and journey coverage appropriate for
@@ -262,8 +264,31 @@ is that the work is judged by a reader who did not write it, and who
 reaches its conclusions from the diff rather than from a memory of having
 intended something.
 
-An agent that is not Claude Code gets the same three passes, and does not
-skip them.
+Which of the three bind depends on what changed. `code-review` binds on
+every commit, without exception — it is the gate step 8 describes.
+`verifier` binds as well, with the scope step 7 already gives it: the
+checks appropriate for the change, which for a file nothing compiles can
+come down to a single test — the sub-agent still runs, even when what it
+has to run is one test. `ui-review` binds when the change can alter what
+the game shows a player or asks of them. This file, a test's plumbing and
+CI configuration usually give it nothing to read; the build system does
+the moment it changes what gets compiled in, since `-DSCORE`, `-DCAPTURE`,
+`-DCLOAKING` and the `-DDEBUG` that Debug builds add all decide which
+commands and messages the game has at all.
+
+When it is unclear whether a change reaches the player, run the pass. A
+`ui-review` with nothing to say costs one pass; code that runs while the
+game runs reaches the player whether the change meant it to or not, and a
+refactor that preserves behavior is exactly where a lost line hides.
+
+Skipping it is a decision, not an omission. Say that it was skipped and
+why — in the commit, and in the pull request body and the summary of the
+work, the same places everything else here is disclosed, because the
+commit alone reaches no reviewer. An agent writing that sentence about a
+change to the game's own output has skipped the wrong pass.
+
+An agent that is not Claude Code is bound on the same terms, and cannot
+satisfy a pass by reviewing its own work.
 
 - **A reviewer is a fresh session holding the reviewer's instructions, the
   change, and nothing else.** A sub-agent where the harness has them; a
