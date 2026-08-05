@@ -95,8 +95,9 @@ the suite that checks the game's arithmetic at all.
 Every coding agent working in this repository must follow this workflow.
 
 1. **Inspect before changing anything.** Inspect the repository, current Git
-   state, and all applicable instruction files before making changes. Preserve
-   unrelated staged, unstaged, and untracked work.
+   state, all applicable instruction files, and the issue or roadmap item the
+   work comes from, before making changes. Preserve unrelated staged,
+   unstaged, and untracked work.
 
 2. **Create a branch first.** Create a dedicated feature, fix, refactor, chore,
    test, or documentation branch before making code changes. Never commit
@@ -107,6 +108,37 @@ Every coding agent working in this repository must follow this workflow.
    feature, define the smallest end-to-end slice that can be reviewed, tested,
    shipped, and merged independently. Prefer one coherent user-visible or
    operational outcome over a broad horizontal layer.
+
+   The slice inherits whatever the issue assumes, so check what it claims
+   before building on it. A claim you can settle — what the code does, what
+   `sst.doc` says at a given line — you settle, and where it does not hold
+   you say so on the issue in a comment: what it claimed, what is actually
+   the case, and the line that shows it. Comment, do not rewrite the issue
+   body; a comment keeps straight who said what. A closed issue still
+   takes one, and an issue closed by the pull request that got the premise
+   wrong is exactly where the correction belongs. Where you cannot comment
+   at all — a locked issue, a harness with no access to the tracker — say
+   it in the pull request body and the summary of the work, marked as
+   unposted.
+
+   What is worth building stays the issue author's judgment. A wrong premise
+   voids the claim it supports, not the issue, and the acceptance criteria
+   it never touched still bind. Where the facts change what the issue
+   ought to ask for, say so and ask — do not swap in a slice of your own.
+   Say what was wrong and what the correction changed about the slice, in
+   the pull request body and in the summary of the work, in the summary
+   alone when there is no pull request. Silence is worse than either:
+   building on a mistake you have seen, or building something else and
+   leaving the issue describing work nobody did.
+
+   #58 is the example, and it reasoned well from one wrong fact. On its
+   main ground it ruled out checking the galaxy's digit packing because
+   that packing "appears nowhere in `sst.doc`" — where the manual gives it
+   at `sst.doc:436-439`, as the meaning of the long-range scan. The
+   instinct was the one step 4 now endorses, to take an expectation from
+   somewhere independent of the code; only the fact about where that
+   source was silent was wrong. It cost a narrower slice than the facts
+   allowed, not the wrong one.
 
 4. **Use test-driven development when behavior or structure is testable.**
    - Add or update a focused test before implementation.
@@ -208,8 +240,9 @@ Every coding agent working in this repository must follow this workflow.
    - **Do not fix it in this slice.** An unrelated fix buried in an
      unrelated diff is how both the fix and the finding go unreviewed. Fix
      it here only if it belongs to the slice.
-   - That is not license to file what steps 4 and 6-8 require you to fix.
-     A test of your own that cannot fail is fixed here, under step 4. A
+   - That is not license to file what steps 3, 4 and 6-8 require you to
+     fix. A premise the slice rests on is corrected under step 3, not
+     deferred; a test of your own that cannot fail is fixed under step 4. A
      `ui-review`, `verifier` or `code-review` finding about *this* change is
      resolved here; filing it is not resolving it. What gets filed is what
      those reviews turn up about code the change did not touch, and
