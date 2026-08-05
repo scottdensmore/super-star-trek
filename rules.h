@@ -74,4 +74,25 @@ double impulse_time(double quadrants);
  * fired with the shields up. Restated at sst.doc:1465-1466. */
 #define FAST_SHIELD_COST	(200.0)
 
+/* Whether the ship will run at a given warp factor.
+ *
+ * Asked in two places that must agree: when the player sets the
+ * factor, and again when they try to move at it, since the engines can
+ * take damage in between.
+ *
+ * Spec: sst.doc:572-573 for the damaged cases, sst.doc:598 for the
+ * range.
+ */
+enum warpverdict {
+	WARP_OK,		/* the engines will do it */
+	WARP_INOPERATIVE,	/* too damaged to run at all */
+	WARP_LIMITED,		/* damaged: warp 4 is the most on offer */
+	WARP_TOO_FAST,		/* above the ship's top speed */
+	WARP_TOO_SLOW		/* below the bottom of the range */
+};
+
+/* enginedamage is stardates of repair outstanding on the warp drive,
+ * which is what damage[DWARPEN] holds. */
+int warp_verdict(double wanted, double enginedamage);
+
 #endif	/* SST_RULES_H */

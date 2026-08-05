@@ -133,3 +133,26 @@ double impulse_time(double quadrants)
 {
 	return quadrants/0.095;
 }
+
+int warp_verdict(double wanted, double enginedamage)
+{
+	/* "If warp engines are damaged less than 10 stardates (undocked)
+	   you can still go warp 4." -- sst.doc:572-573. So any damage at
+	   all caps the engines at four, and around ten stardates they
+	   stop being usable.
+
+	   Two things the sentence leaves open. It says what holds below
+	   ten and nothing about a ship damaged exactly ten: the game has
+	   always allowed that one, so this does too, and the test holds
+	   it there. And "(undocked)" describes no condition here --
+	   docking divides the repair time and never lifts the cap, so the
+	   cap reads the same either way. */
+	if (enginedamage > 10.0) return WARP_INOPERATIVE;
+	if (enginedamage > 0.0 && wanted > 4.0) return WARP_LIMITED;
+
+	/* "Your minimum warp factor is 1.0 and your maximum warp factor
+	   is 10.0" -- sst.doc:598. */
+	if (wanted > 10.0) return WARP_TOO_FAST;
+	if (wanted < 1.0) return WARP_TOO_SLOW;
+	return WARP_OK;
+}
