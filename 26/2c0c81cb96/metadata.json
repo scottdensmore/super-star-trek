@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "262c0c81cb96",
+  "strategy": "manual-commit",
+  "branch": "test/prove-a-test-can-fail",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "AGENTS.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/26/2c0c81cb96/0/metadata.json",
+      "transcript": "/26/2c0c81cb96/0/full.jsonl",
+      "compact_transcript": "/26/2c0c81cb96/0/transcript.jsonl",
+      "content_hash": "/26/2c0c81cb96/0/content_hash.txt",
+      "prompt": "/26/2c0c81cb96/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 854,
+    "cache_creation_tokens": 1055182,
+    "cache_read_tokens": 125650236,
+    "output_tokens": 267054,
+    "api_call_count": 458
+  }
+}
