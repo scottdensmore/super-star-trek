@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "20497ed77484",
+  "strategy": "manual-commit",
+  "branch": "docs/file-findings-as-issues",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "AGENTS.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/20/497ed77484/0/metadata.json",
+      "transcript": "/20/497ed77484/0/full.jsonl",
+      "compact_transcript": "/20/497ed77484/0/transcript.jsonl",
+      "content_hash": "/20/497ed77484/0/content_hash.txt",
+      "prompt": "/20/497ed77484/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 713,
+    "cache_creation_tokens": 969386,
+    "cache_read_tokens": 90161607,
+    "output_tokens": 222092,
+    "api_call_count": 383
+  }
+}
