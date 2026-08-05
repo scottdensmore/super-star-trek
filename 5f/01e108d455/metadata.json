@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "5f01e108d455",
+  "strategy": "manual-commit",
+  "branch": "test/golden-won-game",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "tests/golden.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/5f/01e108d455/0/metadata.json",
+      "transcript": "/5f/01e108d455/0/full.jsonl",
+      "compact_transcript": "/5f/01e108d455/0/transcript.jsonl",
+      "content_hash": "/5f/01e108d455/0/content_hash.txt",
+      "prompt": "/5f/01e108d455/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 169,
+    "cache_creation_tokens": 97057,
+    "cache_read_tokens": 14494525,
+    "output_tokens": 51522,
+    "api_call_count": 91
+  }
+}
