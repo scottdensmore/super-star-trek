@@ -591,6 +591,53 @@ static void test_shield_costs(void) {
 		  FAST_SHIELD_COST, 200.0);
 }
 
+/* "If warp engines are damaged less than 10 stardates (undocked) you
+ * can still go warp 4." -- sst.doc:572-573 */
+static void test_warp_with_damaged_engines(void) {
+	/* Sound engines will do anything in range. */
+	checkint("warp 9 on sound engines", warp_verdict(9.0, 0.0), WARP_OK);
+
+	/* "less than 10 stardates ... you can still go warp 4": any
+	   damage at all caps the ship at four, and four is allowed. */
+	checkint("warp 4 with the engines hurt",
+		 warp_verdict(4.0, 5.0), WARP_OK);
+	checkint("but not warp 5", warp_verdict(5.0, 5.0), WARP_LIMITED);
+	checkint("a scratch is enough to cap it",
+		 warp_verdict(5.0, 0.1), WARP_LIMITED);
+
+	/* Ten stardates is where "less than 10" stops applying -- and the
+	   manual stops there too, saying nothing about a ship damaged
+	   exactly ten. The game has always allowed that one, so the test
+	   holds it: this line is what the code decided, not what sst.doc
+	   said, and without it "> 10" and ">= 10" are the same file. */
+	checkint("nine stardates of damage still gives warp 4",
+		 warp_verdict(4.0, 9.0), WARP_OK);
+	checkint("ten exactly still gives warp 4",
+		 warp_verdict(4.0, 10.0), WARP_OK);
+	checkint("eleven gives nothing at all",
+		 warp_verdict(4.0, 11.0), WARP_INOPERATIVE);
+	checkint("and nothing at all means not even warp 1",
+		 warp_verdict(1.0, 11.0), WARP_INOPERATIVE);
+}
+
+/* "Your minimum warp factor is 1.0 and your maximum warp factor is
+ * 10.0" -- sst.doc:598 */
+static void test_warp_factor_range(void) {
+	checkint("warp 1 is the bottom of the range",
+		 warp_verdict(1.0, 0.0), WARP_OK);
+	checkint("below it is refused", warp_verdict(0.9, 0.0), WARP_TOO_SLOW);
+	checkint("warp 10 is the top of the range",
+		 warp_verdict(10.0, 0.0), WARP_OK);
+	checkint("above it is refused", warp_verdict(10.1, 0.0), WARP_TOO_FAST);
+
+	/* Damage is answered before the range is: engines that cannot run
+	   are not a question about how fast the player asked to go. */
+	checkint("inoperative beats out of range",
+		 warp_verdict(99.0, 11.0), WARP_INOPERATIVE);
+	checkint("and the cap beats it too",
+		 warp_verdict(99.0, 1.0), WARP_LIMITED);
+}
+
 int main(void) {
 	test_score_gains();
 	test_score_surrender();
@@ -610,6 +657,8 @@ int main(void) {
 	test_impulse_energy();
 	test_impulse_speed();
 	test_shield_costs();
+	test_warp_with_damaged_engines();
+	test_warp_factor_range();
 	if (failures) {
 		printf("%d test(s) FAILED\n", failures);
 		return 1;

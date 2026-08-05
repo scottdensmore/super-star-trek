@@ -516,7 +516,7 @@ void impuls(void) {
 
 
 void warp(int i) {
-	int blooey=0, twarp=0, iwarp;
+	int blooey=0, twarp=0, iwarp, verdict;
 	double power;
 
 	if (i!=2) { /* Not WARPX entry */
@@ -529,7 +529,8 @@ void warp(int i) {
 			return;
 		}
 #endif
-		if (damage[DWARPEN] > 10.0) {
+		verdict = warp_verdict(warpfac, damage[DWARPEN]);
+		if (verdict == WARP_INOPERATIVE) {
 			chew();
 			skip(1);
 			/* Say what can be done, not only what cannot. Warp out
@@ -542,7 +543,7 @@ void warp(int i) {
 			prout("  We can still make way on impulse power.\"");
 			return;
 		}
-		if (damage[DWARPEN] > 0.0 && warpfac > 4.0) {
+		if (verdict == WARP_LIMITED) {
 			chew();
 			skip(1);
 			prout("Engineer Scott- \"Sorry, Captain. Until this damage");
@@ -678,22 +679,22 @@ void setwrp(void) {
 		huh();
 		return;
 	}
-	if (damage[DWARPEN] > 10.0) {
-		prout("Warp engines inoperative.");
-		return;
-	}
-	if (damage[DWARPEN] > 0.0 && aaitem > 4.0) {
-		prout("Engineer Scott- \"I'm doing my best, Captain,\n"
-			  "  but right now we can only go warp 4.\"");
-		return;
-	}
-	if (aaitem > 10.0) {
-		prout("Helmsman Sulu- \"Our top speed is warp 10, Captain.\"");
-		return;
-	}
-	if (aaitem < 1.0) {
-		prout("Helmsman Sulu- \"We can't go below warp 1, Captain.\"");
-		return;
+	switch (warp_verdict(aaitem, damage[DWARPEN])) {
+		case WARP_INOPERATIVE:
+			prout("Warp engines inoperative.");
+			return;
+		case WARP_LIMITED:
+			prout("Engineer Scott- \"I'm doing my best, Captain,\n"
+				  "  but right now we can only go warp 4.\"");
+			return;
+		case WARP_TOO_FAST:
+			prout("Helmsman Sulu- \"Our top speed is warp 10, Captain.\"");
+			return;
+		case WARP_TOO_SLOW:
+			prout("Helmsman Sulu- \"We can't go below warp 1, Captain.\"");
+			return;
+		default:
+			break;
 	}
 	oldfac = warpfac;
 	warpfac = aaitem;
