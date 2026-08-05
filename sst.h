@@ -501,11 +501,9 @@ void attakreport(void);
 void movetho(void);
 void probe(void);
 
-#ifndef WINDOWS
-int min(int, int);
-int max(int, int);
-#endif
-int getch(void);
+/* min(), max(), getch() and stdio_is_terminal() come from osx.c, which
+   cannot include this header; osx.h is where both sides meet. */
+#include "osx.h"
 
 #ifdef CLOAKING
 void cloak(void);

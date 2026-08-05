@@ -8,9 +8,6 @@
 #include <dos.h>
 #endif
 #include <time.h>
-	
-/*int getch(void);
-*/
 
 static char line[128], *linep = line;
 static int linecount;	/* for paging */

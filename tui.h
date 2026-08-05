@@ -60,8 +60,6 @@ extern int tui_ingame;	/* a game is set up, so the panels have something
 			   to show; false through the setup questions,
 			   including a second game's */
 
-int stdio_is_terminal(void);	/* osx.c; stdin and stdout are both ttys */
-
 int tui_init(void);		/* returns TRUE if the TUI started */
 int tui_terminal_capable(void);	/* TERM is known and can address the cursor */
 void tui_shutdown(void);

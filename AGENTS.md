@@ -20,6 +20,14 @@ mechanism — plain `extern` in `tui.h`, defined in `tui.c` — so `tui.h`
 stays self-contained for `osx.c`, which cannot include `sst.h`. Put new
 display flags there, not in `sst.h`.
 
+`osx.c` is the file that cannot include `sst.h`: `sst.h` declares
+`pause(int)`, which collides with the POSIX `pause(void)` that `osx.c`
+needs. So what `osx.c` *provides* is declared in `osx.h` (included by
+both `osx.c` and `sst.h`), and what `osx.c` *calls* it gets from
+`tui.h`. Put new platform functions in `osx.h`, not `sst.h`, so the
+definition stays checked against the declaration — `-Wmissing-prototypes`
+is on and CI builds with `-Werror`.
+
 ## Build and run
 
 ```sh

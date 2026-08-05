@@ -1,8 +1,11 @@
-#include <stdio.h>
-/* tui.h, not sst.h: the declarations getch() needs are in the first,
-   and the second declares a pause(int) that collides with the POSIX
-   pause(void) that <unistd.h> below brings in. */
+/* osx.h and tui.h, not sst.h: the first declares what this file
+   provides, the second what getch() calls, and neither drags in
+   sst.h's pause(int), which collides with the POSIX pause(void) that
+   <unistd.h> below brings in. osx.h goes first so the build would
+   notice if it ever stopped standing on its own. */
+#include "osx.h"
 #include "tui.h"
+#include <stdio.h>
 #ifndef WINDOWS
 #include <sys/ioctl.h>
 #include <termios.h>
@@ -27,7 +30,8 @@ int min(int a, int b) {
 /* Whether the game is talking to a real terminal. This lives here
    rather than in tui.c because it needs <unistd.h>, and sst.h -- which
    tui.c includes -- declares void pause(int), which collides with the
-   POSIX pause(void) that header brings in. */
+   POSIX pause(void) that header brings in. Declared in osx.h with the
+   rest of what this file provides. */
 int stdio_is_terminal(void) {
 	return isatty(STDIN_FILENO) && isatty(STDOUT_FILENO);
 }
