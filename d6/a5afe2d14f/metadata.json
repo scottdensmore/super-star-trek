@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "d6a5afe2d14f",
+  "strategy": "manual-commit",
+  "branch": "test/rules-warp-damage-and-galaxy",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "moving.c",
+    "rules.c",
+    "rules.h",
+    "tests/test_rules.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d6/a5afe2d14f/0/metadata.json",
+      "transcript": "/d6/a5afe2d14f/0/full.jsonl",
+      "compact_transcript": "/d6/a5afe2d14f/0/transcript.jsonl",
+      "content_hash": "/d6/a5afe2d14f/0/content_hash.txt",
+      "prompt": "/d6/a5afe2d14f/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2572,
+    "cache_creation_tokens": 9952960,
+    "cache_read_tokens": 592539527,
+    "output_tokens": 1069399,
+    "api_call_count": 1368
+  }
+}
