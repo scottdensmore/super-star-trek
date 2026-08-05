@@ -123,7 +123,9 @@ Every coding agent working in this repository must follow this workflow.
 6. **Run `ui-review` before verification.** After the main agent completes an
    implementation pass, invoke the `ui-review` sub-agent. The `ui-review`
    sub-agent must act as an expert in games and CLI games. Address every
-   actionable finding before moving on, as with the two steps below.
+   actionable finding before moving on, as with the two steps below. If you
+   are not Claude Code, read "The review sub-agents" after this list before
+   running this step or the two that follow.
 
 7. **Run `verifier` before code review.** Invoke the `verifier` sub-agent to
    run the builds, static checks, tests, and journey coverage appropriate for
@@ -206,6 +208,46 @@ Every coding agent working in this repository must follow this workflow.
     these conditions are met. Use squash merge for short-lived development
     branches to keep `main` linear, then delete the merged branch.
 
-Note: steps 6-8 invoke Claude Code sub-agents defined in `.claude/agents/`.
-Agents without sub-agent support should perform the equivalent review,
-verification, and code-review passes themselves before committing.
+### The review sub-agents
+
+Steps 6-8 invoke Claude Code sub-agents defined in `.claude/agents/`:
+`ui-review`, `verifier` and `code-review`. What matters is not the tool. It
+is that the work is judged by a reader who did not write it, and who
+reaches its conclusions from the diff rather than from a memory of having
+intended something.
+
+An agent that is not Claude Code gets the same three passes, and does not
+skip them.
+
+- **A reviewer is a fresh session holding the reviewer's instructions, the
+  change, and nothing else.** A sub-agent where the harness has them; a
+  second non-interactive invocation of your own CLI — `codex exec` and its
+  equivalents — where it does not. A new session reading the change cold
+  satisfies this. The same session in a later turn does not.
+- **Point at the definitions here rather than restating them.**
+  `.claude/agents/ui-review.md`, `verifier.md` and `code-review.md` are the
+  specifications. A per-tool definition should say to read the matching
+  file and follow it, and carry only the wiring its own harness needs: the
+  name, and that the reviewer reports findings and never edits. Copying the
+  text is how three tools come to review three different things, which is
+  the whole reason this file exists.
+- **Keep the three names.** The workflow above, the commit history and the
+  issue tracker all refer to them by name.
+- **Land the definition as its own change,** on its own branch and commit,
+  before the work it will review — not beside a feature, which step 10
+  forbids and step 3 argues against. It belongs in the repository rather
+  than in someone's local configuration for the same reason this file
+  does: the next session in that tool then inherits a reviewer instead of
+  improvising one, and an improvised reviewer drifts. That commit is also
+  the one place self-review cannot be avoided, since step 8 cannot be
+  satisfied by the commit that creates the reviewer. Say so in the commit,
+  and disclose it as below.
+- **Confirm the harness actually loads what you wrote.** A definition in a
+  directory the tool never reads is inert, and from the outside it looks
+  exactly like a step that was carried out.
+- **Self-review is the last resort, not the default.** Taking it means
+  saying which mechanism you looked for and why it was not there — or, for
+  the commit that creates the reviewer, that it did not yet exist. Say it
+  in the pull request body and in the summary of the work — in the summary
+  alone when there is no pull request. A reviewer who shares the author's memory
+  of what was intended is the one thing this section exists to prevent.
