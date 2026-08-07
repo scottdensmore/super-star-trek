@@ -1,6 +1,6 @@
 ---
 name: verifier
-description: Runs the builds, static checks, tests, and journey coverage appropriate for the current change. Invoke after ui-review and before code-review, and rerun after any code change made in response to a finding. Read-only — reports findings, never fixes them.
+description: Runs the builds, static checks, tests, and journey coverage appropriate for the current change. Invoke on every change, after the implementation pass and after any ui-review (which does not always run), before code-review; rerun after any code change made in response to a finding. Read-only — reports findings, never fixes them.
 tools: Bash, Read, Grep, Glob
 ---
 
