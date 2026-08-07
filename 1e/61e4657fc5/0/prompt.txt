@@ -1,0 +1,33 @@
+Yes lets push it and open a pr... once it is green squash merge
+
+---
+
+Ok what is next we should work on?
+
+---
+
+Lets pick up 58
+
+---
+
+Try and rerun the mutations. If Bash keeps failing, lets try and debug that
+
+---
+
+I want to update the workflow to make sure that any issue found in the feature / work being done is filed as issues to be worked on later
+
+---
+
+Also update the workflow to ensure that if the agent is not Claude that it creates or uses it's own code review subagent
+
+---
+
+Yep lets fix it. Also is there anything else in the workflow that you would scrutinize and change?
+
+---
+
+Ok pick those up next
+
+---
+
+Lets do 62

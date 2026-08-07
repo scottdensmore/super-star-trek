@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "1e61e4657fc5",
+  "strategy": "manual-commit",
+  "branch": "fix/score-sheet-column",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "CMakeLists.txt",
+    "finish.c",
+    "tests/golden.sh",
+    "tests/golden/won.txt",
+    "tests/score.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/1e/61e4657fc5/0/metadata.json",
+      "transcript": "/1e/61e4657fc5/0/full.jsonl",
+      "compact_transcript": "/1e/61e4657fc5/0/transcript.jsonl",
+      "content_hash": "/1e/61e4657fc5/0/content_hash.txt",
+      "prompt": "/1e/61e4657fc5/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1042,
+    "cache_creation_tokens": 1743930,
+    "cache_read_tokens": 183532496,
+    "output_tokens": 336999,
+    "api_call_count": 559
+  }
+}
