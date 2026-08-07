@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "62e18ce98bff",
+  "strategy": "manual-commit",
+  "branch": "fix/tui-resize-repaint",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "README.md",
+    "tests/tui.sh",
+    "tui.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/62/e18ce98bff/0/metadata.json",
+      "transcript": "/62/e18ce98bff/0/full.jsonl",
+      "compact_transcript": "/62/e18ce98bff/0/transcript.jsonl",
+      "content_hash": "/62/e18ce98bff/0/content_hash.txt",
+      "prompt": "/62/e18ce98bff/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1377,
+    "cache_creation_tokens": 3344102,
+    "cache_read_tokens": 316574875,
+    "output_tokens": 485817,
+    "api_call_count": 739
+  }
+}
