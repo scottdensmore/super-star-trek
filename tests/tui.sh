@@ -483,11 +483,297 @@ else
 	fi
 fi
 
-# Nothing here asserts what the screen looks like *during* a pause that
-# a resize interrupts. The windows are rebuilt at the next prompt
-# rather than under the blocking read, so until the player answers, the
-# pane can be left holding whatever the terminal emulator put there --
-# which on this one is nothing at all, on `main` as much as here.
+# --- a resize during a pause redraws without waiting for the player ---
+# The windows used to be rebuilt only at the next prompt, so a terminal
+# dragged while the game sat on "hit space bar to continue" left the
+# panels at their old size until the player answered -- the new columns
+# empty beside them, the old border stopping short of the edge. Nothing
+# was wrong with the game, but it read as one that had stopped.
+#
+# A pause is where this is worth checking, because it is the one place
+# the game is blocked on a keystroke with a full screen behind it. The
+# resize must not be taken for that keystroke either: the page the
+# player is reading has to still be there afterwards, and one space has
+# to move on by exactly one page.
+start 80 24 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "resize pause: the game never reached its command prompt"
+	dump
+else
+	# `help move` is several screens long, so it pages.
+	tm send-keys -t "$pane" 'help' Enter
+	sleep 0.3
+	tm send-keys -t "$pane" 'move' Enter
+	expect_re "resize pause: help never paged" 'CONTINUE|HIT SPACE BAR'
+	# Guarded, because everything below reads the paused screen: with
+	# no pause to interrupt there is nothing here to measure, and the
+	# failure has already been reported.
+	if screen | grep -qE 'CONTINUE|HIT SPACE BAR'; then
+		tm resize-window -t "$session" -x 120 -y 40
+		sleep 1
+
+		# No keystroke has been sent. The panels have to have
+		# followed anyway.
+		if [ "$(screen | head -1 | wc -c)" -lt 100 ]; then
+			fail "resize pause: the panels kept their old width while the game waited"
+			dump
+		fi
+		# And the page the player was reading is still on screen,
+		# still asking -- the resize was not eaten as the answer.
+		if ! screen | grep -qE 'CONTINUE|HIT SPACE BAR'; then
+			fail "resize pause: the resize answered the pause"
+			dump
+		fi
+		if ! screen | grep -qF 'usual way to move'; then
+			fail "resize pause: the page being read was lost"
+			dump
+		fi
+
+		# One keystroke, one page.
+		tm send-keys -t "$pane" Space
+		expect "resize pause: one keystroke did not advance one page" \
+			'horizontal and vertical displacements'
+	fi
+fi
+
+# --- and the same when the terminal gets smaller ----------------------
+# Shrinking is the harder direction and the one that stayed broken
+# longest. Curses clips the message window when it takes the resize in,
+# and it does that before the game is told, so the rows it throws away
+# -- the bottom ones, where the newest text is -- are gone before any
+# of this code runs. The prompt went with them: a screen waiting for a
+# keystroke with nothing on it to say so.
+#
+# Starting large and ending at the minimum is the case that failed. A
+# gentler shrink passed even before the fix, because the prompt happened
+# to survive the clip.
+start 120 40 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "shrink pause: the game never reached its command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'help' Enter
+	sleep 0.3
+	tm send-keys -t "$pane" 'move' Enter
+	expect_re "shrink pause: help never paged" 'CONTINUE|HIT SPACE BAR'
+	if screen | grep -qE 'CONTINUE|HIT SPACE BAR'; then
+		tm resize-window -t "$session" -x 72 -y 24
+		sleep 1
+
+		if ! screen | grep -qE 'CONTINUE|HIT SPACE BAR'; then
+			fail "shrink pause: shrinking took the prompt away"
+			dump
+		fi
+		# The prompt alone is not enough: the text being read has
+		# to come with it, or the player answers a pause about a
+		# page they can no longer see. This one passes against a
+		# pre-fix build too -- the clip took the prompt and left
+		# this text -- so it is a property worth holding rather
+		# than evidence of the bug.
+		if ! screen | grep -qF 'usual way to move'; then
+			fail "shrink pause: shrinking paged away unread text"
+			dump
+		fi
+		# Exactly once. The prompt is reprinted when the clip took
+		# it, and left alone when it did not.
+		if [ "$(screen | grep -cE 'CONTINUE|HIT SPACE BAR')" -ne 1 ]; then
+			fail "shrink pause: the prompt is on screen more than once"
+			dump
+		fi
+	fi
+fi
+
+# --- a resize while an answer is half typed ---------------------------
+# The other place the game blocks on the keyboard, and the one where
+# there is something to lose: the line the player has typed so far.
+# wgetnstr returned ERR on the resize and threw the partial line away
+# with it, so a drag mid-word left the prompt looking untouched and the
+# answer gone -- type the rest, press Enter, and the game gets only the
+# rest. The reader takes a keystroke at a time now and keeps its own
+# buffer, so the resize passes between keystrokes.
+#
+# Note what is *not* asserted here: the panels. On this path they
+# followed the terminal even before the fix, because the failing
+# wgetnstr was re-entered and curses redrew them on its way back in. A
+# width check here would pass against the bug -- it was written, tried
+# against a pre-fix build, and taken out again. The pause above is where
+# the panels really did stay stale.
+start 80 24 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "resize typing: the game never reached its command prompt"
+	dump
+else
+	# Half a command, no Enter: the game is inside the line read.
+	tm send-keys -t "$pane" 'srsc'
+	sleep 0.5
+	tm resize-window -t "$session" -x 110 -y 32
+	sleep 1
+
+	# Still there to finish, and once. Half-eaten shows as a bare
+	# prompt; echoed again shows as `srscsrsc`, which an unanchored
+	# pattern would match just as happily -- it did, while the answer
+	# really was being written twice.
+	if ! screen | grep -qE 'COMMAND> *srsc *$'; then
+		fail "resize typing: what had been typed did not survive the resize, or was echoed twice"
+		dump
+	fi
+	# Once, and only once. A pending answer used to make the restore
+	# decide the prompt had been clipped -- what follows the prompt on
+	# screen is the answer, not the blanks it was looking for -- so it
+	# wrote another copy at every step of a drag. Twelve widen steps
+	# stood eight prompts up the window. The line-shape check above
+	# cannot see that: the last copy looks perfectly correct.
+	if [ "$(screen | grep -c 'COMMAND>')" -ne 1 ]; then
+		fail "resize typing: the prompt was written out again over a pending answer"
+		dump
+	fi
+
+	# Finishing it has to land after the answer, not on top of it.
+	# The repaint leaves the cursor where an echo belongs; when it was
+	# left in front of the answer instead, `an` typed over `sr` and
+	# the line read `ansc` while the game held `srscan` -- a command
+	# the screen never showed.
+	tm send-keys -t "$pane" 'an'
+	sleep 0.5
+	if ! screen | grep -qE 'COMMAND> *srscan *$'; then
+		fail "resize typing: finishing the answer did not land after it"
+		dump
+	fi
+	tm send-keys -t "$pane" Enter
+	expect "resize typing: the finished command did not run" 'Condition'
+	if screen | grep -q 'UNRECOGNIZED'; then
+		fail "resize typing: the finished command was not understood"
+		dump
+	fi
+fi
+
+# --- a shrink while an answer is half typed ---------------------------
+# The direction nothing covered, and it is where every late defect in
+# this change hid. Growing cannot clip, and the pause has no answer to
+# lose, so a width shrink with something typed is the only path that
+# exercises putting a clipped prompt *and* its answer back.
+#
+# Long enough to wrap at the narrower width, because a wrapped pair is
+# the case that stumped the restore: the text on screen after the resize
+# is not the string it is looking for, and the copies it wrote instead
+# stacked up one per step of a drag.
+start 100 30 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "shrink typing: the game never reached its command prompt"
+	dump
+else
+	answer=zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
+	tm send-keys -t "$pane" "$answer"
+	sleep 0.5
+	tm resize-window -t "$session" -x 76 -y 30
+	sleep 1
+
+	if [ "$(screen | grep -c 'COMMAND>')" -ne 1 ]; then
+		fail "shrink typing: the prompt is on screen more than once"
+		dump
+	fi
+	# The whole answer, counted rather than matched as one string:
+	# at this width it wraps, and the message window starts at column
+	# one, so joining the rows puts the left margin in the middle of
+	# it. Every character of it has to still be there -- fewer means
+	# the shrink ate some. More would mean a second copy, which the
+	# prompt count above is what catches.
+	if [ "$(screen | tr -cd z | wc -c)" -lt 80 ]; then
+		fail "shrink typing: the answer did not survive the shrink whole"
+		dump
+	fi
+	# And the conversation it was part of is still there.
+	if ! screen | grep -qF 'Good Luck'; then
+		fail "shrink typing: the conversation was pushed off the screen"
+		dump
+	fi
+fi
+
+# --- the same before the message window has filled --------------------
+# The case above types at the command prompt, where the conversation has
+# already filled the window, so the last row with anything on it *is*
+# the bottom row. That makes it blind to where the clipped line is put
+# back: bottom-anchored and line-anchored are the same row there, and a
+# build that anchors to the bottom passes it.
+#
+# The setup questions are the other half, and every game starts there:
+# the window is mostly empty, the live line sits in the middle of it,
+# and anchoring to the bottom leaves the mangled copy stranded above
+# with blank rows between. Same for anything after a clearscreen().
+start 110 40
+if ! wait_for 'regular, tournament, or frozen'; then
+	fail "shrink setup: the game never asked its first question"
+	dump
+else
+	# Long enough that the question and the answer wrap at 76 columns:
+	# the question alone is 53 of the 74 the message window gets.
+	setupanswer=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+	tm send-keys -t "$pane" "$setupanswer"
+	sleep 0.5
+	tm resize-window -t "$session" -x 76 -y 40
+	sleep 1
+
+	if [ "$(screen | grep -c 'regular, tournament, or frozen')" -ne 1 ]; then
+		fail "shrink setup: the question is on screen more than once"
+		dump
+	fi
+	# 49, not 40: the banner and the question carry nine a's of their
+	# own at either size, so a bare "at least 40" is satisfied while
+	# nine of the typed characters are missing. The z's in the section
+	# above need no such allowance -- the screen has none of its own.
+	if [ "$(screen | tr -cd a | wc -c)" -lt 49 ]; then
+		fail "shrink setup: the answer did not survive the shrink whole"
+		dump
+	fi
+fi
+
+# --- a shrink with a conversation behind it ---------------------------
+# " COMMAND> " is the most repeated string in the game, so deciding
+# whether the live prompt survived a shrink by looking for that text
+# finds an answered prompt further up instead. The cursor then sits in
+# the middle of the history: the player types into a command they ran
+# two turns ago, and the game reads a line that was never on screen.
+#
+# Needs a few commands behind it -- with an empty conversation there is
+# no older prompt to match, which is why every earlier resize case here
+# passes either way.
+start 100 30 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "shrink history: the game never reached its command prompt"
+	dump
+else
+	for c in status damages; do
+		tm send-keys -t "$pane" "$c" Enter
+		sleep 0.5
+	done
+	tm resize-window -t "$session" -x 100 -y 24
+	sleep 1
+	tm send-keys -t "$pane" 'ch'
+	sleep 0.5
+	# What is typed has to be at the bottom, on a prompt of its own.
+	if ! screen | grep -v '^ *$' | tail -1 | grep -qE 'COMMAND> *ch *$'; then
+		fail "shrink history: typing after the shrink did not go to the live prompt"
+		dump
+	fi
+	tm send-keys -t "$pane" 'art' Enter
+	expect "shrink history: the command typed after the shrink did not run" \
+		'STAR CHART'
+fi
+
+# --- Ctrl-D ends the session on its own keystroke ---------------------
+# Under cbreak() the tty does no end-of-file handling of its own, so
+# Ctrl-D arrives as a character. wgetnstr returned only on Enter, so it
+# used to take Ctrl-D *and* Enter to leave; every other way out of the
+# game takes one keystroke.
+start 80 24 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "ctrl-d: the game never reached its command prompt"
+	dump
+else
+	tm send-keys -t "$pane" C-d
+	expect "ctrl-d: the session did not end on the keystroke alone" \
+		'May the Great Bird'
+fi
 
 # --- the panel says why the grid is masked ---------------------------
 # srscan() heads its grid with SHORT-RANGE SENSORS DAMAGED. The panel
