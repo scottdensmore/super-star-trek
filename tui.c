@@ -168,6 +168,200 @@ static int resized(void) {
 	return is_term_resized(builtlines, builtcols);
 }
 
+/* The line the game is part way through writing -- everything since the
+ * last newline. It is kept because a resize can take it off the screen
+ * and there is no getting it back from curses.
+ *
+ * Curses clips the message window when it processes the resize, which
+ * it does before handing the game a KEY_RESIZE: by the time the game
+ * knows the terminal moved, the bottom rows are already gone. When the
+ * terminal is now shorter, those rows are where the newest text is --
+ * and the newest text is the prompt the player is being asked to answer
+ * or the pause waiting for a keystroke. Losing it leaves a screen that
+ * is waiting for something without saying so.
+ *
+ * A whole transcript would let the conversation be reflowed; this is the
+ * one line that matters, and it is what lets the prompt be put back. */
+static char curline[256];
+static int curlen;
+
+static void note_out(const char *s) {
+	for (; *s != '\0'; s++) {
+		/* A carriage return ends it as surely as a newline does:
+		   pause() wipes its own prompt with "\r ... \r", and
+		   keeping those bytes left curline holding 56 characters
+		   that render as an empty row, which then matched nothing
+		   on screen. */
+		if (*s == '\n' || *s == '\r')
+			curlen = 0;
+		else if (curlen < (int)sizeof curline - 1)
+			curline[curlen++] = *s;
+	}
+	curline[curlen] = '\0';
+}
+
+/* What tui_readline has echoed of the answer so far, while it is
+ * waiting; NULL at a pause, which has no answer to echo. The restore
+ * below needs it because the bottom of the conversation is the game's
+ * unfinished line *and* the player's unfinished answer, and it has to
+ * recognise the pair to tell "still on screen" from "clipped away". */
+static const char *pending_answer;
+
+/* Whether the repaint left the cursor at the end of the game's line,
+ * with the answer to be written after it. False when the restore was
+ * not needed at all -- a terminal that only grew -- where the cursor is
+ * still sitting after the answer and writing it again would double it. */
+static int cursor_at_prompt;
+
+/* Whether a window row holds nothing but blanks. */
+static int row_blank(int r) {
+	char row[256];
+	int i;
+
+	row[0] = '\0';
+	mvwinnstr(wmsg, r, 0, row, (int)sizeof row - 1);
+	for (i = 0; row[i] != '\0'; i++)
+		if (row[i] != ' ') return FALSE;
+	return TRUE;
+}
+
+/* Put the unfinished line back on screen if the resize took it away,
+ * and leave the cursor at the end of it either way.
+ *
+ * Whether it is still there is answered by looking for it, because the
+ * cursor is no guide: until the conversation has filled the window
+ * curses leaves it a row off, which read as "the prompt is gone" and
+ * appended a second copy of every setup question.
+ *
+ * Looking is not enough on its own, though. " COMMAND> " is the most
+ * repeated string in the game, so a search that takes any match finds
+ * an answered prompt from earlier in the conversation, decides nothing
+ * was lost, and parks the cursor in the middle of the history -- the
+ * player then types into an old command and the game reads a line the
+ * screen never showed. A match counts only as the last thing on the
+ * screen: nothing but blanks after it on its row, and nothing but blank
+ * rows below.
+ *
+ * Missing, and it gets a row of its own. The window scrolls by one
+ * first, because writing a newline would clear to the end of the row
+ * the clip left the cursor on, taking the tail of the line above with
+ * it -- a sentence cut off mid-word. Losing the oldest row is what this
+ * window does all the time; mangling the newest is not.
+ *
+ * A terminal that loses columns is the awkward case: it does not remove
+ * the line, it mangles it. Curses truncates each row rather than
+ * reflowing it, so a pair that no longer fits stops being the string
+ * this searches for -- and that same absence of reflow is what makes
+ * the stump's height, computed below, exact. */
+static void restore_curline(int oldmsgw) {
+	/* want holds curline and the answer: 160 covers readinput()'s
+	   callers, which pass 128-byte buffers (line[] in sst.c,
+	   winner[] in finish.c) of which the reader fills at most 126.
+	   onscreen and row_blank's row are smaller than a very wide
+	   terminal on purpose -- nothing the game writes reaches column
+	   255, the longest line being a prompt plus that 126-character
+	   answer -- so a row with content past there cannot exist. Raise
+	   the input buffer and these want revisiting. */
+	char onscreen[512], want[sizeof curline + 160], joined[2048];
+	char *found;
+	int r, last, maxy, width, i, tail_blank, wantlen;
+
+	if (curlen == 0) return;
+	/* What the bottom of the conversation should read: the line the
+	   game is part way through, and after it whatever the reader has
+	   echoed of the answer. Comparing against the prompt alone made
+	   every pending answer look like something drawn over the line,
+	   so an ordinary drag reprinted the prompt at each step and stood
+	   eight copies of it up the window. */
+	snprintf(want, sizeof want, "%s%s", curline,
+		 pending_answer != NULL ? pending_answer : "");
+	wantlen = (int)strlen(want);
+	maxy = getmaxy(wmsg);
+	width = getmaxx(wmsg);
+	for (r = maxy - 1; r >= 0; r--) {
+		if (!row_blank(r)) break;
+	}
+	last = r;
+	/* Read back as many rows as the line takes when it wraps, not
+	   one: a question and an answer longer than the window is two
+	   rows on screen and a single string here, so a one-row search
+	   could never match it and reprinted at every resize -- four
+	   copies up the window over a slow drag. Curses pads each row to
+	   the full width, so joining them rebuilds the text exactly. */
+	if (r >= 0 && width > 0) {
+		int start = r - wantlen / width;
+		int rr;
+
+		if (start < 0) start = 0;
+		joined[0] = '\0';
+		for (rr = start; rr <= r; rr++) {
+			onscreen[0] = '\0';
+			mvwinnstr(wmsg, rr, 0, onscreen,
+				  (int)sizeof onscreen - 1);
+			strncat(joined, onscreen,
+				sizeof joined - strlen(joined) - 1);
+		}
+		found = strstr(joined, want);
+		if (found != NULL) {
+			tail_blank = TRUE;
+			for (i = (int)(found - joined) + wantlen;
+			     joined[i] != '\0'; i++)
+				if (joined[i] != ' ') tail_blank = FALSE;
+			if (tail_blank) {
+				/* At the end of the prompt, not of the
+				   answer: the reader writes the answer
+				   again from here, over the identical
+				   characters already there. */
+				i = (int)(found - joined) + curlen;
+				wmove(wmsg, start + i / width, i % width);
+				cursor_at_prompt = TRUE;
+				return;
+			}
+		}
+	}
+	/* Where to put it. A terminal that lost columns left the stump on
+	   screen, taking as many rows as the pair filled at the old
+	   width -- which is arithmetic, not something to go looking for.
+	   Rub those rows out and write the line in their place; scrolling
+	   instead is what left one stump per step of a narrowing drag,
+	   six of them up the window with the conversation pushed off the
+	   top.
+	   A terminal that only lost rows is the other case: the line is
+	   gone altogether and the bottom rows hold older conversation
+	   worth keeping, so that scrolls by one and writes below it. */
+	if (oldmsgw > 0) {
+		int total = curlen;
+		int rows, rr;
+
+		if (pending_answer != NULL)
+			total += (int)strlen(pending_answer);
+		/* One row per oldmsgw columns, and a line that fills its
+		   last row exactly needs no extra: total/oldmsgw+1 says
+		   two for a line of exactly one row's width, and with the
+		   anchoring below that would rub out a row of live
+		   conversation above the stump. */
+		rows = total == 0 ? 1 : (total - 1) / oldmsgw + 1;
+		/* Anchored to the last row with anything on it, not to the
+		   bottom of the window. They are the same once the
+		   conversation has filled it, and different for the whole
+		   setup conversation and after every clearscreen() -- there
+		   the live line sits mid-window, and writing at the bottom
+		   left the stump above it with blank rows in between. */
+		r = (last >= 0 ? last : maxy - 1) - rows + 1;
+		if (r < 0) r = 0;
+		for (rr = r; rr < maxy; rr++) {
+			wmove(wmsg, rr, 0);
+			wclrtoeol(wmsg);
+		}
+		wmove(wmsg, r, 0);
+	} else {
+		wscrl(wmsg, 1);
+		wmove(wmsg, maxy - 1, 0);
+	}
+	waddstr(wmsg, curline);
+	cursor_at_prompt = TRUE;
+}
+
 /* Adopt a new terminal size if there is one. Called before every
  * repaint rather than only where a resize is reported, because the
  * report does not always come: a terminal dragged while the game is
@@ -178,10 +372,20 @@ static int resized(void) {
  * and the game keeps no transcript -- so the panels come back and the
  * conversation carries on from wherever it had got to. */
 static void sync_size(void) {
+	int oldlines = builtlines, oldcols = builtcols;
+
 	if (!resized()) return;
+	cursor_at_prompt = FALSE;
 	resize_term(0, 0);	/* adopt whatever the terminal is now */
-	make_windows();
+	make_windows();		/* which is what moves builtlines/builtcols on */
 	touchwin(wmsg);		/* the panels redraw themselves; this does not */
+	/* A terminal that only grew clipped nothing, so there is nothing
+	   to put back and no need to go looking: asking anyway is what
+	   left a second copy of a question whenever the answer being
+	   typed was long enough to wrap, since a wrapped pair is not the
+	   contiguous string the search hunts for. */
+	if (LINES < oldlines || COLS < oldcols)
+		restore_curline(COLS < oldcols ? oldcols - 2 : 0);
 	wnoutrefresh(wmsg);
 }
 
@@ -289,11 +493,13 @@ void tui_refresh_panels(void) {
 }
 
 void tui_puts(char *s) {
+	note_out(s);
 	waddstr(wmsg, s);
 	wrefresh(wmsg);
 }
 
 void tui_puts_slow(char *s) {
+	note_out(s);
 	while (*s) {
 		waddch(wmsg, *s++);
 		wrefresh(wmsg);
@@ -301,39 +507,130 @@ void tui_puts_slow(char *s) {
 	}
 }
 
-int tui_readline(char *buf, int buflen) {
-	int got;
+/* Rub out the character before the cursor, on screen.
+ *
+ * An answer long enough to wrap puts the cursor at column 0 with the
+ * character to delete at the end of the row above, so that case steps
+ * back a row rather than giving up -- giving up is what let the buffer
+ * and the screen disagree, the player rubbing out characters that
+ * stayed visible while the game forgot them.
+ *
+ * Only ever called with something still to rub out, which is what keeps
+ * it off the prompt: it deletes no more characters than were typed. */
+static void erase_one(void) {
+	int y, x;
 
+	getyx(wmsg, y, x);
+	if (x > 0) {
+		mvwaddch(wmsg, y, x-1, ' ');
+		wmove(wmsg, y, x-1);
+	} else if (y > 0) {
+		x = getmaxx(wmsg) - 1;
+		mvwaddch(wmsg, y-1, x, ' ');
+		wmove(wmsg, y-1, x);
+	}
+}
+
+/* Read a line, a keystroke at a time, rather than with wgetnstr.
+ *
+ * Two things need that. A resize has to be able to rebuild the windows
+ * and carry on waiting, which cannot be done underneath wgetnstr -- it
+ * is still reading the screen curses would be repainting, which is what
+ * made every attempt at it blank the display. Here the resize arrives
+ * between reads, where a repaint is safe, exactly as in tui_getch().
+ *
+ * And cbreak() turns off the tty's own end-of-file handling, so Ctrl-D
+ * arrives as a character. wgetnstr returns only on Enter, so it used to
+ * take a Ctrl-D *and* an Enter to end a session. On its own keystroke
+ * now, as everywhere else. */
+int tui_readline(char *buf, int buflen) {
+	int len = 0, room = buflen-2, c;
+
+	if (room < 0) room = 0;	/* keep room for the "\n" and the NUL */
 	tui_refresh_panels();
 	for (;;) {
-		echo();
-		got = wgetnstr(wmsg, buf, buflen-2) != ERR;
-		noecho();
-		/* A resize interrupts the read, and ERR is also how the end
-		   of input arrives -- so without telling them apart, dragging
-		   the window would end the session. Read again instead. The
-		   windows are not rebuilt here: doing that under a blocking
-		   read leaves curses repainting a screen it is still reading
-		   from, and the player watching it blank. The next prompt
-		   picks up the new size. */
-		if (got || !resized()) break;
+		c = wgetch(wmsg);
+		if (c == KEY_RESIZE) {
+			/* Written whenever the repaint moved the cursor,
+			   rather than only when it decided the line had
+			   been lost. It leaves the cursor at the end of the
+			   prompt, which is where an echo belongs: where the
+			   answer survived on screen this writes the same
+			   characters over themselves, and where it did not
+			   this puts them there. Either way the screen ends
+			   up saying exactly what buf holds -- and where the
+			   repaint did nothing at all, because the terminal
+			   only grew, the cursor is still after the answer
+			   and writing it again would double it.
+			   Doing it only when the line had been reprinted
+			   left the cursor in front of an answer that was
+			   already drawn, so the next keystroke typed over
+			   it -- srsc then an came out "ansc" and ran
+			   srscan, a command the screen never showed. */
+			buf[len] = '\0';
+			cursor_at_prompt = FALSE;
+			pending_answer = buf;
+			tui_refresh_panels();
+			pending_answer = NULL;
+			if (cursor_at_prompt && len > 0) {
+				waddstr(wmsg, buf);
+				wrefresh(wmsg);
+			}
+			continue;
+		}
+		if (c == ERR)
+			break;			/* input has ended */
+		if (c == '\n' || c == '\r' || c == KEY_ENTER) {
+			waddch(wmsg, '\n');
+			/* Ends the line for note_out as well, which only
+			   ever sees what the game writes. Without this the
+			   answer's own newline goes unnoticed and the line
+			   being remembered grows across prompts, so the
+			   restore looks for a string spanning two of them,
+			   never finds it, and writes a second copy. */
+			note_out("\n");
+			wrefresh(wmsg);
+			buf[len] = 0;
+			strcat(buf, "\n");	/* the fgets-like contract;
+						   readinput() strips it */
+			return TRUE;
+		}
+		if (c == '\004') {		/* Ctrl-D */
+			if (len == 0) break;	/* nothing typed: end of input */
+			continue;		/* mid-line a tty ignores it */
+		}
+		if (c == KEY_BACKSPACE || c == '\b' || c == 127) {
+			if (len > 0) {
+				len--;
+				erase_one();
+				wrefresh(wmsg);
+			}
+			continue;
+		}
+		if (c == '\025') {		/* Ctrl-U */
+			/* The tty's own kill character, which wgetnstr
+			   used to honour. It is the reflex for "scrap that
+			   and start again" at any prompt, and the one piece
+			   of line editing the old reader had that this one
+			   would otherwise have dropped. */
+			while (len > 0) {
+				len--;
+				erase_one();
+			}
+			wrefresh(wmsg);
+			continue;
+		}
+		/* Printable ASCII only. The game asks for words and numbers,
+		   and a stray control code or an arrow key answering a
+		   question is worse than one the player has to type again. */
+		if (c >= ' ' && c < 127 && len < room) {
+			buf[len++] = (char)c;
+			waddch(wmsg, c);
+			wrefresh(wmsg);
+		}
 	}
-	/* cbreak() turns off canonical mode, and with it the tty's own
-	   end-of-file handling, so Ctrl-D arrives as a plain character
-	   rather than as ERR. A line holding nothing else still means end
-	   of input. wgetnstr only returns on Enter, so unlike a normal
-	   terminal the Ctrl-D has to be followed by one; ending the
-	   session properly on the keystroke alone would mean replacing
-	   wgetnstr with our own line editor. */
-	if (got && buf[0] == '\004' && buf[1] == 0)
-		got = FALSE;
-	if (!got) {
-		buf[0] = 0;
-		return FALSE;	/* no more input is coming */
-	}
-	strcat(buf, "\n");	/* keep the fgets-like contract; readinput()
-				   strips it again */
-	return TRUE;
+	buf[0] = 0;
+	return FALSE;			/* no more input is coming */
 }
 
 int tui_getch(void) {
@@ -347,15 +644,25 @@ int tui_getch(void) {
 		c = wgetch(wmsg);
 		/* Not a keystroke, whatever curses calls it. Handing it back
 		   would let a window drag answer "hit space bar to continue"
-		   and page away text the player never read. Like the line
-		   read above, the new size is taken at the next prompt
-		   rather than in the middle of this one. */
+		   and page away text the player never read. */
 		if (c != KEY_RESIZE) return c;
+		/* Redraw for the new size before waiting again. Safe
+		   because curses reports the resize by returning from
+		   wgetch, so nothing is reading the screen at this moment
+		   -- the same reason it is safe in tui_readline above, now
+		   that it reads a keystroke at a time. Leaving it until the
+		   next prompt is what made a drag mid-pause look like a
+		   game that had stopped: the panels stayed the old width
+		   with the new columns empty beside them, for as long as
+		   the player took to press a key. */
+		tui_refresh_panels();
 	}
 }
 
 void tui_clearmsg(void) {
 	werase(wmsg);
+	curlen = 0;		/* nothing is part written any more */
+	curline[0] = '\0';
 	wrefresh(wmsg);
 }
 
