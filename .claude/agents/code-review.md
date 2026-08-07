@@ -38,6 +38,26 @@ judge each change in context, not just the diff hunks.
   changes that belong in a different branch.
 - **Tests and docs**: tests match the behavior they claim to cover;
   player-visible changes are reflected in `sst.doc`/README when relevant.
+- **Review coverage**: whether the diff can alter what the game shows a
+  player or asks of them, and if it can, whether `ui-review` ran *on this
+  state*. See "The review sub-agents" in `AGENTS.md` for what counts as
+  reaching the player; unclear means the pass was owed.
+
+  The author is required to tell you which passes ran, whether the last
+  `ui-review` round saw the state being committed, and why any was
+  skipped. Weigh that against the diff rather than accepting it, and say
+  so when no claim was made at all — that leaves the question unanswered
+  rather than answered in the author's favor. "It ran" is not enough on
+  its own: ask for that pass's verdict and the list of what it says it
+  exercised, which you can check against the diff. A run whose coverage
+  names journeys the change cannot reach is worth as little as no run.
+
+  A change that reaches the player with none of that behind it is a
+  blocker where the diff plainly reaches them and a should-fix where it
+  is arguable — not a nit either way. You read code, that pass reads
+  screens, and neither substitutes for the other. The skip is the
+  author's own judgment about their own work, and you are the pass
+  positioned to dispute it before the commit exists.
 
 Report only real, actionable findings. Do not pad the review with
 observations that would not change what the author does next.

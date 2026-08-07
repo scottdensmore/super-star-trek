@@ -203,10 +203,15 @@ Every coding agent working in this repository must follow this workflow.
    implementation pass, invoke the `ui-review` sub-agent whenever the change
    can alter what the game shows a player or asks of them. The `ui-review`
    sub-agent must act as an expert in games and CLI games. Address every
-   actionable finding before moving on, as with the two steps below. Read
-   "The review sub-agents" after this list for when this pass binds, what
-   to say when it does not, and — if you are not Claude Code — how to get
-   any of these three passes at all.
+   actionable finding before moving on, as with the two steps below. If
+   addressing one changes what the game shows a player, rerun `ui-review`
+   on the result: the fixes made for #46 introduced a doubled echo, a
+   duplicated question, a line cut mid-word and a cursor left where the
+   next keystroke typed over the answer, each of them found by a later
+   round rather than by the one that caused it. Read "The review
+   sub-agents" after this list for when this pass binds, what to say when
+   it does not, and — if you are not Claude Code — how to get any of
+   these three passes at all.
 
 7. **Run `verifier` before code review.** Invoke the `verifier` sub-agent to
    run the builds, static checks, tests, and journey coverage appropriate for
@@ -222,6 +227,20 @@ Every coding agent working in this repository must follow this workflow.
    before committing. If review findings cause changes, rerun the appropriate
    tests and the `verifier`, then obtain a fresh `code-review` approval for
    the changed state.
+
+   Tell it which of the passes above ran, whether the last `ui-review`
+   round saw the state being committed, and where `ui-review` did not
+   run, why. The middle one is what makes the rerun rule in step 6
+   auditable: a fix made after that pass reported is a change it never
+   saw, and "it ran" is a true answer that hides it.
+
+   The skip itself is the author's judgment about the author's own
+   change — unlike the `verifier`'s scope, which the `verifier` decides
+   and reports for itself. `code-review` binds on every commit whatever the
+   change touched, so it is the pass certain to see the claim, and to be
+   able to dispute it while the work can still change. Left to the commit
+   and the pull request, the decision reaches a reader only once the work
+   is finished, which is disclosure rather than review.
 
 9. **File what you found outside the slice.** Work turns up problems that
    belong to no slice in particular: a defect the change did not cause, a
@@ -317,10 +336,13 @@ game runs reaches the player whether the change meant it to or not, and a
 refactor that preserves behavior is exactly where a lost line hides.
 
 Skipping it is a decision, not an omission. Say that it was skipped and
-why — in the commit, and in the pull request body and the summary of the
-work, the same places everything else here is disclosed, because the
-commit alone reaches no reviewer. An agent writing that sentence about a
-change to the game's own output has skipped the wrong pass.
+why — to `code-review` when invoking it, per step 8, and in the commit,
+the pull request body and the summary of the work. The last three put it
+on the record; the first is the one that reaches a reviewer with a
+mandate to argue back, and reaches it before there is a commit to argue
+about, which is why step 8 asks for it as well. An agent writing that
+sentence about a change to the game's own output has skipped the wrong
+pass.
 
 An agent that is not Claude Code is bound on the same terms, and cannot
 satisfy a pass by reviewing its own work.
