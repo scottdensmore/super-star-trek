@@ -370,10 +370,11 @@ n
 # Two things about the recording itself. A supernova announcement
 # arrives mid-journey and pauses, so this is the only fixture with a
 # real screen-clear escape in it -- read it with `cat -v` or it wipes
-# what came before off your terminal. And the score sheet's Romulan
-# line sits one column left of every other line, because the plural
-# format string in finish.c is a space short (#62); that is the game's
-# bug, recorded as it is, not a spec worth copying.
+# what came before off your terminal. And its score sheet is the only
+# one anywhere with a Romulan surrender line, which is how #62 was
+# found: the plural format string was a space short, so that line sat a
+# column left of every other. Fixed, and this recording is the evidence;
+# tests/score.sh now holds every one of those formats to column 47.
 play won 'tournament 23
 short
 novice

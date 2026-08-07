@@ -103,7 +103,7 @@ LIVE LONG AND PROSPER.
 [HIT SPACE BAR TO CONTINUE]                           
 
 Your score --
-     2 Romulan ships surrendered             2
+     2 Romulan ships surrendered              2
      2 ordinary Klingon ships destroyed      20
      1 Klingon Commander ship destroyed      50
   1.25 Klingon ships per stardate           625

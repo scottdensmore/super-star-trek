@@ -349,7 +349,7 @@ void score(int inGame) {
 		proutf(d.nromkl> 1 ? "%6d Romulan ships destroyed            %5d\n" : "%6d Romulan ship destroyed             %5d\n",
 			   d.nromkl, 20*d.nromkl);
 	if (dnromrem)
-		proutf(dnromrem > 1 ? "%6d Romulan ships surrendered         %5d\n" : "%6d Romulan ship surrendered           %5d\n",
+		proutf(dnromrem > 1 ? "%6d Romulan ships surrendered          %5d\n" : "%6d Romulan ship surrendered           %5d\n",
 			   dnromrem, dnromrem);
 	if (d.killk)
 		proutf(d.killk > 1 ? "%6d ordinary Klingon ships destroyed   %5d\n" : "%6d ordinary Klingon ship destroyed    %5d\n",
