@@ -1,0 +1,48 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "f82af76dd765",
+  "session_id": "712a4a2d-02c6-4bf5-8a02-29c0e1335445",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-07T20:56:41.887214694Z",
+  "branch": "docs/audit-the-ui-review",
+  "checkpoints_count": 2,
+  "save_step_count": 1,
+  "files_touched": [
+    "AGENTS.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5",
+  "turn_id": "d23e394f708d",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 1469,
+    "cache_creation_tokens": 4261906,
+    "cache_read_tokens": 359854570,
+    "output_tokens": 512829,
+    "api_call_count": 788
+  },
+  "session_metrics": {
+    "turn_count": 14
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-07T20:56:40.558169998Z",
+    "agent_lines": 14,
+    "agent_removed": 5,
+    "human_added": 25,
+    "human_modified": 8,
+    "human_removed": 0,
+    "total_committed": 47,
+    "total_lines_changed": 52,
+    "agent_percentage": 36.53846153846153,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}
