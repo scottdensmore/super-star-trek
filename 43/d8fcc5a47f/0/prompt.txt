@@ -101,3 +101,49 @@ Ok lets start 78
 ---
 
 try again
+
+---
+
+<task-notification>
+<task-id>a13395ebdae7cb39c</task-id>
+<tool-use-id>toolu_01EiSekqB1eTdc6kBAubRBRe</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a13395ebdae7cb39c.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-review after the marker fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict on the current state
+
+All four are right, and none of them made anything worse. The quadrant title is guarded and now degrades in three steps rather than wrapping; the band you predicted exists but falls the *good* way (see 1 below); the 40-column threshold in the comment matches the screen exactly; the README sentence is now true as written; and 40 really is the maximum over every reachable status-line state, not just the ones I happened to drive — I checked that by construction rather than by observation. Nothing else changed at 72x24 or 80x24, `tests/tui.sh` and the full `ctest` suite pass, and plain mode is untouched.
+
+**1. Quadrant title guard — correct, and the band is benign.** The thresholds are exactly what the code implies: the placeholder `" Quadrant "` needs `panel_room(wquad) &gt;= 10`, i.e. 13 columns; the in-game `" Quadrant %d - %d "` needs 16, i.e. 19 columns. Quadrant coordinates are always single digits (1-8), so the guard string `" Quadrant 8 - 8 "` is the exact length of what gets printed, never an approximation.
+
+The band is 13-18 columns, and it does not do what you feared. Because the placeholder is drawn first and unconditionally overwritten only when the longer title fits, a *running game* at those widths shows `" Quadrant "` with the coordinates dropped — captioned, not bare:
+
+```
+=== 19 ===            === 18 ===            === 12 ===
+lq Quadrant 3 - 2 k   lq Quadrant qqqqqk    lqqqqqqqqqqk
+x     1 2 3 4 5 6&gt;x   x     1 2 3 4 5 &gt;x    x     1 2 &gt;x
+```
+
+So the sequence is full title → panel name only → nothing, and the pre-game screen (checked separately at 20, 19, 18, 16, 14, 13, 12) never disagrees: it carries `" Quadrant "` at every width down to 13 and nothing below. The one place the two states differ is 13-18, where in-game loses only the coordinates — it never shows stale or wrong ones, and never wraps at any width I could produce. I would leave this exactly as it is.
+
+**2. Threshold comment — matches the screen.** Caption present at exactly 40 columns, absent at 39. Verified at 41/40/39/38 in a running game.
+
+**3. README — accurate.** "brings the panels straight back" is now true of what I can demonstrate; grow-back from 33, 35, 39, 40 and 71 to 80 restores the panels exactly, and the sentence no longer implies the conversation comes back with them.
+
+**4. The 40-column claim — confirmed as a maximum, not a sample.** Two independent checks:
+
+- *By exhaustion of the assignment sites.* All eleven places that write `shield` (`setup.c:239,263`, `moving.c:245`, `sst.c:890`, `battle.c:194,209,217,620,978`, `events.c:541,545`) keep `0 &lt;= shield &lt;= inshld`, and `inshld` is only ever 1250.0 or 2500.0. The shield-transfer path clamps to `inshld` explicitly (`battle.c:187-194`), the hit path clamps the absorbed amount to `shield` (`battle.c:619`), and the one unclamped subtraction, `shield -= hit*0.2` in `checkshctrl()` (`battle.c:978`), cannot go negative because `hit = rpow*shield/inshld` and `rpow` is rejected unless it is strictly less than `energy &lt;= inenrg`, so the subtraction is at most `0.4*shield`. Hence `%.1f` is at most `2500.0` (6 characters), the percentage is at most `100` (4 with the sign), and `DAMAGED,` (8) is the longest of the three state words — 40 exactly.
+- *By brute force.* I compiled `tuifmt.c` against a scratch driver outside the repository and swept every line over the extremes of `d.date`, `energy`, `shield`, `inshld`, `lsupres`, `d.remkl`, `d.remtime`, `warpfac`, `torps`, both damage flags, `shldup`, `iscloaked`, docked/undocked and all three conditions, including deliberately out-of-range values (negative energy, negative reserves, 99999.9 stardate, 999 Klingons, 999.99 time left). Widest per line: 21, 29, 28, 37, 18, 22, 16, **40**, 17, 20. Line 8 is the only one that reaches 40, and it needs pathological inputs elsewhere to be beaten — none of which the game can produce. On screen at 72x24 the `DAMAGED` line ends `... 2500.0 unitsx`, flush against the border, no marker; at 71 it clips to `... 2500.0 uni&gt;`. So the supported minimum is safe, with exactly zero slack, which is what the comment now says and what #89 records.
+
+## What I exercised this round
+
+- Re-read `tui.c`, `README.md` and the full working-tree diff from disk; rebuilt (`cmake --build build` — already up to date).
+- tmux on socket `uirev2` only, killed with `kill-server` on that socket at the end. In-game width sweep at 21, 20, 19, 18, 17, 16, 14, 13, 12 (quadrant caption band) and 72, 71, 41, 40, 39, 38, 35, 33 (status caption and clipping), plus a pre-game sweep at 20-11 before any game state exists, and grow-back to 80.
+- Forced `Shields DAMAGED` via the `debug` command's selective damage at 72x24 to check the exact fit on screen.
+- Scratch brute-force driver over `fmt_status_line()` (compiled outside the repository; no files added to the tree).
+- `./tests/tui.sh ./build/sst` → `tui OK`; `ctest --test-dir build` → 11/11 passed.
+- Plain mode journey `printf 'regular\nshort\nnovice\nxyz\nsrscan\nquit\ny\n' | ./build/sst` — scan, status readout and ending unchanged, no markers.
+- `git status` unchanged (`README.md`, `tests/tui.sh`, `tui.c` modified); I edited nothing.</result>
+<usage><subagent_tokens>97793</subagent_tokens><tool_uses>17</tool_uses><duration_ms>562935</duration_ms></usage>
+</task-notification>
