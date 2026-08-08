@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "43d8fcc5a47f",
+  "strategy": "manual-commit",
+  "branch": "fix/tui-below-minimum",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "README.md",
+    "tests/tui.sh",
+    "tui.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/43/d8fcc5a47f/0/metadata.json",
+      "transcript": "/43/d8fcc5a47f/0/full.jsonl",
+      "compact_transcript": "/43/d8fcc5a47f/0/transcript.jsonl",
+      "content_hash": "/43/d8fcc5a47f/0/content_hash.txt",
+      "prompt": "/43/d8fcc5a47f/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1798,
+    "cache_creation_tokens": 5578002,
+    "cache_read_tokens": 419519876,
+    "output_tokens": 664747,
+    "api_call_count": 965
+  }
+}
