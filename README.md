@@ -21,6 +21,17 @@ were asked and the answer you were halfway through typing survive.
 Older text that no longer fits scrolls away, as it would in any
 terminal.
 
+Dragged narrower than the 72 columns the panels ask for, they clip
+rather than rearrange themselves. A line with more to show than there
+is room for ends in `>`, so a shortened number is never mistaken for a
+small one, and a heading with no room left is dropped rather than
+shortened. Widening the terminal brings the panels straight back.
+
+Squeezed under about thirty columns or fourteen rows they break up
+instead — a terminal too short runs the panel rows together rather
+than clipping them — and the display does not recover on its own;
+quitting and starting again is the way back.
+
 If full-screen mode isn't possible — the terminal is too small, the
 game isn't attached to one (piped input, redirected output, a job with
 no tty), or `TERM` names a terminal that can't address the cursor —
