@@ -1,0 +1,388 @@
+Yes lets push it and open a pr... once it is green squash merge
+
+---
+
+Ok what is next we should work on?
+
+---
+
+Lets pick up 58
+
+---
+
+Try and rerun the mutations. If Bash keeps failing, lets try and debug that
+
+---
+
+I want to update the workflow to make sure that any issue found in the feature / work being done is filed as issues to be worked on later
+
+---
+
+Also update the workflow to ensure that if the agent is not Claude that it creates or uses it's own code review subagent
+
+---
+
+Yep lets fix it. Also is there anything else in the workflow that you would scrutinize and change?
+
+---
+
+Ok pick those up next
+
+---
+
+Lets do 62
+
+---
+
+Ok lets do 46
+
+---
+
+What is each one of those?
+
+---
+
+Lets do 66 and 72 next
+
+---
+
+Lets do 71
+
+---
+
+Ok lets do 82
+
+---
+
+<task-notification>
+<task-id>a4d56ca795ed18bf9</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a4d56ca795ed18bf9.output</output-file>
+<status>completed</status>
+<summary>Agent "Final review before commit" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: **approve** — the substitution landed cleanly, commit on this state
+
+Re-read from the repository, not from my earlier copy. State reviewed: `HEAD` = `a71050f`, two unstaged modifications, nothing staged, nothing untracked (`git diff --stat`: `code-review.md` +4-1, `verifier.md` +12). `code-review.md`'s blob is `0b497be`, unchanged from the state I approved, so only the one paragraph moved.
+
+The sentence is exactly the suggested replacement, and the surrounding text survived the rewrap intact. Checked mechanically rather than by eye, since four rewrites is precisely where reading confirms what you expect to see:
+
+- **Substitution boundary.** Only `reach you the same way,` → `are no fresher: they are`. The tail — "quoted into the task description from the main agent's memory of them, which the work under verification may since have changed." — is character-for-character what was there before the edit.
+- **No duplicated fragment.** Zero adjacent repeated words; zero repeated 4-grams anywhere in the paragraph. A fragment surviving a rewrap twice would show as a repeated n-gram, and none does.
+- **No dropped fragment.** Four sentences, matching the four-sentence structure before the edit; four em-dashes, in two correct pairs (`— … —` around the file list, `— … —` around the commit counts); all three clause boundaries around the edit still parse.
+- **Mechanics.** No trailing whitespace, no CR, file ends in `\n`, lines 37-47 run 65-75 columns, in step with the file. `sh tests/instructions.sh .` passes.
+
+One thing you will see and should not act on: line 45 wraps at 65 columns where its neighbours run 70-75, because the reflow pushed "A claim" down rather than reflowing the last three lines. It is inside the file's existing range (58-77) and reflowing it would rewrite the same three lines a fifth time for nothing.
+
+The numbers are untouched by this edit and remain as I derived them from `git` in the previous round: 15, 9, three days.
+
+Nothing else moved. The other two nits and the recommendation are resolved as you describe — `#84` corrected by comment, `#85`'s fourth row added, `#86` filed on the framing that keeps `#82`'s parity criterion intact. The commit body's two recorded items (15/9/3 re-derived in code review rather than by a fourth verifier round; the `code-review.md`/`verifier.md` asymmetry as a decision resting on parity) match what I found. Ship it.</result>
+<usage><subagent_tokens>45268</subagent_tokens><tool_uses>3</tool_uses><duration_ms>50407</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bkz0tz75x</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/bkz0tz75x.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI to finish" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Which one should we do?
+
+---
+
+Ok lets start 78
+
+---
+
+try again
+
+---
+
+<task-notification>
+<task-id>a13395ebdae7cb39c</task-id>
+<tool-use-id>toolu_01EiSekqB1eTdc6kBAubRBRe</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a13395ebdae7cb39c.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-review after the marker fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict on the current state
+
+All four are right, and none of them made anything worse. The quadrant title is guarded and now degrades in three steps rather than wrapping; the band you predicted exists but falls the *good* way (see 1 below); the 40-column threshold in the comment matches the screen exactly; the README sentence is now true as written; and 40 really is the maximum over every reachable status-line state, not just the ones I happened to drive — I checked that by construction rather than by observation. Nothing else changed at 72x24 or 80x24, `tests/tui.sh` and the full `ctest` suite pass, and plain mode is untouched.
+
+**1. Quadrant title guard — correct, and the band is benign.** The thresholds are exactly what the code implies: the placeholder `" Quadrant "` needs `panel_room(wquad) &gt;= 10`, i.e. 13 columns; the in-game `" Quadrant %d - %d "` needs 16, i.e. 19 columns. Quadrant coordinates are always single digits (1-8), so the guard string `" Quadrant 8 - 8 "` is the exact length of what gets printed, never an approximation.
+
+The band is 13-18 columns, and it does not do what you feared. Because the placeholder is drawn first and unconditionally overwritten only when the longer title fits, a *running game* at those widths shows `" Quadrant "` with the coordinates dropped — captioned, not bare:
+
+```
+=== 19 ===            === 18 ===            === 12 ===
+lq Quadrant 3 - 2 k   lq Quadrant qqqqqk    lqqqqqqqqqqk
+x     1 2 3 4 5 6&gt;x   x     1 2 3 4 5 &gt;x    x     1 2 &gt;x
+```
+
+So the sequence is full title → panel name only → nothing, and the pre-game screen (checked separately at 20, 19, 18, 16, 14, 13, 12) never disagrees: it carries `" Quadrant "` at every width down to 13 and nothing below. The one place the two states differ is 13-18, where in-game loses only the coordinates — it never shows stale or wrong ones, and never wraps at any width I could produce. I would leave this exactly as it is.
+
+**2. Threshold comment — matches the screen.** Caption present at exactly 40 columns, absent at 39. Verified at 41/40/39/38 in a running game.
+
+**3. README — accurate.** "brings the panels straight back" is now true of what I can demonstrate; grow-back from 33, 35, 39, 40 and 71 to 80 restores the panels exactly, and the sentence no longer implies the conversation comes back with them.
+
+**4. The 40-column claim — confirmed as a maximum, not a sample.** Two independent checks:
+
+- *By exhaustion of the assignment sites.* All eleven places that write `shield` (`setup.c:239,263`, `moving.c:245`, `sst.c:890`, `battle.c:194,209,217,620,978`, `events.c:541,545`) keep `0 &lt;= shield &lt;= inshld`, and `inshld` is only ever 1250.0 or 2500.0. The shield-transfer path clamps to `inshld` explicitly (`battle.c:187-194`), the hit path clamps the absorbed amount to `shield` (`battle.c:619`), and the one unclamped subtraction, `shield -= hit*0.2` in `checkshctrl()` (`battle.c:978`), cannot go negative because `hit = rpow*shield/inshld` and `rpow` is rejected unless it is strictly less than `energy &lt;= inenrg`, so the subtraction is at most `0.4*shield`. Hence `%.1f` is at most `2500.0` (6 characters), the percentage is at most `100` (4 with the sign), and `DAMAGED,` (8) is the longest of the three state words — 40 exactly.
+- *By brute force.* I compiled `tuifmt.c` against a scratch driver outside the repository and swept every line over the extremes of `d.date`, `energy`, `shield`, `inshld`, `lsupres`, `d.remkl`, `d.remtime`, `warpfac`, `torps`, both damage flags, `shldup`, `iscloaked`, docked/undocked and all three conditions, including deliberately out-of-range values (negative energy, negative reserves, 99999.9 stardate, 999 Klingons, 999.99 time left). Widest per line: 21, 29, 28, 37, 18, 22, 16, **40**, 17, 20. Line 8 is the only one that reaches 40, and it needs pathological inputs elsewhere to be beaten — none of which the game can produce. On screen at 72x24 the `DAMAGED` line ends `... 2500.0 unitsx`, flush against the border, no marker; at 71 it clips to `... 2500.0 uni&gt;`. So the supported minimum is safe, with exactly zero slack, which is what the comment now says and what #89 records.
+
+## What I exercised this round
+
+- Re-read `tui.c`, `README.md` and the full working-tree diff from disk; rebuilt (`cmake --build build` — already up to date).
+- tmux on socket `uirev2` only, killed with `kill-server` on that socket at the end. In-game width sweep at 21, 20, 19, 18, 17, 16, 14, 13, 12 (quadrant caption band) and 72, 71, 41, 40, 39, 38, 35, 33 (status caption and clipping), plus a pre-game sweep at 20-11 before any game state exists, and grow-back to 80.
+- Forced `Shields DAMAGED` via the `debug` command's selective damage at 72x24 to check the exact fit on screen.
+- Scratch brute-force driver over `fmt_status_line()` (compiled outside the repository; no files added to the tree).
+- `./tests/tui.sh ./build/sst` → `tui OK`; `ctest --test-dir build` → 11/11 passed.
+- Plain mode journey `printf 'regular\nshort\nnovice\nxyz\nsrscan\nquit\ny\n' | ./build/sst` — scan, status readout and ending unchanged, no markers.
+- `git status` unchanged (`README.md`, `tests/tui.sh`, `tui.c` modified); I edited nothing.</result>
+<usage><subagent_tokens>97793</subagent_tokens><tool_uses>17</tool_uses><duration_ms>562935</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bz16nwtdb</task-id>
+<tool-use-id>toolu_01VSGSG61YAVzR18G6vXBPVR</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/bz16nwtdb.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Ok lets do 91
+
+---
+
+<task-notification>
+<task-id>a9daa02e223dfd256</task-id>
+<tool-use-id>toolu_01Pm12EeC7iW2UHRzmS2ewv7</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a9daa02e223dfd256.output</output-file>
+<status>completed</status>
+<summary>Agent "Second UI review of the height fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+Two of the three are right. The recovery paragraph is now accurate and reads as the conjunction you intended, and the test's positional check lands on the correct row and is not timing-sensitive. The pager sentence over-claims: fifteen rows does **not** behave like fourteen — at fifteen the whole scan is readable, a line per page. That is one sentence to fix; everything else in this round is good.
+
+## Answers to your two questions
+
+**1. "above about thirty columns and fourteen rows" — the join is right.** It reads as a conjunction, not a disjunction. "so long as the squeeze stopped above about thirty columns and fourteen rows" states two conditions the squeeze must satisfy together, and "Below either, the display does not recover" then names the disjunction explicitly for the failure side, which reinforces the reading rather than muddying it. It does not promise recovery in any case that lacks it. That is the failure of the old wording gone.
+
+One nit, not worth blocking on: "above ... fourteen rows" strictly excludes fourteen, and fourteen is the last size that recovers (`80x14 → 80x24` restores the panels and the prompt; `80x13` does not). The same seam exists at thirty columns, but "about" covers that one and there is no "about" governing the rows. Since the paragraph above sets the cliff precisely — "Shorter than fourteen rows" — a reader who compares the two gets the right answer anyway. If you want it airtight, "stopped at about thirty columns and fourteen rows or better" closes it.
+
+**"Quitting and starting again is the way out; it works even when you cannot see it" matches my measurement, and not naming the sequence is the right call.** What I reached the farewell with was `quit`, `n`, Enter, `n` — but that is one path through the ending, not the path: the answers depend on whether you want the score recorded and whether you want to play again, and a player at a different point in a game may meet a different set. A README that named it would be stating a sequence that is only sometimes the sequence. "It works even when you cannot see it" is the load-bearing fact and it is true.
+
+**2. The pager sentence over-claims at fifteen — should-fix, `README.md:34-36`.** I paged `lrscan` all the way through at both sizes, TUI engaged by starting at 100x30 and resizing down (starting at 80x15 directly does not reach the TUI at all — it refuses and falls back, which is why this has to be measured as a resize).
+
+At **fourteen** rows nothing is readable at any point. Six presses, six identical screens:
+
+```
+mqqqqqqqqqqqqqqqqqqqqqqqqqqqjmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj
+ [HIT SPACE BAR TO CONTINUE]
+```
+
+then `COMMAND&gt;`. "A scan pages past with nothing to read" is exactly right for fourteen. (It also corrects something I said in round 1: it is not endless — it ends after as many pages as the scan has lines, having shown none of them. Worth having in #95 if that phrasing went in.)
+
+At **fifteen** the scan is fully readable, one line per page — the message window has two rows, one for content and one for the pager, and `LINES-PANELH-1` is 1 rather than 0:
+
+```
+page 0:  (blank)                              page 3:      7    5   16
+         [HIT SPACE BAR TO CONTINUE]                   [HIT SPACE BAR TO CONTINUE]
+page 1:  Long-range scan for Quadrant 3 - 2   page 4:      1    3    9
+         [HIT SPACE BAR TO CONTINUE]                   [HIT SPACE BAR TO CONTINUE]
+page 2:      4    4    7                      page 6:  COMMAND&gt;
+```
+
+Heading, all three data rows, then back to the prompt. Cramped and slow, but a player gets the scan. Lumping it with fourteen tells them a size that works does not. My round-1 report is where this came from — I measured fifteen with a single capture and reported "one blank line", which was the first page, not the whole story. Suggested fix, keeping your structure:
+
+&gt; Just above that there is barely more — at fourteen rows the one line left over goes entirely to the pager, so a scan pages past with nothing to read at all; at fifteen it comes one line at a time.
+
+If #95 says fifteen shows nothing, it is worth a correcting comment there too, since the sentence and the issue came from the same measurement.
+
+## The test
+
+`tests/tui.sh:1092-1097` is right. The positional form asserts what the fix is actually about, and row 11 is the correct row: the full suite passes against the current binary (`tui OK`), and the caption cannot appear on row 11 in a build that names `PANELH-1`, because at that height row 12 does not exist and the caption is not drawn at all. I also checked the row is not a timing artefact of arriving there via the 19-column excursion — I sampled row 11 every 100 ms starting the instant after the resize and it matched on the very first sample and every one after, so the `sleep 1` is generous. The single-shot check rather than a polling `expect` matches the height-sweep block immediately above it, so it is consistent with its neighbour; given the measured latency I would not change it.
+
+## What I exercised this round
+
+- Re-read `README.md:23-42` and `tests/tui.sh:1082-1098` from the working tree.
+- `tests/tui.sh ./build/sst Debug` — passes.
+- Paged a full `lrscan` at 80x14 and 80x15 (resized down from 100x30, ten Space presses each), plus a control run started directly at 80x15 that showed the TUI declining to engage at that size.
+- Sampled screen row 11 twelve times at 100 ms intervals after the 80x11 resize, along the same path the test takes (20x24, 19x24, 80x24, then 80x11).
+- Private tmux sockets `uirev2` and `uirev3`, both killed and their socket files removed; no files edited; `git status --short` still shows only your three modified files.</result>
+<usage><subagent_tokens>81974</subagent_tokens><tool_uses>8</tool_uses><duration_ms>232995</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab656d0956be48302</task-id>
+<tool-use-id>toolu_0175xwk1jS5wGRv4yENRSd5H</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/ab656d0956be48302.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the height fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Re-review of the changed state
+
+Worktree still `HEAD = c2fd28b`, three modified files, nothing staged or untracked. `tui.c` is byte-identical to what I reviewed (`git diff -- tui.c` unchanged); both edits landed in `tests/tui.sh` and one in `README.md`.
+
+# Verdict: **request changes** — one line, and it is the one I asked you to add
+
+## Blocker/should-fix: my suggested positive control swallows the assertion it was meant to protect
+
+`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh:1136-1143`
+
+The caption is drawn at row 0, column 2. The title is drawn at row 0, column 2. At one row they are the same sixteen columns, so a build with the guard relaxed erases `Quadrant` with the caption — which means the control fails, the `elif` never runs, and the block reports a defect that does not exist while staying silent about the one that does.
+
+Not inferred. I rebuilt the `&gt;= 1` mutant from the current sources and ran the current test against it:
+
+```
+FAIL: sensors: the panel is not drawn at all at one row
+```
+
+Before the control was added, that same mutant reported `sensors: the caption was drawn over the only row there is`. The control made the diagnosis worse. This is the #64 shape AGENTS.md step 4 names — an assertion tripping whose text points elsewhere — and I introduced it, so I am not going to approve past it.
+
+The control has to be something the caption cannot overwrite. Non-blankness is enough, it is what the control actually needs to establish, and it is render-agnostic (`uniform_col`'s comment already warns that capture-pane renders the line-drawing set as it pleases, so a control keyed on `q` runs would be worse):
+
+```sh
+		# The positive control first: absence proves nothing on a
+		# screen where nothing was painted, and this assertion is
+		# nothing but an absence. It cannot ask for the title --
+		# the caption is drawn over exactly where the title is, so
+		# a build with the guard relaxed would fail the control and
+		# never reach the line that names the defect.
+		if ! screen | head -1 | grep -q '[^ ]'; then
+			fail "sensors: nothing at all was drawn at one row"
+			dump
+		elif screen | grep -qF 'SENSORS DAMAGED'; then
+			fail "sensors: the caption was drawn over the only row there is"
+			dump
+		fi
+```
+
+Verified both ways, on fresh out-of-tree copies with their own build directories:
+
+- `&gt;= 1` mutant with this control: `FAIL: sensors: the caption was drawn over the only row there is` — the accurate message, and the only one.
+- Unmutated build with this control: `tui OK`.
+
+Keeping `if`/`elif` is right, and your reason for not using `unwanted` holds — the control must run first. That answer only breaks down if the control is one the defect can erase, which is exactly what happened. The mutant capture, for the record:
+
+```
+mq SENSORS DAMAGED qqqqqqqqqjmq Status qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj
+```
+
+## The should-fix: confirmed, and stronger than argued
+
+The replacement is right and your verification of the spacing premise matches mine (`fmt_quad_line` writes `"%2d "` then `" %c"`; header is `"    1 2 …"`, one space). I did not just re-run your seeds — I took the actual broken capture and substituted the cell the old pattern leaned on:
+
+| capture | old pattern | new pattern |
+|---|---|---|
+| `mq 9 … .10 .` (real mutant) | MATCH | MATCH |
+| same with `.10 *` | **quiet** | MATCH |
+| healthy 72x11 | quiet | quiet |
+
+That is the demonstration the comment claims, done against the thing itself rather than against three galaxies that happened to agree. The guard-removed mutant still fails `short: two grid rows were drawn onto one line` under the current test, and the fixed build is `tui OK`.
+
+**On the galaxy shape you asked about: I cannot construct one, and I think none exists.** The reasoning is closed rather than sampled:
+
+- The second label is always preceded by the previous row's last *cell*, and `quad` cells are never digits (`.` `*` `E` `K` `C` `S` `B` `P` `@` `?` `#` `-` and blank), so `[^0-9]` always holds.
+- Only grid row 10 can ever be the appended one — row 11 is the first `wmove` that fails — so the label is `10`, which `1?[0-9]` matches; and `1?[0-9]` covers 1-9 too if the collision ever moved.
+- A blank first cell only *adds* spaces after the label, so `[0-9]+  ` still holds.
+- The header cannot match under `^`: after `x` and its spaces the only digit reachable is the leading `1`, and it is followed by one space.
+- Title and border rows fail at `[0-9]+` (`Q`, `q`).
+
+The remaining exposure is a change to `fmt_quad_line`'s format string, not to a galaxy — and that would break the test loudly at 80x24 first.
+
+## The README nit: confirmed
+
+"A terminal shorter than the panels themselves loses rows off the bottom of them" is accurate — the panels are 13 deep and rows first drop at 12 — and it no longer implies anything about 24. The rest of that section I re-verified against the running game in the first pass and it still stands.
+
+## `cut -c1-29` — fine implied, one clause better
+
+Your read is correct: 29 is `QUADW`, the quadrant window is 29 wide at any terminal ≥ 29 columns because `resize_term` only shrinks, and the `-x 72` three lines above pins it. `cut -c1-29` takes 1-indexed columns 1-29 = the window's 0-indexed columns 0-28, which stops exactly one column short of `wstat`'s left border — I checked that boundary against a real capture, and it is right, not right-by-luck.
+
+I would name the number, because the failure mode of getting it wrong is quiet in the wrong direction: a narrower size added to this block readmits status-panel digits, which turns a clean assertion into a *spurious* failure that a future maintainer is likely to fix by loosening the pattern. Since you are editing the file anyway, one clause on the existing sentence does it — "…the status panel beside it is full of digits. Twenty-nine is `QUADW`, which the panel keeps at any width at or above it, and this only ever runs at 72." Not worth a round on its own; fold it in with the control fix.
+
+## What re-approval will need
+
+Only the control line changed. I have already run the exact replacement green on the fixed build and correctly-failing on the `&gt;= 1` mutant, so a fresh `code-review` on the result can lean on that; re-run `tests/tui.sh` once on the real tree to confirm the file edits as you made them, and the state is ready. `tui.c` needs nothing.
+
+Everything else from the first pass stands: the five mutants, the 11/11 `ctest`, the `-Werror` build, the README's numeric claims measured against the running game, and the judgment calls on silent row-clipping and on part 2 belonging to this slice rather than #88.</result>
+<usage><subagent_tokens>102924</subagent_tokens><tool_uses>12</tool_uses><duration_ms>497074</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab656d0956be48302</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/ab656d0956be48302.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the height fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Verdict: **approve**
+
+Reviewed state: worktree at `HEAD = c2fd28b` (branch `fix/tui-short-terminal`, no commits yet), three modified files, nothing staged or untracked — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c`, `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh`, `/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md`. `tui.c`'s diff hashes identically to my first pass, and the README paragraph is the one I fact-checked against the running game.
+
+## Confirmations
+
+**The control.** Applied exactly, with the reasoning in the comment. I rebuilt the `&gt;= 1` mutant independently of your run: `FAIL: sensors: the caption was drawn over the only row there is`, alone. Real tree `tui OK` on the exact committed state.
+
+**The `QUADW` clause.** Reads correctly and pins the coupling.
+
+## I took the invitation, and it found one
+
+You were right that this was the moment. **`tests/tui.sh:989-991` — `grep -qF 'Time Left'` had never been observed failing**: it sits behind the `elif` of the grid-row check, and every mutant run so far — mine and the verifier's — tripped the first branch and short-circuited past it. An assertion whose failure nobody has seen is the same class as the other three, so I built one that isolates it: `panel_has_row(wstat, row + 1)`, which drops only the status panel's last row and leaves the quadrant panel whole.
+
+```
+FAIL: short: the last status line is missing at 80x24
+```
+
+It fires, with its own accurate message. I also checked the thing that would have made it a false assertion — the search is unconfined, and this file has `expect_status` precisely because "Stardate" appears in both the panel and the conversation. On the mutant screen, `Time Left` appears **nowhere**: not in the briefing, not in the prompt. So the unconfined grep is currently asking what it says it asks. Worth knowing that it is sound for a reason rather than by luck; if a future check ever runs this block after a `status` command, it will need `cut -c30-`.
+
+That closes the audit: every new assertion has now been observed failing on a build that breaks precisely what it claims to cover, and each with a message naming that defect and not a neighbour.
+
+| assertion | isolating mutant | message |
+|---|---|---|
+| `^x 10 ` | `getmaxy(w) - 2` | last grid row missing at 80x24 |
+| `Time Left` | `panel_has_row(wstat, row+1)` | **last status line missing at 80x24** (new) |
+| sweep border awk ×3 | guards deleted | drawn onto the bottom border at 72x12/11/9 |
+| two-labels regex | guards deleted | two grid rows on one line |
+| `NR == 11` / `NR == 2` caption | `PANELH-1` | lost its reason / not on the border |
+| 80x1 control + negative | `&gt;= 1` | caption drawn over the only row |
+| part 2 | `wresize(wstat, PANELH, …)` | drawn onto the bottom border |
+
+## One nit — and explicitly *not* the shape you are hunting
+
+**`tests/tui.sh:987` — `'^x 10 '` is the only assertion in the suite that depends on how `capture-pane` renders the line-drawing set.** The file's own `uniform_col` comment establishes the opposite convention: "Which character it is does not matter — capture-pane renders the line-drawing set as it pleases." The `x` is ACS_VLINE's ASCII fallback.
+
+It is safe today for a reason I checked rather than assumed: nothing in the tree calls `setlocale()`, so ncurses runs in the C locale and emits ACS escapes, which tmux stores and replays as `x`/`q` — on macOS by the same reasoning. **And its failure mode is a spurious FAIL, never a silent pass**, so it cannot hide a defect. That is the opposite of the three assertions this branch has already produced, and I do not want the framing of your question to push it up a severity it does not deserve.
+
+If you want it render-agnostic anyway, `'^. 10  '` is a verified drop-in — I ran all three candidates against a real 80x24 capture:
+
+| pattern | lines matched |
+|---|---|
+| `^x 10 ` | 1 (grid row 10) |
+| `^. 10  ` | 1 (grid row 10) |
+| ` 10  ` | **3** — header, `Torpedoes     10`, grid row 10 |
+
+The third is the trap: dropping the anchor to escape the `x` would silently weaken the check to something the column header satisfies on its own. `^. 10  ` keeps the selectivity because the header has one space after its leading `1` where a grid row has two — the same spacing fact the two-labels regex now rests on. Your call; leaving it is defensible, and I would not hold the commit for it.
+
+## Everything else stands
+
+The judgment calls (silent row-clipping, dropping from the bottom, part 2 belonging to #91 rather than #88, the 80x1/80x2 sizes as sound test practice), the closed argument that no galaxy shape fools the two-labels regex, the `-Werror` build, 11/11 `ctest`, and the README's four numeric claims measured against the running game.
+
+Nothing further from me. The pass coverage claim holds: `ui-review` saw the last player-visible state, and everything since has been test-file material that I have now exercised directly.</result>
+<usage><subagent_tokens>120065</subagent_tokens><tool_uses>10</tool_uses><duration_ms>306443</duration_ms></usage>
+</task-notification>
