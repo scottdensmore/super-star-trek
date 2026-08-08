@@ -41,7 +41,9 @@ judge each change in context, not just the diff hunks.
 - **Review coverage**: whether the diff can alter what the game shows a
   player or asks of them, and if it can, whether `ui-review` ran *on this
   state*. See "The review sub-agents" in `AGENTS.md` for what counts as
-  reaching the player; unclear means the pass was owed.
+  reaching the player; unclear means the pass was owed. Read that from the
+  file in the repository rather than from any copy already in context,
+  which may predate the rule.
 
   The author is required to tell you which passes ran, whether the last
   `ui-review` round saw the state being committed, and why any was

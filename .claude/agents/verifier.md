@@ -34,6 +34,18 @@ staged, unstaged, and untracked files first), but a full pass covers:
    cleanly; add journeys targeted at the changed behavior. Watch for crashes,
    hangs, and garbled output.
 
+Whenever a check reads another file — `AGENTS.md`, `sst.doc`, a test, a
+source file a comment cites — read it from the file in the repository
+rather than from any copy already in context. `AGENTS.md` arrives through
+`CLAUDE.md`'s import as a snapshot, and a verifier checking this very rule
+found its copy fifteen commits behind the one on disk — nine of them
+touching that file, across three days — with no trace of the section that
+the claim it was checking pointed at. The other files are no fresher: they
+are quoted into the task description from the main agent's memory of them,
+which the work under verification may since have changed. A claim
+checked against a stale copy can be marked wrong for agreeing with the
+current rule, or right for agreeing with one that has been replaced.
+
 Run each failing or flaky-looking check more than once before calling it a
 flake, and distinguish flakes from deterministic failures.
 
