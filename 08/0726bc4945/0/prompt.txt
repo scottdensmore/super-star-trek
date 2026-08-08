@@ -386,3 +386,54 @@ The judgment calls (silent row-clipping, dropping from the bottom, part 2 belong
 Nothing further from me. The pass coverage claim holds: `ui-review` saw the last player-visible state, and everything since has been test-file material that I have now exercised directly.</result>
 <usage><subagent_tokens>120065</subagent_tokens><tool_uses>10</tool_uses><duration_ms>306443</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>ab656d0956be48302</task-id>
+<tool-use-id>toolu_01PJJRhPnvLm6kqmjMCg5maj</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/ab656d0956be48302.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the height fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Verdict: **approve**
+
+## State approved
+
+Worktree at `HEAD = c2fd28b` (branch `fix/tui-short-terminal`, no commits yet), three modified files, nothing staged or untracked:
+
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c` — `panel_has_row()` plus the early return in both draw loops; `panelh = LINES &lt; PANELH ? LINES : PANELH` for the status panel's `wresize`; the ` SENSORS DAMAGED ` caption asked of the window (`getmaxy(wquad)-1`, guarded by `&gt;= 2`). Diff hashes identically to my first pass.
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh` — the height sweep at 72x12/11/9, the completeness pair at 80x24, the two-labels collision check, and the caption's three heights.
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md` — unchanged since my first pass, hash confirmed.
+
+## Both final edits confirmed
+
+`grep -qE '^. 10  '` with a comment giving both reasons, and the `Time Left` caveat written into the file. The second one is the better of the two changes: the reason that gap stayed open — an assertion behind an `elif` that every earlier mutant short-circuited past — is now in front of whoever adds the next branch to that chain, which is where it does some good. A review comment would have died with this thread.
+
+## Re-verified against the final test file, not the one I reviewed earlier
+
+The test file changed after every mutant run in this thread, so I rebuilt all three from the current sources in fresh out-of-tree copies with their own build directories, and re-ran:
+
+| mutant | result |
+|---|---|
+| `row &lt; getmaxy(w) - 2` | `short: the last grid row is missing at 80x24` — the new `^. 10  ` still fires |
+| `panel_has_row(wstat, row + 1)` | `short: the last status line is missing at 80x24` — `^. 10  ` passes, so the `elif` is reached |
+| both guards deleted | six failures: the sweep at 72x12/11/9, the two-labels check, and both caption rows |
+
+That second row is the one that mattered for this round: it proves the anchor change did not re-close the branch it sits above.
+
+Selectivity re-checked on a real 80x24 capture — `^. 10  ` matches exactly one line, grid row 10, and neither the column header nor `Torpedoes     10`.
+
+Final state: `tui OK`, `ctest` 11/11, `-Werror` build clean, `git diff --check` clean, no stray files. My tmux sockets are cleaned up; I touched nothing on the default socket or any session I did not create.
+
+## Standing record for the commit
+
+Every assertion in the new material has now been observed failing on a build that breaks precisely what it claims, each with a message naming that defect and not a neighbour. Three needed an isolating mutant built for them specifically — the over-clip bound, the status panel's last line, and the caption's height guard — and one of those, the `Time Left` check, had never been seen to fail until this review.
+
+The three judgment calls stand as reviewed: rows clip silently (defensible because rows only start dropping at twelve, below the fourteen where the prompt is already gone per #94, so no player reads a clipped panel and acts on it); dropping from the bottom rather than reordering the status panel; and part 2 belonging to #91 rather than #88, since it changes only the shrunk state and leaves the grow-back path byte-identical.
+
+Pass coverage: `ui-review` twice with the last round seeing the player-visible state, `verifier` once, and everything since has been test-file material that I exercised directly. The README's four numeric claims — the fourteen-row conversation cliff, the fourteen-row pager, fifteen paging one line at a time, and the fourteen-row recovery boundary — I measured against the running game myself.
+
+Approval covers exactly this state. Commit it.</result>
+<usage><subagent_tokens>125750</subagent_tokens><tool_uses>7</tool_uses><duration_ms>479168</duration_ms></usage>
+</task-notification>
