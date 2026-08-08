@@ -108,6 +108,21 @@ static int panel_room(WINDOW *w) {
 	return getmaxx(w) - 3;
 }
 
+/* Whether a panel line has a row to be drawn on: inside the box, not on
+ * either border. The same question as panel_room() on the other axis,
+ * and it went unasked -- the draw loops took the row from the caller,
+ * which always asks for all eleven however short the terminal is.
+ *
+ * A window shrunk to twelve rows still has row eleven, so the tenth grid
+ * line was drawn over the bottom border. At eleven rows it has no row
+ * eleven at all: wmove() fails, leaves the cursor where the previous
+ * line left it, and the whole line lands on the row above --
+ * `mq 9  . . . . . . . . . .10 .x`, two grid rows and the border
+ * sharing one line. */
+static int panel_has_row(WINDOW *w, int row) {
+	return row >= 1 && row < getmaxy(w) - 1;
+}
+
 /* Clipping a status line in silence is worse than the wrapping it
  * replaces, because what is left reads as a smaller, perfectly
  * plausible reading of the same field: `Torpedoes     1` for ten of
@@ -128,6 +143,7 @@ static char clip_at(const char *s, int i, int room) {
 static void draw_quad_line(int row, const char *s) {
 	int i, room = panel_room(wquad);
 
+	if (!panel_has_row(wquad, row)) return;
 	wmove(wquad, row, 2);
 	for (i = 0; s[i] != '\0' && i < room; i++) {
 		char c = clip_at(s, i, room);
@@ -144,6 +160,7 @@ static void draw_status_line(int row, int line, const char *s) {
 	chtype a = attr_for_status(line);
 	int i, room = panel_room(wstat);
 
+	if (!panel_has_row(wstat, row)) return;
 	wmove(wstat, row, 2);
 	for (i = 0; s[i] != '\0' && i < room; i++) {
 		if (i == STATLABEL && a != A_NORMAL) wattron(wstat, a);
@@ -166,10 +183,19 @@ static int builtlines, builtcols;
  * were. Ending curses under them to say the window is too small would
  * be a worse answer to a mouse drag. */
 static void make_windows(void) {
-	int msgh, statw, msgw;
+	int msgh, statw, msgw, panelh;
 
 	builtlines = LINES;
 	builtcols = COLS;
+	/* On a terminal too short for them the panels are as deep as there
+	   is room for, not as deep as they would like. The quadrant panel
+	   gets this from curses -- resize_term() shrinks every window that
+	   no longer fits -- but the status panel is resized here by hand
+	   and was being put back to its full depth every time, leaving it
+	   taller than the screen. Its bottom border then fell off the
+	   bottom and the last status line was drawn where that border
+	   should have been. */
+	panelh = LINES < PANELH ? LINES : PANELH;
 	msgh = LINES-PANELH > 1 ? LINES-PANELH : 1;
 	statw = COLS-QUADW > 1 ? COLS-QUADW : 1;
 	msgw = COLS-2 > 1 ? COLS-2 : 1;
@@ -184,7 +210,7 @@ static void make_windows(void) {
 		   at that very moment, which would leave the game looking
 		   hung. The panels are redrawn from the game state either
 		   way. */
-		wresize(wstat, PANELH, statw);
+		wresize(wstat, panelh, statw);
 		wresize(wmsg, msgh, msgw);
 	}
 	/* Set every time, not only on the first: keypad in particular is
@@ -534,10 +560,19 @@ void tui_refresh_panels(void) {
 		   columns inside a twenty-nine-column box, so it fits at
 		   the 72x24 minimum as well as anywhere else -- but not
 		   below 20, where the window itself is narrower than that
-		   and the caption ate the bottom-right corner. */
-		if (sensors_masked() &&
+		   and the caption ate the bottom-right corner.
+
+		   The row is asked of the window rather than named: it is
+		   the bottom border wherever that has ended up, which on a
+		   terminal too short for the panel is not PANELH-1. Naming
+		   it meant the dashes lost their explanation from twelve
+		   rows down -- the field of nothing this exists to prevent,
+		   at the sizes where a player is least sure what they are
+		   looking at. */
+		if (sensors_masked() && getmaxy(wquad) >= 2 &&
 		    panel_room(wquad) >= (int)strlen(" SENSORS DAMAGED "))
-			mvwaddstr(wquad, PANELH-1, 2, " SENSORS DAMAGED ");
+			mvwaddstr(wquad, getmaxy(wquad)-1, 2,
+				  " SENSORS DAMAGED ");
 		for (i = 0; i <= 10; i++) {
 			fmt_quad_line(i, buf);
 			draw_quad_line(i+1, buf);

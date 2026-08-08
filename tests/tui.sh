@@ -961,6 +961,87 @@ else
 	fi
 fi
 
+# --- a shrink past the panels' height clips too ------------------------
+# The width sweep above is only half of it. The panels are PANELH rows
+# deep, and a terminal shorter than that shrinks them with it -- but the
+# draw loops were told which row to write on by the caller and never
+# asked whether that row still existed. Two ways to fail, one on each
+# side of the last row: at twelve rows the tenth grid line was drawn
+# onto the bottom border, and at eleven wmove() failed outright, left
+# the cursor where it was, and the line landed on the row above --
+# `mq 9  . . . . . . . . . .10 .x`, two grid rows and the border in one.
+#
+# Twelve and eleven because they are those two cases; nine for a shrink
+# well past both.
+start 100 30 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "short: the game never reached its command prompt"
+	dump
+else
+	# Before shrinking anything: at a size with room for all of them,
+	# every row is still drawn. The sweep below only asks that nothing
+	# lands where it should not, which a bound that clips two rows too
+	# many satisfies perfectly -- at every size, including this one.
+	tm resize-window -t "$session" -x 80 -y 24
+	sleep 1
+	# `^.` rather than `^x`: the leading cell is the panel's left
+	# border, and capture-pane renders the line-drawing set as it
+	# pleases -- the rest of this file is careful not to depend on it.
+	# The two spaces are what tell a grid row from the column header,
+	# which has one; without them ` 10  ` also matches the header and
+	# `Torpedoes     10`.
+	if ! screen | grep -qE '^. 10  '; then
+		fail "short: the last grid row is missing at 80x24"
+		dump
+	# Unconfined, which is only safe because `Time Left` appears
+	# nowhere else on this screen -- not in the briefing, not at the
+	# prompt. A `status` command anywhere in this block would put it in
+	# the conversation too, and this would need `cut -c30-`.
+	elif ! screen | grep -qF 'Time Left'; then
+		fail "short: the last status line is missing at 80x24"
+		dump
+	fi
+	for h in 12 11 9; do
+		tm resize-window -t "$session" -x 72 -y "$h"
+		sleep 1
+		# The panels fill a screen this short, so the last row of it
+		# is their bottom border. Nothing numeric belongs there --
+		# the only caption it ever carries is SENSORS DAMAGED -- and
+		# a grid line that landed on it brings its row label along.
+		if ! screen | head -1 | grep -qF 'Quadrant'; then
+			fail "short: the panels are not on screen at 72x$h"
+			dump
+		elif ! screen | awk -v h="$h" 'NR == h && /[0-9]/ { bad = 1 }
+		                               END { exit bad ? 1 : 0 }'; then
+			fail "short: a panel line was drawn onto the bottom border at 72x$h"
+			dump
+		fi
+	done
+	# The wmove() failure put two grid rows on one line, which the
+	# border check above catches only because that line was the
+	# border. Asked for directly as well, so the assertion does not
+	# depend on where the collision happened to land: no row of the
+	# panels carries two grid labels.
+	tm resize-window -t "$session" -x 72 -y 11
+	sleep 1
+	# Two row labels on one line. Told apart from the column header by
+	# the spacing of the label itself: fmt_quad_line() writes "%2d "
+	# and then " %c" per cell, so a grid row has two spaces after its
+	# number where the header has one. Nothing here depends on what is
+	# in the quadrant -- an earlier version ended the pattern at a grid
+	# cell it expected to be a dot, which this seed provides and
+	# another galaxy would not.
+	#
+	# Confined to the quadrant panel's columns, which is what lets the
+	# pattern end at the second label: the status panel beside it is
+	# full of digits. Twenty-nine is QUADW, which that panel keeps at
+	# any width at or above it, and this only ever runs at 72.
+	if screen | cut -c1-29 | grep -qE '^.q? *[0-9]+  .*[^0-9]1?[0-9]'; then
+		fail "short: two grid rows were drawn onto one line"
+		dump
+	fi
+fi
+
 # --- Ctrl-D ends the session on its own keystroke ---------------------
 # Under cbreak() the tty does no end-of-file handling of its own, so
 # Ctrl-D arrives as a character. wgetnstr returned only on Enter, so it
@@ -1033,6 +1114,51 @@ if [ "$BUILD_TYPE" = "Debug" ]; then
 		sleep 1
 		expect "sensors: the caption did not come back with the room for it" \
 			"SENSORS DAMAGED"
+		# The caption belongs to the bottom border wherever the box
+		# has ended up, not to the row PANELH names. A terminal too
+		# short for the panel moves that border up, and naming the
+		# row lost the caption from twelve rows down -- the field of
+		# dashes with no reason given that it exists to prevent.
+		tm resize-window -t "$session" -x 80 -y 11
+		sleep 1
+		# Asked of the row rather than of the screen: the fix is
+		# about which row the caption lands on, and a whole-screen
+		# search would pass a build that drew it over a grid line.
+		# Eleven rows of panel, so its bottom border is row 11.
+		if ! screen | awk 'NR == 11 && /SENSORS DAMAGED/ { seen = 1 }
+		                   END { exit seen ? 0 : 1 }'; then
+			fail "sensors: the dashes lost their reason on a short terminal"
+			dump
+		fi
+		# The far end of the same question. Two rows leave a title and
+		# a border, and the caption belongs on the border; one row
+		# leaves only the title, and writing the caption over it is
+		# what the height guard exists to stop. Nothing else reaches
+		# these sizes -- the sweep above stops at nine rows.
+		tm resize-window -t "$session" -x 80 -y 2
+		sleep 1
+		if ! screen | awk 'NR == 2 && /SENSORS DAMAGED/ { seen = 1 }
+		                   END { exit seen ? 0 : 1 }'; then
+			fail "sensors: the caption is not on the border of a two-row panel"
+			dump
+		fi
+		tm resize-window -t "$session" -x 80 -y 1
+		sleep 1
+		# The positive control first: absence proves nothing on a
+		# screen where nothing was painted, and this assertion is
+		# nothing but an absence. It cannot ask for the title --
+		# the caption is drawn at the same row and column, so a
+		# build with the guard relaxed erases the title with the
+		# caption, fails the control, and never reaches the line
+		# that names the defect. Non-blankness is all the control
+		# needs, and nothing can overwrite it.
+		if ! screen | head -1 | grep -q '[^ ]'; then
+			fail "sensors: nothing at all was drawn at one row"
+			dump
+		elif screen | grep -qF 'SENSORS DAMAGED'; then
+			fail "sensors: the caption was drawn over the only row there is"
+			dump
+		fi
 	fi
 fi
 

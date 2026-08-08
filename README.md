@@ -21,16 +21,24 @@ were asked and the answer you were halfway through typing survive.
 Older text that no longer fits scrolls away, as it would in any
 terminal.
 
-Dragged narrower than the 72 columns the panels ask for, they clip
-rather than rearrange themselves. A line with more to show than there
-is room for ends in `>`, so a shortened number is never mistaken for a
-small one, and a heading with no room left is dropped rather than
-shortened. Widening the terminal brings the panels straight back.
+Dragged smaller than the 72x24 the panels ask for, they clip rather
+than rearrange themselves. A line with more to show than there is room
+for ends in `>`, so a shortened number is never mistaken for a small
+one, and a heading with no room left is dropped rather than shortened.
+A terminal shorter than the panels themselves loses rows off the bottom
+of them, the grid keeping its numbering so you can see where it stops.
 
-Squeezed under about thirty columns or fourteen rows they break up
-instead — a terminal too short runs the panel rows together rather
-than clipping them — and the display does not recover on its own;
-quitting and starting again is the way back.
+Shorter than fourteen rows there is no room left for the conversation
+at all: the panels are the whole screen and the prompt is not on it.
+Just above that there is barely more — at fourteen rows the one line
+left over goes entirely to the pager, so a scan pages past without
+showing any of itself; at fifteen it comes one line at a time.
+
+Growing the terminal back brings the panels with it, so long as the
+squeeze stopped at about thirty columns and fourteen rows or better.
+Below either, the display does not recover on its own, and below
+fourteen rows the prompt does not come back with it. Quitting and
+starting again is the way out; it works even when you cannot see it.
 
 If full-screen mode isn't possible — the terminal is too small, the
 game isn't attached to one (piped input, redirected output, a job with
