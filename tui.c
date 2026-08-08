@@ -89,16 +89,51 @@ static chtype attr_for_status(int line) {
 	}
 }
 
+/* How much of a panel line there is room for: the window less its right
+ * border, less the two columns the text is indented by -- the left
+ * border and the padding column beside it.
+ *
+ * Without it the panels do not clip, whatever make_windows() says they
+ * do. waddch past the last column wraps to the next row of the same
+ * window, so a line too long for a terminal shrunk below the 72x24
+ * minimum landed on the row below -- over its left border and padding,
+ * and for the last line over the bottom border, which is where
+ * `xtsKlingons Left 2` and a bottom border reading `     7.00qj` came
+ * from. At the minimum and above every line fits and nothing here
+ * changes -- but only just: `Shields       DAMAGED, 100% 2500.0 units`
+ * is 40 columns against the 40 the status panel has at 72, an exact fit
+ * with nothing to spare. One more word on any status line and it would
+ * be the supported minimum that clips. Nothing checks that; see #89. */
+static int panel_room(WINDOW *w) {
+	return getmaxx(w) - 3;
+}
+
+/* Clipping a status line in silence is worse than the wrapping it
+ * replaces, because what is left reads as a smaller, perfectly
+ * plausible reading of the same field: `Torpedoes     1` for ten of
+ * them, `Energy        367` for 3675.25, `Shields       DOWN, 10` for
+ * 100%. Those are the fields a player checks in a fight, on a panel
+ * that now looks intact and so gets believed. Garbage announced
+ * itself; a truncated number does not.
+ *
+ * So the last column a clipped line has goes to a marker instead of to
+ * one more digit. `Energy        36>` cannot be misread as a quantity,
+ * and it says which lines to widen the terminal to see. */
+static char clip_at(const char *s, int i, int room) {
+	return (i == room - 1 && s[i + 1] != '\0') ? '>' : s[i];
+}
+
 /* Draw a grid line a cell at a time so each symbol carries its own
  * colour. Row labels and spacing classify as plain and stay uncoloured. */
 static void draw_quad_line(int row, const char *s) {
-	int i;
+	int i, room = panel_room(wquad);
 
 	wmove(wquad, row, 2);
-	for (i = 0; s[i] != '\0'; i++) {
-		chtype a = attr_for_cell(s[i]);
+	for (i = 0; s[i] != '\0' && i < room; i++) {
+		char c = clip_at(s, i, room);
+		chtype a = attr_for_cell(c);
 		if (a != A_NORMAL) wattron(wquad, a);
-		waddch(wquad, (unsigned char)s[i]);
+		waddch(wquad, (unsigned char)c);
 		if (a != A_NORMAL) wattroff(wquad, a);
 	}
 }
@@ -107,12 +142,12 @@ static void draw_quad_line(int row, const char *s) {
  * down the panel picks out the fields that are shouting. */
 static void draw_status_line(int row, int line, const char *s) {
 	chtype a = attr_for_status(line);
-	int i;
+	int i, room = panel_room(wstat);
 
 	wmove(wstat, row, 2);
-	for (i = 0; s[i] != '\0'; i++) {
+	for (i = 0; s[i] != '\0' && i < room; i++) {
 		if (i == STATLABEL && a != A_NORMAL) wattron(wstat, a);
-		waddch(wstat, (unsigned char)s[i]);
+		waddch(wstat, (unsigned char)clip_at(s, i, room));
 	}
 	if (a != A_NORMAL) wattroff(wstat, a);
 }
@@ -460,22 +495,48 @@ void tui_refresh_panels(void) {
 	sync_size();
 	werase(wquad);
 	box(wquad, 0, 0);
-	mvwaddstr(wquad, 0, 2, " Quadrant ");
+	/* Four strings in these panels are written whole rather than a cell
+	   at a time -- the two titles, the in-game one that replaces the
+	   first, and the SENSORS DAMAGED caption below -- so the clipping
+	   above does not cover any of them, and each needs room asked for
+	   before it is drawn. One longer than its window wraps onto the row
+	   beneath and sits on that row's left border, which is the very
+	   fault the clipping exists to remove; the caption, being on the
+	   window's last row, runs into the corner instead. " Status " does
+	   it below 40 columns, the quadrant's in-game title below 19, the
+	   bare " Quadrant " below 13 -- which stands in before a game, and
+	   inside one wherever the coordinates no longer fit -- and the
+	   caption below 20. Both windows shrink: resize_term() takes every
+	   window that no longer fits the screen down with it, the quadrant
+	   panel included, whatever size make_windows() first asked for. A
+	   box with no caption is the better of the two, and at these widths
+	   the panel underneath is the only thing saying which is which. */
+	if (panel_room(wquad) >= (int)strlen(" Quadrant "))
+		mvwaddstr(wquad, 0, 2, " Quadrant ");
 	werase(wstat);
 	box(wstat, 0, 0);
-	mvwaddstr(wstat, 0, 2, " Status ");
+	if (panel_room(wstat) >= (int)strlen(" Status "))
+		mvwaddstr(wstat, 0, 2, " Status ");
 	/* Nothing to show before a game is set up or after one ends; the
 	   formatters work the condition out for themselves, so nothing
 	   here writes to the game state. */
 	if (tui_ingame) {
-		mvwprintw(wquad, 0, 2, " Quadrant %d - %d ", quadx, quady);
+		/* The guard measures the widest the title can be, which is
+		   also the only width it is: quadrant coordinates are always
+		   single digits, so " Quadrant 8 - 8 " is what gets drawn,
+		   not an upper bound on it. */
+		if (panel_room(wquad) >= (int)strlen(" Quadrant 8 - 8 "))
+			mvwprintw(wquad, 0, 2, " Quadrant %d - %d ", quadx, quady);
 		/* srscan() heads the grid with SHORT-RANGE SENSORS DAMAGED;
 		   the panel has no line to spare for that, so it says the
 		   same thing on the bottom border. Without it the dashes
 		   are a field of nothing with no reason given. Seventeen
 		   columns inside a twenty-nine-column box, so it fits at
-		   the 72x24 minimum as well as anywhere else. */
-		if (sensors_masked())
+		   the 72x24 minimum as well as anywhere else -- but not
+		   below 20, where the window itself is narrower than that
+		   and the caption ate the bottom-right corner. */
+		if (sensors_masked() &&
+		    panel_room(wquad) >= (int)strlen(" SENSORS DAMAGED "))
 			mvwaddstr(wquad, PANELH-1, 2, " SENSORS DAMAGED ");
 		for (i = 0; i <= 10; i++) {
 			fmt_quad_line(i, buf);

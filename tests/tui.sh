@@ -116,6 +116,32 @@ wait_scrollback() {
 	return 1
 }
 
+# Whether every row from $2 to $3 carries the same character in column
+# $1. That is how a wrapped line shows up: the panel borders run down a
+# column, and text that spilled onto the next row lands on one of them.
+# Which character it is does not matter -- capture-pane renders the
+# line-drawing set as it pleases -- only that they agree.
+#
+# It answers "they agree", not "the panels are there". A screen whose
+# rows are all shorter than column $1 agrees with itself: capture-pane
+# strips trailing blanks, every row reads as empty, and this passes.
+# The row count rules out a capture with nothing in it, not a capture
+# of nothing. Prove the panels are drawn before asking.
+#
+# Scalar rather than `length(array)`, which POSIX awk does not have:
+# CI runs this suite on macOS too, where /usr/bin/awk is the one true
+# awk, and a version that could not index by array would have failed
+# the assertion rather than the game.
+uniform_col() {
+	screen | awk -v col="$1" -v lo="$2" -v hi="$3" '
+		NR >= lo && NR <= hi {
+			c = substr($0, col, 1)
+			if (n++ == 0) first = c
+			else if (c != first) bad = 1
+		}
+		END { exit (n > 0 && !bad) ? 0 : 1 }'
+}
+
 dump() {
 	printf '  --- screen ---\n' >&2
 	screen | sed 's/^/  | /' >&2
@@ -760,6 +786,181 @@ else
 		'STAR CHART'
 fi
 
+# --- a shrink past the minimum clips instead of wrapping ---------------
+# make_windows() promises that a terminal shrunk below the 72x24 the
+# display asks for "keeps its size and the screen clips". It did not
+# clip: draw_status_line() wrote the whole line a character at a time
+# with nothing stopping it at the window edge, so curses wrapped what
+# did not fit onto the next row of the same window -- over the left
+# border and the padding column, and on the last line over the bottom
+# border. At 40 columns that read as `xtsKlingons Left 2` and a bottom
+# border of `     7.00qj`.
+#
+# 40 columns rather than 71: both wraps need the text to overrun, and
+# "Time Left" is the shortest line there is, so the one that lands on
+# the border only shows up well below the minimum.
+start 100 30 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "sub-minimum: the game never reached its command prompt"
+	dump
+else
+	tm resize-window -t "$session" -x 40 -y 24
+	sleep 1
+	# The panels have to actually be there and actually be too narrow,
+	# or everything below this passes by describing an empty screen.
+	# Both captions on the top row, not the bare word: plain mode says
+	# "currently in Quadrant 3 - 2" in its scrolling prose, so a game
+	# that fell back to it -- TERM=dumb, no tty -- matched the panel
+	# check and then had its conversation measured as though it were a
+	# panel. The status caption is drawn down to exactly 40 columns and
+	# dropped at 39, so this guard and the width below have to move
+	# together.
+	if ! screen | head -1 | grep -qF 'Quadrant' ||
+	   ! screen | head -1 | grep -qF 'Status'; then
+		fail "sub-minimum: both captions are not on the top row at 40 columns, where the status one is drawn down to exactly 40"
+		dump
+	elif [ "$(screen | head -1 | wc -c)" -gt 45 ]; then
+		fail "sub-minimum: the terminal did not shrink"
+		dump
+	elif screen | grep -qF '2500.0 units'; then
+		fail "sub-minimum: the status lines still fit, so nothing was clipped"
+		dump
+	else
+		# Column 30 is the status panel's left border: the quadrant box
+		# is 29 wide, so its own border ends at 29. Every row of the
+		# panels carries the same character there. Which character is
+		# not the point -- capture-pane renders the line-drawing set as
+		# it pleases -- but a row that disagrees with the others is text
+		# that wrapped into the border.
+		if ! uniform_col 30 2 12; then
+			fail "sub-minimum: a status line wrapped over the panel border"
+			dump
+		fi
+		# Row 13 is the panels' bottom border -- they are PANELH rows
+		# deep and start at the top of the screen. Nothing numeric
+		# belongs on it: the only caption it ever carries is SENSORS
+		# DAMAGED.
+		if ! screen | awk 'NR == 13 && /[0-9]/ { bad = 1 }
+		                   END { exit bad ? 1 : 0 }'; then
+			fail "sub-minimum: a status line wrapped over the bottom border"
+			dump
+		fi
+		# A clipped line spends its last column on a marker, so what is
+		# left cannot be read as a whole smaller value -- `Torpedoes
+		# 1` for ten of them was what clipping in silence looked like.
+		# Column 39 is the last one the text gets at this width: the
+		# status window starts at 30 and its right border is column 40.
+		# Every line here is longer than the eight columns of room, so
+		# every one of the ten carries the marker.
+		if [ "$(screen | awk 'NR >= 3 && NR <= 12 && substr($0, 39, 1) == ">"' | wc -l)" -ne 10 ]; then
+			fail "sub-minimum: a clipped status line does not say it was clipped"
+			dump
+		fi
+	fi
+
+	# Narrower still, where the panel's own title no longer fits. It is
+	# the one string not drawn a character at a time, so the clipping
+	# above does not cover it, and " Status " wrapped onto the row
+	# beneath and sat on its border exactly as the status lines had.
+	# The check above cannot see it: at 40 columns the title still fits.
+	tm resize-window -t "$session" -x 33 -y 24
+	sleep 1
+	if ! screen | head -1 | grep -qF 'Quadrant'; then
+		fail "sub-minimum: the quadrant panel went missing at 33 columns"
+		dump
+	elif ! uniform_col 30 2 12; then
+		fail "sub-minimum: the status title wrapped over the panel border"
+		dump
+	fi
+
+	# Widening puts it all back, which is what the README promises a
+	# player who dragged too far. Checked before going narrower still:
+	# past the panels' own geometry the display does not recover at all
+	# (#88), so a grow-back after that would be testing that bug.
+	tm resize-window -t "$session" -x 80 -y 24
+	sleep 1
+	if ! screen | grep -qF '2500.0 units'; then
+		fail "sub-minimum: widening did not bring the clipped lines back"
+		dump
+	fi
+	# Asked separately from the line above, not as its else: a repaint
+	# that brought the text back and left the markers behind is exactly
+	# the failure worth catching, and chaining the two hides it behind
+	# the one that passed.
+	if ! screen | awk 'NR >= 2 && NR <= 12 && />/ { bad = 1 }
+	                   END { exit bad ? 1 : 0 }'; then
+		fail "sub-minimum: a clip marker survived the widening"
+		dump
+	fi
+
+	# The quadrant panel's own titles. The 33 above cannot reach them:
+	# that window is still its full 29 wide there, so only the status
+	# title is under any pressure. Column 1 from here on -- it is the
+	# quadrant box's left border that a wrapped quadrant title lands
+	# on -- from a title that did not fit, or from a grid line, which
+	# clips against the same edge once the window has shrunk with the
+	# screen.
+	#
+	# Last, because this is below the geometry the panels need and the
+	# display does not come back from it (#88). Each width is asserted
+	# on both sides of its threshold: a guard that gives up a column
+	# early looks exactly like one that gives up on time.
+	#
+	# The coordinates need 19 columns.
+	tm resize-window -t "$session" -x 19 -y 24
+	want_quadtitle "sub-minimum: the quadrant went unnamed while it still fitted"
+	tm resize-window -t "$session" -x 18 -y 24
+	sleep 1
+	# uniform_col agrees with itself on a screen that drew nothing, so
+	# every call below needs the panels shown to be there first. The
+	# bare " Quadrant " stands in from here down to 13.
+	if screen | head -1 | grep -qE 'Quadrant [0-9] - [0-9]'; then
+		fail "sub-minimum: the coordinates stayed past the room for them"
+		dump
+	elif ! screen | head -1 | grep -qF 'Quadrant'; then
+		fail "sub-minimum: nothing stood in for the title at 18 columns"
+		dump
+	elif ! uniform_col 1 2 12; then
+		fail "sub-minimum: text wrapped over the quadrant panel border"
+		dump
+	fi
+	# Sixteen is not a threshold, and is here for what only it shows:
+	# at 18 the in-game title is exactly as wide as the window, so an
+	# unguarded one overwrites the right border without ever wrapping,
+	# and the border check below cannot see it -- the regex above is
+	# what catches that. Three columns narrower it genuinely wraps,
+	# which is the fault this whole section is about.
+	tm resize-window -t "$session" -x 16 -y 24
+	sleep 1
+	if ! screen | head -1 | grep -qF 'Quadrant'; then
+		fail "sub-minimum: the panels went missing at 16 columns"
+		dump
+	elif ! uniform_col 1 2 12; then
+		fail "sub-minimum: text wrapped over the quadrant panel border"
+		dump
+	fi
+	# And the bare title itself needs 13, below which the box carries
+	# no caption at all.
+	tm resize-window -t "$session" -x 13 -y 24
+	sleep 1
+	if ! screen | head -1 | grep -qF 'Quadrant'; then
+		fail "sub-minimum: the panel went unlabelled while the label fitted"
+		dump
+	fi
+	tm resize-window -t "$session" -x 12 -y 24
+	sleep 1
+	if screen | head -1 | grep -qF 'Quadrant'; then
+		fail "sub-minimum: the panel label stayed past the room for it"
+		dump
+	elif ! screen | sed -n '2p' | grep -q '[0-9]'; then
+		fail "sub-minimum: the panels are not drawn at 12 columns"
+		dump
+	elif ! uniform_col 1 2 12; then
+		fail "sub-minimum: the panel label wrapped over the panel border"
+		dump
+	fi
+fi
+
 # --- Ctrl-D ends the session on its own keystroke ---------------------
 # Under cbreak() the tty does no end-of-file handling of its own, so
 # Ctrl-D arrives as a character. wgetnstr returned only on Enter, so it
@@ -799,6 +1000,38 @@ if [ "$BUILD_TYPE" = "Debug" ]; then
 			sleep 0.1
 		done
 		expect "sensors: the grid gives no reason for its dashes" \
+			"SENSORS DAMAGED"
+		# The caption is the fourth string in the panels written
+		# whole rather than a cell at a time, so it needs the same
+		# room asked for before it is drawn. Seventeen columns
+		# inside a box that is only twenty-nine while the terminal
+		# has room for it: below twenty the caption overran the
+		# bottom-right corner and drew over it. Gone is the right
+		# answer -- the dashes lose their explanation, but at that
+		# width so has everything else.
+		# Twenty columns is where it fits exactly, nineteen where it
+		# does not. Both, so a guard that is too strict fails here
+		# rather than passing quietly: dropping the caption a column
+		# early looks the same as dropping it correctly unless the
+		# last width it survives is asserted too.
+		tm resize-window -t "$session" -x 20 -y 24
+		sleep 1
+		expect "sensors: the caption went early, before the room ran out" \
+			"SENSORS DAMAGED"
+		tm resize-window -t "$session" -x 19 -y 24
+		sleep 1
+		unwanted "sensors: the caption overran the box it captions" \
+			"SENSORS DAMAGED"
+		# Nineteen columns is under the twenty-nine the panels are
+		# built for, so widening back does not restore the display
+		# itself -- #88 leaves the quadrant box stretched and its
+		# right border gone. What this asserts is only that the
+		# caption returns once there is room for it, which is what
+		# the guard above governs. The block further up widens
+		# before going that narrow, for the same reason.
+		tm resize-window -t "$session" -x 80 -y 24
+		sleep 1
+		expect "sensors: the caption did not come back with the room for it" \
 			"SENSORS DAMAGED"
 	fi
 fi
