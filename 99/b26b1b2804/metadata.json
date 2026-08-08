@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "99b26b1b2804",
+  "strategy": "manual-commit",
+  "branch": "docs/pointers-read-from-the-repo",
+  "checkpoints_count": 2,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/99/b26b1b2804/0/metadata.json",
+      "transcript": "/99/b26b1b2804/0/full.jsonl",
+      "compact_transcript": "/99/b26b1b2804/0/transcript.jsonl",
+      "content_hash": "/99/b26b1b2804/0/content_hash.txt",
+      "prompt": "/99/b26b1b2804/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1585,
+    "cache_creation_tokens": 5393487,
+    "cache_read_tokens": 400518079,
+    "output_tokens": 561765,
+    "api_call_count": 850
+  }
+}
