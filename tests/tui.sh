@@ -874,9 +874,10 @@ else
 	fi
 
 	# Widening puts it all back, which is what the README promises a
-	# player who dragged too far. Checked before going narrower still:
-	# past the panels' own geometry the display does not recover at all
-	# (#88), so a grow-back after that would be testing that bug.
+	# player who dragged too far. Checked here rather than at the end
+	# of the sweep so that what it proves is this section's own
+	# clipping being undone, and not the geometry restore that the
+	# "panels come back from a squeeze" block covers on its own.
 	tm resize-window -t "$session" -x 80 -y 24
 	sleep 1
 	if ! screen | grep -qF '2500.0 units'; then
@@ -901,8 +902,11 @@ else
 	# clips against the same edge once the window has shrunk with the
 	# screen.
 	#
-	# Last, because this is below the geometry the panels need and the
-	# display does not come back from it (#88). Each width is asserted
+	# Last, because this is below the geometry the panels are built for.
+	# The panels themselves come back from that now, but what a squeeze
+	# that deep leaves of the pending prompt does not (#100), so a
+	# session that has been there is not the clean subject the widths
+	# above want. Each width is asserted
 	# on both sides of its threshold: a guard that gives up a column
 	# early looks exactly like one that gives up on time.
 	#
@@ -1042,6 +1046,100 @@ else
 	fi
 fi
 
+# --- the panels come back from a squeeze ------------------------------
+# make_windows() used to resize only the status and message windows,
+# never the quadrant panel: it was made once and left to curses, which
+# resizes a window that spans the screen along with the screen -- down
+# and back up again. So a panel squeezed past its own size stopped being
+# 29 columns and started tracking the terminal, and a squeeze returned
+# from came back broken at a size where nothing on screen explained why.
+#
+# Two shapes, one cause. Squeezed narrow, the quadrant box came back as
+# wide as the whole screen, so its right border was past the status
+# panel rather than beside it. Squeezed short, it came back taller than PANELH,
+# so its bottom border ended up at the bottom of the screen instead of
+# row 13, with the message window and the prompt hidden under it.
+#
+# Two of the four sizes are for coverage and two are for diagnosis.
+#
+# 20x8 squeezes both axes at once, which is the gesture a player makes,
+# and catches everything 25x24 and 80x13 do. 82x13 is the one nothing
+# else reaches: it returns to a terminal *narrower* than the squeeze,
+# and mvwin() refuses a move that does not fit at the window's current
+# size, so a message window still 80 columns wide could not be put back
+# into an 80-column screen. Every other case grows back at least as
+# wide as it shrank and hides that.
+#
+# 25x24 and 80x13 catch nothing 20x8 misses. They are here to say which
+# axis broke -- 20x8 fires on both at once, and a report naming the
+# width alone or the height alone is worth two lines of script. Drop
+# them only if that stops being worth it, not because they look
+# redundant.
+#
+# 30 columns and 14 rows still recovered before the fix; 29 and 13 are
+# the first that did not, so 13 is the boundary itself and 25 is a few
+# columns clear of the other one.
+#
+# A session of its own for each, because the damage outlives the
+# squeeze that caused it: run back to back, the second squeeze starts
+# from a display the first already broke, and whichever assertion fires
+# is not the one that describes it.
+for squeeze in "25 24" "80 13" "20 8" "82 13"; do
+	# shellcheck disable=SC2086
+	set -- $squeeze
+	start 100 30 'tournament 7 short novice pw'
+	if ! to_command; then
+		fail "restore: the game never reached its command prompt"
+		dump
+	else
+		tm resize-window -t "$session" -x "$1" -y "$2"
+		sleep 1
+		tm resize-window -t "$session" -x 80 -y 24
+		sleep 1
+		# The panels have to be drawn at all before their corners
+		# mean anything: a screen with nothing on it agrees with
+		# itself about every column.
+		if ! screen | head -1 | grep -qF 'Quadrant'; then
+			fail "restore: after $1x$2 the panels are not on screen to be checked"
+			dump
+			continue
+		fi
+		# The corners are what say the boxes are two boxes. Asked as
+		# "differs from its neighbour" rather than by naming a glyph,
+		# because capture-pane renders the line-drawing set as it
+		# pleases: a corner differs from the border running into it,
+		# and a border that lost its corner does not. Column 28 has
+		# to be drawn as well -- two blanks differ from nothing and
+		# agree with each other, so without that a panel narrower
+		# than 28 would be reported as one that came back too wide.
+		if ! screen | awk 'NR == 1 { exit (substr($0, 28, 1) == " " ||
+		                                   substr($0, 29, 1) == substr($0, 28, 1)) }'; then
+			fail "restore: after $1x$2 the quadrant panel came back the wrong width"
+			dump
+		fi
+		if ! screen | awk 'NR == 12 { above = substr($0, 1, 1) }
+		                   NR == 13 { exit substr($0, 1, 1) == above }'; then
+			fail "restore: after $1x$2 the quadrant panel came back too tall"
+			dump
+		fi
+		# And the conversation is back under the panels, which is the
+		# half a player notices first. Asked by typing rather than by
+		# looking: what a squeeze leaves of the *pending* line is
+		# #100's subject and comes back a stump or not at all, so a
+		# check that only looked would be asserting that bug instead
+		# of this fix. One keystroke gets a fresh prompt, and where it
+		# lands is what the message window being back in its place
+		# means -- row 14 is the first under panels that end at 13.
+		tm send-keys -t "$pane" Enter
+		sleep 1
+		if ! screen | awk 'NR >= 14 && /COMMAND>/ { found = 1 }
+		                   END { exit found ? 0 : 1 }'; then
+			fail "restore: after $1x$2 the conversation did not come back under the panels"
+			dump
+		fi
+	fi
+done
+
 # --- Ctrl-D ends the session on its own keystroke ---------------------
 # Under cbreak() the tty does no end-of-file handling of its own, so
 # Ctrl-D arrives as a character. wgetnstr returned only on Enter, so it
@@ -1104,12 +1202,11 @@ if [ "$BUILD_TYPE" = "Debug" ]; then
 		unwanted "sensors: the caption overran the box it captions" \
 			"SENSORS DAMAGED"
 		# Nineteen columns is under the twenty-nine the panels are
-		# built for, so widening back does not restore the display
-		# itself -- #88 leaves the quadrant box stretched and its
-		# right border gone. What this asserts is only that the
-		# caption returns once there is room for it, which is what
-		# the guard above governs. The block further up widens
-		# before going that narrow, for the same reason.
+		# built for. What this asserts is only that the caption
+		# returns once there is room for it, which is what the guard
+		# above governs; that the panel itself comes back from a
+		# squeeze that deep is the "panels come back from a squeeze"
+		# block's job.
 		tm resize-window -t "$session" -x 80 -y 24
 		sleep 1
 		expect "sensors: the caption did not come back with the room for it" \
