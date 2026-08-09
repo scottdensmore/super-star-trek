@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "bb2edc1e3b7c",
+  "strategy": "manual-commit",
+  "branch": "docs/align-finding-standards",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "AGENTS.md",
+    "tests/instructions.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/bb/2edc1e3b7c/0/metadata.json",
+      "transcript": "/bb/2edc1e3b7c/0/full.jsonl",
+      "compact_transcript": "/bb/2edc1e3b7c/0/transcript.jsonl",
+      "content_hash": "/bb/2edc1e3b7c/0/content_hash.txt",
+      "prompt": "/bb/2edc1e3b7c/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2289,
+    "cache_creation_tokens": 6166320,
+    "cache_read_tokens": 537585638,
+    "output_tokens": 856198,
+    "api_call_count": 1228
+  }
+}
