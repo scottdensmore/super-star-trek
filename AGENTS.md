@@ -306,12 +306,21 @@ Every coding agent working in this repository must follow this workflow.
       required code review are complete.
     - Open a normal, ready-for-review pull request by default. Do not open
       draft pull requests unless the user explicitly asks for a draft.
+    - Opening a ready-for-review pull request normally starts a Codex
+      review, and a push may start another. "The Codex review" below is
+      what to do with what it says.
 
 12. **Merge only clean, passing pull requests.** Merge only after GitHub
     reports a clean merge state and every configured check passes. Never
-    bypass a failing or pending required check. Self-merges are allowed when
-    these conditions are met. Use squash merge for short-lived development
-    branches to keep `main` linear, then delete the merged branch.
+    bypass a failing or pending required check. Wait as well for the
+    Codex review to answer the state being merged. It is not a check,
+    nothing enforces it, and its answer is not always a thing that can
+    arrive — "The Codex review" below says how to read one and when to
+    stop waiting for it. Where you stop, say so in the pull request body
+    and in the summary of the work. Self-merges are allowed when these
+    conditions are met.
+    Use squash merge for short-lived development branches to keep `main`
+    linear, then delete the merged branch.
 
 ### The review sub-agents
 
@@ -417,3 +426,69 @@ change — step 9 is explicit that filing is not resolving — but a
 finding about code the change did not touch is answered by filing it
 and saying so, which is step 9 working as intended rather than an
 exception to it.
+
+### The Codex review
+
+`chatgpt-codex-connector[bot]` reviews pull requests in this repository,
+and nobody has to invoke it: opening a ready-for-review pull request
+normally starts a review, which is what its documentation promises where
+automatic reviews are turned on. It is not the `codex exec` of "The
+review sub-agents", and it is not the other bot that comments on pull
+requests here.
+
+It answers with a reaction on the pull request itself. 👀 while it is
+working, and 👍 when it has finished with nothing to say. 👍 is not
+approval — it is one reader reporting that this pass found nothing.
+Otherwise it posts review comments; the one review it has filed here was
+a plain commenting review rather than an approval or a request for
+changes.
+
+Those comments bind as `code-review`'s do: fix, or resolve explicitly,
+on the standard "Answering a finding" sets, with the record going where
+that section says. Reply on the thread as well — that is where a
+disagreement reaches the reviewer, and where the next reader looks —
+and resolve the thread once it is answered. Then push, and let the
+review run again on what you pushed.
+
+Reading the answer is harder than it sounds, so do not build a rule on
+the reaction alone. GitHub allows each reaction only once per user per
+issue, so a 👍 cannot be repeated: a pull request that drew one on
+opening should still show that same 👍 after a fix push, `created_at`
+and all, whether or not anything reviewed the push — unless the bot
+withdraws and re-adds it, which nobody here has watched it do. The
+timestamp shows nowhere but `gh api
+repos/:owner/:repo/issues/<n>/reactions`. So what you are waiting for
+after a push is *comments or their absence*, and absence is not
+something the platform reports. Give it the few minutes a review takes,
+look for new comments, and say in the pull request what you saw.
+
+Two things to know about it.
+
+**It is a service on infrastructure this repository does not control.**
+Step 12 asks for its answer; it does not ask anyone to wait indefinitely
+for one, and there are ordinary states where no new answer can arrive —
+a finding resolved rather than fixed changes no code, so there is no
+push to review. Where the answer does not come, say so in the pull
+request body and in the summary of the work, and let whoever merges
+decide.
+
+**It reads this file.** Its comments here cited `AGENTS.md` by line
+range, at rules rather than at the diff, so it is better informed than a
+stranger and worse informed than the passes in steps 6-8: it has the
+pull request conversation but not the rounds behind it, which happen in
+sessions that leave no artifact, and not the reason a rule is worded the
+way it is. It found a defect in this workflow's own test that the passes
+before it had missed, which is the argument for reading it closely. It
+is not an argument for doing what it says without judging it.
+
+What is measured here rather than read: that 👍 means finished with
+nothing to say, that a push can start a fresh review, and that the
+review it files is a plain commenting one. What is neither — reasoned
+from how reactions work, and not watched — is the paragraph on reading
+the answer, where a 👍 outlives the push it predates. The published
+documentation describes the automatic trigger and 👀 and says none of
+those three. The
+evidence is two pull requests on one day — one re-review after a push,
+minutes later, and 👍 on the other after it opened. A trigger list that
+includes every push is documented for Codex Security Review, which is a
+different feature and not evidence about this one.

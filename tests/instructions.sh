@@ -92,6 +92,12 @@ fi
 STANDARD='actionable finding, or resolve it explicitly'
 # Three steps state it and one section defines it. Stating it a fifth
 # time on purpose means changing this number on purpose.
+#
+# "The Codex review" binds a fourth pass to the same standard and is
+# deliberately not counted: it says so in its own words rather than in
+# this phrase, and rewording it into the phrase to make it countable
+# would be a bigger edit than the coverage is worth. That is the one
+# place the standard can drift where this cannot see it.
 STANDARDS=4
 # Awk's status and its output are both checked, because either can lie
 # on its own. A non-number means it did not run -- unsupported construct,
@@ -130,8 +136,42 @@ fi
 # asked where a disagreement is recorded. Matched in quotes because the
 # heading itself is unquoted, so this finds the reference and not the
 # thing referred to.
-if ! grep -q "\"$SECTION\"" "$AGENTS"; then
-	fail "nothing in AGENTS.md refers to \"$SECTION\" -- the section defines the standard steps 6, 7 and 8 state, and nothing now sends a reader to it"
+# Before the heading, specifically. A reference below it is a
+# back-reference and cannot send anyone anywhere: the reader is already
+# there. Counting quoted mentions was enough while step 6 held the only
+# one, and stopped being enough the moment a later section quoted the
+# name too -- that alone would satisfy a count while step 6's pointer
+# was deleted, which is the state this check exists to catch.
+#
+# Flattened first, like the count above and for the same reason: the
+# pointer is a quoted phrase in wrapped prose, and a rewrap that split
+# it across two lines would fail here while the pointer sat there
+# intact. What it cannot see is which step the pointer is in, or a
+# layout that put the section above the steps -- the second would fail
+# it wrongly, and is why the message says what it checked rather than
+# what it means.
+if ! points=$(awk -v s="$SECTION" '
+	{ all = all " " $0 }
+	END {
+		gsub(/[ \t]+/, " ", all)
+		h = index(all, "### " s)
+		q = index(all, "\"" s "\"")
+		print (q > 0 && h > 0 && q < h) ? "yes" : "no"
+	}' "$AGENTS"); then
+	fail "could not look for the pointer to \"$SECTION\" in AGENTS.md -- awk exited non-zero, so this check did not run"
+else
+	# Answered, not merely exited: an awk that prints nothing and
+	# succeeds would otherwise pass this the way one printing a
+	# plausible number passed the count above before it was guarded.
+	case "$points" in
+	yes) ;;
+	no)
+		fail "nothing in AGENTS.md points forward at \"$SECTION\" -- the section defines the standard steps 6, 7 and 8 state, and nothing above it now sends a reader to it"
+		;;
+	*)
+		fail "could not look for the pointer to \"$SECTION\" in AGENTS.md -- awk printed '$points' instead of yes or no, so this check did not run"
+		;;
+	esac
 fi
 
 # CLAUDE.md points at it and holds nothing else.
