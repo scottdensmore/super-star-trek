@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "001c77dac6f4",
+  "strategy": "manual-commit",
+  "branch": "docs/codex-pr-review",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "AGENTS.md",
+    "tests/instructions.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/00/1c77dac6f4/0/metadata.json",
+      "transcript": "/00/1c77dac6f4/0/full.jsonl",
+      "compact_transcript": "/00/1c77dac6f4/0/transcript.jsonl",
+      "content_hash": "/00/1c77dac6f4/0/content_hash.txt",
+      "prompt": "/00/1c77dac6f4/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2549,
+    "cache_creation_tokens": 6358879,
+    "cache_read_tokens": 633566857,
+    "output_tokens": 960169,
+    "api_call_count": 1367
+  }
+}
