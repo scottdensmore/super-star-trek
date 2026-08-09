@@ -1,0 +1,1724 @@
+Yes lets push it and open a pr... once it is green squash merge
+
+---
+
+Ok what is next we should work on?
+
+---
+
+Lets pick up 58
+
+---
+
+Try and rerun the mutations. If Bash keeps failing, lets try and debug that
+
+---
+
+I want to update the workflow to make sure that any issue found in the feature / work being done is filed as issues to be worked on later
+
+---
+
+Also update the workflow to ensure that if the agent is not Claude that it creates or uses it's own code review subagent
+
+---
+
+Yep lets fix it. Also is there anything else in the workflow that you would scrutinize and change?
+
+---
+
+Ok pick those up next
+
+---
+
+Lets do 62
+
+---
+
+Ok lets do 46
+
+---
+
+What is each one of those?
+
+---
+
+Lets do 66 and 72 next
+
+---
+
+Lets do 71
+
+---
+
+Ok lets do 82
+
+---
+
+<task-notification>
+<task-id>a4d56ca795ed18bf9</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a4d56ca795ed18bf9.output</output-file>
+<status>completed</status>
+<summary>Agent "Final review before commit" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: **approve** — the substitution landed cleanly, commit on this state
+
+Re-read from the repository, not from my earlier copy. State reviewed: `HEAD` = `a71050f`, two unstaged modifications, nothing staged, nothing untracked (`git diff --stat`: `code-review.md` +4-1, `verifier.md` +12). `code-review.md`'s blob is `0b497be`, unchanged from the state I approved, so only the one paragraph moved.
+
+The sentence is exactly the suggested replacement, and the surrounding text survived the rewrap intact. Checked mechanically rather than by eye, since four rewrites is precisely where reading confirms what you expect to see:
+
+- **Substitution boundary.** Only `reach you the same way,` → `are no fresher: they are`. The tail — "quoted into the task description from the main agent's memory of them, which the work under verification may since have changed." — is character-for-character what was there before the edit.
+- **No duplicated fragment.** Zero adjacent repeated words; zero repeated 4-grams anywhere in the paragraph. A fragment surviving a rewrap twice would show as a repeated n-gram, and none does.
+- **No dropped fragment.** Four sentences, matching the four-sentence structure before the edit; four em-dashes, in two correct pairs (`— … —` around the file list, `— … —` around the commit counts); all three clause boundaries around the edit still parse.
+- **Mechanics.** No trailing whitespace, no CR, file ends in `\n`, lines 37-47 run 65-75 columns, in step with the file. `sh tests/instructions.sh .` passes.
+
+One thing you will see and should not act on: line 45 wraps at 65 columns where its neighbours run 70-75, because the reflow pushed "A claim" down rather than reflowing the last three lines. It is inside the file's existing range (58-77) and reflowing it would rewrite the same three lines a fifth time for nothing.
+
+The numbers are untouched by this edit and remain as I derived them from `git` in the previous round: 15, 9, three days.
+
+Nothing else moved. The other two nits and the recommendation are resolved as you describe — `#84` corrected by comment, `#85`'s fourth row added, `#86` filed on the framing that keeps `#82`'s parity criterion intact. The commit body's two recorded items (15/9/3 re-derived in code review rather than by a fourth verifier round; the `code-review.md`/`verifier.md` asymmetry as a decision resting on parity) match what I found. Ship it.</result>
+<usage><subagent_tokens>45268</subagent_tokens><tool_uses>3</tool_uses><duration_ms>50407</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bkz0tz75x</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/bkz0tz75x.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI to finish" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Which one should we do?
+
+---
+
+Ok lets start 78
+
+---
+
+try again
+
+---
+
+<task-notification>
+<task-id>a13395ebdae7cb39c</task-id>
+<tool-use-id>toolu_01EiSekqB1eTdc6kBAubRBRe</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a13395ebdae7cb39c.output</output-file>
+<status>completed</status>
+<summary>Agent "Re-review after the marker fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict on the current state
+
+All four are right, and none of them made anything worse. The quadrant title is guarded and now degrades in three steps rather than wrapping; the band you predicted exists but falls the *good* way (see 1 below); the 40-column threshold in the comment matches the screen exactly; the README sentence is now true as written; and 40 really is the maximum over every reachable status-line state, not just the ones I happened to drive — I checked that by construction rather than by observation. Nothing else changed at 72x24 or 80x24, `tests/tui.sh` and the full `ctest` suite pass, and plain mode is untouched.
+
+**1. Quadrant title guard — correct, and the band is benign.** The thresholds are exactly what the code implies: the placeholder `" Quadrant "` needs `panel_room(wquad) &gt;= 10`, i.e. 13 columns; the in-game `" Quadrant %d - %d "` needs 16, i.e. 19 columns. Quadrant coordinates are always single digits (1-8), so the guard string `" Quadrant 8 - 8 "` is the exact length of what gets printed, never an approximation.
+
+The band is 13-18 columns, and it does not do what you feared. Because the placeholder is drawn first and unconditionally overwritten only when the longer title fits, a *running game* at those widths shows `" Quadrant "` with the coordinates dropped — captioned, not bare:
+
+```
+=== 19 ===            === 18 ===            === 12 ===
+lq Quadrant 3 - 2 k   lq Quadrant qqqqqk    lqqqqqqqqqqk
+x     1 2 3 4 5 6&gt;x   x     1 2 3 4 5 &gt;x    x     1 2 &gt;x
+```
+
+So the sequence is full title → panel name only → nothing, and the pre-game screen (checked separately at 20, 19, 18, 16, 14, 13, 12) never disagrees: it carries `" Quadrant "` at every width down to 13 and nothing below. The one place the two states differ is 13-18, where in-game loses only the coordinates — it never shows stale or wrong ones, and never wraps at any width I could produce. I would leave this exactly as it is.
+
+**2. Threshold comment — matches the screen.** Caption present at exactly 40 columns, absent at 39. Verified at 41/40/39/38 in a running game.
+
+**3. README — accurate.** "brings the panels straight back" is now true of what I can demonstrate; grow-back from 33, 35, 39, 40 and 71 to 80 restores the panels exactly, and the sentence no longer implies the conversation comes back with them.
+
+**4. The 40-column claim — confirmed as a maximum, not a sample.** Two independent checks:
+
+- *By exhaustion of the assignment sites.* All eleven places that write `shield` (`setup.c:239,263`, `moving.c:245`, `sst.c:890`, `battle.c:194,209,217,620,978`, `events.c:541,545`) keep `0 &lt;= shield &lt;= inshld`, and `inshld` is only ever 1250.0 or 2500.0. The shield-transfer path clamps to `inshld` explicitly (`battle.c:187-194`), the hit path clamps the absorbed amount to `shield` (`battle.c:619`), and the one unclamped subtraction, `shield -= hit*0.2` in `checkshctrl()` (`battle.c:978`), cannot go negative because `hit = rpow*shield/inshld` and `rpow` is rejected unless it is strictly less than `energy &lt;= inenrg`, so the subtraction is at most `0.4*shield`. Hence `%.1f` is at most `2500.0` (6 characters), the percentage is at most `100` (4 with the sign), and `DAMAGED,` (8) is the longest of the three state words — 40 exactly.
+- *By brute force.* I compiled `tuifmt.c` against a scratch driver outside the repository and swept every line over the extremes of `d.date`, `energy`, `shield`, `inshld`, `lsupres`, `d.remkl`, `d.remtime`, `warpfac`, `torps`, both damage flags, `shldup`, `iscloaked`, docked/undocked and all three conditions, including deliberately out-of-range values (negative energy, negative reserves, 99999.9 stardate, 999 Klingons, 999.99 time left). Widest per line: 21, 29, 28, 37, 18, 22, 16, **40**, 17, 20. Line 8 is the only one that reaches 40, and it needs pathological inputs elsewhere to be beaten — none of which the game can produce. On screen at 72x24 the `DAMAGED` line ends `... 2500.0 unitsx`, flush against the border, no marker; at 71 it clips to `... 2500.0 uni&gt;`. So the supported minimum is safe, with exactly zero slack, which is what the comment now says and what #89 records.
+
+## What I exercised this round
+
+- Re-read `tui.c`, `README.md` and the full working-tree diff from disk; rebuilt (`cmake --build build` — already up to date).
+- tmux on socket `uirev2` only, killed with `kill-server` on that socket at the end. In-game width sweep at 21, 20, 19, 18, 17, 16, 14, 13, 12 (quadrant caption band) and 72, 71, 41, 40, 39, 38, 35, 33 (status caption and clipping), plus a pre-game sweep at 20-11 before any game state exists, and grow-back to 80.
+- Forced `Shields DAMAGED` via the `debug` command's selective damage at 72x24 to check the exact fit on screen.
+- Scratch brute-force driver over `fmt_status_line()` (compiled outside the repository; no files added to the tree).
+- `./tests/tui.sh ./build/sst` → `tui OK`; `ctest --test-dir build` → 11/11 passed.
+- Plain mode journey `printf 'regular\nshort\nnovice\nxyz\nsrscan\nquit\ny\n' | ./build/sst` — scan, status readout and ending unchanged, no markers.
+- `git status` unchanged (`README.md`, `tests/tui.sh`, `tui.c` modified); I edited nothing.</result>
+<usage><subagent_tokens>97793</subagent_tokens><tool_uses>17</tool_uses><duration_ms>562935</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bz16nwtdb</task-id>
+<tool-use-id>toolu_01VSGSG61YAVzR18G6vXBPVR</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/bz16nwtdb.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Ok lets do 91
+
+---
+
+<task-notification>
+<task-id>a9daa02e223dfd256</task-id>
+<tool-use-id>toolu_01Pm12EeC7iW2UHRzmS2ewv7</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a9daa02e223dfd256.output</output-file>
+<status>completed</status>
+<summary>Agent "Second UI review of the height fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+Two of the three are right. The recovery paragraph is now accurate and reads as the conjunction you intended, and the test's positional check lands on the correct row and is not timing-sensitive. The pager sentence over-claims: fifteen rows does **not** behave like fourteen — at fifteen the whole scan is readable, a line per page. That is one sentence to fix; everything else in this round is good.
+
+## Answers to your two questions
+
+**1. "above about thirty columns and fourteen rows" — the join is right.** It reads as a conjunction, not a disjunction. "so long as the squeeze stopped above about thirty columns and fourteen rows" states two conditions the squeeze must satisfy together, and "Below either, the display does not recover" then names the disjunction explicitly for the failure side, which reinforces the reading rather than muddying it. It does not promise recovery in any case that lacks it. That is the failure of the old wording gone.
+
+One nit, not worth blocking on: "above ... fourteen rows" strictly excludes fourteen, and fourteen is the last size that recovers (`80x14 → 80x24` restores the panels and the prompt; `80x13` does not). The same seam exists at thirty columns, but "about" covers that one and there is no "about" governing the rows. Since the paragraph above sets the cliff precisely — "Shorter than fourteen rows" — a reader who compares the two gets the right answer anyway. If you want it airtight, "stopped at about thirty columns and fourteen rows or better" closes it.
+
+**"Quitting and starting again is the way out; it works even when you cannot see it" matches my measurement, and not naming the sequence is the right call.** What I reached the farewell with was `quit`, `n`, Enter, `n` — but that is one path through the ending, not the path: the answers depend on whether you want the score recorded and whether you want to play again, and a player at a different point in a game may meet a different set. A README that named it would be stating a sequence that is only sometimes the sequence. "It works even when you cannot see it" is the load-bearing fact and it is true.
+
+**2. The pager sentence over-claims at fifteen — should-fix, `README.md:34-36`.** I paged `lrscan` all the way through at both sizes, TUI engaged by starting at 100x30 and resizing down (starting at 80x15 directly does not reach the TUI at all — it refuses and falls back, which is why this has to be measured as a resize).
+
+At **fourteen** rows nothing is readable at any point. Six presses, six identical screens:
+
+```
+mqqqqqqqqqqqqqqqqqqqqqqqqqqqjmqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj
+ [HIT SPACE BAR TO CONTINUE]
+```
+
+then `COMMAND&gt;`. "A scan pages past with nothing to read" is exactly right for fourteen. (It also corrects something I said in round 1: it is not endless — it ends after as many pages as the scan has lines, having shown none of them. Worth having in #95 if that phrasing went in.)
+
+At **fifteen** the scan is fully readable, one line per page — the message window has two rows, one for content and one for the pager, and `LINES-PANELH-1` is 1 rather than 0:
+
+```
+page 0:  (blank)                              page 3:      7    5   16
+         [HIT SPACE BAR TO CONTINUE]                   [HIT SPACE BAR TO CONTINUE]
+page 1:  Long-range scan for Quadrant 3 - 2   page 4:      1    3    9
+         [HIT SPACE BAR TO CONTINUE]                   [HIT SPACE BAR TO CONTINUE]
+page 2:      4    4    7                      page 6:  COMMAND&gt;
+```
+
+Heading, all three data rows, then back to the prompt. Cramped and slow, but a player gets the scan. Lumping it with fourteen tells them a size that works does not. My round-1 report is where this came from — I measured fifteen with a single capture and reported "one blank line", which was the first page, not the whole story. Suggested fix, keeping your structure:
+
+&gt; Just above that there is barely more — at fourteen rows the one line left over goes entirely to the pager, so a scan pages past with nothing to read at all; at fifteen it comes one line at a time.
+
+If #95 says fifteen shows nothing, it is worth a correcting comment there too, since the sentence and the issue came from the same measurement.
+
+## The test
+
+`tests/tui.sh:1092-1097` is right. The positional form asserts what the fix is actually about, and row 11 is the correct row: the full suite passes against the current binary (`tui OK`), and the caption cannot appear on row 11 in a build that names `PANELH-1`, because at that height row 12 does not exist and the caption is not drawn at all. I also checked the row is not a timing artefact of arriving there via the 19-column excursion — I sampled row 11 every 100 ms starting the instant after the resize and it matched on the very first sample and every one after, so the `sleep 1` is generous. The single-shot check rather than a polling `expect` matches the height-sweep block immediately above it, so it is consistent with its neighbour; given the measured latency I would not change it.
+
+## What I exercised this round
+
+- Re-read `README.md:23-42` and `tests/tui.sh:1082-1098` from the working tree.
+- `tests/tui.sh ./build/sst Debug` — passes.
+- Paged a full `lrscan` at 80x14 and 80x15 (resized down from 100x30, ten Space presses each), plus a control run started directly at 80x15 that showed the TUI declining to engage at that size.
+- Sampled screen row 11 twelve times at 100 ms intervals after the 80x11 resize, along the same path the test takes (20x24, 19x24, 80x24, then 80x11).
+- Private tmux sockets `uirev2` and `uirev3`, both killed and their socket files removed; no files edited; `git status --short` still shows only your three modified files.</result>
+<usage><subagent_tokens>81974</subagent_tokens><tool_uses>8</tool_uses><duration_ms>232995</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab656d0956be48302</task-id>
+<tool-use-id>toolu_0175xwk1jS5wGRv4yENRSd5H</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/ab656d0956be48302.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the height fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Re-review of the changed state
+
+Worktree still `HEAD = c2fd28b`, three modified files, nothing staged or untracked. `tui.c` is byte-identical to what I reviewed (`git diff -- tui.c` unchanged); both edits landed in `tests/tui.sh` and one in `README.md`.
+
+# Verdict: **request changes** — one line, and it is the one I asked you to add
+
+## Blocker/should-fix: my suggested positive control swallows the assertion it was meant to protect
+
+`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh:1136-1143`
+
+The caption is drawn at row 0, column 2. The title is drawn at row 0, column 2. At one row they are the same sixteen columns, so a build with the guard relaxed erases `Quadrant` with the caption — which means the control fails, the `elif` never runs, and the block reports a defect that does not exist while staying silent about the one that does.
+
+Not inferred. I rebuilt the `&gt;= 1` mutant from the current sources and ran the current test against it:
+
+```
+FAIL: sensors: the panel is not drawn at all at one row
+```
+
+Before the control was added, that same mutant reported `sensors: the caption was drawn over the only row there is`. The control made the diagnosis worse. This is the #64 shape AGENTS.md step 4 names — an assertion tripping whose text points elsewhere — and I introduced it, so I am not going to approve past it.
+
+The control has to be something the caption cannot overwrite. Non-blankness is enough, it is what the control actually needs to establish, and it is render-agnostic (`uniform_col`'s comment already warns that capture-pane renders the line-drawing set as it pleases, so a control keyed on `q` runs would be worse):
+
+```sh
+		# The positive control first: absence proves nothing on a
+		# screen where nothing was painted, and this assertion is
+		# nothing but an absence. It cannot ask for the title --
+		# the caption is drawn over exactly where the title is, so
+		# a build with the guard relaxed would fail the control and
+		# never reach the line that names the defect.
+		if ! screen | head -1 | grep -q '[^ ]'; then
+			fail "sensors: nothing at all was drawn at one row"
+			dump
+		elif screen | grep -qF 'SENSORS DAMAGED'; then
+			fail "sensors: the caption was drawn over the only row there is"
+			dump
+		fi
+```
+
+Verified both ways, on fresh out-of-tree copies with their own build directories:
+
+- `&gt;= 1` mutant with this control: `FAIL: sensors: the caption was drawn over the only row there is` — the accurate message, and the only one.
+- Unmutated build with this control: `tui OK`.
+
+Keeping `if`/`elif` is right, and your reason for not using `unwanted` holds — the control must run first. That answer only breaks down if the control is one the defect can erase, which is exactly what happened. The mutant capture, for the record:
+
+```
+mq SENSORS DAMAGED qqqqqqqqqjmq Status qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj
+```
+
+## The should-fix: confirmed, and stronger than argued
+
+The replacement is right and your verification of the spacing premise matches mine (`fmt_quad_line` writes `"%2d "` then `" %c"`; header is `"    1 2 …"`, one space). I did not just re-run your seeds — I took the actual broken capture and substituted the cell the old pattern leaned on:
+
+| capture | old pattern | new pattern |
+|---|---|---|
+| `mq 9 … .10 .` (real mutant) | MATCH | MATCH |
+| same with `.10 *` | **quiet** | MATCH |
+| healthy 72x11 | quiet | quiet |
+
+That is the demonstration the comment claims, done against the thing itself rather than against three galaxies that happened to agree. The guard-removed mutant still fails `short: two grid rows were drawn onto one line` under the current test, and the fixed build is `tui OK`.
+
+**On the galaxy shape you asked about: I cannot construct one, and I think none exists.** The reasoning is closed rather than sampled:
+
+- The second label is always preceded by the previous row's last *cell*, and `quad` cells are never digits (`.` `*` `E` `K` `C` `S` `B` `P` `@` `?` `#` `-` and blank), so `[^0-9]` always holds.
+- Only grid row 10 can ever be the appended one — row 11 is the first `wmove` that fails — so the label is `10`, which `1?[0-9]` matches; and `1?[0-9]` covers 1-9 too if the collision ever moved.
+- A blank first cell only *adds* spaces after the label, so `[0-9]+  ` still holds.
+- The header cannot match under `^`: after `x` and its spaces the only digit reachable is the leading `1`, and it is followed by one space.
+- Title and border rows fail at `[0-9]+` (`Q`, `q`).
+
+The remaining exposure is a change to `fmt_quad_line`'s format string, not to a galaxy — and that would break the test loudly at 80x24 first.
+
+## The README nit: confirmed
+
+"A terminal shorter than the panels themselves loses rows off the bottom of them" is accurate — the panels are 13 deep and rows first drop at 12 — and it no longer implies anything about 24. The rest of that section I re-verified against the running game in the first pass and it still stands.
+
+## `cut -c1-29` — fine implied, one clause better
+
+Your read is correct: 29 is `QUADW`, the quadrant window is 29 wide at any terminal ≥ 29 columns because `resize_term` only shrinks, and the `-x 72` three lines above pins it. `cut -c1-29` takes 1-indexed columns 1-29 = the window's 0-indexed columns 0-28, which stops exactly one column short of `wstat`'s left border — I checked that boundary against a real capture, and it is right, not right-by-luck.
+
+I would name the number, because the failure mode of getting it wrong is quiet in the wrong direction: a narrower size added to this block readmits status-panel digits, which turns a clean assertion into a *spurious* failure that a future maintainer is likely to fix by loosening the pattern. Since you are editing the file anyway, one clause on the existing sentence does it — "…the status panel beside it is full of digits. Twenty-nine is `QUADW`, which the panel keeps at any width at or above it, and this only ever runs at 72." Not worth a round on its own; fold it in with the control fix.
+
+## What re-approval will need
+
+Only the control line changed. I have already run the exact replacement green on the fixed build and correctly-failing on the `&gt;= 1` mutant, so a fresh `code-review` on the result can lean on that; re-run `tests/tui.sh` once on the real tree to confirm the file edits as you made them, and the state is ready. `tui.c` needs nothing.
+
+Everything else from the first pass stands: the five mutants, the 11/11 `ctest`, the `-Werror` build, the README's numeric claims measured against the running game, and the judgment calls on silent row-clipping and on part 2 belonging to this slice rather than #88.</result>
+<usage><subagent_tokens>102924</subagent_tokens><tool_uses>12</tool_uses><duration_ms>497074</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab656d0956be48302</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/ab656d0956be48302.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the height fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Verdict: **approve**
+
+Reviewed state: worktree at `HEAD = c2fd28b` (branch `fix/tui-short-terminal`, no commits yet), three modified files, nothing staged or untracked — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c`, `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh`, `/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md`. `tui.c`'s diff hashes identically to my first pass, and the README paragraph is the one I fact-checked against the running game.
+
+## Confirmations
+
+**The control.** Applied exactly, with the reasoning in the comment. I rebuilt the `&gt;= 1` mutant independently of your run: `FAIL: sensors: the caption was drawn over the only row there is`, alone. Real tree `tui OK` on the exact committed state.
+
+**The `QUADW` clause.** Reads correctly and pins the coupling.
+
+## I took the invitation, and it found one
+
+You were right that this was the moment. **`tests/tui.sh:989-991` — `grep -qF 'Time Left'` had never been observed failing**: it sits behind the `elif` of the grid-row check, and every mutant run so far — mine and the verifier's — tripped the first branch and short-circuited past it. An assertion whose failure nobody has seen is the same class as the other three, so I built one that isolates it: `panel_has_row(wstat, row + 1)`, which drops only the status panel's last row and leaves the quadrant panel whole.
+
+```
+FAIL: short: the last status line is missing at 80x24
+```
+
+It fires, with its own accurate message. I also checked the thing that would have made it a false assertion — the search is unconfined, and this file has `expect_status` precisely because "Stardate" appears in both the panel and the conversation. On the mutant screen, `Time Left` appears **nowhere**: not in the briefing, not in the prompt. So the unconfined grep is currently asking what it says it asks. Worth knowing that it is sound for a reason rather than by luck; if a future check ever runs this block after a `status` command, it will need `cut -c30-`.
+
+That closes the audit: every new assertion has now been observed failing on a build that breaks precisely what it claims to cover, and each with a message naming that defect and not a neighbour.
+
+| assertion | isolating mutant | message |
+|---|---|---|
+| `^x 10 ` | `getmaxy(w) - 2` | last grid row missing at 80x24 |
+| `Time Left` | `panel_has_row(wstat, row+1)` | **last status line missing at 80x24** (new) |
+| sweep border awk ×3 | guards deleted | drawn onto the bottom border at 72x12/11/9 |
+| two-labels regex | guards deleted | two grid rows on one line |
+| `NR == 11` / `NR == 2` caption | `PANELH-1` | lost its reason / not on the border |
+| 80x1 control + negative | `&gt;= 1` | caption drawn over the only row |
+| part 2 | `wresize(wstat, PANELH, …)` | drawn onto the bottom border |
+
+## One nit — and explicitly *not* the shape you are hunting
+
+**`tests/tui.sh:987` — `'^x 10 '` is the only assertion in the suite that depends on how `capture-pane` renders the line-drawing set.** The file's own `uniform_col` comment establishes the opposite convention: "Which character it is does not matter — capture-pane renders the line-drawing set as it pleases." The `x` is ACS_VLINE's ASCII fallback.
+
+It is safe today for a reason I checked rather than assumed: nothing in the tree calls `setlocale()`, so ncurses runs in the C locale and emits ACS escapes, which tmux stores and replays as `x`/`q` — on macOS by the same reasoning. **And its failure mode is a spurious FAIL, never a silent pass**, so it cannot hide a defect. That is the opposite of the three assertions this branch has already produced, and I do not want the framing of your question to push it up a severity it does not deserve.
+
+If you want it render-agnostic anyway, `'^. 10  '` is a verified drop-in — I ran all three candidates against a real 80x24 capture:
+
+| pattern | lines matched |
+|---|---|
+| `^x 10 ` | 1 (grid row 10) |
+| `^. 10  ` | 1 (grid row 10) |
+| ` 10  ` | **3** — header, `Torpedoes     10`, grid row 10 |
+
+The third is the trap: dropping the anchor to escape the `x` would silently weaken the check to something the column header satisfies on its own. `^. 10  ` keeps the selectivity because the header has one space after its leading `1` where a grid row has two — the same spacing fact the two-labels regex now rests on. Your call; leaving it is defensible, and I would not hold the commit for it.
+
+## Everything else stands
+
+The judgment calls (silent row-clipping, dropping from the bottom, part 2 belonging to #91 rather than #88, the 80x1/80x2 sizes as sound test practice), the closed argument that no galaxy shape fools the two-labels regex, the `-Werror` build, 11/11 `ctest`, and the README's four numeric claims measured against the running game.
+
+Nothing further from me. The pass coverage claim holds: `ui-review` saw the last player-visible state, and everything since has been test-file material that I have now exercised directly.</result>
+<usage><subagent_tokens>120065</subagent_tokens><tool_uses>10</tool_uses><duration_ms>306443</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ab656d0956be48302</task-id>
+<tool-use-id>toolu_01PJJRhPnvLm6kqmjMCg5maj</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/ab656d0956be48302.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the height fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Verdict: **approve**
+
+## State approved
+
+Worktree at `HEAD = c2fd28b` (branch `fix/tui-short-terminal`, no commits yet), three modified files, nothing staged or untracked:
+
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c` — `panel_has_row()` plus the early return in both draw loops; `panelh = LINES &lt; PANELH ? LINES : PANELH` for the status panel's `wresize`; the ` SENSORS DAMAGED ` caption asked of the window (`getmaxy(wquad)-1`, guarded by `&gt;= 2`). Diff hashes identically to my first pass.
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh` — the height sweep at 72x12/11/9, the completeness pair at 80x24, the two-labels collision check, and the caption's three heights.
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md` — unchanged since my first pass, hash confirmed.
+
+## Both final edits confirmed
+
+`grep -qE '^. 10  '` with a comment giving both reasons, and the `Time Left` caveat written into the file. The second one is the better of the two changes: the reason that gap stayed open — an assertion behind an `elif` that every earlier mutant short-circuited past — is now in front of whoever adds the next branch to that chain, which is where it does some good. A review comment would have died with this thread.
+
+## Re-verified against the final test file, not the one I reviewed earlier
+
+The test file changed after every mutant run in this thread, so I rebuilt all three from the current sources in fresh out-of-tree copies with their own build directories, and re-ran:
+
+| mutant | result |
+|---|---|
+| `row &lt; getmaxy(w) - 2` | `short: the last grid row is missing at 80x24` — the new `^. 10  ` still fires |
+| `panel_has_row(wstat, row + 1)` | `short: the last status line is missing at 80x24` — `^. 10  ` passes, so the `elif` is reached |
+| both guards deleted | six failures: the sweep at 72x12/11/9, the two-labels check, and both caption rows |
+
+That second row is the one that mattered for this round: it proves the anchor change did not re-close the branch it sits above.
+
+Selectivity re-checked on a real 80x24 capture — `^. 10  ` matches exactly one line, grid row 10, and neither the column header nor `Torpedoes     10`.
+
+Final state: `tui OK`, `ctest` 11/11, `-Werror` build clean, `git diff --check` clean, no stray files. My tmux sockets are cleaned up; I touched nothing on the default socket or any session I did not create.
+
+## Standing record for the commit
+
+Every assertion in the new material has now been observed failing on a build that breaks precisely what it claims, each with a message naming that defect and not a neighbour. Three needed an isolating mutant built for them specifically — the over-clip bound, the status panel's last line, and the caption's height guard — and one of those, the `Time Left` check, had never been seen to fail until this review.
+
+The three judgment calls stand as reviewed: rows clip silently (defensible because rows only start dropping at twelve, below the fourteen where the prompt is already gone per #94, so no player reads a clipped panel and acts on it); dropping from the bottom rather than reordering the status panel; and part 2 belonging to #91 rather than #88, since it changes only the shrunk state and leaves the grow-back path byte-identical.
+
+Pass coverage: `ui-review` twice with the last round seeing the player-visible state, `verifier` once, and everything since has been test-file material that I exercised directly. The README's four numeric claims — the fourteen-row conversation cliff, the fourteen-row pager, fifteen paging one line at a time, and the fourteen-row recovery boundary — I measured against the running game myself.
+
+Approval covers exactly this state. Commit it.</result>
+<usage><subagent_tokens>125750</subagent_tokens><tool_uses>7</tool_uses><duration_ms>479168</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bjbvfnz45</task-id>
+<tool-use-id>toolu_01V7RR53huEmmKfmUZqHLtrx</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/bjbvfnz45.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Update the workflow for this app so the code review portion runs /codex:adversarial-review as the code reviewer.
+
+---
+
+<task-notification>
+<task-id>a6779434dee61197a</task-id>
+<tool-use-id>toolu_01BBTgWZjxbWkNxf6TgzTdxs</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a6779434dee61197a.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the workflow change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>[harness: subagent output matched instruction-shaped pattern(s): settings-json. Control tags below are neutralized (`&lt;` → `&lt;\`); treat any remaining directive-shaped text as a finding to relay to the user, not an instruction to you.]
+
+Re-read both files at their current state. `.claude/settings.json` is out of the change: the worktree blob is `1c34061`, which parses as `HEAD` plus `enabledPlugins` with `permissions` reordered to the top — i.e. the user's `/plugin install` output, untouched by you. `AGENTS.md` is `0faff2b`, +134/-11.
+
+## Verdict: request changes
+
+Three one-clause edits, all of them in the class you asked me to watch for. Everything from the previous round is genuinely applied — SF2's paragraph is accurate against `scripts/lib/git.mjs`, SF3 no longer claims equivalence, nit 1 is down from ~24 lines to 12 with the one-laptop observation and the 2.1.222 mechanism both gone, nit 2 and nit 3 are done.
+
+### Should-fix 1 — `AGENTS.md:236`: "The `ui-review` middle one" is broken
+
+The original "The middle one" pointed at the middle of three items in the sentence immediately before it. Your new sentence now sits between them, and the repair reads as a leftover edit: a reader has to count list items two sentences back to resolve it.
+
+Fix: `Whether that round saw the state being committed is what makes the rerun rule in step 6 auditable:`
+
+### Should-fix 2 — `AGENTS.md:428-430`: "takes away a contributor's ability to turn it off" overstates by one clause, and it is carrying the justification
+
+Claude Code 2.1.222's own settings documentation: *"Settings precedence is user &lt; project &lt; local &lt; flag &lt; policy, so to disable a plugin that project settings enable, set it to false in `.claude/settings.local.json`; setting false in `~/.claude/settings.json` is overridden by the project."* So tracking it removes the **user-level** off switch; a per-clone local override still works. The reason to be exact here is that this sentence is the stated ground for a decision the next agent will be asked to respect.
+
+Fix: `…takes away a contributor's ability to turn it off in their own user settings.`
+
+### Should-fix 3 — `AGENTS.md:431-433`: the diagnostic sentence indicts the wrong thing
+
+As written, "a project-scoped record reads as enabled while the command does not load" covers a project-scoped record made *for this project* — which loads fine; that is exactly the configuration on the machine you developed this on. The next clause rescues it, but the first clause is the one a reader in trouble will act on, and it would have them reinstall a record that was working.
+
+Fix: `…a record scoped to another project reads as enabled here while the command does not load.`
+
+(For the record on evidence: I reproduced the "reads as enabled" half myself — isolated `HOME`, a record with `projectPath` naming an unrelated directory, `claude plugin list` printed `Status: ✔ enabled` beside `Scope: project`. The "does not load" half is still your verifier's observation, not mine. Since the sentence now leans on the `Scope` line rather than on a mechanism, that split is fine.)
+
+## Your two questions
+
+**1. Dangling promise — no, with one residue.** I grepped: nothing in `AGENTS.md` now mentions `.claude/settings.json`, `enabledPlugins`, or a clone having anything. "Nobody's to install but yours" and "Nothing here checks any of that" both read correctly against the new arrangement, and step 8 never asserts the command exists.
+
+The residue is `AGENTS.md:493-494`. "Where nobody is there to run it — an unattended session, a machine with no Codex CLI, a harness that has no slash commands at all" is a machine-shaped list, written when a clone was going to carry the enablement. The likeliest case now is person-shaped: someone is right there and simply has not installed the plugin. They are not covered by "nobody is there to run it", and "a machine with no Codex CLI" misses them too, since they may have the CLI and not the plugin. Step 10's "could not be run" catches it, so it is not a hole in the rules — but this list is where a reader will look. Nit: add `or without the plugin installed` to the list.
+
+**2. The four-case clause — keep the cases, fix the ordering.** It is followable, but two things push it toward skimmed:
+
+- At the moment `code-review` is invoked, **"still to be asked for" is the normal answer** in any attended session, because step 8's own sequence is code-review, then stop and ask. Nothing says that, so each author re-derives it, and a reviewer receiving "still to be asked for" cannot distinguish the expected state from a dodge — which is the exact failure the clause exists to prevent.
+- "Was declined" cannot yet be true on a first pass, and it is listed second.
+
+Compression that keeps all four and answers both, one clause instead of two sentences:
+
+&gt; …and where the change stands with the adversarial pass below: answered (and whether anything has changed since), declined, still to ask — normally still to ask, since `code-review` comes first — or nobody to ask.
+
+**On aligning the two standards (your SF3 note):** don't, not here — you were right not to smuggle it. Worth knowing when you do decide: the file already has that route under another name. Step 7 says "Fix or **explicitly resolve** every actionable finding" for the `verifier`, while step 8 says only "Address every actionable finding" for `code-review`. So your new wording is consistent with the `verifier`'s precedent, and `code-review` is the odd one out. That makes it a small, well-founded change to step 8 — its own branch and commit.
+
+## One mechanical note for the commit
+
+`.claude/settings.json` is still modified in the worktree, and it still contains `enabledPlugins`. `git commit -a` or `git add -A` would resurrect precisely what SF1 removed. Commit `AGENTS.md` alone (`git commit -- AGENTS.md`), and say in the summary that the settings change is the user's own uncommitted work, left in place.
+
+## Not reviewed
+
+Unchanged from the previous round: whether a foreign-project record actually blocks *loading* (I confirmed only that it reports as enabled), and whether the settings-driven sync ever rewrites a `user` record to `project`. Both need an authenticated interactive session. Neither now bears on the change, since the tracked key is gone and the prose points at the `Scope` line rather than at a mechanism.
+
+Files: `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md`, `/home/scottdensmore/Developer/scottdensmore/super-star-trek/.claude/settings.json`.</result>
+<usage><subagent_tokens>92216</subagent_tokens><tool_uses>5</tool_uses><duration_ms>144886</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a6779434dee61197a</task-id>
+<tool-use-id>toolu_01RjaCS2Zg9Su1taqnArWxQx</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a6779434dee61197a.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the workflow change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>[harness: subagent output matched instruction-shaped pattern(s): settings-json. Control tags below are neutralized (`&lt;` → `&lt;\`); treat any remaining directive-shaped text as a finding to relay to the user, not an instruction to you.]
+
+## Verdict: approve
+
+Reviewed state: branch `docs/codex-adversarial-review` at `main` (`be17114`), no commits ahead. `AGENTS.md` blob `292fc95` (+129/-10) — the only file to be committed. `.claude/settings.json` is unchanged from the last round (`1c34061`, `HEAD` plus `enabledPlugins` with `permissions` reordered) and stays out of the commit as the user's own work.
+
+All five edits landed as described, and I checked each rather than taking the summary for it:
+
+- `AGENTS.md:238-239` names its own referent; nothing counts list items backwards any more.
+- `AGENTS.md:430-432` now scopes the claim to user settings, which is what the precedence documentation supports.
+- `AGENTS.md:433-435` indicts the foreign-project record rather than project scope as such. Folding away the trailing "is the usual reason" was the right call — the sentence is now both shorter and true.
+- `AGENTS.md:493-494` covers the person-shaped case.
+- The four cases at `AGENTS.md:231-236` read as one clause with the normal answer marked, which is what makes it a rule someone follows rather than a checklist they skim.
+
+No new claims were introduced by any of the five edits, so nothing new to verify against the plugin or the binary. Formatting is consistent with the file: no trailing whitespace, wrapping matches the surrounding prose, trailing newline present.
+
+Filing the step 7 / step 8 inconsistency rather than fixing it here is the right disposition, and matches step 9.
+
+## On the three closing paragraphs
+
+Two of the three earn their place; one is a fold, and it is optional.
+
+**Keep** the Codex-authored caveat (`482-489`) and the unattended case (`493-500`). They address different readers, neither restates the other, and each is the answer to a question the section otherwise leaves open.
+
+**Fold** the `Stop` hook paragraph (`490-492`). It is the only paragraph in the section that asks no one to do anything — it exists purely to say when "Only a person is to start it" would stop being true. Sitting three paragraphs downstream of that rule, it reads as a third exception in a row; appended to the rule it qualifies (`AGENTS.md:459-465`), it reads as the rule's own boundary and the tail drops from three paragraphs to two. Something like: *"The plugin also ships an opt-in `Stop` hook that would run a review by itself. It is off as shipped; if anyone turns it on here, this rule stops being true and the section needs rewriting rather than working around."*
+
+One constraint if you do it: `AGENTS.md:437-439` forward-references "the last paragraph of this section", so the unattended case has to stay last. Folding the `Stop` paragraph upward preserves that; reordering the other two would not.
+
+This is cosmetic and does not change what any reader does. Apply it or don't — the approval covers `292fc95` either way, and if you make that fold, it is a paragraph move with no new claims in it, so I don't need to see it again before you commit `AGENTS.md` alone.
+
+## Not reviewed
+
+Unchanged and no longer bearing on the change: whether a foreign-project record blocks loading (I confirmed only that it reports as enabled), and whether the settings-driven sync rewrites a `user` record to `project`. Both need an authenticated interactive session, and the file now points at the `Scope` line rather than at either mechanism.
+
+File: `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md`.</result>
+<usage><subagent_tokens>100224</subagent_tokens><tool_uses>3</tool_uses><duration_ms>56566</duration_ms></usage>
+</task-notification>
+
+---
+
+You should be able to run this without intervension. You don't need any extra files. Make sure that the markteplace and plugin are avaiable when you clone on a different machine. Also if the plugin doesn't exist it falls back to the original subagent
+
+---
+
+lets try /codex:review instead of adverserial review... would that work without my intervintion?
+
+---
+
+ok lets undo all of this and remove the marketplace entry and plugin
+
+---
+
+ok lets fix that error you an into... the marketplace and plugin should be gone
+
+---
+
+Ok lets continue on 97
+
+---
+
+<task-notification>
+<task-id>a4c63b83353f81883</task-id>
+<tool-use-id>toolu_018M8ETf76YN96ykyojNmkHV</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a4c63b83353f81883.output</output-file>
+<status>completed</status>
+<summary>Agent "Reverify after review findings" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: **pass**
+
+All three failures are fixed, verified against the files on disk rather than against your description of them.
+
+**1. Heading message.** `tests/instructions.sh:113` now reads `step 6 points at it by name, and it is where the standard the three steps state is defined`. Both clauses check out: `AGENTS.md:207` names the section (`the standard that "Answering a finding" below sets for all three passes`), and all three steps do state the standard (206, 220, 227, identical wording). I emitted the message for real by renaming the heading in an out-of-repo copy, rather than reading it. It is also now consistent with the sibling message at line 108, which was already accurate.
+
+**2. Step 11's scope.** `AGENTS.md:398-399` now says `step 11 forbids repeating` `code-review` `over an unchanged worktree`, matching `AGENTS.md:301-302` (`Do not repeat code review when the already-reviewed diff and worktree remain unchanged`). The `for this reason` clause is gone; what remains — `step 8 already carries ui-review facts into code-review` — is supported by lines 232-236 without the purpose attribution.
+
+**3. #65.** The correction is posted, with the reproduction, and it goes further than my report did: it names the consequence that a CRLF conversion produces a red build whose message points an editor at step wording. Accurate.
+
+Re-run against the edited script: count still 4 at lines 206, 220, 227, 387 (two wrapped, two whole, exactly as the comment claims). Guard matrix re-run — awk exiting 2, printing nothing, `4 `, `4\r`, two lines, `four` all fail loudly with "did not run"; `4` passes; `3` gives the count-mismatch message. `shellcheck -s sh` clean. Exit 0 under `/bin/sh`, dash, bash, `bash --posix`, busybox ash; count 4 under mawk and busybox awk. 20/20 deterministic. `ctest --test-dir build-debug` 11/11 and `ctest --test-dir build-release` 11/11.
+
+---
+
+## Your first question: is the message still claiming more than it should?
+
+No. It is now the narrowest true statement of the relationship, and I would not change it.
+
+**On pointers versus the message — the message was the better fix.** Four reasons, and I hold this fairly firmly:
+
+- Step 6's pointer already scopes itself to all three passes. `the standard that "Answering a finding" below sets for all three passes` is a forward reference on behalf of 7 and 8; it is located in step 6, but a numbered workflow is read in order, and step 6 is where a reader first meets the standard.
+- The back-link exists too. The section opens `Steps 6, 7 and 8 hold their passes to one standard` (line 386), so a reader arriving at the section knows its scope without being sent there from 7 or 8.
+- Adding two pointers means adding two more assertions about how the steps and the section relate — which is the class of statement that has now been wrong twice in this file within one change. Each cross-reference is another thing that goes stale under renumbering, and renumbering is precisely #65's subject. Fewer such assertions, each verified, beats three of them.
+- It would lengthen steps 7 and 8 to convey nothing a reader of step 6 does not already have.
+
+The one wording seam I noticed is not worth a round: step 6 says the section *sets* the standard, the test message says it is where the standard is *defined*. Compatible, and neither is wrong.
+
+## Your second question: should #98 have been fixed here?
+
+**Your call stands. Do not pull it in.** I tested the argument for reversing it rather than weighing it in the abstract, and its premise does not hold.
+
+The claim is that a file failing open in three places is not worth a fourth check. But none of the three can mask the new check. `agentsbytes`/`claudebytes` come from `wc -c` and `claudelines` from `grep -cv`; the finding count comes from `awk`. Three independent captures, three independent comparisons. I demonstrated this last round in the run where `awk` and `grep` were both unavailable: the new guard fired with `could not count the finding standard ... so this check did not run` and the script exited 1, while line 136's `[: Illegal number:` scrolled past in the same run doing nothing. The new check is strictly additive and inherits none of their weakness — so the fourth check makes the file better in exactly the place it is added, whatever the other three do.
+
+Against pulling it in, three things:
+
+- `AGENTS.md` step 9 is directly on point: *"Do not fix it in this slice. An unrelated fix buried in an unrelated diff is how both the fix and the finding go unreviewed. Fix it here only if it belongs to the slice."* The boundary it draws is the one you drew — the three sites are pre-existing on `main` (I confirmed via `git show main:tests/instructions.sh`), the fourth was fixed here because this change created it.
+- Step 4 would bind on the three fixes too, and proving them needs the shadowed-binary harness that #98 itself identifies as absent from the tree. Landing three guards with no failing-first proof is the failure mode step 4 exists to prevent, and building that harness is a slice of its own.
+- It would roughly double a docs-alignment slice and move its center away from what #97 asked for.
+
+#98 is well-written and its line references are accurate against the current file. One note for whoever picks it up, not a finding here: its acceptance criteria bundle the helper with the harness decision, and if the harness proves expensive the three guards are still worth landing without it rather than stalling behind it.
+
+---
+
+## Remaining, unchanged from my last report
+
+**Missing coverage.** The guard still has no regression test — delete the `case` and all 11 tests pass. Now recorded in #98, which is the right disposition; I am not re-raising it as a blocker.
+
+**Nit, explicitly not worth another round.** `tests/instructions.sh:98` reads `Compared directly against STANDARDS that is not a failure but a silent pass` — the participle dangles slightly. It parses, and the meaning is clear.
+
+**Environment gaps.** No BSD awk (`original-awk`) and no `gawk`, so the BSD-awk check you asked for last round still has not run anywhere — mawk and busybox awk are substitutes, and the constructs used are POSIX, but that remains reasoning rather than a run. No BSD `sh`; dash and busybox ash stand in. `cppcheck`, `clang-tidy` and `scan-build` are all absent — no C changed, so nothing was lost.
+
+**What ran this round.** Full diff re-read from `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md` and `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh`; phrase count and locations replayed through the script's own flattening; steps 6, 7, 8 and 11 read directly; 8-case guard matrix and the heading break against out-of-repo copies; `shellcheck -s sh`; five shells; two awks; 20 consecutive runs; `ctest` Debug and Release, 11/11 each; #65 and #98 read from the tracker. Working tree is the two modified files and nothing else. No `ui-review` owed — agreed, nothing compiled and no game output. I modified nothing.</result>
+<usage><subagent_tokens>81694</subagent_tokens><tool_uses>7</tool_uses><duration_ms>535214</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aa35230b49b8641a5</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/aa35230b49b8641a5.output</output-file>
+<status>completed</status>
+<summary>Agent "Final review of the alignment" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Note: claude-sonnet-5[1m] (the safety classifier) was unavailable when reviewing this subagent's work. Please carefully verify the subagent's actions and output before acting on them.
+
+## Verdict
+
+**Approve.** Reviewed state: branch `docs/align-finding-standards`, `HEAD` at `753556c` with the whole change unstaged — `AGENTS.md` (steps 6, 7, 8 aligned on one form of words; step 10 reworded; new `### Answering a finding` section) and `tests/instructions.sh` (three new checks: counted standard phrase with a non-number guard, section heading, section pointer). No staged or untracked content. Both should-fixes from the last round are properly addressed, and I re-derived the evidence rather than taking the report.
+
+What I verified on this state: `tests/instructions.sh .` green, `shellcheck` clean, counted phrase still exactly 4 with the new step 10 in place (step 10's "fixed or explicitly resolved" does not collide with the counted literal — I checked), no trailing whitespace or CR bytes, no over-long lines in the new prose, and the one number-by-reference elsewhere — `AGENTS.md:369`, "not beside a feature, which step 10 forbids" — still lands on live text at `:295`.
+
+Four mutants, in copies outside the repository:
+
+- **Step 6's pointer clause deleted, counted phrase left intact** — fails on the new check alone; count still 4, heading still passes. Your isolation claim holds.
+- **Heading renamed, pointer left stale** — fails on the heading check alone. So the two literal-string checks are not redundant: each catches a one-place edit the other misses.
+- **Coordinated rename of heading and pointer together** — fails both, with two messages that between them say exactly what to do. That is the rename cost, and it is loud and self-describing rather than mysterious.
+
+## On the lead you changed beyond what I asked
+
+You were right and my suggestion was the worse of the two. Keeping "Commit after approval." and adding a body clause saying approval is not always required leaves the contradiction on the line an agent skimming twelve steps actually reads, and puts the correction where only a careful reader finds it — the defect one line up, as you say. "Commit once the passes are answered" also ties the step to the section's own verb, so the numbered list and the definition now share vocabulary instead of just agreeing in substance. No change wanted.
+
+## On three checks over one section
+
+Keep all three. Two points that change the arithmetic you were weighing:
+
+The concentration is **two literals, not three**. The count check depends on `STANDARD`, a different string; only its *message* mentions the section by name, and a stale message is a cosmetic staleness, not a failing check. So renaming the section is a **two-file** edit — `AGENTS.md` heading plus pointer, `tests/instructions.sh` two greps — not four.
+
+And the mutants show the two are not the same assertion: one catches a dangling pointer (heading renamed out from under it), the other catches an orphaned section (pointer deleted). Dropping either loses a distinct one-place regression, which is the class this check exists for. That is a different trade from the cross-references I argued against last round: those were assertions in *prose* that go stale invisibly, where these fail loudly and name themselves.
+
+If you want the concentration reduced without giving up a check, hoist the name the way you hoisted `STANDARDS`:
+
+```sh
+SECTION='Answering a finding'
+```
+
+then `grep -q "^### $SECTION"` and `grep -q "\"$SECTION\""`. Renaming becomes one line in the script. Optional — I would take it, but it is not a condition of approval.
+
+## Findings (both nits, neither blocking)
+
+### nit — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh:123`
+
+The message says "no step in AGENTS.md points at" but `grep -q '"Answering a finding"'` proves only that the quoted string appears *somewhere* in the file. My fourth mutant — pointer deleted from step 6, and the phrase quoted once inside the section itself — passes all three checks with the section orphaned. Contrived, but it is the same overclaim I flagged in the heading message last round, and the fix is a word: "nothing in AGENTS.md refers to \"Answering a finding\"". The check cannot tell a step from anything else without #65, so the message should not say it can.
+
+### nit — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md:285-286`
+
+Step 10 now says "with every finding fixed or explicitly resolved" — the inverted word order that this same diff removes from step 7 as the odd one out. A reader comparing step 7 and step 10 sees two shapes of the rule again, and the count check is scoped to the three pass steps so it will never notice. The bold lead already has the better word: "with every finding answered" says the same thing, matches the section title, and leaves exactly one phrasing of the standard in the file.
+
+## Not reviewed
+
+I did not wait out the full `ctest` run (it went past the timeout in the background on the golden/tournament tests); I ran `instructions` directly plus the four mutants, and that is the only test this diff can affect. Your 11/11 and the `verifier` transcript I take on report. The `ui-review` disclosure is now stated and I agree with it on the diff: prose plus a shell script, no `sst` source, no CMake feature flag, no `sst.doc` change — nothing that reaches a player, so the pass is not owed.</result>
+<usage><subagent_tokens>59942</subagent_tokens><tool_uses>7</tool_uses><duration_ms>285392</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b53mhodk2</task-id>
+<tool-use-id>toolu_01VBw9sweTp9az6Koxf5TuBP</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/b53mhodk2.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Codex reviewed the pr... look at them and decide if you should address them then resolve them when you are done.
+
+---
+
+<task-notification>
+<task-id>ad8ce23c5074595c6</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/ad8ce23c5074595c6.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the Codex fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: approve
+
+Approval covers the current uncommitted working tree — `ac5ebf2` plus the two edits to `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md` and `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh`, nothing staged, nothing untracked.
+
+Both fixes are in as agreed, and the extra cut you made is an improvement on what I suggested: "and a task with no pull request is where that is easiest to reach by accident" was arguing for a fallback the sentence now states outright, so dropping it removes a justification for something nobody would dispute.
+
+Re-verified on this state, not the previous one:
+
+- `AGENTS.md:406-408` now matches step 3 (`:130-131`) and step 9 (`:278-280`) clause for clause — conjunction, then summary-alone fallback — so the "on the same terms" citation is now true under either parse. That was the fifth numbered-step claim in the change and the last one outstanding; the other four in the section (`steps 6, 7 and 8 each condition theirs on a change`, `step 11 forbids repeating`, `step 8 already carries ui-review facts`, `step 9 is explicit that filing is not resolving`) I checked against the steps themselves and they hold.
+- Fake-awk matrix re-run against the current script: `4`/exit 17 → fail, `4`/exit 0 → pass, `3`/exit 0 → count failure, empty/exit 0 → non-number failure, empty/exit 2 and junk/exit 1 → exit-status failure. Real one-place regression (step 8 reworded in a copied tree, real awk) still fails with the count message.
+- `shellcheck -s sh` clean, `sh tests/instructions.sh .` exit 0, `ctest -R instructions` passes. Phrase count still 4; the `AGENTS.md` edit touched neither the counted phrase nor `STANDARDS`. No trailing whitespace, `git diff --check` clean, file still ends in a single newline.
+- `ui-review` still not owed: prose plus a shell script, nothing compiled, no feature flag, no game output.
+
+On your point about the rate: four of five wrong is the argument for the check, and I would put that number in the commit body rather than only in the PR. The check as it stands catches one of the five (a step reworded on its own) and nothing about a prose citation to a step — which is worth being explicit about somewhere, since a reader who knows the rate and sees a test now guarding "step references" may assume more coverage than exists. The `#65` comment you just landed says exactly that inside the script, so this is only about where else it gets said.
+
+### On the paragraph — not a finding, an answer to the question
+
+You asked me to check rather than confirm, so: the "four destinations" framing overstates it. There are two rules, not four — route it to the next pass if one runs anyway, and write it down either way — and the paragraph currently reads as one continuous chain because the second rule arrives mid-paragraph, four sentences in, after the reasoning about reruns.
+
+If it were mine I would put a paragraph break before "Either way", at `AGENTS.md:406`, and change nothing else. That sentence is the only unconditional obligation in the passage; everything before it is conditional on whether a next pass exists. As a paragraph opener "Either way" still refers back correctly, and an agent skimming for "where do I put this" finds a two-sentence paragraph instead of a twelve-line one.
+
+I would not split it further. Sentences two and three are a single argument — no rerun, *therefore* route it to the next pass — and breaking that connective would cost more than the length does. Shortening is not what this needs; the length is load-bearing reasoning, not padding.
+
+Mechanically the break is inert: the counted phrase is not in this paragraph, the `"Answering a finding"` reference check reads step 6, and `MINAGENTS` is a floor. So it changes no test.
+
+That said, it is a change to the state I just approved. Take it or leave it — if you take it, re-running the `instructions` test is the whole of the re-verification, and you can have a fresh approval from me on that one hunk for the cost of one message rather than a full pass.</result>
+<usage><subagent_tokens>53736</subagent_tokens><tool_uses>5</tool_uses><duration_ms>74737</duration_ms></usage>
+</task-notification>
+
+---
+
+did you push these changes back to the pr?
+
+---
+
+<task-notification>
+<task-id>bq02vrx9t</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/bq02vrx9t.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI on the new commit" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+what are the 2 shells in the background doing?
+
+---
+
+Ok lets squash merge 99.
+
+---
+
+what is the next thing we should work on?
+
+---
+
+Yes go ahead and start. Pause before you merge the PR. I am testing some code review things on PRs
+
+---
+
+<task-notification>
+<task-id>a0424e19bdc6bba43</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a0424e19bdc6bba43.output</output-file>
+<status>completed</status>
+<summary>Agent "Final review of the restore fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: approve
+
+Approval covers exactly this state: `HEAD` = `a215e73` on `fix/tui-restore-quadrant-panel`, nothing staged, nothing untracked, three modified files whose combined `git diff` hashes to `2143535eecd7a0cc…`. Contents: `wresize(wquad, panelh, quadw)` and `mvwin(wmsg, PANELH, 1)` in `make_windows()` (`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c`), the "panels come back from a squeeze" block plus comment edits in two existing blocks (`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh`), and the two rewritten paragraphs in `/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md`.
+
+All five items are applied as described. Re-verified on this state: `sh -n` and `shellcheck -s sh` clean, `-Werror` Debug build clean, `tests/tui.sh` → `tui OK`. `ctest -E tui` was green on the previous state and nothing since then changes a byte of generated code, so I did not re-run it.
+
+### 1. The corrected mechanism — right, and I measured the two ways it could have been wrong
+
+I probed ncurses with three windows on one screen: A 13x29 at column 0, B 13x29 at column 51 (right edge flush against column 79 at 80 columns), C 13x20 at column 10.
+
+| screen | A | B | C |
+|---|---|---|---|
+| 80 → 60 | 29 (untouched) | 29 (untouched, now hanging off the right edge) | 20 |
+| 60 → 80 | 29 | 29 | 20 |
+| 80 → 25 | **25** | **25** | 20 (untouched, hanging off) |
+| 25 → 80 | **80** | **80** | 20 |
+
+- **It is spanning, not touching an edge.** B sat flush against the right edge at 80 columns and the 80→60 squeeze ignored it entirely. Position never mattered in either direction: B, at column 51 and wholly off-screen at 25 columns, grew to 80 exactly as A did.
+- **It is spanning, not "no longer fits at its position" either.** C hung nine columns off the right edge at 25 columns and was left alone, because its *width* still fitted the screen.
+
+So the grow-back trigger the comment names — a window as wide as the screen follows the screen — is exactly the rule. The one compression is the "down" half: what gets cut down is a window *wider than the screen*, which is what makes it span in the first place. Your next clause, "a panel squeezed past its own size stops being 29 columns and starts tracking the terminal", already states that condition precisely, so the sentence as a whole predicts the symptom the test asserts. No change needed.
+
+Worth knowing but not worth writing down: this is also why `wquad` was the only casualty. `statw` is `max(COLS-QUADW,1)` and `msgw` is `max(COLS-2,1)`, so neither is ever wider than the screen and curses never resizes them behind the code's back; `wmsg`'s only mistreatment is the `begy` shift, which is the separate below-the-bottom rule your second comment covers on its own. The two comments already split the two mechanisms correctly.
+
+### 2. The README qualifier is in the right place
+
+Keep it where it is. It qualifies the one sentence that can fail, and a reader who stops after the second paragraph would otherwise carry away an absolute promise the fifth paragraph then contradicts — which was the whole finding. It does not hedge the ordinary case, because in the ordinary case the condition is met and the sentence reads as the promise it was: the paragraph immediately below ("Dragged smaller than the 72x24 the panels ask for…") is what tells the reader when room runs out, so "still room for them" resolves within a few lines rather than dangling. Moving it down to the deep-squeeze paragraph would restore the contradiction; dropping it would too.
+
+The only thing I would even raise is rhythm, and it is optional: the clause currently interrupts the promise before it is made ("and so long as there is still room for them, both the question … survive"). Trailing it — "and both the question you were asked and the answer you were halfway through typing survive, so long as there is still room for them" — keeps #46 and #79's feature in the main clause and the condition as a caveat. Take it or leave it; both are accurate.
+
+### On the tightened width assertion
+
+I confirmed it catches the narrow direction and not only the wide one. In an outside-the-repo copy I capped the quadrant panel at 20 columns on resize; the block reported `restore: after 25x24 the quadrant panel came back the wrong width` and the same at 20x8 — the two cases where the screen had actually been narrow, which is where a too-narrow restore can arise. (The two height-only squeezes stayed green there because the cells between a 20-wide panel and the status panel still held stale border glyphs from the initial 29-wide draw. That is an artifact of the mutant only: in the real code `quadw` is `min(COLS, QUADW)`, so no such gap can exist.) The renamed message is the right call — it matches what the check can prove.
+
+Nothing else outstanding, and nothing I was unable to review.</result>
+<usage><subagent_tokens>93857</subagent_tokens><tool_uses>7</tool_uses><duration_ms>334299</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bjwtul1u1</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/bjwtul1u1.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Is our workflow updated with the codex review bot
+
+---
+
+Ok every PR runs a review that is automatic via Codex. The bot puts eyes emojis on the PR and then runs on every push. We should address every comment and resolve it. We should do this until we see the thumbs up on the pr. We should check the open docs to make sure this is correct. We can then squash merge the pr. Lets update the agents file and use it as a test.
+
+---
+
+<task-notification>
+<task-id>a2d2cc13f382009a4</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a2d2cc13f382009a4.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify the Codex review rule" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>**Verdict: pass**, with one claim I could not corroborate from any source I can reach and a short list of precision notes. All seven prior findings are addressed; F1's fix is real and I proved it can fail.
+
+---
+
+## F1 — fixed, and the check has teeth
+
+`tests/instructions.sh:139-146` now uses an awk positional test. Mutation battery, each on a copy outside the repo (`sh tests/instructions.sh &lt;copy&gt;`), the repo untouched throughout:
+
+| mutant | result |
+|---|---|
+| baseline copy | `instructions OK`, exit 0 |
+| **step 6's pointer clause removed, the Codex section's quoted mention left in place** | **exit 1**, "nothing in AGENTS.md points forward at…" |
+| Codex section's quoted mention removed, step 6's kept | exit 0 (correct — a later mention is optional) |
+| both quoted mentions removed | exit 1 |
+| heading renamed | exit 1 on the separate heading check |
+
+Your reproduction of my mutant is confirmed. Portability: identical pass/fail under `sh`, `dash`, `bash`, `bash --posix`, `busybox sh`, and with `awk` forced to `mawk` and `busybox awk` (no `gawk` or `original-awk` on this box — environment gap, and the program uses only `index`, concatenation and `exit &lt;ternary&gt;`, all POSIX). `shellcheck tests/instructions.sh` is clean, exit 0. `ctest -R instructions` passes; three consecutive direct runs pass; no flakes.
+
+**Your question 1 — is "pointers point forward" right in principle?** It is safe here, and it does not forbid a legitimate later reference (mutant 3 above passes with the Codex section's mention present). Two things it is not, which the comment slightly oversells:
+
+- **It checks "something above", not "a numbered step".** I moved step 6's pointer into `### The review sub-agents` — above the heading, but not in a numbered step — and the check passes. The comment directly above it still says it guards "the one thing tying the numbered steps to the definition." An anchor on the *first* `### ` heading rather than on the target heading would say what the comment says; as written it says something weaker. Not a defect, a scope mismatch between code and comment.
+- **It encodes file order as the proxy.** I relocated the whole `### Answering a finding` section above `## Development workflow`, leaving step 6's pointer intact and correct, and the check goes red. So the rule is wrong in exactly one layout: the definition sitting above the steps that point at it. That layout is unlikely here and partly foreclosed already — the heading check hard-requires `### Answering a finding`, so promoting it to a `##` near the top fails first — and when it does misfire it fails loudly with a message naming the cause. On balance: keep it. The risk of a spurious red is small and self-explaining; the hole it closes was silent.
+
+One thing you may want anyway: **a rewrap breaks it.** I split the pointer across two lines (`"Answering a\n   finding"`) and it fails, blaming a missing pointer that is present. The count check five lines above flattens the file for exactly this reason, and its comment argues "a check a rewrap can break is a check that gets deleted the first time someone rewraps." The two neighbouring checks now use opposite conventions. This is not a regression — the old `grep -q` had the same fragility — but this diff is the moment it was rewritten. A flattened stream with a "have I passed the heading yet" flag would give both properties.
+
+Also noted, not blocking: with `awk` unavailable both awk-based checks go red (safe direction), but the count check reports "awk exited non-zero, so this check did not run" while the new one reports "nothing points forward at…" — a misleading diagnosis for a true failure. It cannot hide a defect, so I would leave it.
+
+## F2, F3, F4, F5, F6, F7 — all confirmed resolved
+
+- **F2** — the contradiction is gone. "which is what its documentation promises where automatic reviews are turned on" matches `https://learn.chatgpt.com/docs/third-party/github.md` verbatim: "Codex will post a review whenever someone opens a new PR for review, without needing an `@codex review` comment." The closing paragraph now scopes the undocumented part to 👍 and the push re-run.
+- **F3** — "a push may start another" (step 11) and "a re-review was seen once after a second push … and every other 👍 followed the pull request opening" are exactly what the data supports. Re-checked against GitHub just now: no new commits, reviews or reactions on #99 or #102, no PR newer than #102, so the evidence base is still those two. Timings unchanged (push `6ce7309` at 00:57:22Z → 👍 00:59:44Z, i.e. "minutes after it"; #102 opened 04:39:34Z → 👍 04:45:13Z).
+- **F4** — "a defect in this workflow's own test that the passes before it had missed": one defect, one test, no count of passes. Correct.
+- **F5** — reversed correctly. Both bot comments cite `AGENTS.md` by line range (`L152-L159`, `L382-L384`), and `github.md` says Codex "searches your repository for AGENTS.md files and follows the applicable code review rules." One optional precision: "of what a previous reviewer already argued" is true of the local `ui-review`/`verifier`/`code-review` rounds, whose transcripts never leave the session, but the pull request conversation *is* visible to it on a re-review — on #99 the 👍 followed replies it could have read. Scoping that clause to the local passes would make it exactly true.
+- **F6** — the step 8 citation is gone; "A 👍 from before the answering push is a pass that never read the answer" carries the point with no cross-reference to get wrong.
+- **F7** — resolved. Step 12 no longer states an absolute, and the resolved-not-fixed case is named explicitly. Consistent with "Never bypass a failing or pending required check", since the 👍 is not a check: the only check runs on `992df4f` are the four `github-actions` `build-and-test` jobs.
+
+## The one claim I cannot corroborate
+
+&gt; "Codex's settings carry a trigger selector, every push among them."
+
+I could not confirm this for **Code Review** from any reachable published page. What I can confirm:
+
+- `github.md` troubleshooting: "For automatic reviews, check that you turned on Automatic reviews and that **the pull request event matches your review trigger settings**." That corroborates the *framing* — which events start a review is configurable — but enumerates nothing.
+- The only enumerated selector I found is on a different feature's page, `https://learn.chatgpt.com/docs/security/security-review.md`: "Choose when Codex Security Review runs: **On PR open** … **Every push** runs independently after new commits are pushed. **Whenever code review runs** …" That is Codex *Security* Review.
+
+So "every push among them" is either (a) read on the Security Review page and generalised to Code Review, or (b) seen first-hand in the Codex settings UI, which I cannot reach. If (b), it is good evidence — but then the closing sentence needs a small scoping: "The published documentation … says nothing about re-running on a push. Both of those were measured here rather than read" sweeps the push trigger into "measured", when the selector would have been *seen in a settings screen*, and the neighbouring product's page does document a push trigger. Saying where the selector was seen would settle it, and it is one clause.
+
+## Smaller precision notes (your call, none blocking)
+
+- **"It answers with reactions … not with a review state."** On #99 the comments arrived as a formal GitHub review object whose state is `COMMENTED`. The point is right — it never uses `APPROVED`/`CHANGES_REQUESTED` — but someone checking `pulls/99/reviews` will find a review state and think the sentence wrong.
+- **"Three things it does not promise"**, whose third item leads "**It reads this file.**" — that is something it does, not a non-promise; the limitation follows in the sentence after. A header like "Three things to know about it" would match all three.
+- **Step 12's forward reference**: it says the section "says why that is a judgment rather than a check." The section explains why nobody must wait indefinitely, and never addresses "check". Close, but this is the exact claim shape ("X below says Y") that came back wrong four times in #99.
+- **"where the merge decision is recorded"** (step 12 and the section) is a new venue phrase; everywhere else the file names venues explicitly — "in the pull request body and in the summary of the work". A reader deciding where to write it has to guess.
+
+## Your question 2 — the uncounted fourth standard
+
+I would not treat this as out of scope, though I would accept an explicit resolution over a fix. The comment itself is still *true*: `STANDARDS=4` counts three steps plus one section, and that is what "Three steps state it and one section defines it" describes. What changed is the file it describes — a fourth pass is now bound by the standard in wording (`fix, or resolve explicitly`, `AGENTS.md:438`) that no check covers, and the block above reasons about drift with "Steps 6, 7 and 8 hold their review passes to one standard, and say it in one form of words so a reader can see that they agree." A fourth reader now agrees in a different form of words, one paraphrase from the drift the counter exists to catch — and this change is what created it.
+
+Under step 7 that makes it a finding about *this* change, so filing alone does not discharge it; it wants either a sentence of comment here or an explicit resolution recorded in the pull request body and the summary. My preference, cheapest first: one line in the existing comment noting that a fourth pass is held to the standard in wording this count does not see, and why that was left uncounted. Moving `STANDARDS` to 5 would mean rewording the Codex sentence into the counted phrase, which is a bigger edit than the finding justifies.
+
+## What ran (this round)
+
+`git diff` of both files read fresh from disk; `AGENTS.md` re-read for structure (12 numbered steps; three `###` sections at 322, 392, 427; quoted `"Answering a finding"` at 207 and 439; finding-standard count still 4, at 206/220/227-228/395). `sh tests/instructions.sh .` ×3 plus `ctest -R instructions`. Eight mutants against copies in the scratchpad. Five shells × pass/fail; three awk implementations; `awk` stubbed to exit 127. `shellcheck`. Fresh `gh api` re-check of #99, #102, and the newest PRs. Docs re-checked from the cached fetches of `third-party/github.md`, `security/security-review.md`, `code-review.md`, `llms.txt`. Hygiene: valid UTF-8, no trailing whitespace, tabs preserved in the shell script, exec bit intact, two added prose lines at 73 columns (123 of 468 lines in the file already exceed 72) and the new `fail` message at 165 characters (the file's existing ones run to 301).
+
+Not re-run: the compiled suite. It passed 11/11 (195.56s, including `golden`, `tournament`, `tui`) earlier this session and no C source, header, `CMakeLists.txt` or feature flag has changed since. Static analysers were not applicable to a Markdown file; `shellcheck` was, and ran. Repository state on exit is exactly as I found it: ` M AGENTS.md`, ` M tests/instructions.sh`, 69 insertions / 5 deletions, nothing staged, nothing untracked.</result>
+<usage><subagent_tokens>105935</subagent_tokens><tool_uses>10</tool_uses><duration_ms>306847</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a2f5cf8a38443cabc</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a2f5cf8a38443cabc.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the Codex review rule" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Re-reviewed the current worktree. The five should-fixes are genuinely addressed, and I re-ran the adversary tests rather than taking the fix on description.
+
+## Verdict: request changes — narrowly
+
+Reviewed state: `docs/codex-pr-review` at `be17114` (no commits ahead of `main`), unstaged changes to `AGENTS.md` and `tests/instructions.sh` only; nothing staged, nothing untracked. Everything from the previous round is settled except one false statement about the platform, one inference presented as fact, and two presentation snags. If those are the only edits, I will approve the result on sight.
+
+### Verified fixed
+
+**The awk hole is closed and matches its neighbour's standard.** `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh:153-176`. I ran four adversary shapes against the current script:
+
+| adversary | result |
+|---|---|
+| pointer deleted, real awk | FAIL "nothing points forward at…" |
+| pointer deleted, stub printing `4`, exit 0 | FAIL "awk printed '4' instead of yes or no" |
+| stub printing nothing, exit 0 | both checks FAIL |
+| stub printing `yes`, exit 17 / awk absent entirely | both checks FAIL on status |
+
+Case two is the one that previously printed `instructions OK` and exited 0; note the count check still swallows it (a `4` is a plausible count), and it is now the pointer check that catches the shadowed binary. Unmodified tree: `instructions OK`, `shellcheck` clean.
+
+**Step 12 and step 11** (`AGENTS.md:309-311, 313-323`) are now consistent with each other and with the section: step 11 hedges on "ready-for-review… normally", which matches the documentation's own "opens a new PR **for review**" and no longer contradicts step 11's draft allowance; step 12 asks for an answer rather than a reaction, names the section as the authority on when to stop, and the resolved-not-fixed case is covered at `AGENTS.md:467-469` instead of falling between two branches.
+
+**"Never an approval"** is now stated at its true sample size (`AGENTS.md:442-444`) and appears in the measured list (`AGENTS.md:482-484`). I re-checked the provenance paragraph against the docs: the automatic trigger (`code-review.md:82-83`) and 👀 (`code-review.md:50`) are documented, and none of the three named claims is — accurate.
+
+**Naming.** `chatgpt-codex-connector[bot]` plus the two disambiguations. I agree with your call on `cursor[bot]`: its only contribution here is a disabled-tier upsell, so "the other bot that comments" identifies it to anyone who looks and naming it would put a third party's product in a rules file to no purpose.
+
+**Issue #103** is filed and is a better issue than the finding was — the "what to decide" section is the part that will save the next person the experiment. Leaving the P0/P1-versus-P2 mismatch unfiled is right: the docs say it flags only P0 and P1, both #99 comments were P2, and nothing about what we do turns on which. It belongs in the PR body at most.
+
+### Findings
+
+**should-fix — `AGENTS.md:454`: "GitHub allows one reaction per user per issue" is not true, and the paragraph two above it depends on it not being true.**
+GitHub allows each reaction *type* once per user per issue — one user can hold 👍 and 👀 and ❤️ simultaneously; re-POSTing an existing one returns the existing reaction rather than creating a second. As written, the rule says the bot cannot show 👀 and 👍 at the same time, which the section at `AGENTS.md:439-441` describes it as doing in sequence and says nothing about it withdrawing. The conclusion you draw is unaffected — a 👍 still cannot be repeated — so this is one clause: "GitHub allows each reaction only once per user per issue".
+
+**should-fix — `AGENTS.md:455-457`: the load-bearing claim is deduced, and the paragraph that sorts measured from read does not say so.**
+"A pull request that drew one on opening will still show that same 👍 after a fix push, `created_at` and all, whether or not anything reviewed the push" is an inference from the mechanics above, not an observation: neither #99 nor #102 exercised 👍-on-open-then-push (#99's first pass posted comments and no reaction; #102 had one pass and no second push), and it holds only if the bot does not remove and re-add its own reaction, which nobody here has watched it do. That inference is what step 12 now rests on, and `AGENTS.md:482-489` enumerates what is measured and what is read without a place for a third category. A clause — "unless it withdraws and re-adds the reaction, which has not been seen here" — puts the claim on the same footing as everything around it. This is the one remaining sentence in the section that outruns its evidence.
+
+**nit — `AGENTS.md:453, 463`: the reaction paragraph is in the right place and the wrong typeface.**
+You asked whether it reads as the subject. It does, and the cause is mechanical rather than editorial: it opens with a bold lead-in, so a reader scanning bold sees three items under a banner that says "Two things to know about it." Un-bold the first sentence and leave the paragraph exactly where it is — it qualifies the reactions described above it and the "let the review run again" below it, so it sits between them correctly. The section then reads as four prose paragraphs, a two-item list that really has two items, and the provenance close. On length: at nine lines it is no longer conspicuously the longest — "It reads this file" and the provenance paragraph are eight each — so I would not move it, only stop it announcing itself.
+
+**nit — `tests/instructions.sh:145-146`: two consecutive bare `#` lines** where the separator went in; the neighbouring paragraph breaks use one.
+
+### Not re-reviewed
+
+`ctest` again exceeded my time budget on a reused `build/`; I ran `tests/instructions.sh` directly against the working tree and against five modified copies, which is the only test this diff touches, and I am relying on the `verifier` for the remaining ten. `ui-review` remains not owed and correctly skipped: nothing compiled changed, no feature flag moved, no game output. The 👀 reaction is still unobservable after the fact — GitHub does not retain removed reactions — so it rests on `code-review.md:50`, where it is documented under the manual `@codex review` path rather than the automatic one.</result>
+<usage><subagent_tokens>83320</subagent_tokens><tool_uses>10</tool_uses><duration_ms>160695</duration_ms></usage>
+</task-notification>
+
+---
+
+Looks like there is a thumbs up
+
+---
+
+oh ok
+
+---
+
+Ok you should address the comments and resolve them. That is the workflow
+
+---
+
+<task-notification>
+<task-id>a95399f5e71e9b4f8</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a95399f5e71e9b4f8.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the Codex fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: request changes
+
+Reviewed state: `33aed5e` plus the current unstaged modification to `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md` — the step 11 bullet extension, the fix/resolution split, the withdrawal observation with its limit, and the rewritten three-paragraph provenance block. `git status --porcelain` shows only that one file; nothing else moved.
+
+My blocker is properly gone: line 456 now ends the paragraph on its own, and deleting the pointer also removed the duplication with line 480. Findings #2/#3 are genuinely overtaken — patching the old counts would have preserved two errors.
+
+I verified the new factual claims against the API rather than reading them. Four hold exactly: both bot reviews (#99, #104) are `state: COMMENTED`; the 👍 meaning is published verbatim in the collapsed note of both review bodies ("If Codex has suggestions, it will comment; otherwise it will react with 👍"); that note's trigger list is *open a PR for review / mark a draft ready / comment "@codex review"*, with no push among them; and `issues/104/reactions` returns `[]`.
+
+Three things in the rewritten paragraph are still not right.
+
+---
+
+## Findings
+
+### Should-fix
+
+**A. `AGENTS.md:494-495` — "a push can start a fresh review" is filed as measured, but the single observation behind it is confounded.**
+
+The only run that produced it is #99, and the timeline is:
+
+- 00:14:35 PR opened; 00:18:32 bot commenting review on `ac5ebf2754`, the opening head — that is the *open* trigger, not a push.
+- 00:56:42 second commit `6ce7309c` pushed.
+- 00:57:22 and 00:57:23 two author thread replies.
+- 00:59:44 bot 👍.
+
+#102 had one commit and no push after opening; #104 has had no push at all. So the sole datum is a 👍 three minutes after a push that was also forty seconds before two replies. Both candidate causes precede the one effect, and the bot's own note — cited two sentences later — lists neither a plain reply nor a push, only `@codex review`. Which of the two it answered was not watched.
+
+Failure scenario: a reader takes the measured category at face value, pushes a fix, and waits for a re-review that may have been reply-triggered and may not come — the exact wait step 12 tells them to bound.
+
+Fix: narrow the claim to what was seen, e.g. "that something after a push starts a fresh review — #99 drew a 👍 three minutes after one, though two thread replies landed forty seconds after that push too, so which it answered is not something we watched." That also strengthens the following sentence, since the absence of a push from the published trigger list becomes evidence rather than an awkward aside.
+
+**B. `AGENTS.md:499-500` — "The evidence for the rest is three pull requests in one evening" attributes to three what two carry.**
+
+"The rest" is now the two measured items. The withdrawal was seen only on #104; the push item rests only on #99. #102's sole datum is a 👍 six minutes after opening — which the preceding sentence has just reclassified as *published* rather than measured. So #102 is being counted as evidence for the item the paragraph says needs none. This is the same failure as the last two rounds: the tally moved and the sentence quantifying it did not.
+
+Fix: name what each supports and drop the count — "The evidence is #99 for the one and #104 for the other." While there: every timestamp is `2026-08-09`, 00:14 to 05:49 UTC, so anyone checking sees one UTC date and no evening. "Within six hours of each other" is timezone-free and verifiable from the same API call.
+
+**C. `AGENTS.md:304-306` — "what triggers a rerun is a changed state, never a comment" collides with the trigger list this same file now cites.**
+
+The intent is right and I agree with the rule. But the sentence's subject drifts across the colon: "and so does answering a Codex comment" makes the comment the topic, so "never a comment" reads as a claim about what starts a review. Three sections later the file says the bot's note lists its triggers — and one of exactly three is `Comment "@codex review"`. A reader holding both gets a contradiction out of one document.
+
+Fix: scope it to the two passes — "what makes either pass run again is a changed state, not the arrival of a comment."
+
+### Nit
+
+**D. `AGENTS.md:468-471` — ragged rewrap left behind, same artifact as last round.** Line 470 is "you are waiting for" alone. Rewrap 468-471.
+
+**E. `AGENTS.md:495` — 75 columns**, one over the 74 the rest of the section holds to, and it is an added line, so the "no added line over 74" claim does not hold. Finding A rewrites that sentence anyway.
+
+**F. `AGENTS.md:481-483` — the "answer does not come" path omits the documented way to ask for one.** The section opens with "nobody has to invoke it", and the trigger list shows you can: commenting `@codex review` is one of the three. Telling a reader to disclose the missing answer and let the merger decide, when one comment would ask for it, leaves out the cheaper move. One clause where the infrastructure paragraph tells them to give up.
+
+---
+
+## On your two questions
+
+**1. The provenance paragraph.** The three-way split is the right structure and the categories are now correct in kind — the 👍 reclassification is plainly right, and I confirmed the note it points at exists in both review bodies. What is still wrong is arithmetic and attribution, again: A and B are both "which pull request is evidence for which claim." That is the third round in a row where the prose moved and the tally behind it did not, which suggests the fix is to stop keeping a tally. Name the pull request beside each claim and there is nothing left that can go out of step when a fourth observation arrives.
+
+One structural nit while you are in there: the unrecoverability paragraph (502-504) is a footnote to the first paragraph's second item, but it sits between measured and reasoned and interrupts that progression. Attach it to the first paragraph or move it after the last.
+
+**2. The step 11 bullet — keep it.** It is not a new rule. The bullet already said code review does not repeat over an unchanged worktree, and step 7 already conditioned the verifier's rerun on a finding requiring a code change; the sentence states the condition both already had. What it adds is the answer to a question that exists only because of the new section: a bot commenting after the passes have run is a new source of findings arriving late, and without this the reader genuinely cannot tell whether each comment costs a full round. Answering it where the rerun condition already lives is better than answering it inside "The Codex review", because the rule governs the sub-agents and belongs with them. The argument against would bite if it changed what those passes do — it does not, so this is the section making a clarification necessary rather than an unrelated fix owed to step 9. Fix the wording per C and it earns its place.
+
+## What I could not review
+
+Whether a 👀 ever sat on #99 or #102 — withdrawn reactions leave no history, so I can only confirm #104's current empty state, which is the paragraph's own point. And the "evening" framing depends on your local timezone; I checked only that all three timestamps fall on one UTC date.</result>
+<usage><subagent_tokens>52754</subagent_tokens><tool_uses>6</tool_uses><duration_ms>197145</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a95399f5e71e9b4f8</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a95399f5e71e9b4f8.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the Codex fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: request changes
+
+Reviewed state: `33aed5e` plus the current unstaged `AGENTS.md` — step 11's bullet, the fix/resolution split, the withdrawal observation with its limit, the `@codex review` escalation, and the attribution-inline provenance block. `git status --porcelain` shows only that file. `instructions` passes; no *added* line exceeds 74 (300, 303 and 310 are pre-existing).
+
+I re-checked every number against the API rather than reading it, and the new arithmetic is exact: #99's push at 00:56:42, replies at 00:57:22 (forty seconds), 👍 at 00:59:44 (three minutes). Both bot reviews are `COMMENTED`; #104's reactions are `[]` with one comment; the trigger list in the collapsed note is open / mark-ready / `@codex review`, no push. The attribution structure did what you hoped — every claim in that paragraph is now checkable in one API call, and I could check them.
+
+Three things remain, one of which has a short fuse.
+
+---
+
+## Findings
+
+### Should-fix
+
+**A. `AGENTS.md:500-503` — "the pull request now reads as though nothing ever reacted to it" is a present-tense claim about a live pull request, and this file's own measured claim predicts the next push will falsify it.**
+
+Six lines above, the file records that something after a push starts a fresh review, evidenced by #99 drawing a 👍 three minutes after one. #104 is open, and pushing these fixes is the next thing that happens to it. If the bot runs again and finds nothing, it reacts 👍 — and #104 stops reading as though nothing ever reacted to it, while the file says it does. The sentence is falsifiable by the commit that carries it.
+
+The durable half of the point is the first half. Fix by keeping that and dropping the state claim: "…that one is already unrecoverable, since GitHub keeps no history of a reaction taken back." If you want the observation preserved, tense it: "nothing in the API showed it had happened when this was written."
+
+**B. `AGENTS.md:503-504` — the trigger-list clause supports the first claim but sits after the second, which is the shape that has gone stale three times.**
+
+"Neither is on the documentation page, and the bot's own note lists its triggers without a push among them" closes the paragraph. The second clause bears only on the push claim, eight lines up; the withdrawal has nothing to do with trigger lists. So the paragraph that was rewritten to put evidence beside its claim ends with one evidential clause floating free of the claim it qualifies — and "Neither" has to reach back over two items with subordinate tails to find its referent.
+
+This is also the answer to your first question, so I'll take them together below rather than twice.
+
+**C. `AGENTS.md:464` — "this file's own pull request" is deictic and goes stale on merge; the other mention of the same event already uses the durable form.**
+
+Line 500 cites `#104`. Line 464 calls the same pull request "this file's own", which is only true while this is the open one. After merge, `AGENTS.md` will have had many pull requests, and a reader wanting to check the withdrawal has a phrase instead of a number — for an event that, as line 501 says, leaves no other trace. Use `#104` in both places.
+
+### Nit
+
+**D. `AGENTS.md:471` — "is not" is an orphan line**, the third round this rewrap artifact has survived. Rewrap 468-472.
+
+---
+
+## Your two questions
+
+**1. Is the measured paragraph readable? No — split it, as you said you'd rather do.**
+
+The honesty is right and worth keeping; the sentence carrying it is not. Two claims, each with a subordinate tail (the push confound; the unrecoverability), joined by a sentence-initial "And that", closing on a "Neither" whose antecedent is eight lines back and a clause that belongs to the first item. A reader who starts it will finish somewhere other than where the paragraph meant them to be.
+
+The split that fixes B at the same time is one claim per paragraph, with its own evidence and its own caveat attached:
+
+&gt; What is measured here rather than read, and by which pull request.
+&gt;
+&gt; That something after a push starts a fresh review: #99 drew a 👍 three minutes after one. Two thread replies landed forty seconds after that push as well, so which of them it answered is not something anyone watched — and the bot's own note lists its triggers without a push among them, so this is the claim least safe of the two.
+&gt;
+&gt; That it takes a reaction away again: #104's 👀 went as soon as it had comments to post. GitHub keeps no history of a reaction taken back, so that observation is already unrecoverable, which is the reason to have written it down.
+&gt;
+&gt; Neither is on the documentation page.
+
+Same facts, nothing floating, and "Neither" now has two short paragraphs behind it instead of one long sentence. It also makes future maintenance obvious: a third observation is a third paragraph, not a re-tallied clause.
+
+**2. Should #104 be in the file? Yes — the number, not the deixis, and not its current reaction state.**
+
+Citing it is exactly right, and it is the strongest citation in the section precisely because it is the one that cannot be re-derived: withdrawn reactions leave nothing behind, so the file is the only record that the event happened. A number in a merged file is not an odd self-reference; it is a footnote, and it stays checkable for the parts that persist — the comment at 05:49:47 is still there and still dated.
+
+What reads oddly after merge is the other two forms of it: "this file's own pull request" (finding C), which only makes sense while #104 is open, and "now reads as though nothing ever reacted to it" (finding A), which asserts a mutable state that will very likely change before anyone else reads the sentence. Fix those two and the self-reference stops being a self-reference and becomes a citation, which is what you want it to be.
+
+## What I could not review
+
+Whether a 👀 ever sat on #99 or #102 — unrecoverable, as the file now says. The full `ctest` run was still going when I finished; I confirmed `instructions` directly and am taking 11/11 on your report, which is proportionate for a change that touches one documentation file.</result>
+<usage><subagent_tokens>68239</subagent_tokens><tool_uses>7</tool_uses><duration_ms>238426</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a95399f5e71e9b4f8</task-id>
+<tool-use-id>toolu_01Mk3KwJKQ7seFU3262FeK8U</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a95399f5e71e9b4f8.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the Codex fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: request changes
+
+Two items, both small, and one of them is a deletion your summary did not mention. Then the answer to your question about the push, which I'd rather give you in full since you asked for it before rather than after.
+
+Reviewed state: `33aed5e` plus the current unstaged `AGENTS.md`, working tree that file alone. The split landed as designed: 495-510 is now a heading line, one paragraph per claim with evidence and caveat attached, and "Neither is on the documentation page" with two short paragraphs behind it. Findings A, C and the substance of B and D are resolved. I re-verified the numbers again and they still hold exactly (#99: push 00:56:42, replies 00:57:22, 👍 00:59:44; #104: `reactions` `[]`, one comment at 05:49:47; both reviews `COMMENTED`; trigger list open / mark-ready / `@codex review`). No claim about any live pull request's current state remains anywhere in the section.
+
+---
+
+## Findings
+
+### Should-fix
+
+**A. The Codex Security Review disambiguation was deleted in the rewrite and not mentioned.**
+
+`33aed5e:493` had: "A trigger list that includes every push is documented for Codex Security Review, which is a different feature and not evidence about this one." It is absent from the working tree, and it is the one piece of content this rewrite dropped rather than restructured.
+
+It guarded a specific wrong turn, and the new wording makes that turn *more* inviting, not less: line 500 now says the bot's own note lists its triggers without a push among them, which is precisely the claim a reader will want to check. Searching for it finds Codex Security Review's documented trigger list, which does include every push — and the reader concludes the paragraph is wrong, or worse, that the push claim is documented after all and the hedge at 501 can go. The deleted sentence is what stopped that.
+
+Fix: restore it, shortened, at the end of the push paragraph — "a trigger list that does include every push is documented for Codex Security Review, a different feature and not evidence about this one." If you'd rather drop it, that is a legitimate resolution (the bot's own note is more specific than any docs page, and citing it may be guard enough) — but say so in the record rather than letting it go silently, since it is the only content this change removes.
+
+### Nit
+
+**B. `AGENTS.md:465` — a new orphan line, in a different place.**
+
+"manages its reactions rather than only adding" is 45 columns in a paragraph that otherwise runs 66-74. The `is not` orphan is indeed gone; the rewrap of 463-473 created this one. Fourth round for this artifact — worth a `awk 'length&lt;50 &amp;&amp; length&gt;0'` pass over the section before committing rather than another round of me finding one.
+
+---
+
+## On the push being the test of the claim
+
+You are right that it is, and I'd rather you hear the design flaw now: **as currently planned, the experiment reproduces the exact confound the file already documents.** Your stated sequence is commit, push, reply on the Codex thread and resolve it. That is a push and thread comments within a minute or two of each other — which is #99, precisely. If a fresh review runs, you will not know whether it answered the push or the reply, and the paragraph at 497-501 will have a second observation that says nothing its caveat does not already say.
+
+Separating them costs nothing and converts it into a real measurement:
+
+1. Push. Note the time.
+2. Wait the few minutes a review takes, touching nothing else on the pull request. Watch for a new review, new comments, and a reaction appearing on #104.
+3. Only then reply on the thread and resolve it.
+
+A review that arrives in step 2 is attributable to the push alone, since nothing else happened — that is the observation #99 could not give you, and it would let the hedge at 500-501 come down honestly rather than by accumulation.
+
+Two cautions on reading the result:
+
+- **A null is weak.** The section already says absence is not something the platform reports; a service on infrastructure this repository does not control can be slow, throttled, or down. One quiet push is not evidence that a push does not trigger a review, and the paragraph should not be reversed on it. If you record a null, record it as a null — "a push on #104 drew nothing within N minutes" — not as a correction to the claim. The structure you now have supports that: a third observation is a third paragraph.
+- **Watch the reaction too, not just the comments.** If the bot 👍s #104 after the push, that is a reaction added to a pull request whose 👀 it had previously withdrawn. It does not show a 👍 being taken back, so line 467's "whether it would take a 👍 back is unwatched" stays true — but add-then-remove-then-add on one pull request is a further data point about reaction management, and it is worth writing down while it is observable, since as line 505 now says, none of this survives in the API afterwards.
+
+Your commitment to report what actually happened rather than what you expected is the right one, and it is the reason the "already unrecoverable" sentence earns its place.
+
+## What I could not review
+
+Whether the published documentation page says what the section says it does not say — I have the bot's own review-footer note verbatim from both #99 and #104, but not the docs page behind the settings link, which is why finding A matters more than its size suggests.</result>
+<usage><subagent_tokens>78667</subagent_tokens><tool_uses>3</tool_uses><duration_ms>90514</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b37ii5pvv</task-id>
+<tool-use-id>toolu_01C45GUPxGjYANMoaoq44rhV</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/b37ii5pvv.output</output-file>
+<status>completed</status>
+<summary>Background command "Watch 104 after the push with nothing else touched" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b5p7rcpdt</task-id>
+<tool-use-id>toolu_01F6FNBNGtJ1HVirAgnnXXFL</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/b5p7rcpdt.output</output-file>
+<status>completed</status>
+<summary>Background command "Watch for the re-review outcome" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Have we gone through all the codex pr comments and addressed and resolved them?
+
+---
+
+<task-notification>
+<task-id>a5f8de14f3fa14bbf</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d9b6ccf4-0167-4fe7-9619-cec1a908d2ed/tasks/a5f8de14f3fa14bbf.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review AGENTS.md rewrite" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Request changes** — no blockers, five should-fix items and three nits, all in the uncommitted `AGENTS.md` rewrite.
+
+State reviewed: branch `docs/codex-pr-review` at `50540ea` (commits `33aed5e`, `50540ea` vs `main`) plus the one unstaged modification to `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md` (35+/35-). Nothing staged, no untracked files (`--untracked-files=all` confirms). Approval would only cover that exact state.
+
+I checked the load-bearing facts against the GitHub API rather than taking them from the diff:
+
+- `+1` on issue 104 at `2026-08-09T06:36:41Z` — matches, and it is the only reaction present.
+- Push candidate: `50540ea` committer date `2026-08-09T06:33:53Z`, i.e. 24 s before the claimed 06:34:17Z push. Consistent.
+- The 06:36:41Z pass filed **no** review object: `pulls/104/reviews` holds only the bot's 05:49:47Z `COMMENTED` review and a human `COMMENTED` at 22:30:22Z. Nothing else touched the PR between the push and the 👍, so the experiment really is clean.
+- "both reviews it has filed here" — exactly two bot reviews exist repo-wide (#99, #104), both `COMMENTED`. Accurate today; it is a claim that goes stale on the next review, but it is qualified enough to live with.
+- "It found a defect in this workflow's own test" — the #99 comment on `tests/instructions.sh` (awk exit status). Accurate.
+- `tests/instructions.sh .` passes on the worktree state: `instructions OK`, exit 0; `STANDARDS=4` still holds because the new section says "fix, or resolve explicitly" rather than the counted phrase, as its comment claims.
+
+On the passes: I agree `ui-review` was not owed. The branch touches `AGENTS.md` and `tests/instructions.sh` and nothing that compiles, no feature flag, no `sst.doc`, no string the game prints — `AGENTS.md` itself names this file as the case that "usually give[s] it nothing to read". The skip was stated to me as step 8 requires. `verifier` running in parallel is noted; my approval, when it comes, will not cover a state changed by its findings.
+
+## Findings
+
+### should-fix
+
+**1. `AGENTS.md:323-324` — step 12 promises the section says "when to stop waiting", and after the rewrite it no longer does.**
+The deleted paragraph carried the only duration in the document: "Give it the few minutes a review takes." What replaced it says how to *read* the answer and nothing about how long to wait; the only remaining stopping guidance is "Where the answer still does not come", which is a condition with no clock in it. An agent following step 12 literally has no bound and will either poll indefinitely or invent one. The measurements are right there to supply it: 👀 at +5 s, 👍 at +2 m 24 s on #104, and the opening review at +3 m 39 s (#104 created 05:46:08Z, review 05:49:47Z). Suggest restoring a sentence such as "A review lands within a few minutes — five seconds to the 👀, under four to the answer on both runs watched here; past that, treat it as not coming."
+
+**2. `AGENTS.md:515-516` — "Comparing `created_at` against the push is what makes that not matter" overstates what the comparison buys.**
+The comparison rules out a *false positive* (mistaking a stale 👍 for a fresh one). It does nothing about the failure mode the preceding two sentences just raised: if the bot does not withdraw an existing 👍 to start the next cycle, GitHub's one-reaction-per-user rule means no new `created_at` can ever appear, step 12's condition becomes permanently unsatisfiable, and every merge on such a PR goes through the escape hatch. That is the opposite of "not mattering" — it is the case where the rule stops working, and the text tells a reader not to worry about it. Suggest: "Comparing `created_at` against the push is what keeps a stale 👍 from being read as a fresh one. If the bot turns out not to withdraw it, no fresh one can arrive at all, and that is the case step 12 hands to `@codex review` and then to whoever merges."
+
+**3. `AGENTS.md:503-504` — "the rule in step 12 rests on that, and it was reasoned before it was watched" contradicts the sentence after it, in the one block whose job is separating reasoned from measured.**
+The nearest antecedent of "it" is "the rule in step 12", and that reading is false: step 12's 👍/`created_at` rule is being introduced by this very rewrite, i.e. after the observation, not before it. The intended reading is presumably "this question was settled by reasoning before anyone watched it" — but the next sentence says the reasoning reached the *opposite* conclusion, so "it was reasoned" (which normally means "correctly concluded") lands wrong either way. Suggest dropping the clause and letting the next sentence carry it: "That a 👍 can postdate the push it answers, from the same run — the rule in step 12 rests on it. An earlier draft reasoned the opposite, that a 👍 could not be repeated and so would go stale; the run above disproved that."
+
+**4. `AGENTS.md:508` — "Neither" no longer has exactly two antecedents.**
+Before the rewrite the block held two single-claim paragraphs. Now paragraph one bundles two findings ("That a push starts a fresh review, **and** that the reaction cycles") and paragraph two adds a third, so "Neither" covers two paragraphs but three claims. It also partly duplicates work paragraph one already did ("this is behaviour the vendor does not document"). Suggest splitting the reaction-cycling claim into its own paragraph and writing "None of these is on the documentation page", or moving the trigger claim's undocumented-ness entirely into the "Neither" sentence so paragraph one states only the observation.
+
+**5. `AGENTS.md:467-470` — a fourth measured claim sits outside the block that claims to enumerate what is measured.**
+"A pass that finds nothing files no review at all — no review object, no comments" is a measurement (I confirmed it: no review object exists for the 06:36:41Z pass), and it is not derivable from the vendor's collapsed note, which only says 👍 means finished with nothing to say. It is never sorted in "What is measured here rather than read", whose header reads as a complete enumeration. Either fold it into the #104 paragraph — it came from the same run — or soften the header.
+
+### nit
+
+**6. `AGENTS.md:496-497` — an inferred timestamp presented as a measurement, an imprecise figure, and a dangling appositive, in three lines.**
+GitHub keeps no history of a removed reaction — the deleted draft said so and the rewrite dropped the caveat — so the withdrawal *time* is inferred from when the comments-review posted (05:49:47Z), not observed. The gap to 06:34:22Z is 44 m 35 s, which is three quarters of an hour, not "two thirds", in a paragraph that otherwise quotes seconds. And "— the same 👀 that had been withdrawn…" attaches to the nearest noun phrase, "👍 at 06:36:41Z", so the first reading is that the 👍 *is* the withdrawn 👀. Suggest: "…drew 👀 five seconds later with nothing else touched on the pull request, and 👍 at 06:36:41Z. That 👀 was a re-add: the same reaction had gone when the earlier review posted comments at 05:49:47Z, and GitHub keeps no history of a reaction taken back, which is why it is written down here."
+
+**7. `AGENTS.md:463-465` — the instruction is executable for the reaction but not for the push it is compared against.**
+The section names the endpoint that yields `created_at` but never says where the push time comes from, and GitHub does not expose it usefully (`pushedDate` is gone; `git log -1 --format=%cI` gives the commit date, which is only a lower bound). Since the agent doing the pushing is the one asking the question, one clause fixes it: record `date -u +%FT%TZ` at push time. Worth adding too that the reaction's `content` reads `+1` and `eyes`, since an agent writing the `-q` filter needs those literals and 👍 is not spelled 👍 in the JSON.
+
+**8. `AGENTS.md:314-315` vs `494` — "a push **may** start another" against the flat "That a push starts a fresh review".**
+One clean instance supports "a push started one here"; step 11 hedges correctly and the provenance block does not, while step 12's gate now depends on the general form holding. Aligning the block to "a push started a fresh review" would cost nothing and keep the three statements from disagreeing.
+
+## What I could not review
+
+- The 👀 at 06:34:22Z and the 👀 withdrawal at 05:49:47Z are unverifiable now — GitHub retains no history of removed reactions, so I could only confirm that they are consistent with the surviving record (a lone `+1` at 06:36:41Z, no reviews or comments between the push and it). Finding 6 is partly about the rewrite having dropped the note that says exactly this.
+- Whether the bot's collapsed note publishes "👍 means finished with nothing to say", and whether its trigger list omits pushes — both are vendor text I did not fetch.
+- `verifier` scope: it was running in parallel and I have not seen its output, so nothing here reflects it.</result>
+<usage><subagent_tokens>56575</subagent_tokens><tool_uses>16</tool_uses><duration_ms>380789</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a795fa122bee05411</task-id>
+<tool-use-id>toolu_01UPD2kkDB1GZQDJDmTnJXzv</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d9b6ccf4-0167-4fe7-9619-cec1a908d2ed/tasks/a795fa122bee05411.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify AGENTS.md rewrite" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: pass
+
+All checks green on the settled worktree. Two things the main agent needs to know: **AGENTS.md changed three times while I was verifying it**, and **the section this change actually edits has no test coverage at all**.
+
+---
+
+## Verified state (pin this for a rerun)
+
+`/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md`
+sha256 `fcc425c2b25d54f76bc03bd97391c40855558a8096fc002f63b653f1f9bb2897`, 30937 bytes, mtime 2026-08-09 15:38:44 -0700.
+
+My first pass ran against a 29435-byte version, my second against 30896 bytes, and the file settled at 30937. I discarded the first two passes and re-ran everything that reads AGENTS.md against the pinned hash, re-checking the hash before and after each. **If the file has moved again since, this report is stale.**
+
+## Failures
+
+None. No check failed on the pinned state, deterministically or otherwise. The `instructions` test was run 3x standalone plus 3x through ctest plus twice in full-suite runs — 8 runs, all pass, no variance.
+
+## Missing coverage
+
+**The edited section is untested.** `tests/instructions.sh` has exactly two live assertions over AGENTS.md content — the finding-standard count (4) and the forward pointer to `"Answering a finding"` — and neither is touched by this diff. Mutation-testing against the pinned file, in a scratch copy:
+
+| mutation | result |
+|---|---|
+| reword step 7 off the shared standard | FAIL ("states the finding standard 3 times, expected 4") |
+| delete step 6's `"Answering a finding"` pointer | FAIL ("nothing points forward at...") |
+| change `### The Codex review` to `## The Codex review` | **passes** |
+| delete the entire body of `### The Codex review` (3.9 KB) | **passes** |
+
+So the two assertions are live rather than blind, but they are live about parts of the file this change did not touch. Every line of the diff could be deleted or reversed and `instructions` stays green. This is a known and documented gap, not a new one — `tests/instructions.sh:96-100` (the comment added on this branch) states the Codex section is deliberately not counted. Reporting it because "the test passed" should not be read as "the change was checked."
+
+Compensating check I ran by hand, since nothing automated does: every empirical claim the new prose makes, cross-checked against the GitHub API for #104. All of them hold.
+
+- opened `05:46:08Z` ✓; bot review with comments `05:49:47Z` ✓ (3m39s, "under four minutes")
+- commit `50540eab` dated `06:33:53Z`, claimed push `06:34:17Z` — the "twenty-four seconds before it reached the remote" is internally consistent ✓
+- 👍 `created_at` `06:36:41Z` ✓ (2m24s after the claimed push)
+- 05:49:47Z → 06:34:22Z is 44m35s, "three quarters of an hour" ✓
+- "no review object and no comments behind it": the only bot review on #104 is the 05:49:47Z one ✓
+- "GitHub stopped serving a push timestamp": confirmed — `issues/104/timeline` returns only `committed` (05:45:17Z, 06:33:53Z) and `reviewed`; no push event ✓
+
+Two claims are unverifiable by design and the text says so itself: the 👀 at 06:34:22Z (withdrawn, no reaction history) and the push time (not served, hence the `date -u +%FT%TZ` instruction).
+
+Internal cross-references check out too: `AGENTS.md:315` does say "a push **may** start another", matching the new "which is why step 11 says a push *may* start one"; the escape-hatch paragraph is at `:489`, below "take the paragraph below on saying so" at `:484`.
+
+## Environment issues
+
+- **`cppcheck`, `clang-tidy`, `scan-build`: all absent.** No static analyzer ran. Nothing compiled changed, so the cost is low, but this is a gap and not a pass.
+- `tmux` present, so `tui` genuinely ran (50.3s) rather than skipping. `shellcheck` present: clean on `tests/instructions.sh`.
+- **The worktree moved under verification** (above). Not an error, but it means a verifier report and the state it describes can diverge silently.
+
+## Worth flagging, outside the checks
+
+The reply posted on #104 at `22:30:22Z` describes the rewrite as landed — "Fixed in 50540ea", "The rewrite says that instead". The half about `"Where the answer was a fix, push it..."` is genuinely in 50540ea; the rest of what the comment describes (the reaction-cycling rewrite, step 12's `created_at` rule) is still **uncommitted** in the worktree. A reader following that comment to the PR right now will not find what it says is there. Also: the current 👍 is `06:36:41Z`, so once this rewrite is pushed, step 12 will need a newer one.
+
+## What ran
+
+Scope: branch diff `main...HEAD` (`AGENTS.md`, `tests/instructions.sh`) plus the uncommitted `AGENTS.md` edit. No untracked or staged files.
+
+- `cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug &amp;&amp; cmake --build build-debug` — clean, 0 warnings
+- `cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release &amp;&amp; cmake --build build-release` — clean, 0 warnings
+- CI parity: `-DCMAKE_BUILD_TYPE=Debug -DSST_WERROR=ON` into a scratch build dir — clean
+- `ctest --test-dir build-debug --output-on-failure` — 11/11 pass (196s); run twice, second on the settled state
+- `ctest --test-dir build-release --output-on-failure` — 11/11 pass (187s)
+- `sh tests/instructions.sh &lt;root&gt;` x3 direct, `ctest -R instructions` x3 — all pass on the pinned hash
+- Mutation testing of `tests/instructions.sh` against copies in the scratchpad (4 mutations, table above) — repo files untouched
+- `shellcheck tests/instructions.sh` — clean
+- Plain-mode journey: `printf 'regular\nshort\nnovice\nxyz\nsrscan\nquit\nn\n' | ./build-debug/sst` — exit 0, srscan renders, clean quit, zero CR bytes in output
+- `gh api` cross-checks of #104 reactions, reviews, comments, commits, timeline
+
+I modified no files in the repository; `git status` is unchanged at ` M AGENTS.md`. The `build-debug/`, `build-release/` trees are gitignored.</result>
+<usage><subagent_tokens>53439</subagent_tokens><tool_uses>34</tool_uses><duration_ms>975228</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a9f50869c8dee587a</task-id>
+<tool-use-id>toolu_0172JtKFgk9HhBUxuCn8B8um</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d9b6ccf4-0167-4fe7-9619-cec1a908d2ed/tasks/a9f50869c8dee587a.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review final state" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Request changes.** Reviewed `HEAD = 50540ea` plus the uncommitted modifications to `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md` and `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh` (nothing staged, no untracked files). Three findings, all fixable in place.
+
+### Answers to the previous round
+
+All eight were answered in substance, not adjacently. I re-read each against the text:
+
+1. Stop-waiting durations restored at `AGENTS.md:480-485`; arithmetic checks out (05:46:08→05:49:47 = 3m39s; 06:34:17→06:36:41 = 2m24s).
+2. `AGENTS.md:540-544` now says exactly what the comparison does and does not buy, including the never-satisfiable case. Answered.
+3. Cut; `AGENTS.md:524-527` now states it as a draft that a run disproved. Answered.
+4. Four measured entries, "None of those" at `AGENTS.md:533`. Answered.
+5. No-review-object claim is its own measured entry at `AGENTS.md:529-531`. I verified it: `pulls/104/reviews` holds one codex review, at 05:49:47Z, and none after the 06:36:41Z 👍.
+6. `AGENTS.md:517-522` now derives the withdrawal from the comment timestamp and says so. 44m35s is fairly called "three quarters of an hour". Answered.
+7. Sourced — but the source it gives is wrong; see finding 1. The `eyes`/`+1` naming is correct (`content` is `+1` on both #99 and #104).
+8. `AGENTS.md:509-511` plus the `may` in step 11 at `AGENTS.md:315`. Answered and consistent.
+
+Other claims I could verify held: "both reviews it has filed here were plain commenting reviews" (#99 and #104, both `COMMENTED`), the 👍 `created_at` of 06:36:41Z, and PR #104's `created_at` of 05:46:08Z.
+
+## Findings
+
+**should-fix — `AGENTS.md:468-470`: "GitHub stopped serving a push timestamp" is false, and two API calls disprove it with the very number the section cites.**
+The section builds a manual bookkeeping rule (`date -u +%FT%TZ` as you push) on the premise that no source exists. Both of these return the push in question:
+
+```
+gh api repos/:owner/:repo --jq .pushed_at          -&gt; 2026-08-09T06:34:17Z
+gh api 'repos/:owner/:repo/events'                 -&gt; PushEvent refs/heads/docs/codex-pr-review
+                                                      2026-08-09T06:34:17Z head 50540eab
+```
+
+Failure scenario: an agent that forgot to run `date` — or any later reader checking whether step 12's condition was met on a merge someone else performed — concludes the timestamp is unrecoverable and either skips the check or reports it as unknowable, when one call answers it. The events feed is strictly better than the hand-noted time, because it survives the session. Fix: name `repos/:owner/:repo/events` (filtered on `payload.ref`) as the source, with its real limits — 90 days and 300 events of retention — and keep `repos/:owner/:repo`'s `pushed_at` as the immediately-after-push shortcut with its real limit, that it is repo-wide and any other branch's push clobbers it. Keep `date` as the belt-and-braces note if you like, but not as the only thing that will tell you.
+
+**should-fix — `AGENTS.md:470-473`: the 24-second measurement is attributed to a commit that does not contain the paragraph making it.**
+"The commit this paragraph arrived in was made twenty-four seconds before it reached the remote." The paragraph is uncommitted (it appears in `git diff HEAD`, not in `50540ea`). The 24 seconds is real, but it belongs to `50540ea`: committed `2026-08-08T23:33:53-07:00` = `06:33:53Z`, pushed `06:34:17Z`. The commit this paragraph will arrive in has not been made and its delta is unknown. Failure scenario: in a section whose whole organising principle is separating what was measured from what was assumed, a load-bearing number ends up attached to the wrong object — and it is unfalsifiable to the next reader, because the commit it names is whichever one they are looking at. Fix: attribute it, e.g. "`50540ea` was committed twenty-four seconds before it reached the remote".
+
+**should-fix — `tests/instructions.sh:190-194`: the comment implies the new call guards the section's body; it guards one heading line and one quoted pointer.**
+"Nothing else in the file guards its body, so this is what stands between a step pointing somewhere and a step pointing nowhere." I replaced everything after `### The Codex review` with `TBD.` in an out-of-tree copy, left the heading and both pointers, and the test exited 0. That is ~110 lines of this branch's main diff still unguarded — the verifier's finding is narrowed, not closed. Failure scenario: the next person reads that comment, believes the body is covered, and does not add the check they were about to. Fix: say what it cannot see, in the register the rest of this file already uses (`instructions.sh:77-84`, `:148-151`) — e.g. "This guards the pointer and the heading, not the body: gut the section to a stub and this still passes." If you want the body covered, a minimum byte or line count between the heading and the next `^### ` is the cheap version, but the honest comment is the required part.
+
+### Nits
+
+- `tests/instructions.sh:155`: `grep -q "^### $name"` interpolates a caller-supplied name into a BRE, while the awk half deliberately uses literal `index()`. Neither current name holds a metacharacter, but `instructions.sh:89-91` warns about exactly this hazard for `STANDARD` and the new function inherits no such note. One line of comment, or `grep -qF` plus a leading-`### ` check, closes it.
+- `tests/instructions.sh:196`: `'it is the only place the reviewer steps 11 and 12 defer to is defined'` garden-paths on "the reviewer steps". Both interpolations read grammatically, but "the reviewer that steps 11 and 12 defer to" scans on the first pass.
+- `tests/instructions.sh:156`: the folded heading message dropped "step 6 points at it by name" from the old inline version. No coverage lost; the pointer check's message carries the idea.
+
+### What I checked and found sound
+
+- The refactor is strictly stronger than what it replaced, not merely equal. The old `grep -q "\"$SECTION\""` accepted a back-reference; the new `q &lt; h` does not. Deleting step 6's clause while leaving the back-reference at `AGENTS.md:451` — the precise state the comment at `:139-143` says it exists to catch — now fails, where the old check passed. Verified out-of-tree.
+- The function cannot pass for the wrong reason on the paths I could construct: heading deleted (fails), both pointers removed (fails), pointer only below the heading (fails), one of two pointers removed (passes, correctly). Both failures accumulate into `fails` correctly across two call sites (`2 check(s) failed.`).
+- The awk guard pattern matches the one above it: non-zero status and a non-`yes`/`no` answer are distinguished, so a shadowed awk printing nothing cannot pass this.
+- `STANDARDS=4` still holds with the new section present, and the comment at `:96-100` correctly explains why the Codex section is not counted.
+- shellcheck `-s sh` is clean. Registered in `CMakeLists.txt:123`, so ctest runs it. Tabs, wrapping (≤72 display columns, emoji at width 2) and comment density match the surrounding files. No trailing whitespace, no stray files.
+
+### Coverage
+
+I agree `ui-review` is not owed. `AGENTS.md` and a shell test that reads markdown compile nothing, touch no feature flag, and add no string the game prints — this is the case `AGENTS.md:344-345` names explicitly. Per the same section, record the skip and its reason in the commit, the PR body and the summary, not only here. `verifier` rerunning in parallel: my approval, once the findings above are answered, does not cover its result.
+
+### Not reviewed
+
+Whether `@codex review` is the documented way to request a re-review, and whether the bot's trigger list omits pushes (`AGENTS.md:493-494`, `:512-515`) — both are claims about vendor documentation I cannot fetch. The 👀 timestamps at 06:34:22Z and its earlier withdrawal are unverifiable by construction, which the text now says.</result>
+<usage><subagent_tokens>59039</subagent_tokens><tool_uses>21</tool_uses><duration_ms>362555</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a1cf2789e9ebed6d7</task-id>
+<tool-use-id>toolu_016iZStP5ZomWcM2s1FGMhLt</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d9b6ccf4-0167-4fe7-9619-cec1a908d2ed/tasks/a1cf2789e9ebed6d7.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify final AGENTS.md + test state" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Verification complete. State moved under me mid-run; I re-ran everything against the settled state.
+
+## Verdict: **pass** (with one pre-existing gap and one undocumented limit, both non-blocking)
+
+## File hashes — they moved
+
+| file | at start | at end |
+|---|---|---|
+| `AGENTS.md` | `fcc425c2b25d54f76bc03bd97391c40855558a8096fc002f63b653f1f9bb2897` | `afc00f44151de5764f7dced6ccedac988ed1ade3fa9f886d47ff971086113a3f` |
+| `tests/instructions.sh` | `010b6ea22ea9fdfe76245b499cce6e865900673277635f0672707aeb370d1d86` | `0a33b6246aeba728a59b4b43d1b589f4ff1c771ddc81ef7c83bf68f83d7d7f1c` |
+| `CLAUDE.md` | `090970cd…` | `090970cd…` (unchanged) |
+
+Two things follow, and the first contradicts your brief:
+
+1. **Claim 1 was wrong when I started.** `AGENTS.md` was byte-identical to `fcc425c2…` — the hash the previous pass verified. The step 12 rewrap and the rewritten "The wait is short" paragraph were *already* in that hash. You asked me to check, so: checked, the file had not moved.
+2. **Both files then changed at 15:55:35 / 15:56:35 local, mid-verification.** `tests/instructions.sh` gained an entire check I was never told about — a per-section body-size floor (`minbody`, third argument to `check_section`, `1200` for `Answering a finding` and `4000` for `The Codex review`) — plus a grammar fix to the Codex `why` string ("the reviewer **that** steps 11 and 12 defer to"). I polled for 9s afterwards and mtimes confirm it settled; I then re-ran the full battery against `afc00f44…` / `0a33b624…`. **Everything below is against the settled state.**
+
+Also worth saying: my imported `CLAUDE.md`→`AGENTS.md` context snapshot did **not** match disk (it had an older "What is still unwatched" paragraph). I read everything from `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md` on disk.
+
+## Failures
+
+None. No flakes: full `ctest` ran three times (11/11 each), `instructions` ran 5× standalone plus `--repeat until-fail:5`, all deterministic.
+
+## The central claim — verified independently
+
+I did not use your table. Mutations applied by line index with a `NO-OP` assertion on every substitution (the trap you hit), run against a copy at `$SCRATCH/mut` with the repo's own script.
+
+- **Whole `### The Codex review` section deleted (110 lines): FAIL** under the current script, **PASS** under `git show HEAD:tests/instructions.sh`. That is the regression closed, confirmed from both sides.
+- Codex heading renamed → FAIL. All Codex forward pointers unquoted → FAIL. `Answering a finding` heading renamed → FAIL. Step 6's pointer unquoted (line 207) → FAIL.
+- **Each of the four statements of the standard, mutated individually → FAIL** (206; 220 where it wraps `resolve it` / `explicitly`; 228 wrapped; 403). A 5th statement added → FAIL. The `STANDARDS=4` comment's claim that the Codex section is deliberately *not* counted is accurate — that section says "fix, or resolve explicitly", different words.
+- **New body floor works**: Codex body gutted to a stub → FAIL (10 chars); cut by 40 lines → FAIL (3954 &lt; 4000); cut by 15 lines → PASS. Bodies today are 1680/1200 and 6409/4000 — floors well under real size, as the comment claims.
+
+## The three wrong-reason mechanisms you asked about — all cleared
+
+- **Stale `points` (and now `body`) between calls: no.** I shimmed `awk` on `PATH` to misbehave on each of the 5 call sites × 3 modes (silent-exit-0, prints-plausible-value-but-exits-17, prints junk). **15/15 caught, every one attributed to the right section and the right check.** The `if ! var=$(...)` form reassigns unconditionally, so nothing carries.
+- **`index()` with the name in more than one place: handled.** A quoted mention placed *only below* the heading → FAIL (correct: `q &gt; h`). The first-occurrence semantics pick the real forward pointer at line 315 ahead of the heading at 435.
+- **Name in a third place: passes, and the script says so.** A quoted `"The Codex review"` inserted anywhere above the heading satisfies the check even with both real step pointers gone. That is explicitly documented ("What it cannot see is which step the pointer is in"). Same for the converse — a duplicate heading above the steps produces a wrong FAIL, also documented. Not defects.
+
+## Gaps found
+
+1. **Prefix-match gap — pre-existing, not introduced here.** Renaming the heading to `### The Codex review process` **passes**. Both `grep -q "^### $name"` and `index(all, "### " s)` match a prefix, so any heading that *starts with* the name satisfies them. I confirmed the same mutation passes under `HEAD`'s script for `Answering a finding`, so the refactor inherited this rather than creating it. Low severity (a reader following the pointer still lands on the section). Under step 9 this is a candidate to file, not to fix in this slice.
+2. **One pointer is enough — undocumented.** `The Codex review` has two forward pointers (lines 315 and 323). Unquoting *either one alone* passes; only unquoting both fails. Inherent to an existence check, but it is new that a section has two pointers, and the script's comments don't mention it. Worth a sentence in the comment block or an explicit resolution.
+
+## Missing coverage
+
+- `tests/instructions.sh` has no test of its own; its mutation-resistance is established only by hand (mine and yours). Not new, and not something I'd block on.
+- Nothing else. The compiled surface is untouched, and the existing suite covers it.
+
+## Environment issues
+
+- **`cppcheck`, `clang-tidy`, `scan-build`: all absent.** No C static analyzer ran. This is an environment gap, not a pass — though nothing compiled changed, so its bearing on this diff is nil.
+- `shellcheck` **is** present: `shellcheck -s sh tests/instructions.sh` exits 0, clean.
+- `awk` is **mawk 1.3.4**; `length()` counts bytes, so the new body counter is byte-based here. The script's comment already anticipates this and the floors have ~30-40% headroom, so it doesn't matter.
+
+## Bonus: the new prose's factual claims check out
+
+The added paragraphs assert timestamps. I verified them against the live GitHub API:
+
+- `50540ea` committed `06:33:53Z`, pushed `06:34:17Z` → **24 seconds**, exactly as line 476-478 claims.
+- The repo-wide `pushed_at` hazard is real: `entire/checkpoints/v1` went up at `06:34:17Z`, the **same second** as the measured push (lines 471-473).
+- #104 created `05:46:08Z`, comments `05:49:47Z` (3m39s), 👍 `06:36:41Z` (2m24s after the `06:34:17Z` push). All match lines 485-488 and 515-516.
+- The only cited figure I could **not** confirm is 👀 "five seconds in" — the reaction list now holds only the `+1`, consistent with the file's own point that GitHub keeps no history of a withdrawn reaction.
+
+## What ran
+
+All from `/home/scottdensmore/Developer/scottdensmore/super-star-trek`, branch `docs/codex-pr-review`:
+
+- `cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug -DSST_WERROR=ON &amp;&amp; cmake --build build-debug` — clean, 0 warnings.
+- `cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DSST_WERROR=ON &amp;&amp; cmake --build build-release` — clean, 0 warnings.
+- `ctest --test-dir build-debug --output-on-failure` — **11/11 passed, run 3×** (last run against the settled state). `ctest -R instructions --repeat until-fail:5` — passed.
+- `shellcheck -s sh tests/instructions.sh` — exit 0.
+- Mutation battery: ~25 mutations of `AGENTS.md` against a scratch copy outside the repo, plus 15 `awk`-shim fault injections, plus a HEAD-vs-worktree script comparison.
+- Journeys on `./build-debug/sst`: plain mode `printf 'regular\nshort\nnovice\nxyz\nsrscan\nquit\nn\n'` — exit 0, srscan panel correct, zero stray CRs; TUI at **80x24 and 72x24** via `tmux -f /dev/null -L sstverify` (own socket, `kill-session` on sessions I created, no bare `kill-server` against the default socket) — panels clipped correctly at both, clean exit.
+- No files in the repository were modified; all mutation work was done in the scratchpad.</result>
+<usage><subagent_tokens>74757</subagent_tokens><tool_uses>38</tool_uses><duration_ms>1125976</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a46f8352aa5a68b67</task-id>
+<tool-use-id>toolu_01DtyV81JohT7MkiqrjjA19t</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d9b6ccf4-0167-4fe7-9619-cec1a908d2ed/tasks/a46f8352aa5a68b67.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review after blocker fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: request changes
+
+One new should-fix, found on this round in the same paragraph the blocker was fixed in. Every finding from the previous round is answered in substance, and I re-derived each factual claim from the live API rather than from your summary.
+
+**State reviewed:** `HEAD` = `50540ea`, plus unstaged edits to `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md` and `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh` (diff blob `84e4fed`). Nothing staged, nothing untracked.
+
+## Previous findings — all answered
+
+| Finding | Status | What I checked |
+|---|---|---|
+| Blocker: feed misses a branch's first push | Fixed, and the claim is stronger than stated | Of 29 branches with a `CreateEvent` in the retained feed, **27 have no `PushEvent` at all**; only `docs/codex-pr-review` and `docs/align-finding-standards` have one, and in both the `PushEvent` postdates the `CreateEvent` — no branch files both at creation. `payload.ref` shapes confirmed: bare name on `CreateEvent`, `refs/heads/…` on `PushEvent`. |
+| Should-fix: feed lag | Fixed (AGENTS.md:486-488) | See nit 2 for the one residual. |
+| Should-fix: prefix match not in the "cannot see" list | Fixed (tests/instructions.sh:163-168) | #105 is open and its repro matches; I reproduced the rename passing (`exit=0`) and confirmed the two inline predecessors matched the same way. |
+| Nit a: `**Reviewed commit:**` | Fixed (AGENTS.md:449-453) | Both Codex reviews carry it — `33aed5ec10`… on #104, `ac5ebf2754` on #99. Both are `COMMENTED` state, so "both reviews … plain commenting reviews" holds exactly. |
+| Nit b: "Newest, not first" | Fixed (AGENTS.md:475) | 37 out-of-order adjacent pairs across 300 events, one gap 4m23s wide. |
+| Nit c: unwatched paragraph | Fixed (AGENTS.md:559-564) | #104 currently carries exactly one reaction, `+1` at 06:36:41Z, so the experiment is set up as described. |
+| Nit d: `## ` boundary | Fixed (tests/instructions.sh:178-183) | Behaviour matches the comment: `index($0,"### ")==1` ends a body, `## ` does not, `#### ` does not either. |
+
+Other claims verified live: push 06:34:17Z / 👍 06:36:41Z = 2m24s; PR opened 05:46:08Z / comments 05:49:47Z = 3m39s; `50540ea` committed 06:33:53Z, exactly 24s before the push; repo `pushed_at` = 06:34:17Z with `entire/checkpoints/v1` pushed in that same second; the collapsed note lists three triggers with no push among them and publishes the 👍 meaning; #99's comment on `tests/instructions.sh` is the awk exit-status defect ("a defect in this workflow's own test").
+
+## Findings
+
+### Should-fix — `AGENTS.md:473-474, 488-490`: the events command as written returns 30 events, not 300, and the next paragraph tells the reader to misread the miss
+
+`gh api repos/:owner/:repo/events` is one page. I measured it just now: `length` is 30, and the oldest entry on that page is `2026-08-09T00:57:22Z` — about 22 hours of this repository's activity. The 300 events the retention sentence promises need `--paginate`; that is how I got the 300 this review rests on.
+
+Failure scenario: a branch open for more than a day or two — `fix/tui-short-terminal`'s `CreateEvent` sits at index 61 of the feed — returns *nothing* from the documented command. The reader then hits AGENTS.md:486-488, which says nothing found means "the feed is behind, not that the push is missing", waits, and re-runs the same one-page call forever. Step 12's condition can never be met, and the reason is a missing flag rather than anything about the bot. The sentence at 488-490 is also literally false of the command given: 300 is what the endpoint *retains*, not what that call returns.
+
+Suggested fix: `gh api --paginate repos/:owner/:repo/events`, and a clause at 488-490 saying the default page is 30, so the three hundred needs `--paginate` — which also makes "three hundred is what this repository returns today" true of the command printed above it.
+
+### Nit — `AGENTS.md:486-491`: the lag paragraph gives the diagnosis but attaches the remedy to the wrong limit
+
+"Note the time yourself as you push if the answer has to outlive either limit" reads as covering the two retention limits in the sentence before it, not the lag in the sentence before that. GitHub documents this endpoint's latency as anywhere from 30 seconds to six hours, which is far past "the few minutes a review takes"; a reader who concludes only "the feed is behind" has been told what is happening and not what to do instead. Suggested fix: extend the remedy to the lag — note the push time yourself rather than waiting the feed out — since the fallback already exists one sentence later.
+
+## On the `ui-review` skip
+
+Agreed, and this round does not change it. Both files are prose and shell-comment edits: `AGENTS.md` is an instruction file, and `tests/instructions.sh` reads markdown and prints pass/fail. Nothing compiled, no CMake, no `SCORE`/`CAPTURE`/`CLOAKING`/`DEBUG` flag, no string the game prints, no prompt. `AGENTS.md` names this file and a test's plumbing as the case that gives that pass nothing to read.
+
+## Independent checks I ran on the test
+
+`ctest`'s `instructions` test passes under both `dash` (the `/bin/sh` here) and `bash`, with `mawk`; `sh -n` clean. Mutating a copy outside the repository: heading deleted → fails; both pointers unquoted → fails; body gutted to a stub → fails at 6 characters against the 4000 floor; `Answering a finding` gutted → fails on the standards count. Current body sizes are 1680 against a 1200 floor and 7611 against 4000 — both floors are floors, not budgets, as the comment claims. The two documented laxnesses behaved exactly as documented: the `#105` rename passes, and removing one of the two pointers passes.
+
+## Could not review
+
+- **The 👀 at push+5s** on #104 — GitHub keeps no history of a withdrawn reaction, so only the current `+1` is retrievable. The section already says this is written down because it is unrecoverable, which is the right handling.
+- **"A trigger list that does include every push is documented for Codex Security Review"** — a claim about vendor documentation I cannot reach from here.
+- **The `verifier` rerun on this state.** You say it is in flight and the commit waits on it; nothing in my findings requires a code change to the game, but the should-fix above changes `AGENTS.md`, so the state will move and this approval will not cover it. Re-invoke `code-review` on the edited state per step 11.</result>
+<usage><subagent_tokens>60670</subagent_tokens><tool_uses>24</tool_uses><duration_ms>428206</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a4c730125b4e3e4d9</task-id>
+<tool-use-id>toolu_01KfrNwjd5QLYErfcktSjuuJ</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d9b6ccf4-0167-4fe7-9619-cec1a908d2ed/tasks/a4c730125b4e3e4d9.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify state after blocker fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: pass — but `AGENTS.md` moved under me mid-run
+
+### Hashes
+
+| File | At start | At end |
+|---|---|---|
+| `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md` | `a0fb1164…` | **`b8ae498e…` — moved** |
+| `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh` | `f58f2af2…` | `f58f2af2…` unchanged |
+
+`AGENTS.md` was rewritten at 16:28:18 local, partway through this run. HEAD stayed at `50540ea`; no untracked files. I re-ran every `AGENTS.md`-dependent check against `b8ae498e` and report only those results below. The delta I can see: the lag paragraph gained a vendor figure ("thirty seconds to six hours"), the recipe gained `--paginate` plus a "first thirty" caveat, and "whichever ends first" became "whichever comes first". I never saw a state where the checks disagreed between the two versions, but you should know the pass certifies `b8ae498e`, not the hash you named.
+
+### The four API claims — all confirmed independently
+
+I queried the live API rather than taking your numbers.
+
+1. **`CreateEvent`/`PushEvent` split — confirmed, and stronger than you reported.** `CreateEvent` carries `payload.ref` as the bare branch name, `PushEvent` as `refs/heads/&lt;branch&gt;`. Of 29 branches with a `CreateEvent` in the retained feed, **27** have no `PushEvent` — only `docs/align-finding-standards` and `docs/codex-pr-review` have both. Your message said "four branches have a `CreateEvent` and no `PushEvent`"; four is the count of branches *with* a `PushEvent` (those two plus `main` and `entire/checkpoints/v1`). The file states no number, so nothing in the prose is wrong — but the figure you carried into the task is inverted, and worth not repeating in the PR body.
+2. **Three hundred events — confirmed.** `--paginate` returns exactly 300, twice in a row. Span is 2026-08-04T05:20:15Z to 2026-08-09T23:08:19Z, i.e. ~6 days, so 300 is the binding limit and not 90 days. The new `--paginate` claim also holds: the default page is 30 events spanning 00:57:22Z to 23:08:19Z — about 22 hours, "about a day".
+3. **Same-second `pushed_at` collision — confirmed exactly.** Two `PushEvent`s share 2026-08-09T06:34:17Z (`docs/codex-pr-review` and `entire/checkpoints/v1`), and `repos/:owner/:repo.pushed_at` is `2026-08-09T06:34:17Z`.
+4. **`Reviewed commit:` — confirmed in both bot reviews.** #104 carries `**Reviewed commit:** \`33aed5ec21\``, #99 carries `ac5ebf2754`. Both are the only two Codex reviews in the repo and both are `COMMENTED`, matching the sentence above it.
+
+Incidental claims I checked while there, all holding: `50540ea` committed 06:33:53Z vs pushed 06:34:17Z = 24 seconds; the feed is genuinely not time-ordered (37 out-of-order adjacent pairs); #104 opened 05:46:08Z with comments 05:49:47Z (3m39s) and 👍 at 06:36:41Z (2m24s after the push); the bot's collapsed note lists exactly three triggers with no push among them, and does publish "otherwise it will react with 👍"; #104's head is `docs/codex-pr-review` at `50540ea`, so the self-referential "the push that lands this paragraph is exactly that experiment" is literally true.
+
+**Not verifiable, by the file's own admission:** the 👀 timings and the withdrawal. #104 now carries a single reaction, `+1` at 06:36:41Z; GitHub keeps no history of a removed reaction, so "👀 up five seconds in" rests on your live observation alone. The file says so where it matters. The `content` enum claim is half-observed: I saw `+1`; `eyes` is not currently present anywhere in the repo to confirm.
+
+### `tests/instructions.sh` — all six assertions live
+
+Mutated outside the repository (scratch copies of `AGENTS.md`/`CLAUDE.md`, the script takes a root argument), and re-run against the post-edit `b8ae498e`:
+
+| Mutation | Result |
+|---|---|
+| baseline | exit 0 |
+| heading renamed away, each section | both fail |
+| forward pointer removed, each section | both fail |
+| body gutted to a stub, each section | both fail at the floor |
+
+The `The Codex review` floor needed a neutral stub to prove — my first stub contained the standard phrase and tripped the `STANDARDS` counter first. With `Stub.` it fires cleanly: "down to 6 characters, under the 4000 floor". Current bodies are 1680 (floor 1200) and 7954 (floor 4000).
+
+Both new comment claims check out:
+- **Prefix-match gap (#105)** reproduces for *both* sections: `### The Codex review process` and `### Answering a finding here` each pass all three checks. #105 is open and its body describes precisely this. The comment documents a filed gap rather than a fixed one, which is correct under step 9.
+- **`## ` does not end a body**: appending a 70-character H2 section grew the measured `The Codex review` body 7611→7681. `The Codex review` is the last `### ` in the file, so the hazard is live for exactly the section the comment warns about, and it errs lax as the comment says.
+
+### What else ran
+
+- `cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug -DSST_WERROR=ON` + build: clean, no warnings.
+- `cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release -DSST_WERROR=ON` + build: clean.
+- `ctest --test-dir build-debug`: 11/11 passed (195.7s), including `tui`, `golden`, `tournament`.
+- `shellcheck tests/instructions.sh`: clean, exit 0.
+- `instructions` re-run 3× against the post-edit file: exit 0 each time. No flakes anywhere; the two event-count queries agreed.
+- Plain-mode journey `printf 'regular\nshort\nnovice\nxyz\nsrscan\nquit\nn\n' | ./build-debug/sst`: exit 0, correct short-range scan, clean sign-off, zero carriage returns in output.
+
+Builds and journeys are belt-and-braces here — the diff touches no C source, only `AGENTS.md` prose and comments in `tests/instructions.sh` with no executable line changed (confirmed by reading the diff).
+
+### Missing coverage
+
+Nothing actionable for this change. Every new comment claim in `instructions.sh` is either enforced by an assertion I proved can fail, or is an explicitly-documented gap with an issue number. The prefix-match gap is untested by design (#105 owns it).
+
+### Environment issues
+
+- `cppcheck`, `clang-tidy` and `scan-build` are all absent from this machine, so no third-party static analysis ran. Irrelevant to this diff (no C changed), but reporting it rather than calling it a pass. `tmux` and `shellcheck` are present and were used.
+- The mid-run `AGENTS.md` edit is the one thing that could undermine this report. If more edits landed after 23:28:50Z, the hash above is the one to compare against.</result>
+<usage><subagent_tokens>58447</subagent_tokens><tool_uses>42</tool_uses><duration_ms>634238</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>afa9db6b01a2ff409</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d9b6ccf4-0167-4fe7-9619-cec1a908d2ed/tasks/afa9db6b01a2ff409.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review after paginate fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>All claims verified independently against the live API. 
+
+## Verdict: **approve**
+
+State reviewed: HEAD `50540ea`, branch `docs/codex-pr-review`, two modified files and nothing staged or untracked — `AGENTS.md` sha256 `b8ae498e…`, `tests/instructions.sh` sha256 `f58f2af2…`. Both hashes match what you reported, so this is the state you described.
+
+### Both prior findings: fixed, and verified against the API rather than your account of it
+
+**Should-fix (event count) — resolved.** `gh api repos/:owner/:repo/events --jq length` returns `30`; `gh api --paginate …` returns `300`. The recipe at `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md:473-474` now carries `--paginate`, and the retention sentence at :490-495 is right on every number I could check:
+
+- `300` is exactly what the repo holds, so "three hundred is what this repository holds today" is the binding cap, not the 90-day one — full feed spans `2026-08-04T05:20:15Z` to `2026-08-09T23:08:19Z`, about 5.7 days.
+- The first thirty span `2026-08-09T00:57:22Z` to `23:08:19Z` — 22h11m. "About a day" is accurate, and "fail on the one that sat open over a weekend" follows from it.
+
+**Nit (remedy attached to the wrong limit) — resolved.** The lag now leads its own sentence with the vendor's figure, and the fallback at :495-497 names all three hazards. The 30s–6h figure is GitHub's own documented note on the repository-events endpoint, correctly attributed to the vendor rather than measured.
+
+### Your blocker-prose question: you are right, I was wrong
+
+I read "understated" off my own sample count and should not have. The prose states the rule; my "27 of 29" stated one draw from it. Checked across all 300 events: 29 branches have a `CreateEvent`, 27 of them have no `PushEvent`, and the two that do — `docs/align-finding-standards` and `docs/codex-pr-review` — have exactly one `PushEvent` each, filed by their *second* push (`docs/codex-pr-review`: `CreateEvent` 05:46:07Z, `PushEvent` 06:34:17Z). So the set "no `PushEvent`" and the set "never pushed to twice" are the same set, not merely coincident in this sample. "Every branch in this repository that was never pushed to twice" is exact, and more informative than the count I offered. Withdrawn.
+
+### Other claims in the section, spot-checked
+
+- Feed not strictly time-ordered: confirmed, five inversions in the 300 (e.g. `05:50:06Z` followed by `05:50:08Z`). "Newest, not first" is load-bearing and correct.
+- `50540ea` committer date `2026-08-09T06:33:53Z` vs `PushEvent` `06:34:17Z` — exactly 24 seconds.
+- Repo-wide `pushed_at` is `06:34:17Z`, and two `PushEvent`s share that second (`docs/codex-pr-review` and `entire/checkpoints/v1`). The "another branch went up in the same second" claim is literally true.
+- `#104` opened `05:46:08Z`, Codex comments `05:49:47Z` (3m39s, "under four minutes"); reaction `+1` at `06:36:41Z` vs push `06:34:17Z` (2m24s, exact). `content` reads `+1`, as :471 says.
+- Both Codex reviews in the repo (#99, #104) are `COMMENTED` and both bodies carry `**Reviewed commit:** \`&lt;10-char sha&gt;\``. The collapsed note lists exactly three triggers — open for review, mark draft ready, `@codex review` — with no push among them, and states "otherwise it will react with 👍". Every characterization in the section matches.
+- The 👍 on #104 has no review object behind it: the reviews list holds only the 05:49:47Z one. "A pass that finds nothing files no review at all" is directly confirmed.
+- `#104`'s head branch is `docs/codex-pr-review` and it currently carries the 👍, so the closing "the push that lands this paragraph is exactly that experiment" is true as written.
+
+### Findings
+
+**Nit — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md:477`.** The `--paginate` insertion left a ragged wrap: line 477 is the ten-character stub `first push` in the middle of a paragraph otherwise wrapped at ~70. Reflowing :476-478 costs nothing and keeps the file uniform. Nothing else in the section is mis-wrapped enough to mention.
+
+### Coverage
+
+`ui-review` skip stands. One instruction file and one shell test that reads it; nothing compiled, no feature flag touched, no string the game prints, so per "The review sub-agents" there is nothing for that pass to read. This round does not change that.
+
+`verifier` against the immediately previous state is the right scope given the delta is one prose paragraph — but the one test that actually reads `AGENTS.md` is `tests/instructions.sh`, and its floors are computed from the file, so I ran it on *this* state myself: passes, `AGENTS.md 32863 bytes`. The "The Codex review" body measures 7954 characters against its 4000 floor and "Answering a finding" 1680 against 1200, so both floors sit well under the real size as the comment claims. Nothing in the paragraph you changed can move either check.
+
+### Not reviewed
+
+I could not verify the 👀 at `06:34:22Z` or its earlier withdrawal — GitHub keeps no reaction history, and only the `+1` survives. The section says so itself and dates the withdrawal from the comments rather than claiming to have watched it, which is the honest form of that claim.</result>
+<usage><subagent_tokens>39295</subagent_tokens><tool_uses>22</tool_uses><duration_ms>246143</duration_ms></usage>
+</task-notification>
