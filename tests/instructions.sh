@@ -78,8 +78,10 @@ fi
 # edit above them, and nothing here can tell which step a match fell in.
 # So this catches the one-place regression -- a step reworded on its own
 # -- and not a coordinated edit that reworded a step and added the
-# phrase somewhere else to keep the total at four. Issue #65 is the
-# check that would know one step from another.
+# phrase somewhere else to keep the total at four. Issue #65 is where
+# that check would live -- as filed it checks numbering, not which step
+# a match fell in; the comment thread there asks for the attribution it
+# would need.
 #
 # Counted over the file with its line breaks flattened, because the
 # phrase wraps mid-sentence in two of the four places it appears: a
@@ -91,24 +93,32 @@ STANDARD='actionable finding, or resolve it explicitly'
 # Three steps state it and one section defines it. Stating it a fifth
 # time on purpose means changing this number on purpose.
 STANDARDS=4
-standards=$(awk -v want="$STANDARD" '
+# Awk's status and its output are both checked, because either can lie
+# on its own. A non-number means it did not run -- unsupported construct,
+# missing binary, anything -- and compared directly against STANDARDS
+# that is a silent pass rather than a failure: the test errors "Illegal
+# number", `if` reads the non-zero status as false, and the script goes
+# on to print "instructions OK". A number from a command that then
+# failed is the same hole from the other side: a shadowed awk printing
+# "4" and exiting 17 satisfied the number check, and did it on a file
+# whose step 8 had been reworded back to the old standard -- green,
+# with the defect present and the counter never having run.
+if ! standards=$(awk -v want="$STANDARD" '
 	{ s = s " " $0 }
-	END { gsub(/[ \t]+/, " ", s); print gsub(want, "&", s) }' "$AGENTS")
-# A non-number means awk did not run -- unsupported construct, missing
-# binary, anything. Compared directly against STANDARDS that is not a
-# failure but a silent pass: the test errors "Illegal number", `if`
-# reads the non-zero status as false, and the script goes on to print
-# "instructions OK". A check that stops existing has to say so.
-case "$standards" in
-'' | *[!0-9]*)
-	fail "could not count the finding standard in AGENTS.md -- awk printed '$standards' instead of a number, so this check did not run"
-	;;
-*)
-	if [ "$standards" -ne "$STANDARDS" ]; then
-		fail "AGENTS.md states the finding standard $standards times, expected $STANDARDS -- steps 6, 7 and 8 each state it and 'Answering a finding' defines it. A step reworded on its own no longer visibly agrees with the others; if you added a statement of it on purpose, update STANDARDS in this script"
-	fi
-	;;
-esac
+	END { gsub(/[ \t]+/, " ", s); print gsub(want, "&", s) }' "$AGENTS"); then
+	fail "could not count the finding standard in AGENTS.md -- awk exited non-zero, so this check did not run whatever it printed"
+else
+	case "$standards" in
+	'' | *[!0-9]*)
+		fail "could not count the finding standard in AGENTS.md -- awk printed '$standards' instead of a number, so this check did not run"
+		;;
+	*)
+		if [ "$standards" -ne "$STANDARDS" ]; then
+			fail "AGENTS.md states the finding standard $standards times, expected $STANDARDS -- steps 6, 7 and 8 each state it and 'Answering a finding' defines it. A step reworded on its own no longer visibly agrees with the others; if you added a statement of it on purpose, update STANDARDS in this script"
+		fi
+		;;
+	esac
+fi
 SECTION='Answering a finding'
 if ! grep -q "^### $SECTION" "$AGENTS"; then
 	fail "AGENTS.md has no '### $SECTION' section -- step 6 points at it by name, and it is where the standard the three steps state is defined"

@@ -402,9 +402,13 @@ repeating `code-review` over an unchanged worktree. So put it to the
 next pass that runs anyway — step 8 already carries `ui-review` facts
 into `code-review`, and a `verifier` finding you resolve is one
 `code-review` should hear about. For a `code-review` finding resolved
-without a change there is no next pass, and the pull request body is
-the whole of it. Either way it goes in the pull request body, which is
-what a later reader has.
+without a change there is no next pass, and the record is the whole
+of it.
+
+Either way it goes in the pull request body and in the summary of the
+work — in the summary alone when there is no pull request, on the same
+terms steps 3 and 9 already set. A resolution nobody can find
+afterwards is the silence this rule exists to stop.
 
 What does not count: fixing something adjacent and calling the finding
 handled, agreeing and then forgetting, or "I disagree" with no reason
