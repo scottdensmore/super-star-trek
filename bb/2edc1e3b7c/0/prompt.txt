@@ -721,3 +721,41 @@ I did not wait out the full `ctest` run (it went past the timeout in the backgro
 ---
 
 Codex reviewed the pr... look at them and decide if you should address them then resolve them when you are done.
+
+---
+
+<task-notification>
+<task-id>ad8ce23c5074595c6</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/ad8ce23c5074595c6.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the Codex fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: approve
+
+Approval covers the current uncommitted working tree — `ac5ebf2` plus the two edits to `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md` and `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh`, nothing staged, nothing untracked.
+
+Both fixes are in as agreed, and the extra cut you made is an improvement on what I suggested: "and a task with no pull request is where that is easiest to reach by accident" was arguing for a fallback the sentence now states outright, so dropping it removes a justification for something nobody would dispute.
+
+Re-verified on this state, not the previous one:
+
+- `AGENTS.md:406-408` now matches step 3 (`:130-131`) and step 9 (`:278-280`) clause for clause — conjunction, then summary-alone fallback — so the "on the same terms" citation is now true under either parse. That was the fifth numbered-step claim in the change and the last one outstanding; the other four in the section (`steps 6, 7 and 8 each condition theirs on a change`, `step 11 forbids repeating`, `step 8 already carries ui-review facts`, `step 9 is explicit that filing is not resolving`) I checked against the steps themselves and they hold.
+- Fake-awk matrix re-run against the current script: `4`/exit 17 → fail, `4`/exit 0 → pass, `3`/exit 0 → count failure, empty/exit 0 → non-number failure, empty/exit 2 and junk/exit 1 → exit-status failure. Real one-place regression (step 8 reworded in a copied tree, real awk) still fails with the count message.
+- `shellcheck -s sh` clean, `sh tests/instructions.sh .` exit 0, `ctest -R instructions` passes. Phrase count still 4; the `AGENTS.md` edit touched neither the counted phrase nor `STANDARDS`. No trailing whitespace, `git diff --check` clean, file still ends in a single newline.
+- `ui-review` still not owed: prose plus a shell script, nothing compiled, no feature flag, no game output.
+
+On your point about the rate: four of five wrong is the argument for the check, and I would put that number in the commit body rather than only in the PR. The check as it stands catches one of the five (a step reworded on its own) and nothing about a prose citation to a step — which is worth being explicit about somewhere, since a reader who knows the rate and sees a test now guarding "step references" may assume more coverage than exists. The `#65` comment you just landed says exactly that inside the script, so this is only about where else it gets said.
+
+### On the paragraph — not a finding, an answer to the question
+
+You asked me to check rather than confirm, so: the "four destinations" framing overstates it. There are two rules, not four — route it to the next pass if one runs anyway, and write it down either way — and the paragraph currently reads as one continuous chain because the second rule arrives mid-paragraph, four sentences in, after the reasoning about reruns.
+
+If it were mine I would put a paragraph break before "Either way", at `AGENTS.md:406`, and change nothing else. That sentence is the only unconditional obligation in the passage; everything before it is conditional on whether a next pass exists. As a paragraph opener "Either way" still refers back correctly, and an agent skimming for "where do I put this" finds a two-sentence paragraph instead of a twelve-line one.
+
+I would not split it further. Sentences two and three are a single argument — no rerun, *therefore* route it to the next pass — and breaking that connective would cost more than the length does. Shortening is not what this needs; the length is load-bearing reasoning, not padding.
+
+Mechanically the break is inert: the counted phrase is not in this paragraph, the `"Answering a finding"` reference check reads step 6, and `MINAGENTS` is a floor. So it changes no test.
+
+That said, it is a change to the state I just approved. Take it or leave it — if you take it, re-running the `instructions` test is the whole of the re-verification, and you can have a fresh approval from me on that one hunk for the cost of one message rather than a full pass.</result>
+<usage><subagent_tokens>53736</subagent_tokens><tool_uses>5</tool_uses><duration_ms>74737</duration_ms></usage>
+</task-notification>
