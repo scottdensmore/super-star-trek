@@ -1149,3 +1149,65 @@ What reads oddly after merge is the other two forms of it: "this file's own pull
 Whether a 👀 ever sat on #99 or #102 — unrecoverable, as the file now says. The full `ctest` run was still going when I finished; I confirmed `instructions` directly and am taking 11/11 on your report, which is proportionate for a change that touches one documentation file.</result>
 <usage><subagent_tokens>68239</subagent_tokens><tool_uses>7</tool_uses><duration_ms>238426</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a95399f5e71e9b4f8</task-id>
+<tool-use-id>toolu_01Mk3KwJKQ7seFU3262FeK8U</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a95399f5e71e9b4f8.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the Codex fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: request changes
+
+Two items, both small, and one of them is a deletion your summary did not mention. Then the answer to your question about the push, which I'd rather give you in full since you asked for it before rather than after.
+
+Reviewed state: `33aed5e` plus the current unstaged `AGENTS.md`, working tree that file alone. The split landed as designed: 495-510 is now a heading line, one paragraph per claim with evidence and caveat attached, and "Neither is on the documentation page" with two short paragraphs behind it. Findings A, C and the substance of B and D are resolved. I re-verified the numbers again and they still hold exactly (#99: push 00:56:42, replies 00:57:22, 👍 00:59:44; #104: `reactions` `[]`, one comment at 05:49:47; both reviews `COMMENTED`; trigger list open / mark-ready / `@codex review`). No claim about any live pull request's current state remains anywhere in the section.
+
+---
+
+## Findings
+
+### Should-fix
+
+**A. The Codex Security Review disambiguation was deleted in the rewrite and not mentioned.**
+
+`33aed5e:493` had: "A trigger list that includes every push is documented for Codex Security Review, which is a different feature and not evidence about this one." It is absent from the working tree, and it is the one piece of content this rewrite dropped rather than restructured.
+
+It guarded a specific wrong turn, and the new wording makes that turn *more* inviting, not less: line 500 now says the bot's own note lists its triggers without a push among them, which is precisely the claim a reader will want to check. Searching for it finds Codex Security Review's documented trigger list, which does include every push — and the reader concludes the paragraph is wrong, or worse, that the push claim is documented after all and the hedge at 501 can go. The deleted sentence is what stopped that.
+
+Fix: restore it, shortened, at the end of the push paragraph — "a trigger list that does include every push is documented for Codex Security Review, a different feature and not evidence about this one." If you'd rather drop it, that is a legitimate resolution (the bot's own note is more specific than any docs page, and citing it may be guard enough) — but say so in the record rather than letting it go silently, since it is the only content this change removes.
+
+### Nit
+
+**B. `AGENTS.md:465` — a new orphan line, in a different place.**
+
+"manages its reactions rather than only adding" is 45 columns in a paragraph that otherwise runs 66-74. The `is not` orphan is indeed gone; the rewrap of 463-473 created this one. Fourth round for this artifact — worth a `awk 'length&lt;50 &amp;&amp; length&gt;0'` pass over the section before committing rather than another round of me finding one.
+
+---
+
+## On the push being the test of the claim
+
+You are right that it is, and I'd rather you hear the design flaw now: **as currently planned, the experiment reproduces the exact confound the file already documents.** Your stated sequence is commit, push, reply on the Codex thread and resolve it. That is a push and thread comments within a minute or two of each other — which is #99, precisely. If a fresh review runs, you will not know whether it answered the push or the reply, and the paragraph at 497-501 will have a second observation that says nothing its caveat does not already say.
+
+Separating them costs nothing and converts it into a real measurement:
+
+1. Push. Note the time.
+2. Wait the few minutes a review takes, touching nothing else on the pull request. Watch for a new review, new comments, and a reaction appearing on #104.
+3. Only then reply on the thread and resolve it.
+
+A review that arrives in step 2 is attributable to the push alone, since nothing else happened — that is the observation #99 could not give you, and it would let the hedge at 500-501 come down honestly rather than by accumulation.
+
+Two cautions on reading the result:
+
+- **A null is weak.** The section already says absence is not something the platform reports; a service on infrastructure this repository does not control can be slow, throttled, or down. One quiet push is not evidence that a push does not trigger a review, and the paragraph should not be reversed on it. If you record a null, record it as a null — "a push on #104 drew nothing within N minutes" — not as a correction to the claim. The structure you now have supports that: a third observation is a third paragraph.
+- **Watch the reaction too, not just the comments.** If the bot 👍s #104 after the push, that is a reaction added to a pull request whose 👀 it had previously withdrawn. It does not show a 👍 being taken back, so line 467's "whether it would take a 👍 back is unwatched" stays true — but add-then-remove-then-add on one pull request is a further data point about reaction management, and it is worth writing down while it is observable, since as line 505 now says, none of this survives in the API afterwards.
+
+Your commitment to report what actually happened rather than what you expected is the right one, and it is the reason the "already unrecoverable" sentence earns its place.
+
+## What I could not review
+
+Whether the published documentation page says what the section says it does not say — I have the bot's own review-footer note verbatim from both #99 and #104, but not the docs page behind the settings link, which is why finding A matters more than its size suggests.</result>
+<usage><subagent_tokens>78667</subagent_tokens><tool_uses>3</tool_uses><duration_ms>90514</duration_ms></usage>
+</task-notification>
