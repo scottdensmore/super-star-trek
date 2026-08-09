@@ -648,3 +648,62 @@ Against pulling it in, three things:
 **What ran this round.** Full diff re-read from `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md` and `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh`; phrase count and locations replayed through the script's own flattening; steps 6, 7, 8 and 11 read directly; 8-case guard matrix and the heading break against out-of-repo copies; `shellcheck -s sh`; five shells; two awks; 20 consecutive runs; `ctest` Debug and Release, 11/11 each; #65 and #98 read from the tracker. Working tree is the two modified files and nothing else. No `ui-review` owed — agreed, nothing compiled and no game output. I modified nothing.</result>
 <usage><subagent_tokens>81694</subagent_tokens><tool_uses>7</tool_uses><duration_ms>535214</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>aa35230b49b8641a5</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/aa35230b49b8641a5.output</output-file>
+<status>completed</status>
+<summary>Agent "Final review of the alignment" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Note: claude-sonnet-5[1m] (the safety classifier) was unavailable when reviewing this subagent's work. Please carefully verify the subagent's actions and output before acting on them.
+
+## Verdict
+
+**Approve.** Reviewed state: branch `docs/align-finding-standards`, `HEAD` at `753556c` with the whole change unstaged — `AGENTS.md` (steps 6, 7, 8 aligned on one form of words; step 10 reworded; new `### Answering a finding` section) and `tests/instructions.sh` (three new checks: counted standard phrase with a non-number guard, section heading, section pointer). No staged or untracked content. Both should-fixes from the last round are properly addressed, and I re-derived the evidence rather than taking the report.
+
+What I verified on this state: `tests/instructions.sh .` green, `shellcheck` clean, counted phrase still exactly 4 with the new step 10 in place (step 10's "fixed or explicitly resolved" does not collide with the counted literal — I checked), no trailing whitespace or CR bytes, no over-long lines in the new prose, and the one number-by-reference elsewhere — `AGENTS.md:369`, "not beside a feature, which step 10 forbids" — still lands on live text at `:295`.
+
+Four mutants, in copies outside the repository:
+
+- **Step 6's pointer clause deleted, counted phrase left intact** — fails on the new check alone; count still 4, heading still passes. Your isolation claim holds.
+- **Heading renamed, pointer left stale** — fails on the heading check alone. So the two literal-string checks are not redundant: each catches a one-place edit the other misses.
+- **Coordinated rename of heading and pointer together** — fails both, with two messages that between them say exactly what to do. That is the rename cost, and it is loud and self-describing rather than mysterious.
+
+## On the lead you changed beyond what I asked
+
+You were right and my suggestion was the worse of the two. Keeping "Commit after approval." and adding a body clause saying approval is not always required leaves the contradiction on the line an agent skimming twelve steps actually reads, and puts the correction where only a careful reader finds it — the defect one line up, as you say. "Commit once the passes are answered" also ties the step to the section's own verb, so the numbered list and the definition now share vocabulary instead of just agreeing in substance. No change wanted.
+
+## On three checks over one section
+
+Keep all three. Two points that change the arithmetic you were weighing:
+
+The concentration is **two literals, not three**. The count check depends on `STANDARD`, a different string; only its *message* mentions the section by name, and a stale message is a cosmetic staleness, not a failing check. So renaming the section is a **two-file** edit — `AGENTS.md` heading plus pointer, `tests/instructions.sh` two greps — not four.
+
+And the mutants show the two are not the same assertion: one catches a dangling pointer (heading renamed out from under it), the other catches an orphaned section (pointer deleted). Dropping either loses a distinct one-place regression, which is the class this check exists for. That is a different trade from the cross-references I argued against last round: those were assertions in *prose* that go stale invisibly, where these fail loudly and name themselves.
+
+If you want the concentration reduced without giving up a check, hoist the name the way you hoisted `STANDARDS`:
+
+```sh
+SECTION='Answering a finding'
+```
+
+then `grep -q "^### $SECTION"` and `grep -q "\"$SECTION\""`. Renaming becomes one line in the script. Optional — I would take it, but it is not a condition of approval.
+
+## Findings (both nits, neither blocking)
+
+### nit — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh:123`
+
+The message says "no step in AGENTS.md points at" but `grep -q '"Answering a finding"'` proves only that the quoted string appears *somewhere* in the file. My fourth mutant — pointer deleted from step 6, and the phrase quoted once inside the section itself — passes all three checks with the section orphaned. Contrived, but it is the same overclaim I flagged in the heading message last round, and the fix is a word: "nothing in AGENTS.md refers to \"Answering a finding\"". The check cannot tell a step from anything else without #65, so the message should not say it can.
+
+### nit — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md:285-286`
+
+Step 10 now says "with every finding fixed or explicitly resolved" — the inverted word order that this same diff removes from step 7 as the odd one out. A reader comparing step 7 and step 10 sees two shapes of the rule again, and the count check is scoped to the three pass steps so it will never notice. The bold lead already has the better word: "with every finding answered" says the same thing, matches the section title, and leaves exactly one phrasing of the standard in the file.
+
+## Not reviewed
+
+I did not wait out the full `ctest` run (it went past the timeout in the background on the golden/tournament tests); I ran `instructions` directly plus the four mutants, and that is the only test this diff can affect. Your 11/11 and the `verifier` transcript I take on report. The `ui-review` disclosure is now stated and I agree with it on the diff: prose plus a shell script, no `sst` source, no CMake feature flag, no `sst.doc` change — nothing that reaches a player, so the pass is not owed.</result>
+<usage><subagent_tokens>59942</subagent_tokens><tool_uses>7</tool_uses><duration_ms>285392</duration_ms></usage>
+</task-notification>
