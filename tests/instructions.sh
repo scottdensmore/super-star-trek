@@ -125,54 +125,128 @@ else
 		;;
 	esac
 fi
-SECTION='Answering a finding'
-if ! grep -q "^### $SECTION" "$AGENTS"; then
-	fail "AGENTS.md has no '### $SECTION' section -- step 6 points at it by name, and it is where the standard the three steps state is defined"
-fi
-# And the pointer to it, which is the one thing tying the numbered steps
-# to the definition. Delete just that clause and the count above still
-# reads 4 and the heading is still there: the section goes on existing
-# with nothing sending a reader to it, which loses the half of #97 that
-# asked where a disagreement is recorded. Matched in quotes because the
-# heading itself is unquoted, so this finds the reference and not the
-# thing referred to.
-# Before the heading, specifically. A reference below it is a
-# back-reference and cannot send anyone anywhere: the reader is already
-# there. Counting quoted mentions was enough while step 6 held the only
-# one, and stopped being enough the moment a later section quoted the
-# name too -- that alone would satisfy a count while step 6's pointer
-# was deleted, which is the state this check exists to catch.
+# A section the numbered steps hand work to needs three things, and
+# each fails silently without the others: a heading, a pointer above it,
+# and something under the heading. A heading nothing references is a
+# section no reader is sent to; a pointer with no heading under it sends
+# them nowhere; and a heading and a pointer with a stub between them
+# satisfy the first two while answering nothing. So all three are
+# checked, for every section a step defers to by name.
+#
+# Names are interpolated into a grep BRE below and into awk's literal
+# index() everywhere else. Neither name holds a regex metacharacter, so
+# the two agree today; one added later would make the heading check
+# something other than the literal it looks like, the same hazard the
+# comment on STANDARD above describes.
+#
+# The pointer is matched in quotes because the heading itself is
+# unquoted, so this finds the reference and not the thing referred to.
+# Before the heading, specifically: a mention below it is a
+# back-reference and cannot send anyone anywhere, since the reader is
+# already there. Counting quoted mentions was enough while "Answering a
+# finding" had one pointer and one heading, and stopped being enough the
+# moment a later section quoted the name too -- that alone would satisfy
+# a count while step 6's pointer was deleted, which is the state this
+# exists to catch.
 #
 # Flattened first, like the count above and for the same reason: the
 # pointer is a quoted phrase in wrapped prose, and a rewrap that split
 # it across two lines would fail here while the pointer sat there
 # intact. What it cannot see is which step the pointer is in, or a
 # layout that put the section above the steps -- the second would fail
-# it wrongly, and is why the message says what it checked rather than
-# what it means.
-if ! points=$(awk -v s="$SECTION" '
-	{ all = all " " $0 }
-	END {
-		gsub(/[ \t]+/, " ", all)
-		h = index(all, "### " s)
-		q = index(all, "\"" s "\"")
-		print (q > 0 && h > 0 && q < h) ? "yes" : "no"
-	}' "$AGENTS"); then
-	fail "could not look for the pointer to \"$SECTION\" in AGENTS.md -- awk exited non-zero, so this check did not run"
-else
+# it wrongly, and is why the messages say what was checked rather than
+# what it means. Nor how many pointers there are: "The Codex review" has
+# two, in steps 11 and 12, and either one alone satisfies this. An
+# existence check cannot do better, and the case it is here for is the
+# last one going, not the first.
+#
+# Nor a heading that merely starts with the name. All three matches here
+# are prefix matches, so renaming the heading to "### The Codex review
+# process" satisfies every one of them while both pointers name a
+# heading that no longer exists -- the exact state they are here to
+# catch. That is issue #105, and it predates this function: the two
+# inline checks it was factored out of matched the same way.
+#
+# The third argument is a floor under the section's body, in the same
+# spirit as MINAGENTS above and for the same reason: the heading and the
+# pointer are two lines, and a section gutted to a stub satisfies both
+# while saying nothing. It is a floor, not a budget -- set well under
+# the real size, so ordinary editing never touches it and only a
+# deletion does. It cannot tell whether what is there is still the right
+# content; nothing here can, and that is what review is for.
+#
+# Bodies run from the heading to the next `### ` or the end of file. A
+# `## ` does not end one, so a new top-level section appended after the
+# last `### ` would be counted into it and the floor would stop being
+# able to fire. That errs lax rather than false, which is the direction
+# a floor should err, but it is why the floors are set against the real
+# sizes rather than left to look after themselves.
+#
+# Counted in whatever units awk gives -- characters under a UTF-8
+# locale, bytes under C -- because a floor this far below the real size
+# does not care which.
+check_section() {
+	name="$1"
+	why="$2"
+	minbody="$3"
+	if ! grep -q "^### $name" "$AGENTS"; then
+		fail "AGENTS.md has no '### $name' section -- $why"
+		return
+	fi
+	if ! body=$(awk -v h="### " -v n="$name" '
+		index($0, h n) == 1 { inb = 1; next }
+		inb && index($0, h) == 1 { inb = 0 }
+		inb { b += length($0) + 1 }
+		END { print b + 0 }' "$AGENTS"); then
+		fail "could not measure the \"$name\" section of AGENTS.md -- awk exited non-zero, so this check did not run"
+		return
+	fi
+	case "$body" in
+	'' | *[!0-9]*)
+		fail "could not measure the \"$name\" section of AGENTS.md -- awk printed '$body' instead of a number, so this check did not run"
+		return
+		;;
+	esac
+	if [ "$body" -lt "$minbody" ]; then
+		fail "AGENTS.md's \"$name\" section is down to $body characters, under the $minbody floor -- $why. If you shortened it on purpose, lower the floor in this script on purpose"
+	fi
+	if ! points=$(awk -v s="$name" '
+		{ all = all " " $0 }
+		END {
+			gsub(/[ \t]+/, " ", all)
+			h = index(all, "### " s)
+			q = index(all, "\"" s "\"")
+			print (q > 0 && h > 0 && q < h) ? "yes" : "no"
+		}' "$AGENTS"); then
+		fail "could not look for the pointer to \"$name\" in AGENTS.md -- awk exited non-zero, so this check did not run"
+		return
+	fi
 	# Answered, not merely exited: an awk that prints nothing and
 	# succeeds would otherwise pass this the way one printing a
 	# plausible number passed the count above before it was guarded.
 	case "$points" in
 	yes) ;;
 	no)
-		fail "nothing in AGENTS.md points forward at \"$SECTION\" -- the section defines the standard steps 6, 7 and 8 state, and nothing above it now sends a reader to it"
+		fail "nothing in AGENTS.md points forward at \"$name\" -- $why, and nothing above it now sends a reader to it"
 		;;
 	*)
-		fail "could not look for the pointer to \"$SECTION\" in AGENTS.md -- awk printed '$points' instead of yes or no, so this check did not run"
+		fail "could not look for the pointer to \"$name\" in AGENTS.md -- awk printed '$points' instead of yes or no, so this check did not run"
 		;;
 	esac
-fi
+}
+
+# Delete just step 6's clause and the count above still reads 4 and the
+# heading is still there: the section goes on existing with nothing
+# sending a reader to it, which loses the half of #97 that asked where a
+# disagreement is recorded.
+check_section 'Answering a finding' \
+	'it is where the standard steps 6, 7 and 8 state is defined' 1200
+# Steps 11 and 12 defer the whole of the Codex reviewer's handling to
+# this one -- what its reactions mean, how to answer its comments, and
+# the merge condition in step 12, which has no other definition
+# anywhere.
+check_section 'The Codex review' \
+	'it is the only place the reviewer that steps 11 and 12 defer to is defined' 4000
 
 # CLAUDE.md points at it and holds nothing else.
 if ! grep -q '^@AGENTS\.md[[:space:]]*$' "$CLAUDE"; then

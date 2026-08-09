@@ -318,12 +318,12 @@ Every coding agent working in this repository must follow this workflow.
 12. **Merge only clean, passing pull requests.** Merge only after GitHub
     reports a clean merge state and every configured check passes. Never
     bypass a failing or pending required check. Wait as well for the
-    Codex review to answer the state being merged. It is not a check,
-    nothing enforces it, and its answer is not always a thing that can
-    arrive — "The Codex review" below says how to read one and when to
-    stop waiting for it. Where you stop, say so in the pull request body
-    and in the summary of the work. Self-merges are allowed when these
-    conditions are met.
+    Codex review to come back 👍 with a `created_at` later than your last
+    push, which is what says it read the state being merged. It is not a
+    check and nothing enforces it — "The Codex review" below says how to
+    read one and when to stop waiting. Where you stop, say so in the
+    pull request body and in the summary of the work. Self-merges are
+    allowed when these conditions are met.
     Use squash merge for short-lived development branches to keep `main`
     linear, then delete the merged branch.
 
@@ -446,6 +446,11 @@ working, and 👍 when it has finished with nothing to say. 👍 is not
 approval — it is one reader reporting that this pass found nothing.
 Otherwise it posts review comments; both reviews it has filed here were
 plain commenting reviews rather than approvals or requests for changes.
+A review it posts says which state it read, in its own body: **Reviewed
+commit:** and a short sha. That settles the question outright and with
+no arithmetic, so where there are comments, read that rather than
+comparing times. It is only the silent pass that needs the rest of
+this, since a pass with nothing to say files no review to carry a sha.
 
 Those comments bind as `code-review`'s do: fix, or resolve explicitly,
 on the standard "Answering a finding" sets, with the record going where
@@ -455,21 +460,56 @@ and resolve the thread once it is answered. Where the answer was a fix,
 push it and let the review run again on what you pushed. Where it was a
 resolution, there is nothing to push and no further review to wait for.
 
-Reading the answer is harder than it sounds, so do not build a rule on
-the reaction alone. GitHub allows each reaction only once per user per
-issue, so a 👍 cannot be repeated: a pull request that drew one on
-opening should still show that same 👍 after a fix push, `created_at` and
-all, whether or not anything reviewed the push — unless the bot
-withdraws and re-adds it, which it is evidently capable of doing: it
-withdrew its own 👀 on #104 the moment it had comments to post, so it
-manages its reactions rather than only adding them. That was the end of
-a working marker's life, though, which is what 👀 is for; whether it
-would take a 👍 back is unwatched. The timestamp is not in the web
-interface at all: `gh api repos/:owner/:repo/issues/<n>/reactions` is
-where to read it. So what you are waiting for after a push is *comments
-or their absence*, and absence is not something the platform reports.
-Give it the few minutes a review takes, look for new comments, and say
-in the pull request what you saw.
+Reading the answer takes one API call. The bot swaps its own reaction
+as it goes rather than accumulating them: 👀 when a review starts, 👍
+when that review finishes with nothing to say, and where it has
+something to say it takes the 👀 away and posts comments instead. So the
+reaction tracks the latest review, and the question worth asking is not
+whether a 👍 is there but whether it is newer than your last push. That
+is the one thing the web interface does not show. `gh api
+repos/:owner/:repo/issues/<n>/reactions` gives `created_at`, with
+`content` reading `eyes` and `+1` rather than the emoji.
+
+The push time it is compared against takes a second call: `gh api
+--paginate repos/:owner/:repo/events`, and the newest `created_at`
+among the entries naming your branch. Newest, not first — the feed is
+not strictly ordered by time. And two event types, not one: a branch's
+first push files no `PushEvent` at all, only a `CreateEvent` whose
+`payload.ref` is the bare branch name where a `PushEvent` spells it
+`refs/heads/<branch>`. Match only the second and the ordinary case —
+branch, one push, open, merge — comes back empty, which is every branch
+in this repository that was never pushed to twice. `repos/:owner/:repo`
+carries a `pushed_at` as well, but that one is repo-wide: another
+branch went up in the same second as the push measured below, and the
+later of the two is all it would have kept.
+
+That feed is not built for real time. The vendor puts its lag at
+anywhere from thirty seconds to six hours, against the few minutes a
+review takes, so nothing found three minutes after a push means the
+feed is behind rather than the push missing. It also ends: ninety days
+or three hundred events, whichever comes first, and three hundred is
+what this repository holds today. Drop the `--paginate` and you get the
+first thirty of those, which here is about a day — long enough to work
+on every branch you try it on and fail on the one that sat open over a
+weekend. Against all three — the lag, the limits, the flag — the
+fallback is the same and costs nothing: note the time as you push, and
+none of them can reach you. What will not do is a
+commit's own date, which is a lower bound rather than an answer:
+`50540ea` was committed twenty-four seconds before it reached the
+remote, and a commit written before a rebase or a review round is off
+by however long that took.
+
+A pass that finds nothing files no review at all — no review object, no
+comments, only the reaction changing. So an unchanged comment count is
+not evidence that nothing ran, and the reaction is the whole of the
+answer.
+
+The wait is short. Both runs timed below took under four minutes to
+answer — #104 opened at 05:46:08Z and had comments at 05:49:47Z, and
+the review its later push drew answered in two minutes and twenty-four
+seconds, 👀 up five seconds in. Give it that; past a few minutes more,
+treat the answer as one that is not coming and take the paragraph below
+on saying so.
 
 Two things to know about it.
 
@@ -493,24 +533,43 @@ is not an argument for doing what it says without judging it.
 
 What is measured here rather than read, and by which pull request.
 
-That something after a push starts a fresh review: #99 drew a 👍 three
-minutes after one. Two thread replies landed forty seconds after that
-push as well, so which of them it answered is not something anyone
-watched — and the bot's own note lists its triggers without a push among
-them, which makes this the less safe of the two. A trigger list that
-does include every push is documented for Codex Security Review, a
-different feature and not evidence about this one.
+That a push started a fresh review: on #104, a push at 06:34:17Z drew
+👀 five seconds later with nothing else touched on the pull request, and
+👍 at 06:36:41Z. One clean instance, which is why step 11 says a push
+*may* start one. Its own note lists its triggers without a push among
+them. A trigger list that does include every push is documented for
+Codex Security Review, a different feature and not evidence about this
+one.
 
-That it takes a reaction away again: #104's 👀 went as soon as it had
-comments to post. GitHub keeps no history of a reaction taken back, so
-that observation is already unrecoverable, which is the reason to have
-written it down.
+That the reaction cycles rather than accumulates: that 👀 was a re-add.
+The same reaction had gone three quarters of an hour earlier, when the
+review before it had comments to post at 05:49:47Z. GitHub keeps no
+history of a reaction taken back, so the withdrawal is dated from those
+comments rather than watched, and is already unrecoverable — which is
+the reason to have written it down.
 
-Neither is on the documentation page. That 👍 means finished with
+That a 👍 can postdate the push it answers: the same run again, and what
+step 12's rule rests on. An earlier draft of this section reasoned the
+opposite — that a 👍 could not be repeated and so would go stale — which
+that run disproved.
+
+That a pass finding nothing files no review at all: the same run once
+more. The 👍 arrived with no review object and no comments behind it,
+which is what the paragraph on comment counts above rests on.
+
+None of those is on the documentation page. That 👍 means finished with
 nothing to say *is* published, though not there: it is in the collapsed
 note at the foot of every review it posts.
 
-What is neither measured nor read — reasoned from how reactions work,
-and not watched — is the paragraph on reading the answer, where a 👍
-outlives the push it predates. That one is less safe than when it was
-written, since a bot that withdraws one reaction may withdraw another.
+What is still unwatched: a pull request that already carries a 👍 and
+then takes a push. #104 was carrying nothing when the push above went
+up, so whether the bot withdraws a 👍 to start the next cycle is not
+something anyone here has seen — and #104 is carrying one now, which
+makes the push that lands this paragraph exactly that experiment. Read
+the reactions after it and write down what happened.
+
+Comparing `created_at` against the push is what keeps a stale 👍 from
+being read as a fresh one. It does not help with the other way this
+could go: if the bot leaves an existing 👍 alone, no newer one can
+arrive, step 12's condition can never be met, and the merge goes
+through the escape hatch above rather than the rule.
