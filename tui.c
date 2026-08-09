@@ -183,19 +183,22 @@ static int builtlines, builtcols;
  * were. Ending curses under them to say the window is too small would
  * be a worse answer to a mouse drag. */
 static void make_windows(void) {
-	int msgh, statw, msgw, panelh;
+	int msgh, statw, msgw, panelh, quadw;
 
 	builtlines = LINES;
 	builtcols = COLS;
-	/* On a terminal too short for them the panels are as deep as there
-	   is room for, not as deep as they would like. The quadrant panel
-	   gets this from curses -- resize_term() shrinks every window that
-	   no longer fits -- but the status panel is resized here by hand
-	   and was being put back to its full depth every time, leaving it
-	   taller than the screen. Its bottom border then fell off the
-	   bottom and the last status line was drawn where that border
-	   should have been. */
+	/* On a terminal too small for them the panels are as big as there
+	   is room for, not as big as they would like. Asking for the full
+	   size on a smaller screen is not merely optimistic: the window
+	   then reports room the player cannot see, and the guards that
+	   decide whether a title or a status line fits believe it.
+
+	   The status panel used to be put back to its full depth on every
+	   resize, which left it taller than the screen, its bottom border
+	   off the bottom, and its last line drawn where that border should
+	   have been. */
 	panelh = LINES < PANELH ? LINES : PANELH;
+	quadw = COLS < QUADW ? COLS : QUADW;
 	msgh = LINES-PANELH > 1 ? LINES-PANELH : 1;
 	statw = COLS-QUADW > 1 ? COLS-QUADW : 1;
 	msgw = COLS-2 > 1 ? COLS-2 : 1;
@@ -210,8 +213,43 @@ static void make_windows(void) {
 		   at that very moment, which would leave the game looking
 		   hung. The panels are redrawn from the game state either
 		   way. */
+		/* The quadrant panel is resized here too, though nothing
+		   about the layout asks it to change size. curses resizes a
+		   window that spans the screen along with the screen, down
+		   and back up again, so a panel squeezed past its own size
+		   stops being 29 columns and starts tracking the terminal:
+		   it came back as wide as the whole screen after a narrow
+		   squeeze, and as tall as it after a short one, which left
+		   the message window off the bottom with the prompt on it.
+		   The fault outlived the squeeze, at a size where nothing on
+		   screen explained it. */
+		wresize(wquad, panelh, quadw);
 		wresize(wstat, panelh, statw);
 		wresize(wmsg, msgh, msgw);
+		/* And the message window is moved back, not only resized. A
+		   squeeze leaving no room under the panels puts its origin
+		   at or past the bottom of the screen, and resize_term()
+		   then treats it as living below the screen and shifts it
+		   down again by however much the terminal later grew: the
+		   panels came back whole while the conversation stayed gone,
+		   prompt and all, on a screen with eleven empty rows waiting
+		   for it.
+
+		   After the resizes, not before. mvwin() refuses a move that
+		   would not fit at the destination *at the window's current
+		   size*, so moving first asks to put a window still as wide
+		   as the squeeze was into a narrower terminal. Squeeze to 82
+		   columns and come back to 80 and the move is refused, the
+		   window stays off-screen, and nothing tries again -- the
+		   display that came back looked right and swallowed
+		   everything typed into it.
+
+		   The return is dropped on purpose: ERR comes back only
+		   where there is nowhere legal to put the window -- LINES
+		   at or under PANELH, or fewer than two columns -- and at
+		   those sizes the panels are the whole screen and nothing
+		   is drawn below them anyway. The next resize asks again. */
+		mvwin(wmsg, PANELH, 1);
 	}
 	/* Set every time, not only on the first: keypad in particular is
 	   what turns a resize into KEY_RESIZE rather than into whatever
@@ -532,11 +570,12 @@ void tui_refresh_panels(void) {
 	   it below 40 columns, the quadrant's in-game title below 19, the
 	   bare " Quadrant " below 13 -- which stands in before a game, and
 	   inside one wherever the coordinates no longer fit -- and the
-	   caption below 20. Both windows shrink: resize_term() takes every
-	   window that no longer fits the screen down with it, the quadrant
-	   panel included, whatever size make_windows() first asked for. A
-	   box with no caption is the better of the two, and at these widths
-	   the panel underneath is the only thing saying which is which. */
+	   caption below 20. Both windows shrink, and both report it:
+	   make_windows() asks for each of them clamped to what the screen
+	   can show, so panel_room() never offers room the player cannot
+	   see. A box with no caption is the better of the two, and at these
+	   widths the panel underneath is the only thing saying which is
+	   which. */
 	if (panel_room(wquad) >= (int)strlen(" Quadrant "))
 		mvwaddstr(wquad, 0, 2, " Quadrant ");
 	werase(wstat);

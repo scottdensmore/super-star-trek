@@ -17,9 +17,9 @@ Without `-t` the game uses its classic scrolling display.
 Resizing the terminal is fine at any point. The display follows it
 straight away — while the game is waiting for you to answer, and while
 it is waiting for a keystroke at a pause — and both the question you
-were asked and the answer you were halfway through typing survive.
-Older text that no longer fits scrolls away, as it would in any
-terminal.
+were asked and the answer you were halfway through typing survive, so
+long as there is still room for them. Older text that no longer fits
+scrolls away, as it would in any terminal.
 
 Dragged smaller than the 72x24 the panels ask for, they clip rather
 than rearrange themselves. A line with more to show than there is room
@@ -34,11 +34,15 @@ Just above that there is barely more — at fourteen rows the one line
 left over goes entirely to the pager, so a scan pages past without
 showing any of itself; at fifteen it comes one line at a time.
 
-Growing the terminal back brings the panels with it, so long as the
-squeeze stopped at about thirty columns and fourteen rows or better.
-Below either, the display does not recover on its own, and below
-fourteen rows the prompt does not come back with it. Quitting and
-starting again is the way out; it works even when you cannot see it.
+Growing the terminal back brings the panels with it, however far the
+squeeze went: they redraw from the game state, so they return full of
+live readings. The conversation cannot be rebuilt that way — curses
+does not reflow it — so it comes back holding only what fitted while
+the window was small, and after a deep squeeze no more than the tail of
+the line you were on. A line that was cut short stays cut short. Every
+reading is a command away, and none of them costs anything: `srscan`,
+`status`, `chart`, `damages`. If the prompt is not on screen with them,
+Enter brings it back.
 
 If full-screen mode isn't possible — the terminal is too small, the
 game isn't attached to one (piped input, redirected output, a job with
