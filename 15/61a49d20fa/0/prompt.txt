@@ -789,3 +789,50 @@ what is the next thing we should work on?
 ---
 
 Yes go ahead and start. Pause before you merge the PR. I am testing some code review things on PRs
+
+---
+
+<task-notification>
+<task-id>a0424e19bdc6bba43</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a0424e19bdc6bba43.output</output-file>
+<status>completed</status>
+<summary>Agent "Final review of the restore fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: approve
+
+Approval covers exactly this state: `HEAD` = `a215e73` on `fix/tui-restore-quadrant-panel`, nothing staged, nothing untracked, three modified files whose combined `git diff` hashes to `2143535eecd7a0cc…`. Contents: `wresize(wquad, panelh, quadw)` and `mvwin(wmsg, PANELH, 1)` in `make_windows()` (`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c`), the "panels come back from a squeeze" block plus comment edits in two existing blocks (`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh`), and the two rewritten paragraphs in `/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md`.
+
+All five items are applied as described. Re-verified on this state: `sh -n` and `shellcheck -s sh` clean, `-Werror` Debug build clean, `tests/tui.sh` → `tui OK`. `ctest -E tui` was green on the previous state and nothing since then changes a byte of generated code, so I did not re-run it.
+
+### 1. The corrected mechanism — right, and I measured the two ways it could have been wrong
+
+I probed ncurses with three windows on one screen: A 13x29 at column 0, B 13x29 at column 51 (right edge flush against column 79 at 80 columns), C 13x20 at column 10.
+
+| screen | A | B | C |
+|---|---|---|---|
+| 80 → 60 | 29 (untouched) | 29 (untouched, now hanging off the right edge) | 20 |
+| 60 → 80 | 29 | 29 | 20 |
+| 80 → 25 | **25** | **25** | 20 (untouched, hanging off) |
+| 25 → 80 | **80** | **80** | 20 |
+
+- **It is spanning, not touching an edge.** B sat flush against the right edge at 80 columns and the 80→60 squeeze ignored it entirely. Position never mattered in either direction: B, at column 51 and wholly off-screen at 25 columns, grew to 80 exactly as A did.
+- **It is spanning, not "no longer fits at its position" either.** C hung nine columns off the right edge at 25 columns and was left alone, because its *width* still fitted the screen.
+
+So the grow-back trigger the comment names — a window as wide as the screen follows the screen — is exactly the rule. The one compression is the "down" half: what gets cut down is a window *wider than the screen*, which is what makes it span in the first place. Your next clause, "a panel squeezed past its own size stops being 29 columns and starts tracking the terminal", already states that condition precisely, so the sentence as a whole predicts the symptom the test asserts. No change needed.
+
+Worth knowing but not worth writing down: this is also why `wquad` was the only casualty. `statw` is `max(COLS-QUADW,1)` and `msgw` is `max(COLS-2,1)`, so neither is ever wider than the screen and curses never resizes them behind the code's back; `wmsg`'s only mistreatment is the `begy` shift, which is the separate below-the-bottom rule your second comment covers on its own. The two comments already split the two mechanisms correctly.
+
+### 2. The README qualifier is in the right place
+
+Keep it where it is. It qualifies the one sentence that can fail, and a reader who stops after the second paragraph would otherwise carry away an absolute promise the fifth paragraph then contradicts — which was the whole finding. It does not hedge the ordinary case, because in the ordinary case the condition is met and the sentence reads as the promise it was: the paragraph immediately below ("Dragged smaller than the 72x24 the panels ask for…") is what tells the reader when room runs out, so "still room for them" resolves within a few lines rather than dangling. Moving it down to the deep-squeeze paragraph would restore the contradiction; dropping it would too.
+
+The only thing I would even raise is rhythm, and it is optional: the clause currently interrupts the promise before it is made ("and so long as there is still room for them, both the question … survive"). Trailing it — "and both the question you were asked and the answer you were halfway through typing survive, so long as there is still room for them" — keeps #46 and #79's feature in the main clause and the condition as a caveat. Take it or leave it; both are accurate.
+
+### On the tightened width assertion
+
+I confirmed it catches the narrow direction and not only the wide one. In an outside-the-repo copy I capped the quadrant panel at 20 columns on resize; the block reported `restore: after 25x24 the quadrant panel came back the wrong width` and the same at 20x8 — the two cases where the screen had actually been narrow, which is where a too-narrow restore can arise. (The two height-only squeezes stayed green there because the cells between a 20-wide panel and the status panel still held stale border glyphs from the initial 29-wide draw. That is an artifact of the mutant only: in the real code `quadw` is `min(COLS, QUADW)`, so no such gap can exist.) The renamed message is the right call — it matches what the check can prove.
+
+Nothing else outstanding, and nothing I was unable to review.</result>
+<usage><subagent_tokens>93857</subagent_tokens><tool_uses>7</tool_uses><duration_ms>334299</duration_ms></usage>
+</task-notification>
