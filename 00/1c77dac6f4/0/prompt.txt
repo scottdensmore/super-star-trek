@@ -931,3 +931,58 @@ Under step 7 that makes it a finding about *this* change, so filing alone does n
 Not re-run: the compiled suite. It passed 11/11 (195.56s, including `golden`, `tournament`, `tui`) earlier this session and no C source, header, `CMakeLists.txt` or feature flag has changed since. Static analysers were not applicable to a Markdown file; `shellcheck` was, and ran. Repository state on exit is exactly as I found it: ` M AGENTS.md`, ` M tests/instructions.sh`, 69 insertions / 5 deletions, nothing staged, nothing untracked.</result>
 <usage><subagent_tokens>105935</subagent_tokens><tool_uses>10</tool_uses><duration_ms>306847</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a2f5cf8a38443cabc</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8a40541a-fb84-480b-901c-78b4f60341e6/tasks/a2f5cf8a38443cabc.output</output-file>
+<status>completed</status>
+<summary>Agent "Review the Codex review rule" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Re-reviewed the current worktree. The five should-fixes are genuinely addressed, and I re-ran the adversary tests rather than taking the fix on description.
+
+## Verdict: request changes — narrowly
+
+Reviewed state: `docs/codex-pr-review` at `be17114` (no commits ahead of `main`), unstaged changes to `AGENTS.md` and `tests/instructions.sh` only; nothing staged, nothing untracked. Everything from the previous round is settled except one false statement about the platform, one inference presented as fact, and two presentation snags. If those are the only edits, I will approve the result on sight.
+
+### Verified fixed
+
+**The awk hole is closed and matches its neighbour's standard.** `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh:153-176`. I ran four adversary shapes against the current script:
+
+| adversary | result |
+|---|---|
+| pointer deleted, real awk | FAIL "nothing points forward at…" |
+| pointer deleted, stub printing `4`, exit 0 | FAIL "awk printed '4' instead of yes or no" |
+| stub printing nothing, exit 0 | both checks FAIL |
+| stub printing `yes`, exit 17 / awk absent entirely | both checks FAIL on status |
+
+Case two is the one that previously printed `instructions OK` and exited 0; note the count check still swallows it (a `4` is a plausible count), and it is now the pointer check that catches the shadowed binary. Unmodified tree: `instructions OK`, `shellcheck` clean.
+
+**Step 12 and step 11** (`AGENTS.md:309-311, 313-323`) are now consistent with each other and with the section: step 11 hedges on "ready-for-review… normally", which matches the documentation's own "opens a new PR **for review**" and no longer contradicts step 11's draft allowance; step 12 asks for an answer rather than a reaction, names the section as the authority on when to stop, and the resolved-not-fixed case is covered at `AGENTS.md:467-469` instead of falling between two branches.
+
+**"Never an approval"** is now stated at its true sample size (`AGENTS.md:442-444`) and appears in the measured list (`AGENTS.md:482-484`). I re-checked the provenance paragraph against the docs: the automatic trigger (`code-review.md:82-83`) and 👀 (`code-review.md:50`) are documented, and none of the three named claims is — accurate.
+
+**Naming.** `chatgpt-codex-connector[bot]` plus the two disambiguations. I agree with your call on `cursor[bot]`: its only contribution here is a disabled-tier upsell, so "the other bot that comments" identifies it to anyone who looks and naming it would put a third party's product in a rules file to no purpose.
+
+**Issue #103** is filed and is a better issue than the finding was — the "what to decide" section is the part that will save the next person the experiment. Leaving the P0/P1-versus-P2 mismatch unfiled is right: the docs say it flags only P0 and P1, both #99 comments were P2, and nothing about what we do turns on which. It belongs in the PR body at most.
+
+### Findings
+
+**should-fix — `AGENTS.md:454`: "GitHub allows one reaction per user per issue" is not true, and the paragraph two above it depends on it not being true.**
+GitHub allows each reaction *type* once per user per issue — one user can hold 👍 and 👀 and ❤️ simultaneously; re-POSTing an existing one returns the existing reaction rather than creating a second. As written, the rule says the bot cannot show 👀 and 👍 at the same time, which the section at `AGENTS.md:439-441` describes it as doing in sequence and says nothing about it withdrawing. The conclusion you draw is unaffected — a 👍 still cannot be repeated — so this is one clause: "GitHub allows each reaction only once per user per issue".
+
+**should-fix — `AGENTS.md:455-457`: the load-bearing claim is deduced, and the paragraph that sorts measured from read does not say so.**
+"A pull request that drew one on opening will still show that same 👍 after a fix push, `created_at` and all, whether or not anything reviewed the push" is an inference from the mechanics above, not an observation: neither #99 nor #102 exercised 👍-on-open-then-push (#99's first pass posted comments and no reaction; #102 had one pass and no second push), and it holds only if the bot does not remove and re-add its own reaction, which nobody here has watched it do. That inference is what step 12 now rests on, and `AGENTS.md:482-489` enumerates what is measured and what is read without a place for a third category. A clause — "unless it withdraws and re-adds the reaction, which has not been seen here" — puts the claim on the same footing as everything around it. This is the one remaining sentence in the section that outruns its evidence.
+
+**nit — `AGENTS.md:453, 463`: the reaction paragraph is in the right place and the wrong typeface.**
+You asked whether it reads as the subject. It does, and the cause is mechanical rather than editorial: it opens with a bold lead-in, so a reader scanning bold sees three items under a banner that says "Two things to know about it." Un-bold the first sentence and leave the paragraph exactly where it is — it qualifies the reactions described above it and the "let the review run again" below it, so it sits between them correctly. The section then reads as four prose paragraphs, a two-item list that really has two items, and the provenance close. On length: at nine lines it is no longer conspicuously the longest — "It reads this file" and the provenance paragraph are eight each — so I would not move it, only stop it announcing itself.
+
+**nit — `tests/instructions.sh:145-146`: two consecutive bare `#` lines** where the separator went in; the neighbouring paragraph breaks use one.
+
+### Not re-reviewed
+
+`ctest` again exceeded my time budget on a reused `build/`; I ran `tests/instructions.sh` directly against the working tree and against five modified copies, which is the only test this diff touches, and I am relying on the `verifier` for the remaining ten. `ui-review` remains not owed and correctly skipped: nothing compiled changed, no feature flag moved, no game output. The 👀 reaction is still unobservable after the fact — GitHub does not retain removed reactions — so it rests on `code-review.md:50`, where it is documented under the manual `@codex review` path rather than the automatic one.</result>
+<usage><subagent_tokens>83320</subagent_tokens><tool_uses>10</tool_uses><duration_ms>160695</duration_ms></usage>
+</task-notification>
