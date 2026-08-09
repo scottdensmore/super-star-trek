@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "1561a49d20fa",
+  "strategy": "manual-commit",
+  "branch": "fix/tui-restore-quadrant-panel",
+  "checkpoints_count": 7,
+  "files_touched": [
+    "README.md",
+    "tests/tui.sh",
+    "tui.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/15/61a49d20fa/0/metadata.json",
+      "transcript": "/15/61a49d20fa/0/full.jsonl",
+      "compact_transcript": "/15/61a49d20fa/0/transcript.jsonl",
+      "content_hash": "/15/61a49d20fa/0/content_hash.txt",
+      "prompt": "/15/61a49d20fa/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2455,
+    "cache_creation_tokens": 6285469,
+    "cache_read_tokens": 595652294,
+    "output_tokens": 919457,
+    "api_call_count": 1317
+  }
+}
