@@ -301,7 +301,12 @@ Every coding agent working in this repository must follow this workflow.
       conflict resolution, or any other staged, unstaged, or untracked
       content.
     - Do not repeat code review when the already-reviewed diff and worktree
-      remain unchanged.
+      remain unchanged. The `verifier` follows the same condition, and so
+      does answering a Codex comment: what makes either pass run again is
+      a changed state, not the arrival of a comment. A finding answered by
+      argument alone leaves both passes nothing they have not already
+      seen, and a round of findings answered by edits takes one rerun over
+      the result rather than one per finding.
     - Push and create the pull request only after local verification and any
       required code review are complete.
     - Open a normal, ready-for-review pull request by default. Do not open
@@ -439,28 +444,32 @@ requests here.
 It answers with a reaction on the pull request itself. 👀 while it is
 working, and 👍 when it has finished with nothing to say. 👍 is not
 approval — it is one reader reporting that this pass found nothing.
-Otherwise it posts review comments; the one review it has filed here was
-a plain commenting review rather than an approval or a request for
-changes.
+Otherwise it posts review comments; both reviews it has filed here were
+plain commenting reviews rather than approvals or requests for changes.
 
 Those comments bind as `code-review`'s do: fix, or resolve explicitly,
 on the standard "Answering a finding" sets, with the record going where
 that section says. Reply on the thread as well — that is where a
 disagreement reaches the reviewer, and where the next reader looks —
-and resolve the thread once it is answered. Then push, and let the
-review run again on what you pushed.
+and resolve the thread once it is answered. Where the answer was a fix,
+push it and let the review run again on what you pushed. Where it was a
+resolution, there is nothing to push and no further review to wait for.
 
 Reading the answer is harder than it sounds, so do not build a rule on
 the reaction alone. GitHub allows each reaction only once per user per
 issue, so a 👍 cannot be repeated: a pull request that drew one on
-opening should still show that same 👍 after a fix push, `created_at`
-and all, whether or not anything reviewed the push — unless the bot
-withdraws and re-adds it, which nobody here has watched it do. The
-timestamp shows nowhere but `gh api
-repos/:owner/:repo/issues/<n>/reactions`. So what you are waiting for
-after a push is *comments or their absence*, and absence is not
-something the platform reports. Give it the few minutes a review takes,
-look for new comments, and say in the pull request what you saw.
+opening should still show that same 👍 after a fix push, `created_at` and
+all, whether or not anything reviewed the push — unless the bot
+withdraws and re-adds it, which it is evidently capable of doing: it
+withdrew its own 👀 on #104 the moment it had comments to post, so it
+manages its reactions rather than only adding them. That was the end of
+a working marker's life, though, which is what 👀 is for; whether it
+would take a 👍 back is unwatched. The timestamp is not in the web
+interface at all: `gh api repos/:owner/:repo/issues/<n>/reactions` is
+where to read it. So what you are waiting for after a push is *comments
+or their absence*, and absence is not something the platform reports.
+Give it the few minutes a review takes, look for new comments, and say
+in the pull request what you saw.
 
 Two things to know about it.
 
@@ -468,9 +477,10 @@ Two things to know about it.
 Step 12 asks for its answer; it does not ask anyone to wait indefinitely
 for one, and there are ordinary states where no new answer can arrive —
 a finding resolved rather than fixed changes no code, so there is no
-push to review. Where the answer does not come, say so in the pull
-request body and in the summary of the work, and let whoever merges
-decide.
+push to review. Where you want one anyway, a comment saying
+`@codex review` is the documented way to ask. Where the answer still
+does not come, say so in the pull request body and in the summary of the
+work, and let whoever merges decide.
 
 **It reads this file.** Its comments here cited `AGENTS.md` by line
 range, at rules rather than at the diff, so it is better informed than a
@@ -481,14 +491,26 @@ way it is. It found a defect in this workflow's own test that the passes
 before it had missed, which is the argument for reading it closely. It
 is not an argument for doing what it says without judging it.
 
-What is measured here rather than read: that 👍 means finished with
-nothing to say, that a push can start a fresh review, and that the
-review it files is a plain commenting one. What is neither — reasoned
-from how reactions work, and not watched — is the paragraph on reading
-the answer, where a 👍 outlives the push it predates. The published
-documentation describes the automatic trigger and 👀 and says none of
-those three. The
-evidence is two pull requests on one day — one re-review after a push,
-minutes later, and 👍 on the other after it opened. A trigger list that
-includes every push is documented for Codex Security Review, which is a
+What is measured here rather than read, and by which pull request.
+
+That something after a push starts a fresh review: #99 drew a 👍 three
+minutes after one. Two thread replies landed forty seconds after that
+push as well, so which of them it answered is not something anyone
+watched — and the bot's own note lists its triggers without a push among
+them, which makes this the less safe of the two. A trigger list that
+does include every push is documented for Codex Security Review, a
 different feature and not evidence about this one.
+
+That it takes a reaction away again: #104's 👀 went as soon as it had
+comments to post. GitHub keeps no history of a reaction taken back, so
+that observation is already unrecoverable, which is the reason to have
+written it down.
+
+Neither is on the documentation page. That 👍 means finished with
+nothing to say *is* published, though not there: it is in the collapsed
+note at the foot of every review it posts.
+
+What is neither measured nor read — reasoned from how reactions work,
+and not watched — is the paragraph on reading the answer, where a 👍
+outlives the push it predates. That one is less safe than when it was
+written, since a bot that withdraws one reaction may withdraw another.
