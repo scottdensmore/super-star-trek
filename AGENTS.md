@@ -202,9 +202,10 @@ Every coding agent working in this repository must follow this workflow.
 6. **Run `ui-review` before verification.** After the main agent completes an
    implementation pass, invoke the `ui-review` sub-agent whenever the change
    can alter what the game shows a player or asks of them. The `ui-review`
-   sub-agent must act as an expert in games and CLI games. Address every
-   actionable finding before moving on, as with the two steps below. If
-   addressing one changes what the game shows a player, rerun `ui-review`
+   sub-agent must act as an expert in games and CLI games. Fix every
+   actionable finding, or resolve it explicitly, before moving on — the
+   standard that "Answering a finding" below sets for all three passes.
+   If fixing one changes what the game shows a player, rerun `ui-review`
    on the result: the fixes made for #46 introduced a doubled echo, a
    duplicated question, a line cut mid-word and a cursor left where the
    next keystroke typed over the answer, each of them found by a later
@@ -216,17 +217,17 @@ Every coding agent working in this repository must follow this workflow.
 7. **Run `verifier` before code review.** Invoke the `verifier` sub-agent to
    run the builds, static checks, tests, and journey coverage appropriate for
    the change. The verifier must report failures, flakes, missing coverage,
-   and environment issues. Fix or explicitly resolve every actionable finding
-   before starting code review. If a verifier finding requires a code change,
-   rerun the verifier after addressing it.
+   and environment issues. Fix every actionable finding, or resolve it
+   explicitly, before starting code review. If a verifier finding requires a
+   code change, rerun the verifier after addressing it.
 
 8. **Run `code-review` before every commit.** Invoke the `code-review`
    sub-agent against the current branch diff and every staged, unstaged, and
    untracked file. The reviewer must act as an expert in the languages and
-   frameworks used by this application. Address every actionable finding
-   before committing. If review findings cause changes, rerun the appropriate
-   tests and the `verifier`, then obtain a fresh `code-review` approval for
-   the changed state.
+   frameworks used by this application. Fix every actionable finding, or
+   resolve it explicitly, before committing. If review findings cause changes,
+   rerun the appropriate tests and the `verifier`, then obtain a fresh
+   `code-review` approval for the changed state.
 
    Tell it which of the passes above ran, whether the last `ui-review`
    round saw the state being committed, and where `ui-review` did not
@@ -280,8 +281,10 @@ Every coding agent working in this repository must follow this workflow.
      the findings in the same places, marked as unfiled, so a human can
      file them. Silence is the one outcome this step exists to prevent.
 
-10. **Commit after approval.** Commit only after verification and code review
-    are complete. Use Conventional Commits:
+10. **Commit once the passes are answered.** Commit only after verification
+    and code review are complete, with every finding answered — a finding
+    resolved rather than fixed needs no fresh approval, which is why this
+    does not say "after approval". Use Conventional Commits:
 
     ```text
     <type>(<scope>): <imperative summary>
@@ -379,3 +382,34 @@ satisfy a pass by reviewing its own work.
   in the pull request body and in the summary of the work — in the summary
   alone when there is no pull request. A reviewer who shares the author's
   memory of what was intended is the one thing this section exists to prevent.
+
+### Answering a finding
+
+Steps 6, 7 and 8 hold their passes to one standard, in the same words:
+fix every actionable finding, or resolve it explicitly. Two ways to
+answer, and silence is neither.
+
+**Fixing** is the ordinary one, and most findings deserve it.
+
+**Resolving explicitly** is for the finding you judge wrong, or right
+about something this change is not. Say what you think is true instead,
+in the words you would use if you expected to be argued with.
+
+Where it goes depends on whether anything else is going to read the
+change. A resolution alters no code, so it triggers no rerun: steps 6,
+7 and 8 each condition theirs on a change, and step 11 forbids
+repeating `code-review` over an unchanged worktree. So put it to the
+next pass that runs anyway — step 8 already carries `ui-review` facts
+into `code-review`, and a `verifier` finding you resolve is one
+`code-review` should hear about. For a `code-review` finding resolved
+without a change there is no next pass, and the pull request body is
+the whole of it. Either way it goes in the pull request body, which is
+what a later reader has.
+
+What does not count: fixing something adjacent and calling the finding
+handled, agreeing and then forgetting, or "I disagree" with no reason
+under it. Filing an issue does not answer a finding about *this*
+change — step 9 is explicit that filing is not resolving — but a
+finding about code the change did not touch is answered by filing it
+and saying so, which is step 9 working as intended rather than an
+exception to it.

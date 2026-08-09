@@ -67,6 +67,63 @@ if ! grep -q '^## Development workflow' "$AGENTS"; then
 	fail "AGENTS.md has no '## Development workflow' section -- the workflow every agent follows should live there"
 fi
 
+# Steps 6, 7 and 8 hold their review passes to one standard, and say it
+# in one form of words so a reader can see that they agree. They did not
+# always: two said "address every actionable finding" and the middle one
+# said "fix or explicitly resolve", while the first claimed to be
+# stating the same rule "as with the two steps below". Nobody noticed
+# until a reviewer read all three together.
+#
+# Counted, not located: hard-coding line numbers would break on every
+# edit above them, and nothing here can tell which step a match fell in.
+# So this catches the one-place regression -- a step reworded on its own
+# -- and not a coordinated edit that reworded a step and added the
+# phrase somewhere else to keep the total at four. Issue #65 is the
+# check that would know one step from another.
+#
+# Counted over the file with its line breaks flattened, because the
+# phrase wraps mid-sentence in two of the four places it appears: a
+# check a rewrap can break is a check that gets deleted the first time
+# someone rewraps. The phrase holds no regex metacharacter, so passing
+# it to awk as a pattern matches it literally; one added later would
+# quietly turn this into something else.
+STANDARD='actionable finding, or resolve it explicitly'
+# Three steps state it and one section defines it. Stating it a fifth
+# time on purpose means changing this number on purpose.
+STANDARDS=4
+standards=$(awk -v want="$STANDARD" '
+	{ s = s " " $0 }
+	END { gsub(/[ \t]+/, " ", s); print gsub(want, "&", s) }' "$AGENTS")
+# A non-number means awk did not run -- unsupported construct, missing
+# binary, anything. Compared directly against STANDARDS that is not a
+# failure but a silent pass: the test errors "Illegal number", `if`
+# reads the non-zero status as false, and the script goes on to print
+# "instructions OK". A check that stops existing has to say so.
+case "$standards" in
+'' | *[!0-9]*)
+	fail "could not count the finding standard in AGENTS.md -- awk printed '$standards' instead of a number, so this check did not run"
+	;;
+*)
+	if [ "$standards" -ne "$STANDARDS" ]; then
+		fail "AGENTS.md states the finding standard $standards times, expected $STANDARDS -- steps 6, 7 and 8 each state it and 'Answering a finding' defines it. A step reworded on its own no longer visibly agrees with the others; if you added a statement of it on purpose, update STANDARDS in this script"
+	fi
+	;;
+esac
+SECTION='Answering a finding'
+if ! grep -q "^### $SECTION" "$AGENTS"; then
+	fail "AGENTS.md has no '### $SECTION' section -- step 6 points at it by name, and it is where the standard the three steps state is defined"
+fi
+# And the pointer to it, which is the one thing tying the numbered steps
+# to the definition. Delete just that clause and the count above still
+# reads 4 and the heading is still there: the section goes on existing
+# with nothing sending a reader to it, which loses the half of #97 that
+# asked where a disagreement is recorded. Matched in quotes because the
+# heading itself is unquoted, so this finds the reference and not the
+# thing referred to.
+if ! grep -q "\"$SECTION\"" "$AGENTS"; then
+	fail "nothing in AGENTS.md refers to \"$SECTION\" -- the section defines the standard steps 6, 7 and 8 state, and nothing now sends a reader to it"
+fi
+
 # CLAUDE.md points at it and holds nothing else.
 if ! grep -q '^@AGENTS\.md[[:space:]]*$' "$CLAUDE"; then
 	fail "CLAUDE.md has no '@AGENTS.md' import line -- Claude Code would not load the shared rules"
