@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "1b260b661748",
+  "strategy": "manual-commit",
+  "branch": "chore/drop-section-floors",
+  "checkpoints_count": 9,
+  "files_touched": [
+    "AGENTS.md",
+    "tests/instructions.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/1b/260b661748/0/metadata.json",
+      "transcript": "/1b/260b661748/0/full.jsonl",
+      "compact_transcript": "/1b/260b661748/0/transcript.jsonl",
+      "content_hash": "/1b/260b661748/0/content_hash.txt",
+      "prompt": "/1b/260b661748/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3304,
+    "cache_creation_tokens": 6910048,
+    "cache_read_tokens": 777755918,
+    "output_tokens": 1247418,
+    "api_call_count": 1770
+  }
+}
