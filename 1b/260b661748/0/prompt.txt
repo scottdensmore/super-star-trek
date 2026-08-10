@@ -3494,3 +3494,48 @@ The original read "unless the user explicitly asks for a draft". Without it the 
 - Whether the owner's "take it out" extends to closing #103 is a judgment I can only flag, not settle.</result>
 <usage><subagent_tokens>62699</subagent_tokens><tool_uses>27</tool_uses><duration_ms>338820</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>ac4e959a3cbd550e5</task-id>
+<tool-use-id>toolu_0111pm9X5ZX1BNQgWSQH1PBr</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d9b6ccf4-0167-4fe7-9619-cec1a908d2ed/tasks/ac4e959a3cbd550e5.output</output-file>
+<status>completed</status>
+<summary>Agent "Final review before commit" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: request changes — one should-fix, everything else confirmed
+
+Reviewed state: worktree at `chore/drop-section-floors`, HEAD = `main` = `ba8d6e0`, no branch commits; all work is staged and `git diff` is empty. Hashes match the ones you gave (`AGENTS.md` `3d5401d4…`, `tests/instructions.sh` `123cdc02…`). Staged diff: `AGENTS.md` +19/−31 (step 11 rewritten as "Create pull requests from the reviewed state", Codex clauses out of step 12), `tests/instructions.sh` +43/−251 (`--body` mode, its guards, the recursion marker, `check_section` and both floors removed; the heading + pointer checks for `Answering a finding` inlined). No untracked files.
+
+### Your three questions
+
+1. **The `else` restructuring changes nothing but the second diagnosis.** Confirmed. The old `check_section` also stopped at the heading failure (`fail; return`), so both before and after, a missing heading yields exactly one message and skips the pointer check. Mutations against a copy: heading renamed to `### Answering findings` → 1 FAIL, exit 1; heading renamed *and* the step 6 pointer deleted → still 1 FAIL (heading only), exit 1; pointer deleted alone → pointer FAIL, exit 1; step 7's statement of the standard reworded → count FAIL (3, expected 4). Clean run passes, `shellcheck -s sh` is silent, `git diff --check` clean, `ctest -R instructions` passes. `main` against its own script is red for exactly the reason you gave (`no '### The Codex review' section`).
+2. **The restored bullet is verbatim.** Diffed the flattened sentence against `21145b7:AGENTS.md` — byte-identical.
+3. **Nothing else dangles.** `git grep -i codex` outside `AGENTS.md` finds only `.codex/hooks.json` (unrelated tooling); no reference to `The Codex review` survives anywhere; no reference to `--body` survives anywhere; `CMakeLists.txt:122-125` invokes the script in the one surviving form. `STANDARDS=4` still matches the four occurrences (`AGENTS.md:206,220,227,394`), and the removed comment about the Codex section's uncounted fifth statement went with the section. `Answering a finding`'s "step 11 forbids repeating `code-review` over an unchanged worktree" (`AGENTS.md:405-406`) is now true again, which it was not on `main`.
+
+`ui-review` not owed: agreed, and the diff supports it — one instruction file plus one shell test, nothing compiled, no feature flag touched, no string the game prints. That matches what "The review sub-agents" says gives that pass nothing to read.
+
+### Findings
+
+**should-fix — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh:123-126`: the new comment states the opposite of what the code does.**
+
+```
+# is issue #105, and the pointer check below inherits nothing of it --
+# that one uses awk's literal index().
+```
+
+The pointer check locates the heading with `h = index(all, "### " s)` — a substring search, so it is a prefix match too. What `index()` avoids relative to `grep`'s BRE is *metacharacter interpretation*, not prefix matching; the comment conflates the two. Demonstrated: rename the heading to `### Answering a finding here` and the whole script exits 0 with no FAIL — both the `grep` and the pointer check are satisfied while every pointer names a heading that is gone. Directly: `awk -v s='Answering a finding' '… index(all, "### " s)'` on a file whose only heading is `### Answering a finding here` returns `2`. The comment this replaced said it correctly ("All three matches here are prefix matches").
+
+Failure scenario: whoever picks up #105 reads this comment, fixes only the `grep`, and leaves a second prefix matcher four lines below — and a reader auditing coverage credits the pointer check with a robustness it does not have. Suggested fix: say that both matchers are prefix matches and that `index()`'s literalness is a separate property, e.g. "…That is issue #105, and the pointer check below matches the same way — `index()` is literal rather than a BRE, but it is still a substring search, so a longer heading satisfies it too."
+
+**nit — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh:133-176`: the `else` body sits at column 0.** Every other multi-line `if/else` in the file indents its branch (see 106-121), and here the un-indented block leaves the `fi` / `fi` pair at 175-176 with no visual cue about which closes what. Indent 134-175 by one tab.
+
+### Not reviewed
+
+- The bodies of #109 and #110 beyond title and state (both OPEN and titled as you describe; #103 CLOSED, #105 OPEN) — I confirmed they exist and match your account, not that their fix sketches are complete.
+- `shfmt` is not installed here, so formatting is judged against the file's own style rather than a formatter.
+
+Fix the comment (a one-line reword, no behavior change) and this approves; the mutation evidence above stands for the rest of the state as it is.</result>
+<usage><subagent_tokens>51968</subagent_tokens><tool_uses>31</tool_uses><duration_ms>273822</duration_ms></usage>
+</task-notification>
