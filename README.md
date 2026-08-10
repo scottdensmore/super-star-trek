@@ -37,12 +37,26 @@ showing any of itself; at fifteen it comes one line at a time.
 Growing the terminal back brings the panels with it, however far the
 squeeze went: they redraw from the game state, so they return full of
 live readings. The conversation cannot be rebuilt that way — curses
-does not reflow it — so it comes back holding only what fitted while
-the window was small, and after a deep squeeze no more than the tail of
-the line you were on. A line that was cut short stays cut short. Every
-reading is a command away, and none of them costs anything: `srscan`,
-`status`, `chart`, `damages`. If the prompt is not on screen with them,
-Enter brings it back.
+does not reflow it — so whatever scrolled away while the window was
+small is gone for good, and an older line that was cut short stays cut
+short. Every reading is a command away, though, and none of them costs
+anything: `srscan`, `status`, `chart`, `damages`.
+
+The line you are on usually comes back, and it is the one that matters:
+a question or a pause the game was part way through writing is written
+out again whole once there is room for it, so you are not left typing
+into the tail of a prompt. A few prompts finish their line before they
+stop to wait, and those get treated like any other older line — they
+scroll away, or come back cut off mid-sentence — while the game goes on
+waiting for the answer.
+
+If the prompt is missing, or cut off, press Enter. Nothing waiting
+behind one commits you to anything: a pause moves on, the
+self-destruct password reads the empty answer as a refusal and stands
+the sequence down, and a yes/no question comes back only as `Please
+answer with "Y" or "N":`, without saying again what it asked — answer
+`N` there and you are back at the prompt, free to give the command
+again.
 
 If full-screen mode isn't possible — the terminal is too small, the
 game isn't attached to one (piped input, redirected output, a job with

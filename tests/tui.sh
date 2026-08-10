@@ -1124,12 +1124,14 @@ for squeeze in "25 24" "80 13" "20 8" "82 13"; do
 		fi
 		# And the conversation is back under the panels, which is the
 		# half a player notices first. Asked by typing rather than by
-		# looking: what a squeeze leaves of the *pending* line is
-		# #100's subject and comes back a stump or not at all, so a
-		# check that only looked would be asserting that bug instead
-		# of this fix. One keystroke gets a fresh prompt, and where it
-		# lands is what the message window being back in its place
-		# means -- row 14 is the first under panels that end at 13.
+		# looking, which was once because the pending line came back
+		# a stump -- #100, fixed, and the block below now asks by
+		# looking for exactly that reason. Typing still asks a
+		# different question than looking does, and the one this
+		# block wants: a fresh prompt has to *land* somewhere, and
+		# where it lands is what the message window being back in
+		# its place means -- row 14 is the first under panels that
+		# end at 13.
 		tm send-keys -t "$pane" Enter
 		sleep 1
 		if ! screen | awk 'NR >= 14 && /COMMAND>/ { found = 1 }
@@ -1139,6 +1141,157 @@ for squeeze in "25 24" "80 13" "20 8" "82 13"; do
 		fi
 	fi
 done
+
+# --- the pending prompt comes back from a squeeze ---------------------
+# The block above asks by typing, because what a squeeze left of the
+# line the game was part way through was a stump. This asks by looking,
+# which is what a player does: they squeeze a window, drag it back, and
+# read what is on screen before touching the keyboard.
+#
+# sync_size() reprinted that line only when the terminal shrank. The
+# shrink-time write went into a window that could be one row tall and
+# narrower than the line, so it wrapped, scrolled, and left the tail --
+# and growing back did nothing to repair it. From 20x8 the first setup
+# question came back as ` , or frozen game?`, and a pending pause as
+# ` CONTINUE]`.
+#
+# Worse than cosmetic where the stump is a pause: it is still pending,
+# so the first keystroke of the next command is eaten by it. Typing
+# `srscan` into that stump fed `rscan` to the parser and the game
+# answered with the whole command list.
+#
+# Asked at the first setup question because it is pending with no
+# keystrokes spent to get there, and because the answer is read by the
+# same reader that serves every later prompt. The opening pause reaches
+# the same code, but the setup answers this suite passes on the command
+# line run straight past it to the command prompt.
+#
+# And asked again at a pager pause, which is the half of #100 that did
+# more than look wrong: the pause is still waiting, so the first
+# keystroke of whatever you type next is eaten by it. `chart` fills the
+# window and stops, which is the one pause reachable without spending a
+# keystroke to reach it.
+#
+# Asked as "exactly one", not "at least one". A stump fails it by
+# absence, and so does the other direction: reprinting without erasing
+# is what once stood eight copies of a question up the window, and a
+# check for presence alone would pass that.
+#
+# 20x8 is the corner drag, the commonest gesture and the one #100's
+# table was measured from. 10x8 is past every minimum the display has,
+# and the stump is shorter still: a build without the fix leaves
+# ` game?` of the question and ` UE]` of the pause. #100's table says
+# "nothing at all" at that size, which is what the pre-fix build does
+# not do -- measured, and corrected on the issue.
+#
+# The panels recover at both sizes since #88, so the conversation is
+# the only thing left that does not.
+for squeeze in "20 8" "10 8"; do
+	# shellcheck disable=SC2086
+	set -- $squeeze
+	start 80 24
+	if ! wait_for 'regular, tournament, or frozen'; then
+		fail "pending: the game never asked its first question"
+		dump
+	else
+		tm resize-window -t "$session" -x "$1" -y "$2"
+		sleep 1
+		tm resize-window -t "$session" -x 80 -y 24
+		sleep 1
+		# No keystroke between the resize and the look. One would
+		# answer the question and take it off screen.
+		if ! screen | awk '/Would you like a regular, tournament, or frozen game\?/ { n++ }
+		                   END { exit n == 1 ? 0 : 1 }'; then
+			fail "pending: after $1x$2 the question is not on screen exactly once"
+			dump
+		fi
+	fi
+
+	start 80 24 'tournament 7 short novice pw'
+	if ! to_command; then
+		fail "pending: the game never reached its command prompt"
+		dump
+	else
+		tm send-keys -t "$pane" chart Enter
+		if ! wait_for 'HIT SPACE BAR TO CONTINUE'; then
+			fail "pending: chart did not fill the window and stop"
+			dump
+		else
+			tm resize-window -t "$session" -x "$1" -y "$2"
+			sleep 1
+			tm resize-window -t "$session" -x 80 -y 24
+			sleep 1
+			if ! screen | awk '/\[HIT SPACE BAR TO CONTINUE\]/ { n++ }
+			                   END { exit n == 1 ? 0 : 1 }'; then
+				fail "pending: after $1x$2 the pause is not on screen exactly once"
+				dump
+			fi
+			# A control, not a second check of #100: the pause is
+			# still pending either way, so this passes against a
+			# build with the defect too. It says the assertion
+			# above was taken at a real pause rather than at
+			# something that merely reads like one, and it would
+			# fail a fix that put the line back by re-prompting
+			# and swallowing the pause -- which is the obvious
+			# wrong way to make the check above pass.
+			tm send-keys -t "$pane" Space
+			sleep 1
+			if screen | grep -qF 'HIT SPACE BAR TO CONTINUE'; then
+				fail "pending: after $1x$2 Space did not page the chart on"
+				dump
+			fi
+		fi
+	fi
+done
+
+# --- a wrapping answer survives a grow --------------------------------
+# restore_curline() is called on a grow now, which it was not before
+# #100. That was excluded once for a reason: a grow reprinted a
+# question whose answer had wrapped, because the search that looks for
+# the pair already on screen read a single row and a wrapped pair is
+# two. It never matched, so it reprinted, and the copies stacked up the
+# window. The joined-row search is what makes the grow call safe, and
+# nothing else in this suite exercises it on a grow.
+#
+# Height only, at a fixed width, which is the shape that duplicates.
+# A width change takes the other branch, which works out how many rows
+# the stump occupies and erases them before writing -- so a missed
+# match there costs a rewrite, not a copy. Only the height-only branch
+# scrolls by one and writes without erasing, leaving what was already
+# there. Cutting the search back to one row -- `int start = r;` --
+# gives 2 copies, then 3, then 4 over the three steps below, and passes
+# every other check in this file.
+start 72 24
+if ! wait_for 'regular, tournament, or frozen'; then
+	fail "wrap: the game never asked its first question"
+	dump
+else
+	# The question is 53 columns and the window 70, so an answer this
+	# long puts the pair over two rows and into the joined path.
+	tm send-keys -t "$pane" 'regularbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+	sleep 1
+	for h in 30 36 42; do
+		tm resize-window -t "$session" -x 72 -y "$h"
+		sleep 1
+		if ! screen | awk '/Would you like a regular, tournament, or frozen game\?/ { n++ }
+		                   END { exit n == 1 ? 0 : 1 }'; then
+			fail "wrap: grown to 72x$h the question is not on screen exactly once"
+			dump
+			break
+		fi
+		# Not asserting the answer here, though it is the half the
+		# player is looking at. Two attempts at it were blind: a
+		# per-row grep for the run of b's could never match, because
+		# the answer is what wraps and the run is split across two
+		# rows; and joining the rows back does not reassemble it
+		# either, because what capture-pane returns for the two rows
+		# does not concatenate to what was typed. Counting b's over
+		# the whole screen needs a baseline, since the banner has
+		# its own. The question alone kills the mutant this block is
+		# for, so the gap is coverage rather than a hole -- issue
+		# #115.
+	done
+fi
 
 # --- Ctrl-D ends the session on its own keystroke ---------------------
 # Under cbreak() the tty does no end-of-file handling of its own, so
