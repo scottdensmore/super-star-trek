@@ -3227,3 +3227,84 @@ None that I can identify for this diff. Every `--body` path — success, both ex
 I modified nothing in the repository; `git status` is the same two modified files it started as.</result>
 <usage><subagent_tokens>81373</subagent_tokens><tool_uses>45</tool_uses><duration_ms>1204629</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a04b2df0285a3c689</task-id>
+<tool-use-id>toolu_01AhCtYVJRBR1qsK2poT4pFD</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d9b6ccf4-0167-4fe7-9619-cec1a908d2ed/tasks/a04b2df0285a3c689.output</output-file>
+<status>completed</status>
+<summary>Agent "Gate review of the recursion guard" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Approve** — for exactly this state and nothing else.
+
+Reviewed: HEAD `6ed975b924d92a89baf701b5c5f9b090a4d8dbc1` plus the uncommitted working-tree modifications to two files, nothing staged, no untracked files.
+
+Hashes verified against what you gave me, both matching:
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md` → `cbc7abb817579eed354b4c90a80e4d7c64be4c689913bac9c956356b35ed6151`
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh` → `f1fd1c788bd6f8979eb2aa5532dccf1f214911b099a45b69534e8271a8401a16`
+
+`git status --porcelain` is exactly ` M AGENTS.md` / ` M tests/instructions.sh`. `git diff main...HEAD` plus the unstaged diff touches only those two paths — no C, no CMake, no untracked strays.
+
+## My three findings: all fixed, and I re-proved each independently
+
+I did not take the fixes on report. I copied the worktree (uncommitted files included) to scratchpad and mutated there.
+
+1. **Unbounded self-invocation** — fixed. Deleting the `exit 0` from the `--body` dispatch now produces two `FAIL` lines and exit 1 in 0.1s. Process count before/after: 569 → 572, i.e. depth 2, no orphans. The refusal message rides back inside the captured `$flag` (the `2&gt;&amp;1`), which is why the failure text is two lines — worth knowing when reading it, not a defect.
+2. **Unreached guards** — fixed. Removing the empty-name guard fires `probe_body ''`; the run goes red with the right message.
+3. **`grep -q "^### $3"` as a BRE** — fixed, and I proved the assertion is what closes it: swapping the measurement rejection back to `grep -q "^### $3"` makes `The C.dex review` pass the guard, return 0, and trip `probe_body 'The C.dex review'`.
+
+Also checked in situ: `ctest -R instructions` passes in 0.09s (TIMEOUT 30 has ample headroom despite five new child shells), `shellcheck -s sh` is clean, no tabs/spaces mixing, no trailing whitespace.
+
+## The `probe_body ''` observation — your resolution is right
+
+Your premise is correct: `/bin/sh` here is dash, and `sh &lt;unopenable&gt;` exits **2**, the same code the empty-name guard returns. I ran the whole script through `sh -s &lt; tests/instructions.sh .` to see it happen. What comes back:
+
+```
+FAIL: `--body` with a name matching no heading did not exit 1 ...
+FAIL: `--body` accepted a name that only matches as a regex ...
+FAIL: ... does not work: sh: 0: cannot open sh: No such file   (x2)
+4 check(s) failed.
+```
+
+So the one assertion passes for the wrong reason and four others fail with `cannot open sh` naming the cause outright. It is a false pass inside a run that cannot be green, on an invocation form `add_test` never produces (CMakeLists.txt:123 passes an absolute path). Tightening it would buy a distinction nobody can reach. I would not spend a round on it. If the file is opened again for some other reason, a one-line `[ -f "$0" ]` at the top of `probe_body` would retire it for free — but not on its own account.
+
+## Findings
+
+No blockers. No should-fixes. Nits only, none of which I would hold the commit for.
+
+**nit — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/instructions.sh:363`** — the regex probe goes vacuous on a rename, silently. `probe_body 'The C.dex review'` proves the matcher is literal only while a heading it matches *as a regex* exists. Rename the section and that probe exits 1 for the ordinary absent-name reason, testing nothing. Today `check_section 'The Codex review'` at line 383 fails loudly on the same rename, so a green run is impossible — but the repair someone reaches for is updating line 383's argument, and line 363's literal is twenty lines away and does not fail to remind them. Deriving both from one variable (`CODEX='The Codex review'`, probe `"The C${CODEX#The Co}"` or simply a second literal beside it with a comment tying them) makes the coupling visible where it matters. This is the "asserts less than it appears to" shape the project files issues for; note it and move on, or file it.
+
+**nit — `tests/instructions.sh:53`** — `[ $# -lt 3 ] || [ -z "$3" ]` has two halves and only the second is driven. `probe_body ''` passes three arguments, so `$# -lt 3` is never exercised. Both halves share an exit and a message, so the exposure is small.
+
+**nit — `tests/instructions.sh:367-376`** — two unrelated comment paragraphs run together with no `#` separator: lines 367-370 explain the *pointer* check (step 6's clause, #97), lines 371-376 explain the *floor* (1200 → 850). Read straight through, "About half its section, as above" appears to continue the sentence about #97. A bare `#` between them fixes it.
+
+**nit — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md:488`** — the `--jq` snippet is a 4-space indented code block; every other code block in the file is fenced (lines 33, 289). It renders, but it is the odd one out.
+
+**nit — proportion.** `AGENTS.md` is 39,335 bytes and "The Codex review" is now 14,426 of them — 37% of an instruction file loaded into every agent session, for one third-party bot's reaction behaviour. The section itself concedes "None of this changes what you do." The measured block earns its place; the "still unwatched" block is a to-do list for future sessions and reads like one. Your own floor comment already anticipates it being pruned. Editorial judgment, yours to make.
+
+## What I verified rather than accepted
+
+Every documentary number in both files reproduces:
+
+- Floors: `--body 'The Codex review'` → 14426 (floor 6500 = 45%); `--body 'Answering a finding'` → 1680 (floor 850 = 51%). Both "about half".
+- The comment's history claims: the section measured **7954** at `6ed975b`, the commit that added `check_section` and the 4000 floor (`git log -S` confirms both) — so "a 4000 floor was half of it" is exact, and 4000/14426 = 27.7% is genuinely "under a third". `Answering a finding` was 1200/1680 = 71%, so "over 70%" is exact.
+- `STANDARDS=4` still holds against the flattened file; the new comment correctly records "The Codex review" as the uncounted fourth.
+- Guard behaviour end to end: `''`→2, `No Such Section`→1, `The C.dex review`→1, `The Codex`→0 (the documented #105 prefix hole, issue confirmed OPEN with a matching title), missing third arg→2, `INSTRUCTIONS_BODY_CHILD=1` on a normal run→2.
+- Against the live API: the bot login is exactly `chatgpt-codex-connector[bot]`; the 👍 timestamps are 23:39:48Z on #104, 00:59:44Z on #99, 04:45:13Z on #102 — all three as written. Exactly two bot reviews exist, both `COMMENTED`, on #99 and #104, at 00:18:32Z and 05:49:47Z; your two thread replies on #99 are at 00:57:22Z and 00:57:23Z, as the text says. Every arithmetic span in the wait paragraph (2m22s, 2m24s, 3m50s, 3m39s, 5m39s) checks out, and "five runs" is five. The `--jq` filter as printed runs and returns the one bot `+1`.
+
+## `ui-review`
+
+Not owed, and I would have said so unprompted. The pending state is one instruction file and one shell test: nothing compiled, no `CMakeLists.txt` change, no feature flag, no string the game prints, no change to `sst.doc`. `AGENTS.md`'s own "The review sub-agents" names this case — "This file, a test's plumbing and CI configuration usually give it nothing to read" — and the build-system exception it carves out (a change to what `-DSCORE`/`-DCAPTURE`/`-DCLOAKING`/`-DDEBUG` compile in) is not engaged. `verifier` ran on this exact hash pair and, per your report, independently mutation-proved all three fixes and corrected its own earlier `ulimit -u 200` harness artifact — which is the right way to have handled that. Your plan to state the skip in the commit, the PR body and the summary satisfies step 6.
+
+## Not reviewed
+
+- I did not run `tournament`, `golden`, or the compiled tests. No C or CMake changed, `ctest -R instructions` passes here, and the `verifier` covered the suite on this hash pair.
+- Whether the prose is the *right* prose is not something any check can reach, and the floor comment says as much. I read it for internal consistency and reproducibility against the API, and it holds on both.
+
+One caveat on the approval's shelf life: `check_section 'The Codex review'` compares against the file it lives beside. Editing `AGENTS.md` again before committing changes the measurement, and the approval above covers hash `cbc7abb8…` only.</result>
+<usage><subagent_tokens>72463</subagent_tokens><tool_uses>29</tool_uses><duration_ms>431556</duration_ms></usage>
+</task-notification>
