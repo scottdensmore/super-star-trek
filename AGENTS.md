@@ -444,8 +444,13 @@ requests here.
 It answers with a reaction on the pull request itself. 👀 while it is
 working, and 👍 when it has finished with nothing to say. 👍 is not
 approval — it is one reader reporting that this pass found nothing.
-Otherwise it posts review comments; both reviews it has filed here were
-plain commenting reviews rather than approvals or requests for changes.
+Otherwise it posts review comments. Every review it had filed here as
+of 2026-08-09, when #104 was written, was a plain commenting review
+rather than an approval or a request for changes — two of them, on #99
+and #104. A count like that goes stale the next time it reviews
+anything, which is why it is dated. `gh api
+repos/:owner/:repo/pulls/<n>/reviews` is what brings it forward.
+
 A review it posts says which state it read, in its own body: **Reviewed
 commit:** and a short sha. That settles the question outright and with
 no arithmetic, so where there are comments, read that rather than
@@ -470,6 +475,19 @@ is the one thing the web interface does not show. `gh api
 repos/:owner/:repo/issues/<n>/reactions` gives `created_at`, with
 `content` reading `eyes` and `+1` rather than the emoji.
 
+Filter it on both fields, or step 12's gate opens on things that are
+not an answer. That endpoint returns every user's reactions, and a
+human thumbs-up carries the same `+1` as the bot's, so `content` cannot
+tell them apart — a maintainer adding one to their own agent's pull
+request, an ordinary thing to do and likelier the more this workflow
+gets used, would clear the gate with no Codex pass having run. And the
+bot's own 👀 is a reaction too, newer than your push by five or ten
+seconds, so filtering on the user alone hands you a review that is
+still running as though it had answered. Both, then:
+
+    --jq '.[] | select(.user.login == "chatgpt-codex-connector[bot]"
+                       and .content == "+1")'
+
 The push time it is compared against takes a second call: `gh api
 --paginate repos/:owner/:repo/events`, and the newest `created_at`
 among the entries naming your branch. Newest, not first — the feed is
@@ -479,9 +497,12 @@ first push files no `PushEvent` at all, only a `CreateEvent` whose
 `refs/heads/<branch>`. Match only the second and the ordinary case —
 branch, one push, open, merge — comes back empty, which is every branch
 in this repository that was never pushed to twice. `repos/:owner/:repo`
-carries a `pushed_at` as well, but that one is repo-wide: another
-branch went up in the same second as the push measured below, and the
-later of the two is all it would have kept.
+carries a `pushed_at` as well, but that one is repo-wide and names no
+branch: all three of the pushes timed below that filed a `PushEvent`
+shared their second with a push to another branch, so `pushed_at` could
+not have told you which one it was reporting even where it agreed with
+them. No other push shared the second of the two that filed a
+`CreateEvent`, which is luck rather than a rule.
 
 That feed is not built for real time. The vendor puts its lag at
 anywhere from thirty seconds to six hours, against the few minutes a
@@ -493,21 +514,37 @@ first thirty of those, which here is about a day — long enough to work
 on every branch you try it on and fail on the one that sat open over a
 weekend. Against all three — the lag, the limits, the flag — the
 fallback is the same and costs nothing: note the time as you push, and
-none of them can reach you. What will not do is a
-commit's own date, which is a lower bound rather than an answer:
-`50540ea` was committed twenty-four seconds before it reached the
+none of them can reach you. Note it *after* the push returns, though.
+A time taken before it is a lower bound, so anything the bot does in
+the gap reads as having come after your push when it came before — and
+the gap is not small enough to ignore: the note taken here went in six
+seconds early, because the shell read the clock before `git push` had
+finished sending. The measurements below are timed off the feed for
+that reason, poll times included. What will not do at all is a commit's
+own date, which is a lower bound by more: the commit behind the
+06:34:17Z push was made twenty-four seconds before it reached the
 remote, and a commit written before a rebase or a review round is off
-by however long that took.
+by however long that took. (Shas are avoided here on purpose. Step 12
+squash-merges and deletes the branch, so a commit named on it stops
+resolving in a fresh clone of `main` — dates and pull request numbers
+survive that, and `payload.head` in the feed gives the sha back.)
 
 A pass that finds nothing files no review at all — no review object, no
 comments, only the reaction changing. So an unchanged comment count is
 not evidence that nothing ran, and the reaction is the whole of the
 answer.
 
-The wait is short. Both runs timed below took under four minutes to
-answer — #104 opened at 05:46:08Z and had comments at 05:49:47Z, and
-the review its later push drew answered in two minutes and twenty-four
-seconds, 👀 up five seconds in. Give it that; past a few minutes more,
+The wait is short, and its range is known. Five runs are timed here and
+they span two minutes twenty-two to five minutes thirty-nine: #99
+answered 2m22s after the activity at 00:57:22Z, #104's two pushes drew
+answers in 2m24s and 3m50s with 👀 up within ten seconds on both,
+#104's opening review took 3m39s from the pull request opening at
+05:46:08Z to its comments, and #102 — the slowest, and no draft —
+waited 5m39s from 04:39:34Z to a 👍 at 04:45:13Z. Note that the two
+opening runs are timed from the pull request opening, not from the
+branch push, which is the event the paragraph above counts: a second
+earlier for #104, and the same second for #102. So four minutes is not
+the ceiling it looks like from #104 alone. Give it ten; past that,
 treat the answer as one that is not coming and take the paragraph below
 on saying so.
 
@@ -535,41 +572,105 @@ What is measured here rather than read, and by which pull request.
 
 That a push started a fresh review: on #104, a push at 06:34:17Z drew
 👀 five seconds later with nothing else touched on the pull request, and
-👍 at 06:36:41Z. One clean instance, which is why step 11 says a push
-*may* start one. Its own note lists its triggers without a push among
-them. A trigger list that does include every push is documented for
-Codex Security Review, a different feature and not evidence about this
-one.
+👍 at 06:36:41Z. The next push to the same pull request did it again,
+ten seconds and three minutes fifty, again with nothing else touched
+between the push and the answer. #99 looks like a third — a push at
+00:57:22Z, 👍 at 00:59:44Z — but two thread replies of mine went in at
+00:57:22Z and 00:57:23Z, so which of the three that review answered is
+not something anyone watched. A reply is not a documented trigger, but
+neither is a push: the whole point of this entry is that the published
+list is short, so it cannot be used to acquit one unlisted candidate
+and convict another. Two clean instances rather than a promise, which
+is why step 11 says a push *may* start one — the bot's own note
+lists its triggers without a push among them. A trigger list that does
+include every push is documented for Codex Security Review, a different
+feature and not evidence about this one.
 
 That the reaction cycles rather than accumulates: that 👀 was a re-add.
 The same reaction had gone three quarters of an hour earlier, when the
 review before it had comments to post at 05:49:47Z. GitHub keeps no
-history of a reaction taken back, so the withdrawal is dated from those
-comments rather than watched, and is already unrecoverable — which is
-the reason to have written it down.
+history of a reaction taken back, so that withdrawal is dated from
+those comments rather than watched, and is already unrecoverable —
+which is the reason to have written it down.
 
-That a 👍 can postdate the push it answers: the same run again, and what
-step 12's rule rests on. An earlier draft of this section reasoned the
-opposite — that a 👍 could not be repeated and so would go stale — which
-that run disproved.
+That it withdrew a standing 👍 rather than leaving it in place, once,
+watched: on the push that carried the prediction this entry replaces.
+#104 was carrying a 👍 from 06:36:41Z when that push landed at
+23:35:58Z. A poll at 23:36:05Z, seven seconds later, still found that
+👍; the next at 23:36:17Z, nineteen seconds in, found it gone and 👀 in
+its place carrying a `created_at` of 23:36:08Z. Nothing looked in
+between, so the withdrawal happened somewhere in those twelve seconds,
+and the ten-second figure is the 👀's arrival rather than the 👍's
+departure — they are the same instant only if the two never overlapped,
+which is exactly the inference the entry above refuses to make. At
+23:39:48Z — three minutes and fifty seconds after the push — 👀 gave
+way to a 👍 of its own, with no review and no comments filed. The
+paragraph this entry replaces called the case unwatched and named the
+push that would settle it, which makes this the only experiment here
+the file called in advance.
+
+That a 👍 can arrive where none stood: the 06:34 run, and what step 12's
+rule first rested on. #104 was carrying nothing at all when that push
+landed — its opening review had taken the 👀 away when it posted
+comments — so what the run disproved was the *conclusion* an earlier
+draft had drawn, that no 👍 could ever postdate your push and the rule
+was therefore unwaitable. What that run could not reach is the claim
+underneath, that a 👍 already standing cannot be replaced by a newer
+one; the 23:36 run reached that and disproved it. The draft rested both
+on a supposed platform rule, one reaction to a user per issue, which is
+not a rule — the limit is one reaction of each *type*, which is how a 👀
+and a 👍 come to sit on a pull request together. What swaps them here is
+the bot, as behaviour, and it is measured above rather than promised
+anywhere.
 
 That a pass finding nothing files no review at all: the same run once
 more. The 👍 arrived with no review object and no comments behind it,
-which is what the paragraph on comment counts above rests on.
+which is what the paragraph on comment counts above rests on. #99 shows
+it too, and #102 as well, and those two are where a reader can still
+check: both are merged with their branches gone, so nothing will ever
+be pushed to them again and their 👍s are frozen where they landed.
+#104's from 06:36:41Z is gone, withdrawn by the cycle the next push
+started, and whichever 👍 stands on it as you read this will go the same
+way the moment anything else is pushed. A reaction is evidence only
+until the next push, which is why the two frozen ones carry this and
+#104 has to be taken on trust.
 
 None of those is on the documentation page. That 👍 means finished with
 nothing to say *is* published, though not there: it is in the collapsed
 note at the foot of every review it posts.
 
-What is still unwatched: a pull request that already carries a 👍 and
-then takes a push. #104 was carrying nothing when the push above went
-up, so whether the bot withdraws a 👍 to start the next cycle is not
-something anyone here has seen — and #104 is carrying one now, which
-makes the push that lands this paragraph exactly that experiment. Read
-the reactions after it and write down what happened.
+What was still unwatched as of 2026-08-09, and what would settle each.
+These are the entries most likely to be out of date by the time you
+read them, since the thing that settles one is an ordinary review.
 
-Comparing `created_at` against the push is what keeps a stale 👍 from
-being read as a fresh one. It does not help with the other way this
-could go: if the bot leaves an existing 👍 alone, no newer one can
-arrive, step 12's condition can never be met, and the merge goes
-through the escape hatch above rather than the rule.
+A commenting run that starts from a standing 👍: both commenting runs
+to that date began from no reaction, each being the review a pull
+request draws on opening, so whether a 👍 goes the way a 👀 does when
+the review has something to say is untested. #104 was carrying one, so
+the next round of findings on it settles this — quite possibly the
+review of the push that landed this paragraph.
+
+A 👀 withdrawal watched rather than inferred: none of the three here
+was. The opening review's is dated from the comments that replaced it
+at 05:49:47Z, the 06:34 one from the 👍 that followed at 06:36:41Z, and
+the 23:36 one from its 👍 at 23:39:48Z — each from the thing that came
+next, not from watching the reaction go. Even the 23:35 run, which
+polled closely enough to bracket the 👍's departure, stopped polling
+once 👀 was up and so watched its own 👀 no better than the others. A
+commenting run polled the whole way through would date one directly,
+and the same review settles this and the entry above it.
+
+Whether `@codex review` starts anything here: documented, and never
+once used in this repository to that date. The advice above, on what to
+do when no answer comes, tells an agent to use it — so the first one
+who does ends this entry, and should say what happened.
+
+None of this changes what you do, which is to compare `created_at`
+against the push and read the time rather than the presence. It matters
+to the reader who glances at the page instead: the stale 👍 was still
+up seven seconds after the push and gone by nineteen, so for something
+like the first twenty seconds the reaction on screen is the last
+review's and looks exactly like this one's. That bracket is one run,
+the only one anyone here has watched, and nineteen seconds is a
+measurement rather than a promise — which is the argument for reading
+the timestamp and never the icon.
