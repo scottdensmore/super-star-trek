@@ -307,9 +307,13 @@ static void note_out(const char *s) {
 static const char *pending_answer;
 
 /* Whether the repaint left the cursor at the end of the game's line,
- * with the answer to be written after it. False when the restore was
- * not needed at all -- a terminal that only grew -- where the cursor is
- * still sitting after the answer and writing it again would double it. */
+ * with the answer to be written after it. The repaint runs whichever
+ * way the terminal moved, so what a repaint leaves this false for is
+ * having no part-written line to move the cursor to: a prompt that
+ * ended its own line, which restore_curline() returns from at once and
+ * cannot put back at all. Issue #112. It is also false where no
+ * repaint happened -- a KEY_RESIZE carrying no actual size change,
+ * which sync_size() returns from before touching anything. */
 static int cursor_at_prompt;
 
 /* Whether a window row holds nothing but blanks. */
@@ -418,16 +422,19 @@ static void restore_curline(int oldmsgw) {
 			}
 		}
 	}
-	/* Where to put it. A terminal that lost columns left the stump on
+	/* Where to put it. A terminal whose width changed left the stump on
 	   screen, taking as many rows as the pair filled at the old
 	   width -- which is arithmetic, not something to go looking for.
+	   The old width is what the stump was laid out at whichever way
+	   the terminal then moved, so this holds on a grow as well: it is
+	   how many rows are already occupied, not how many the line needs
+	   now.
 	   Rub those rows out and write the line in their place; scrolling
 	   instead is what left one stump per step of a narrowing drag,
 	   six of them up the window with the conversation pushed off the
 	   top.
-	   A terminal that only lost rows is the other case: the line is
-	   gone altogether and the bottom rows hold older conversation
-	   worth keeping, so that scrolls by one and writes below it. */
+	   A width that did not change is the other case, and the else
+	   below is where it is argued. */
 	if (oldmsgw > 0) {
 		int total = curlen;
 		int rows, rr;
@@ -454,6 +461,34 @@ static void restore_curline(int oldmsgw) {
 		}
 		wmove(wmsg, r, 0);
 	} else {
+		/* A width that did not change is the other case, and it
+		   comes both ways. Lost rows: the line is gone altogether
+		   and the bottom rows hold older conversation worth
+		   keeping, so this scrolls by one and writes below it.
+		   Gained rows: the line is on screen as a stump, and the
+		   scroll is what carries it off the top.
+		   Bottom-anchored, unlike the branch above, and on a grow
+		   that shows: a height-only squeeze and return leaves the
+		   pair on the last two rows with blank ones above it. That
+		   is reproducible -- 72x24, a wrapping answer, 72x14, back
+		   to 72x24 -- and it is this change that made it visible,
+		   by restoring on a grow at all. Left alone deliberately.
+		   The scroll is not only making room: it is what carries
+		   the stump off the top of the window. Anchoring under the
+		   conversation without it leaves the stump on screen above
+		   the line, which is worse than a gap.
+		   Erasing instead, the way the branch above does, is not
+		   the arithmetic problem it looks like -- the width did not
+		   change, so getmaxx(wmsg) already is the old width and the
+		   row count is one line away. What stops it is that this
+		   branch serves two opposite states. On a height grow the
+		   stump is on screen and last names its last row, so
+		   erasing back from there is right. On a height shrink
+		   wresize() truncated the line away and last names live
+		   conversation, so the same erase would wipe the line above
+		   the prompt where the scroll preserves it. A fix has to
+		   tell the two apart first, which is more than this is
+		   worth. Issue #114. */
 		wscrl(wmsg, 1);
 		wmove(wmsg, maxy - 1, 0);
 	}
@@ -471,20 +506,31 @@ static void restore_curline(int oldmsgw) {
  * and the game keeps no transcript -- so the panels come back and the
  * conversation carries on from wherever it had got to. */
 static void sync_size(void) {
-	int oldlines = builtlines, oldcols = builtcols;
+	int oldcols = builtcols;
 
 	if (!resized()) return;
 	cursor_at_prompt = FALSE;
 	resize_term(0, 0);	/* adopt whatever the terminal is now */
 	make_windows();		/* which is what moves builtlines/builtcols on */
 	touchwin(wmsg);		/* the panels redraw themselves; this does not */
-	/* A terminal that only grew clipped nothing, so there is nothing
-	   to put back and no need to go looking: asking anyway is what
-	   left a second copy of a question whenever the answer being
-	   typed was long enough to wrap, since a wrapped pair is not the
-	   contiguous string the search hunts for. */
-	if (LINES < oldlines || COLS < oldcols)
-		restore_curline(COLS < oldcols ? oldcols - 2 : 0);
+	/* On a grow as well as a shrink. A shrink writes the line into
+	   whatever room is left, which can be one row and narrower than
+	   the line: it wraps, scrolls, and leaves the tail. Growing back
+	   used to do nothing, so a corner drag returned to a stump --
+	   ` , or frozen game?` of a question still waiting to be
+	   answered, with the first keystroke of the answer eaten by the
+	   reader still sitting behind it.
+	   This was left out once because asking on a grow stood a second
+	   copy of a question up the window whenever the answer being
+	   typed was long enough to wrap. That was the one-row search:
+	   restore_curline() joins as many rows as the pair takes before
+	   looking, so an intact line is found and left alone whichever
+	   way the terminal moved, and only a line that really is gone or
+	   broken gets rewritten.
+	   The old width is what says how many rows the stump occupies,
+	   so it is passed whenever the width changed at all rather than
+	   only when it shrank. */
+	restore_curline(COLS != oldcols ? oldcols - 2 : 0);
 	wnoutrefresh(wmsg);
 }
 
@@ -693,10 +739,12 @@ int tui_readline(char *buf, int buflen) {
 			   answer survived on screen this writes the same
 			   characters over themselves, and where it did not
 			   this puts them there. Either way the screen ends
-			   up saying exactly what buf holds -- and where the
-			   repaint did nothing at all, because the terminal
-			   only grew, the cursor is still after the answer
-			   and writing it again would double it.
+			   up saying exactly what buf holds. The repaint runs
+			   whichever way the terminal moved, so the guard is
+			   not about the direction: it is for a line the
+			   repaint could not place at all, where the cursor
+			   is wherever the game left it and an echo would
+			   land in the wrong column.
 			   Doing it only when the line had been reprinted
 			   left the cursor in front of an answer that was
 			   already drawn, so the next keystroke typed over
