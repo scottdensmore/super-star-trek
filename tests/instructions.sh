@@ -14,12 +14,6 @@
 # an agent session with no rules at all.
 #
 # Usage: instructions.sh /path/to/repo/root
-#        instructions.sh /path/to/repo/root --body '<section name>'
-#
-# The second form runs no checks. It prints the size of one AGENTS.md
-# section, in the units the section floors below are compared against,
-# and is there so re-aiming a floor does not mean copying the awk out
-# of this file. See the comment above check_section.
 
 set -u
 
@@ -29,64 +23,6 @@ while [ "${ROOT%/}" != "$ROOT" ] && [ "$ROOT" != "/" ]; do
 done
 CLAUDE="$ROOT/CLAUDE.md"
 AGENTS="$ROOT/AGENTS.md"
-
-# The one copy of the body measurement: check_section compares against
-# it, and --body prints it. Defined up here rather than beside its
-# caller so --body can answer before any check runs -- the moment you
-# most want to measure a section is just after its floor fired, and a
-# form that had to reach the bottom of the script would be unusable
-# exactly then.
-#
-# shellcheck disable=SC2016  # $0 belongs to awk here, not to the shell
-AGENTS_BODY_AWK='
-	index($0, h n) == 1 { inb = 1; next }
-	inb && index($0, h) == 1 { inb = 0 }
-	inb { b += length($0) + 1 }
-	END { print b + 0 }'
-
-if [ "${2:-}" = "--body" ]; then
-	# The name is required, and refusing an empty one is the point: with
-	# n="" the pattern matches every `### ` heading, so the run measures
-	# the whole file and returns a large, plausible number for a command
-	# that did nothing you meant. Same hazard the guards further down
-	# exist for, reached by a typo instead of a broken awk.
-	if [ $# -lt 3 ] || [ -z "$3" ]; then
-		printf 'usage: %s <repo-root> --body <section name>\n' "$0" >&2
-		exit 2
-	fi
-	if [ ! -f "$AGENTS" ]; then
-		printf 'no such file: %s\n' "$AGENTS" >&2
-		exit 2
-	fi
-	# Rejected on the measurement rather than on a separate `grep`,
-	# which would have been a second matcher to disagree with the
-	# first: `grep` takes a BRE, so `The C.dex review` would have
-	# satisfied it and then measured nothing, handing back 0 as though
-	# it were an answer.
-	if ! measured=$(awk -v h="### " -v n="$3" "$AGENTS_BODY_AWK" "$AGENTS"); then
-		printf 'could not measure "### %s": awk exited non-zero\n' "$3" >&2
-		exit 2
-	fi
-	if [ "$measured" = 0 ]; then
-		printf 'AGENTS.md has no "### %s" section, or it is empty\n' "$3" >&2
-		exit 1
-	fi
-	printf '%s\n' "$measured"
-	exit 0
-fi
-
-# Only reachable if the branch above did not dispatch. check_section
-# re-invokes this script with --body, so a break that stops the
-# dispatch firing -- deleting its `exit`, mistyping the flag -- would
-# have each child run the checks, re-invoke, and fork again without
-# bound: a chain still growing at hundreds of processes, orphaned to
-# init, outliving the ctest timeout that reaps the top of it. Refusing
-# here turns the one break this check cannot otherwise catch into a
-# message. The marker is set on the child in check_section.
-if [ "${INSTRUCTIONS_BODY_CHILD:-}" = 1 ]; then
-	printf '%s: --body did not dispatch; refusing to recurse\n' "$0" >&2
-	exit 2
-fi
 
 # The pointer needs a title, a sentence or two, and the import. Kept
 # tight on purpose: headroom here is room for a rule to hide by being
@@ -156,12 +92,6 @@ fi
 STANDARD='actionable finding, or resolve it explicitly'
 # Three steps state it and one section defines it. Stating it a fifth
 # time on purpose means changing this number on purpose.
-#
-# "The Codex review" binds a fourth pass to the same standard and is
-# deliberately not counted: it says so in its own words rather than in
-# this phrase, and rewording it into the phrase to make it countable
-# would be a bigger edit than the coverage is worth. That is the one
-# place the standard can drift where this cannot see it.
 STANDARDS=4
 # Awk's status and its output are both checked, because either can lie
 # on its own. A non-number means it did not run -- unsupported construct,
@@ -189,138 +119,43 @@ else
 		;;
 	esac
 fi
-# A section the numbered steps hand work to needs three things, and
-# each fails silently without the others: a heading, a pointer above it,
-# and something under the heading. A heading nothing references is a
-# section no reader is sent to; a pointer with no heading under it sends
-# them nowhere; and a heading and a pointer with a stub between them
-# satisfy the first two while answering nothing. So all three are
-# checked, for every section a step defers to by name.
-#
-# Names are interpolated into a grep BRE below and into awk's literal
-# index() everywhere else. Neither name holds a regex metacharacter, so
-# the two agree today; one added later would make the heading check
-# something other than the literal it looks like, the same hazard the
-# comment on STANDARD above describes.
-#
-# The pointer is matched in quotes because the heading itself is
-# unquoted, so this finds the reference and not the thing referred to.
-# Before the heading, specifically: a mention below it is a
-# back-reference and cannot send anyone anywhere, since the reader is
-# already there. Counting quoted mentions was enough while "Answering a
-# finding" had one pointer and one heading, and stopped being enough the
-# moment a later section quoted the name too -- that alone would satisfy
-# a count while step 6's pointer was deleted, which is the state this
-# exists to catch.
-#
-# Flattened first, like the count above and for the same reason: the
-# pointer is a quoted phrase in wrapped prose, and a rewrap that split
-# it across two lines would fail here while the pointer sat there
-# intact. What it cannot see is which step the pointer is in, or a
-# layout that put the section above the steps -- the second would fail
-# it wrongly, and is why the messages say what was checked rather than
-# what it means. Nor how many pointers there are: "The Codex review" has
-# two, in steps 11 and 12, and either one alone satisfies this. An
-# existence check cannot do better, and the case it is here for is the
-# last one going, not the first.
-#
-# Nor a heading that merely starts with the name. All three matches here
-# are prefix matches, so renaming the heading to "### The Codex review
-# process" satisfies every one of them while both pointers name a
-# heading that no longer exists -- the exact state they are here to
-# catch. That is issue #105, and it predates this function: the two
-# inline checks it was factored out of matched the same way.
-#
-# The third argument is a floor under the section's body, in the same
-# spirit as MINAGENTS above and for the same reason: the heading and the
-# pointer are two lines, and a section gutted to a stub satisfies both
-# while saying nothing. It is a floor, not a budget -- set well under
-# the real size, so ordinary editing never touches it and only a
-# deletion does. It cannot tell whether what is there is still the right
-# content; nothing here can, and that is what review is for.
-#
-# Aim each floor at about half its section, and re-aim it when the
-# section moves. "The Codex review" measured 7954 in the commit that
-# added this check, where a 4000 floor was half of it; the change after
-# it alone was enough to leave 4000 under a third, with nothing saying
-# so.
-#
-# No current size is written down here on purpose. Every edit to the
-# section changes it, so a figure in this comment is stale before the
-# commit that adds it lands -- which happened twice while this check was
-# being written, each time caught by a reviewer reading a number that
-# reproduced against nothing. Measure it instead:
-#
-#   tests/instructions.sh . --body 'The Codex review'
-#
-# prints exactly what the floor is compared against, because it runs
-# the same program: AGENTS_BODY_AWK, defined at the top of this file
-# and used by both. A recipe that restated the program in a comment
-# would drift from it the first time either moved, and nothing would
-# say so.
-#
-# The unit is whatever awk counts, which is bytes in mawk and busybox
-# and characters where awk is locale-aware -- this file's emoji and
-# em-dashes put a couple of hundred between them. At half a section
-# that is thousands from mattering, which is one more reason not to set
-# a floor close. It is also why nothing here says "characters".
-#
-# Half, not more, deliberately. "The Codex review" is the most volatile
-# section in the file and it is volatile *downward*: its "still
-# unwatched" block is written to be pruned as entries get settled, and
-# its measured block churns with it, so settling two entries is
-# ordinary editing that could cost a couple of thousand characters. A
-# floor set close enough to trip on that is a budget, and a budget gets
-# lowered reflexively until it means nothing. The floor is for the
-# silent stub.
-#
-# Nothing prompts anyone to revisit this. The check only speaks when a
-# section shrinks, and the condition worth noticing -- a floor left far
-# under a section that grew -- is silent by construction. So: if you
-# are reading this and the ratio has drifted again, that is the thing
-# to fix, and it is not evidence that the check is fine.
-#
-# Bodies run from the heading to the next `### ` or the end of file. A
-# `## ` does not end one, so a new top-level section appended after the
-# last `### ` would be counted into it and the floor would stop being
-# able to fire. That errs lax rather than false, which is the direction
-# a floor should err, but it is why the floors are set against the real
-# sizes rather than left to look after themselves.
-#
-check_section() {
-	name="$1"
-	why="$2"
-	minbody="$3"
-	if ! grep -q "^### $name" "$AGENTS"; then
-		fail "AGENTS.md has no '### $name' section -- $why"
-		return
-	fi
-	if ! body=$(awk -v h="### " -v n="$name" "$AGENTS_BODY_AWK" "$AGENTS"); then
-		fail "could not measure the \"$name\" section of AGENTS.md -- awk exited non-zero, so this check did not run"
-		return
-	fi
-	case "$body" in
-	'' | *[!0-9]*)
-		fail "could not measure the \"$name\" section of AGENTS.md -- awk printed '$body' instead of a number, so this check did not run"
-		return
-		;;
-	esac
-	# The comment above hands a reader `--body` as the way to re-aim a
-	# floor, and a recipe that prints something other than what the
-	# floor was compared against is worse than no recipe at all. It is
-	# also the one path here that nothing else runs -- a human reaches
-	# for it at the moment their build is already failing, which is the
-	# worst moment to discover it broken. So run it, and hold it to the
-	# number this check just used.
-	if ! flag=$(INSTRUCTIONS_BODY_CHILD=1 sh "$0" "$ROOT" --body "$name" 2>&1); then
-		fail "\`tests/instructions.sh . --body '$name'\` failed, so the measurement recipe the comment beside these floors gives a reader does not work: $flag"
-	elif [ "$flag" != "$body" ]; then
-		fail "\`tests/instructions.sh . --body '$name'\` prints $flag but this check compared against $body -- the recipe and the floor have drifted apart, and the comment beside them says they cannot"
-	fi
-	if [ "$body" -lt "$minbody" ]; then
-		fail "AGENTS.md's \"$name\" section measures $body, under the $minbody floor -- $why. If you shortened it on purpose, lower the floor in this script on purpose; \`tests/instructions.sh . --body '$name'\` prints the same number"
-	fi
-	if ! points=$(awk -v s="$name" '
+SECTION='Answering a finding'
+# Prefix-matched, so a heading renamed to "### Answering a finding here"
+# satisfies this while every pointer names a heading that is gone. That
+# is issue #105, and the pointer check below matches the same way:
+# awk's index() is literal rather than a BRE, which is a different
+# property, but it is still a substring search and a longer heading
+# satisfies it too. Fixing one without the other fixes nothing.
+if ! grep -q "^### $SECTION" "$AGENTS"; then
+	fail "AGENTS.md has no '### $SECTION' section -- step 6 points at it by name, and it is where the standard the three steps state is defined"
+# The pointer check is the `else` because it needs the heading to
+# locate: with no heading it reports that nothing points forward, which
+# is true but reads as a second, separate defect when the pointer is
+# sitting there untouched.
+else
+	# And the pointer to it, which is the one thing tying the numbered steps
+	# to the definition. Delete just that clause and the count above still
+	# reads 4 and the heading is still there: the section goes on existing
+	# with nothing sending a reader to it, which loses the half of #97 that
+	# asked where a disagreement is recorded. Matched in quotes because the
+	# heading itself is unquoted, so this finds the reference and not the
+	# thing referred to.
+	#
+	# Before the heading, specifically. A mention below it is a
+	# back-reference and cannot send anyone anywhere: the reader is
+	# already there. Counting mentions instead would pass on a file where
+	# step 6's pointer was deleted and the section itself quoted its own
+	# name -- one mention either way -- which is the state this exists to
+	# catch. The file has one of each again today, so the case is
+	# prospective rather than historical, but it has happened once
+	# already: a later section quoting the name is what defeated the
+	# count that used to stand here.
+	#
+	# Flattened first, because the pointer is a quoted phrase in wrapped
+	# prose and a rewrap that split it across two lines would fail here
+	# while the pointer sat there intact. What it cannot see is which step
+	# the pointer is in, or a layout that put the section above the steps.
+	if ! points=$(awk -v s="$SECTION" '
 		{ all = all " " $0 }
 		END {
 			gsub(/[ \t]+/, " ", all)
@@ -328,60 +163,22 @@ check_section() {
 			q = index(all, "\"" s "\"")
 			print (q > 0 && h > 0 && q < h) ? "yes" : "no"
 		}' "$AGENTS"); then
-		fail "could not look for the pointer to \"$name\" in AGENTS.md -- awk exited non-zero, so this check did not run"
-		return
+		fail "could not look for the pointer to \"$SECTION\" in AGENTS.md -- awk exited non-zero, so this check did not run"
+	else
+		# Answered, not merely exited: an awk that prints nothing and
+		# succeeds would otherwise pass this the way one printing a
+		# plausible number passed the count above before it was guarded.
+		case "$points" in
+		yes) ;;
+		no)
+			fail "nothing in AGENTS.md points forward at \"$SECTION\" -- the section defines the standard steps 6, 7 and 8 state, and nothing above it now sends a reader to it"
+			;;
+		*)
+			fail "could not look for the pointer to \"$SECTION\" in AGENTS.md -- awk printed '$points' instead of yes or no, so this check did not run"
+			;;
+		esac
 	fi
-	# Answered, not merely exited: an awk that prints nothing and
-	# succeeds would otherwise pass this the way one printing a
-	# plausible number passed the count above before it was guarded.
-	case "$points" in
-	yes) ;;
-	no)
-		fail "nothing in AGENTS.md points forward at \"$name\" -- $why, and nothing above it now sends a reader to it"
-		;;
-	*)
-		fail "could not look for the pointer to \"$name\" in AGENTS.md -- awk printed '$points' instead of yes or no, so this check did not run"
-		;;
-	esac
-}
-
-# --body's guards are the other half of the recipe, and check_section
-# only ever drives its success path, so nothing would reach them: an
-# edit that moved one past the measurement would go unnoticed, which is
-# the hazard the empty-name guard was added for in the first place. The
-# marker keeps a broken dispatch from forking here as well.
-probe_body() {
-	INSTRUCTIONS_BODY_CHILD=1 sh "$0" "$ROOT" --body "$1" >/dev/null 2>&1
-	printf '%s' "$?"
-}
-if [ "$(probe_body '')" != 2 ]; then
-	fail "\`--body\` with an empty name did not exit 2 -- with no name the measurement matches every heading and returns the size of the whole file, which is a plausible number for a command that did nothing you meant"
 fi
-if [ "$(probe_body 'No Such Section')" != 1 ]; then
-	fail "\`--body\` with a name matching no heading did not exit 1 -- it should refuse rather than report the 0 it measures"
-fi
-if [ "$(probe_body 'The C.dex review')" != 1 ]; then
-	fail "\`--body\` accepted a name that only matches as a regex -- the measurement is literal, so such a name measures nothing and 0 would be returned as though it were an answer"
-fi
-
-# Delete just step 6's clause and the count above still reads 4 and the
-# heading is still there: the section goes on existing with nothing
-# sending a reader to it, which loses the half of #97 that asked where a
-# disagreement is recorded.
-# About half its section, as above. It was 1200, over 70% of it, which
-# is a budget rather than a floor: cutting the section's longest
-# paragraph would have tripped it, and the message would then have
-# invited lowering the number, which is how a floor decays. Being the
-# stabler of the two sections is a reason the budget would rarely have
-# bitten, not a reason it was the right shape.
-check_section 'Answering a finding' \
-	'it is where the standard steps 6, 7 and 8 state is defined' 850
-# Steps 11 and 12 defer the whole of the Codex reviewer's handling to
-# this one -- what its reactions mean, how to answer its comments, and
-# the merge condition in step 12, which has no other definition
-# anywhere.
-check_section 'The Codex review' \
-	'it is the only place the reviewer that steps 11 and 12 defer to is defined' 6500
 
 # CLAUDE.md points at it and holds nothing else.
 if ! grep -q '^@AGENTS\.md[[:space:]]*$' "$CLAUDE"; then

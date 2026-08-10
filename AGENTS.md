@@ -293,40 +293,28 @@ Every coding agent working in this repository must follow this workflow.
     Keep the subject at 72 characters or fewer, describe why in the body when
     useful, and do not combine unrelated work.
 
-11. **Let Codex review the pull request, and answer it.** Automatic Codex
-    review is expected after each push, and its verdict gates the merge.
-
-    - It reacts 👀 on the pull request while reading and 👍 when it is satisfied.
-      The reactions are on the pull request itself:
-      `gh api repos/<owner>/<repo>/issues/<pr>/reactions`.
-    - Findings are inline review threads, invisible to
-      `gh pr view --json comments`. Read them through GraphQL `reviewThreads`,
-      which gives the body, the `isResolved` state the merge gate turns on, and
-      the thread id needed to resolve it — the REST comments endpoint carries
-      none of the last two. Page it: a missed page reads as a finding that is
-      not there.
-    - The loop: address the findings, re-run steps 6 to 9 for what changed,
-      push, reply to each thread saying what changed, resolve it, wait for the
-      next verdict. Repeat until 👍. Treat P1 as blocking, and where a finding
-      is right about the problem but wrong about the fix, say so rather than
-      resolving quietly.
-    - **Only a 👍 you watched arrive counts.** The old one survives a push, and
-      survives a later review that had findings, so the reaction sitting there
-      may be about a commit two revisions back. Watch it go 👀 and then 👍
-      after your push; never read the one that was already there as approval.
-      Silence is pending, never approval. If no new review run starts, stop
-      before merging and report it as pending; do not post `@codex review`
-      unless the user explicitly requests it.
+11. **Create pull requests from the reviewed state.**
+    - Confirm that local verification remains valid.
+    - Rerun `code-review` only if the reviewed state changed after the
+      pre-commit review. A changed state includes code, tests,
+      documentation, generated files, conflict resolution, or any other
+      staged, unstaged, or untracked content.
+    - Do not repeat code review when the already-reviewed diff and
+      worktree remain unchanged. The `verifier` follows the same
+      condition: what makes either pass run again is a changed state. A
+      finding answered by argument alone leaves both passes nothing they
+      have not already seen, and a round of findings answered by edits
+      takes one rerun over the result rather than one per finding.
+    - Push and create the pull request only after local verification and
+      any required code review are complete.
+    - Open a normal, ready-for-review pull request by default. Do not
+      open draft pull requests unless the user explicitly asks for a
+      draft.
 
 12. **Merge only clean, passing pull requests.** Merge only after GitHub
     reports a clean merge state and every configured check passes. Never
-    bypass a failing or pending required check. Wait as well for the
-    Codex review to come back 👍 with a `created_at` later than your last
-    push, which is what says it read the state being merged. It is not a
-    check and nothing enforces it — "The Codex review" below says how to
-    read one and when to stop waiting. Where you stop, say so in the
-    pull request body and in the summary of the work. Self-merges are
-    allowed when these conditions are met.
+    bypass a failing or pending required check. Self-merges are allowed
+    when these conditions are met.
     Use squash merge for short-lived development branches to keep `main`
     linear, then delete the merged branch.
 
