@@ -4188,3 +4188,52 @@ Clean. No accidental files, no debug leftovers, no unrelated edits. The comment 
 I did not re-run the non-TUI suites (`golden`, `tournament`, `ctest`); the change is confined to `tui.c` paths reachable only under `tui_active`, so plain mode cannot be affected, and you report the `verifier` covered them on these hashes.</result>
 <usage><subagent_tokens>99707</subagent_tokens><tool_uses>44</tool_uses><duration_ms>744084</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>ab27ab47501f3e7b3</task-id>
+<tool-use-id>toolu_01Bt7oxHaiALgk9s8gbLx1ss</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d9b6ccf4-0167-4fe7-9619-cec1a908d2ed/tasks/ab27ab47501f3e7b3.output</output-file>
+<status>completed</status>
+<summary>Agent "Final code review before commit" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: approve
+
+State approved: worktree at `42c2a74` (branch `fix/tui-restore-pending-prompt`, no branch commits, nothing staged, no untracked files), with three modified files:
+
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c` → `38a52a55ac257952…` ✓
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh` → `4d5f3334d98e8328…` ✓ (unchanged)
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md` → `20246621f70672f8…` ✓ (unchanged)
+
+All three hashes verified. I confirmed the edits are comment-only rather than taking it on the claim: preprocessing both `HEAD:tui.c` and the current `tui.c` with comments stripped leaves exactly one delta, the two-line change I already reviewed —
+
+```
+- int oldlines = builtlines, oldcols = builtcols;
++ int oldcols = builtcols;
+- if (LINES &lt; oldlines || COLS &lt; oldcols)
+-  restore_curline(COLS &lt; oldcols ? oldcols - 2 : 0);
++ restore_curline(COLS != oldcols ? oldcols - 2 : 0);
+```
+
+— so the green `tests/tui.sh` run and both mutant kills I did on the previous state still hold without re-running. Rebuild at `-DCMAKE_BUILD_TYPE=Debug -DSST_WERROR=ON` is clean.
+
+## The three findings
+
+**Should-fix, closed.** `tui.c:474-486` now states the obstacle rather than a cost: that `getmaxx(wmsg)` already is the old width so the arithmetic is one line away, that the branch serves two opposite states, that `last` names the stump's last row on a grow and live conversation on a shrink, and that a fix has to tell them apart first. That is the fact that makes leaving it defensible, and it is now where the next person will read it. Your note that `sync_size()` knows the direction and `restore_curline()` does not is the right shape for whoever takes #114.
+
+**Nit, closed.** The duplicate is gone; `tui.c:435-436` now points at the `else` instead of restating it, and the claim lives in one place.
+
+**Nit, closed.** `tui.c:309-317` names both cases and the `sync_size()` early return is accurately described — it does return before touching the flag, which stays false because `tui_readline` cleared it.
+
+## One optional thing, not holding approval
+
+The `else` comment still opens with "A terminal that only lost rows is the other case: the line is gone altogether", and only eleven lines later says the branch serves two states, one of which has the stump on screen. Read top to bottom it resolves; skimmed, the first sentence is the overstatement that both earlier wrong comments were. Widening it to name both directions up front would cost a clause. Take it or leave it — the substance is right either way.
+
+## On your two answers
+
+**README.** Thank you for saying it plainly; that is the answer that was owed and it is the right resolution. `ui-review` does not bind on documentation, the two claims that could mislead a player are settled against `sst.c:731-740` and `finish.c:25-31`, and recording in the commit that the final wording had no `ui-review` pass puts the judgment on the record where a reader can dispute it. Nothing further needed.
+
+**Three wrong comments.** Your reading matches mine from the outside: the code has been right at every state I have reviewed, and what has failed is the account of *why*. Worth noting that all three failures share a shape — a confident sentence about what a branch can or cannot do, written from reasoning rather than from a run. The two that survived this round are the ones that name a reproduction (`72x24, a wrapping answer, 72x14, back`) or a mechanism you can check against the code in front of you (`getmaxx(wmsg)` already is the old width). That is a usable rule for the next one: if a comment asserts an impossibility, it needs either a run behind it or a line of code you can point at.</result>
+<usage><subagent_tokens>107508</subagent_tokens><tool_uses>5</tool_uses><duration_ms>87156</duration_ms></usage>
+</task-notification>
