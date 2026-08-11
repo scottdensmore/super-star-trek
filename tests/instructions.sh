@@ -119,43 +119,55 @@ else
 		;;
 	esac
 fi
-SECTION='Answering a finding'
+# AGENTS.md keeps some of its rules in named sections below the numbered
+# steps, with the steps pointing forward at them by name. Both halves have
+# to hold: a heading nothing points at is unreachable, and a pointer with
+# no heading sends a reader nowhere. Checked for each such section by
+# name, so adding one means adding a call rather than a second copy of
+# this.
+#
+# $1 heading text, $2 what is lost if the heading goes, $3 what is lost if
+# the pointer goes.
+#
 # Prefix-matched, so a heading renamed to "### Answering a finding here"
 # satisfies this while every pointer names a heading that is gone. That
-# is issue #105, and the pointer check below matches the same way:
-# awk's index() is literal rather than a BRE, which is a different
-# property, but it is still a substring search and a longer heading
-# satisfies it too. Fixing one without the other fixes nothing.
-if ! grep -q "^### $SECTION" "$AGENTS"; then
-	fail "AGENTS.md has no '### $SECTION' section -- step 6 points at it by name, and it is where the standard the three steps state is defined"
-# The pointer check is the `else` because it needs the heading to
-# locate: with no heading it reports that nothing points forward, which
-# is true but reads as a second, separate defect when the pointer is
-# sitting there untouched.
-else
-	# And the pointer to it, which is the one thing tying the numbered steps
-	# to the definition. Delete just that clause and the count above still
-	# reads 4 and the heading is still there: the section goes on existing
-	# with nothing sending a reader to it, which loses the half of #97 that
-	# asked where a disagreement is recorded. Matched in quotes because the
-	# heading itself is unquoted, so this finds the reference and not the
-	# thing referred to.
+# is issue #105, and the pointer check matches the same way: awk's
+# index() is literal rather than a BRE, which is a different property,
+# but it is still a substring search and a longer heading satisfies it
+# too. Fixing one without the other fixes nothing.
+check_section() {
+	if ! grep -q "^### $1" "$AGENTS"; then
+		# Returning here rather than going on to the pointer: with no
+		# heading that check reports that nothing points forward, which
+		# is true but reads as a second, separate defect when the
+		# pointer is sitting there untouched.
+		fail "AGENTS.md has no '### $1' section -- $2"
+		return
+	fi
+	# The pointer is the one thing tying the numbered steps to the
+	# section. Delete just that clause and the heading is still there:
+	# the section goes on existing with nothing sending a reader to it.
+	# For "Answering a finding" that loses the half of #97 that asked
+	# where a disagreement is recorded, and the standard count above
+	# still reads 4 while it happens. Matched in quotes because the
+	# heading itself is unquoted, so this finds the reference and not
+	# the thing referred to.
 	#
 	# Before the heading, specifically. A mention below it is a
 	# back-reference and cannot send anyone anywhere: the reader is
-	# already there. Counting mentions instead would pass on a file where
-	# step 6's pointer was deleted and the section itself quoted its own
-	# name -- one mention either way -- which is the state this exists to
-	# catch. The file has one of each again today, so the case is
-	# prospective rather than historical, but it has happened once
-	# already: a later section quoting the name is what defeated the
-	# count that used to stand here.
+	# already there. Counting mentions instead would pass on a file
+	# where the step's pointer was deleted and the section itself quoted
+	# its own name -- one mention either way -- which is the state this
+	# exists to catch. It has happened once already: a later section
+	# quoting the name is what defeated the count that used to stand
+	# here.
 	#
 	# Flattened first, because the pointer is a quoted phrase in wrapped
 	# prose and a rewrap that split it across two lines would fail here
-	# while the pointer sat there intact. What it cannot see is which step
-	# the pointer is in, or a layout that put the section above the steps.
-	if ! points=$(awk -v s="$SECTION" '
+	# while the pointer sat there intact. What it cannot see is which
+	# step the pointer is in, or a layout that put the section above the
+	# steps.
+	if ! points=$(awk -v s="$1" '
 		{ all = all " " $0 }
 		END {
 			gsub(/[ \t]+/, " ", all)
@@ -163,22 +175,52 @@ else
 			q = index(all, "\"" s "\"")
 			print (q > 0 && h > 0 && q < h) ? "yes" : "no"
 		}' "$AGENTS"); then
-		fail "could not look for the pointer to \"$SECTION\" in AGENTS.md -- awk exited non-zero, so this check did not run"
-	else
-		# Answered, not merely exited: an awk that prints nothing and
-		# succeeds would otherwise pass this the way one printing a
-		# plausible number passed the count above before it was guarded.
-		case "$points" in
-		yes) ;;
-		no)
-			fail "nothing in AGENTS.md points forward at \"$SECTION\" -- the section defines the standard steps 6, 7 and 8 state, and nothing above it now sends a reader to it"
-			;;
-		*)
-			fail "could not look for the pointer to \"$SECTION\" in AGENTS.md -- awk printed '$points' instead of yes or no, so this check did not run"
-			;;
-		esac
+		fail "could not look for the pointer to \"$1\" in AGENTS.md -- awk exited non-zero, so this check did not run"
+		return
 	fi
-fi
+	# Answered, not merely exited: an awk that prints nothing and
+	# succeeds would otherwise pass this the way one printing a
+	# plausible number passed the count above before it was guarded.
+	case "$points" in
+	yes) ;;
+	no)
+		fail "nothing in AGENTS.md points forward at \"$1\" -- $3"
+		;;
+	*)
+		fail "could not look for the pointer to \"$1\" in AGENTS.md -- awk printed '$points' instead of yes or no, so this check did not run"
+		;;
+	esac
+}
+
+check_section 'Answering a finding' \
+	"step 6 points at it by name, and it is where the standard the three steps state is defined" \
+	"the section defines the standard steps 6, 7 and 8 state, and nothing above it now sends a reader to it"
+# Steps 4 and 7 both run tests and run different ones, and the section is
+# the only place that says which. Without it the division is a habit
+# rather than a rule: the next session either delegates the failing first
+# run that step 4 asks it to watch, or re-runs the whole battery the
+# verifier is about to run again.
+#
+# Written against a section that already existed, so it never had a
+# failing first run. Proved against a copy of AGENTS.md instead:
+# renaming the heading to "### Who runs the tests" fails the first
+# check, and removing all three quoted pointers fails the second. Removing
+# any proper subset of them still passes, which is right -- one pointer
+# sends a reader there just as well.
+#
+# The first attempt at that second mutation was blind, in two ways worth
+# knowing before editing this. There are three pointers, not one: two in
+# step 4 -- beside its loop and beside its mutation-proof bullets -- and
+# one in step 7. Any single one satisfies this, so a mutation has to take
+# all three, and a green run after removing some of them is the check
+# working as designed rather than a mutation that failed to apply. The
+# second way is that step 4's first pointer wraps mid-phrase where the
+# others do not, so a line-at-a-time `sed 's/"Who runs which tests"/.../'`
+# silently leaves it standing. Mutate with something that spans newlines,
+# and count what you removed against what `grep -n 'Who runs which'` finds.
+check_section 'Who runs which tests' \
+	"steps 4 and 7 point at it, and it is where the split between the main agent's focused test and the verifier's battery is defined" \
+	"the section divides the testing between step 4's loop and step 7's battery, and nothing above it now sends a reader to it"
 
 # CLAUDE.md points at it and holds nothing else.
 if ! grep -q '^@AGENTS\.md[[:space:]]*$' "$CLAUDE"; then
