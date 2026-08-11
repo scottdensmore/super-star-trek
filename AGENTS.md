@@ -61,7 +61,7 @@ CI will refuse. Feature flags `-DSCORE -DCAPTURE
 - The panel formatters in `tuifmt.c` must mirror `srscan()` in `reports.c`
   exactly — it is the spec, including sensor-damage masking and the `-f`
   coordinate transposition (x is the column). Keep `tests/test_tuifmt.c` in
-  sync (`ctest --test-dir build`).
+  sync (`ctest --test-dir build -R '^tuifmt$'`).
 - Testing the TUI needs a pty: use tmux, and always on your own socket via
   `-L`, with `-f /dev/null` so the config does not follow — `tmux -f /dev/null
   -L sst new-session -d -x 100 -y 30 -s t './build/sst -t; sleep 30'`, drive
@@ -149,6 +149,10 @@ Every coding agent working in this repository must follow this workflow.
    - Run focused tests while iterating.
    - Refactor only while the relevant tests remain green.
 
+   Run that loop yourself rather than delegating it. "Who runs which
+   tests" after this list says why, and which tests belong to the
+   `verifier` instead.
+
    A test written against behavior that already exists — a recording, a
    check of something the game has always done — never has that failing
    first run to show for itself, and that is where tests which assert
@@ -167,10 +171,17 @@ Every coding agent working in this repository must follow this workflow.
      copy compiles the original's sources — your break never reaches the
      binary, and the test passes for the wrong reason. It prints a
      cache-path error and exits 0 while it does it, and a regeneration
-     can rewrite the original's build files on the way past. Every test
-     here takes the binary as an argument, so the run is
-     `tests/tournament.sh <copy>/build/sst Debug`, or `ctest --test-dir
-     <copy>/build` for the compiled ones. A `git worktree` will not do: it
+     can rewrite the original's build files on the way past. Most tests
+     here take the binary as an argument. Run from inside the copy:
+     `cd <copy> && tests/tournament.sh build/sst Debug`, or `ctest
+     --test-dir build -R '^(tuifmt|rules)$'` for the two compiled ones.
+     From inside, because for some of them the script decides which tree
+     is read and not the binary: `help` and `tui` find `sst.doc` from
+     their own path, and `golden` its fixtures. The original's script
+     pointed at the copy's binary proves the original's data and comes
+     back green — the same wrong-reason pass as the stale `build/`
+     above. The two that read the tree instead, `instructions` and
+     `score`, take `.` from in there. A `git worktree` will not do: it
      holds `HEAD`, not the test you have just written.
    - Break the game, not the test — and break it somewhere the test's
      expectation does not come from. A break that both sides of the
@@ -182,6 +193,9 @@ Every coding agent working in this repository must follow this workflow.
      that does not share the representation.
    - A green run means one of two things: the test is blind, or the break
      was. Rule out the second before touching the test.
+   - This proof, unlike the loop above, is one a sub-agent can run for you.
+     "Who runs which tests" says when that is worth doing, and what the
+     sub-agent has to report back for the record this asks you to keep.
    - Where a test reaches its subject only on some of the data it runs
      over — one seed, one galaxy, one game that happened to dock — assert
      that the case it needs really occurred. Otherwise the day the data
@@ -220,6 +234,9 @@ Every coding agent working in this repository must follow this workflow.
    and environment issues. Fix every actionable finding, or resolve it
    explicitly, before starting code review. If a verifier finding requires a
    code change, rerun the verifier after addressing it.
+
+   The battery is the `verifier`'s work and not the main agent's, which
+   is what "Who runs which tests" after this list is about.
 
 8. **Run `code-review` before every commit.** Invoke the `code-review`
    sub-agent against the current branch diff and every staged, unstaged, and
@@ -317,6 +334,89 @@ Every coding agent working in this repository must follow this workflow.
     when these conditions are met.
     Use squash merge for short-lived development branches to keep `main`
     linear, then delete the merged branch.
+
+### Who runs which tests
+
+Steps 4 and 7 both run tests, and they are not running the same ones.
+
+**The main agent runs the test that is the subject of the change. The
+`verifier` runs the rest of the battery.** Not everything else: the piped
+plain-mode journey above and the 80x24/72x24 TUI check stay with whoever
+made the change, since they are how you see your own work. The line does not
+fall between unit tests and journeys; it falls on what the change is about.
+A change to the pager makes `tests/tui.sh` the focused test and it belongs
+in the loop, slow as it is. A change to `tuifmt.c` makes the compiled
+`tuifmt` test the focused one, fast as it is, and leaves `tui` and the rest
+to the `verifier` — including the golden recordings, which never pass `-t`
+and so cannot see that file's panel formatters at all, whatever else in it
+they reach.
+
+Step 4's loop cannot be delegated at all, and not because a sub-agent cannot
+be trusted with it. Each failure decides the next edit, so the run and the
+work are one act: what you would hand over is the whole of the task, and a
+report arriving afterwards comes after the moment it was supposed to inform.
+The entanglement is the reason, so a faster harness would not change it, and
+neither would a focused test cheap enough to look worth handing over.
+
+What the `verifier` owns is everything the loop did not reach: the rest of
+`ctest`, the full journey and golden battery, and the configurations the
+main agent did not build — Release, `-DSST_WERROR=ON`, whatever the platform
+adds. It decides that scope for itself: step 7 gives it the criterion, and
+step 8 says the decision is the verifier's own. This says only that it
+should not be asked to skip what the main agent happened to run, and that
+the main agent should not pre-run the battery to save it the trouble.
+Running the suite twice buys nothing and costs the whole of it: a full
+`ctest` here is about four minutes per configuration. One caveat while it
+stands: `verifier.md` does not yet ask for `-DSST_WERROR=ON`, which is
+#125, so say so when invoking the pass.
+
+**Keep what reaches the main agent's context small.** That is the reason
+this split is worth stating, and it is mechanical:
+
+- `ctest` prints no test output on a pass at all, and `--output-on-failure`
+  costs nothing there while saving the second run a failure would otherwise
+  need. `-R` scopes it to the test being worked on — anchor the pattern,
+  since it is a regex: `-R tui` picks up `tuifmt` and `journey-tui` with it.
+- The shell tests print one line on a pass, so they need no filtering. On a
+  failure they print what broke and then dump the evidence behind it — a
+  pane, a slice of game output, a diff, depending on the script — in that
+  order, so it is the first lines that are worth reading and not the last.
+  Redirect to a file and read the head of that rather than piping:
+  `tests/tui.sh` has no `PIPE` trap, so a `head` that closes the pipe early
+  leaves it holding a live tmux server and an `sst -t` inside it (#128).
+- Grep a tmux pane for the string being asserted rather than capturing it
+  whole. `capture-pane -p` is twenty-odd lines of screen and a TUI check
+  makes many; capture the pane when the grep fails, which is when its
+  content is worth reading.
+
+**The mutation proof in step 4 can be delegated**, unlike the loop in the
+step it belongs to, and for the reason the loop cannot: it is one shot,
+asked and answered, and what comes back is checkable. The break has a name,
+and step 4 wants that name written down anyway, so a report that does not
+give it is visibly incomplete.
+
+Not to one of the three review sub-agents — all of them are read-only by
+definition, and a proof has to break something. A general-purpose sub-agent
+is the one that can, working on a copy outside the repository, so nothing it
+touches is tracked. Step 4 already asks for that copy where the proof runs
+the game; ask for it whatever the proof breaks, because a sub-agent editing
+the tree you are working in is a surprise nobody needs.
+
+What handing it off buys is context and not time, and the two do not track
+each other: a proof that runs over three minutes is no cheaper delegated,
+where one that prints twelve hundred lines is. So delegate when the failing
+run would bury this context, which is a property of the test and worth
+looking up rather than guessing — one line broken in `tui_refresh_panels()`
+made `tui.sh` report 47 failures and 1209 lines of panes, `tournament.sh`
+dumps up to 3000 bytes for every seed that fails, `golden.sh` a diff per
+changed journey. Below that, and most proofs are below it — a broken `ctest
+-R '^tuifmt$'` reports itself, with `--output-on-failure`, in a few dozen
+lines, a broken `help` journey in sixty — there is nothing to bury, so keep
+it.
+
+When you do hand it off, the sub-agent has to report what it broke precisely
+enough for the main agent to write that down, since step 4 wants it in the
+commit and in a comment beside the assertion.
 
 ### The review sub-agents
 
