@@ -380,10 +380,8 @@ this split is worth stating, and it is mechanical:
 - The shell tests print one line on a pass, so they need no filtering. On a
   failure they print what broke and then dump the evidence behind it — a
   pane, a slice of game output, a diff, depending on the script — in that
-  order, so it is the first lines that are worth reading and not the last.
-  Redirect to a file and read the head of that rather than piping:
-  `tests/tui.sh` has no `PIPE` trap, so a `head` that closes the pipe early
-  leaves it holding a live tmux server and an `sst -t` inside it (#128).
+  order, so it is the first lines that are worth reading and not the last:
+  `2>&1 | head` keeps what broke, where `tail` keeps the dump and loses it.
 - Grep a tmux pane for the string being asserted rather than capturing it
   whole. `capture-pane -p` is twenty-odd lines of screen and a TUI check
   makes many; capture the pane when the grep fails, which is when its
