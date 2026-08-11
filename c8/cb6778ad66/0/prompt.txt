@@ -1,0 +1,7 @@
+Thinking through our main agent vs sub agent verifier. I want to keep the main agent context as clean as possible. We are
+  doing tdd so we have to build and run tests. We also are doing user journey testing. How should we handle this? have the
+  main agent run the one and the verifier run the entire suite?
+
+---
+
+Yes write it in

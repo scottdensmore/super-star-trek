@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "c8cb6778ad66",
+  "strategy": "manual-commit",
+  "branch": "docs/agents-test-split",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "AGENTS.md",
+    "tests/instructions.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/c8/cb6778ad66/0/metadata.json",
+      "transcript": "/c8/cb6778ad66/0/full.jsonl",
+      "compact_transcript": "/c8/cb6778ad66/0/transcript.jsonl",
+      "content_hash": "/c8/cb6778ad66/0/content_hash.txt",
+      "prompt": "/c8/cb6778ad66/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 221,
+    "cache_creation_tokens": 237441,
+    "cache_read_tokens": 35328713,
+    "output_tokens": 118439,
+    "api_call_count": 118
+  }
+}
