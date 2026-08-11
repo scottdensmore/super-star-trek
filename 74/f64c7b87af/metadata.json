@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "74f64c7b87af",
+  "strategy": "manual-commit",
+  "branch": "fix/tui-restore-completed-prompt",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "tests/tui.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/74/f64c7b87af/0/metadata.json",
+      "transcript": "/74/f64c7b87af/0/full.jsonl",
+      "compact_transcript": "/74/f64c7b87af/0/transcript.jsonl",
+      "content_hash": "/74/f64c7b87af/0/content_hash.txt",
+      "prompt": "/74/f64c7b87af/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 3724,
+    "cache_creation_tokens": 8551954,
+    "cache_read_tokens": 923449022,
+    "output_tokens": 1422241,
+    "api_call_count": 1995
+  }
+}
