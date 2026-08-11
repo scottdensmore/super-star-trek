@@ -1,0 +1,251 @@
+Pick up issue #113 in super-star-trek: sst.doc documents -t and its 72x24 minimum around lines 1544-1547 but says nothing    
+  about resizing. All of that behaviour is only in README.md, and sst.doc is the manual reached from inside the game — so the  
+  players most likely to drag a window can't see it.                                                                           
+                                                                                                                               
+  Follow the workflow in AGENTS.md, including checking the issue's premises before building on them.                           
+                                                                                                                               
+  Three things worth knowing up front:                                                                                         
+                                                                                                                               
+  1. sst.doc is CRLF and the game reads it at runtime. Under curses a trailing \r returns the cursor to column 0 and the       
+  newline erases the line. sst.c:662 strips it. Verify new text through the in-game help, not just in an editor.               
+  2. ui-review binds — this is text the game prints, not an instruction file.                                                  
+  3. The content already exists and is reviewed. README.md's resize paragraphs went through several review rounds and are      
+  accurate as of commit fef362c. The manual wants the player-facing consequences, not the reasoning about why the conversation 
+  can't be rebuilt — don't copy them wholesale.                                                                                
+                                                                                                                               
+  Two specifics that took real work to establish, so don't re-derive or contradict them: the line you're on usually comes back 
+  on a resize, but a question you'd already started answering does not (that's #117). At that one, tell the player to press    
+  Ctrl-U before answering — a yes/no prompt reads the first letter, so an unseen y in the buffer makes a typed N mean yes, and 
+  that can end the game.                                                                                                       
+                                                                                                                               
+  When you run the TUI test suite, run it as sh tests/tui.sh ./build/sst Debug. Without that second argument the sensors block 
+  is silently skipped.
+
+---
+
+<task-notification>
+<task-id>aa32b82eab5014bff</task-id>
+<tool-use-id>toolu_0157szEBriCdmMJozUvHz79s</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/aa32b82eab5014bff.output</output-file>
+<status>completed</status>
+<summary>Agent "ui-review round 2" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+Needs changes — but small, textual ones. The change is documentation-only, so nothing in the running game regressed, and the paragraph's *advice* (look before you type; Ctrl-U; Enter is safe; answer N) is correct and I confirmed every step of it against a live `-t` session. Three of the five rewrites, however, now state things the game does not do: the "said only once" example is recoverable via `CHART`, the ended-own-line prompt claim contradicts the fix that this branch is built on (`fef362c`, #119), and the new width/height split got the height thresholds in the wrong order. All three are one-sentence fixes.
+
+## Findings
+
+### 1. should-fix — the starbase locations are *not* lost (`/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.doc`, new paragraph 2)
+
+&gt; "-- but anything the game says only once is gone, the starbase locations in the opening briefing among them."
+
+The star chart knows every starbase quadrant from setup: `setup.c:339` sets `starch[ix][iy] = -1` as each base is placed, and `reports.c:234` renders that as `.1.`. A player who loses the briefing to a resize gets the locations back with `CHART` — the very command the same sentence has just called free. Verified in plain mode: briefing listed `1 - 6  5 - 3  5 - 1  1 - 1`, and `CHART` at the first `COMMAND&gt;` showed `.1.` at exactly those four cells.
+
+This is the most actionable error in the change: it tells the player a one-off loss is unrecoverable when it is one free command away, and it is self-contradictory two clauses after listing `CHART`.
+
+Suggestion: keep the rule, replace the example with something genuinely unrepeatable — the blow-by-blow of a fight ("what a torpedo did, or how hard you were just hit"), rather than anything the chart or `STATUS` re-derives. If a named example is wanted, check it against `starch`/`STATUS` first; several obvious candidates (Klingons remaining, supernovae, bases) are all recoverable.
+
+### 2. should-fix — ended-own-line prompts *do* come back now (new paragraph 3)
+
+&gt; "A question that had finished its own line before stopping to wait is left as it was..."
+
+That was true before `fef362c` and is what #119 fixed: `note_out()` now keeps the finished line in `lastline` and `restore_curline()` reprints it (`tui.c:423-441`). The surviving gap is narrower — `tui.c:436` returns only when `pending_answer` is non-empty, i.e. **once you have begun typing an answer** — which is issue #117, whose title says exactly that. The rewrite fixed finding 1 by dropping the "begun answering" condition and re-attached it to the wrong half.
+
+Verified live at 80x24: `rest 5000` → `Are you sure?` (an ended line, `events.c:420`), shrink to 80x20 → the question was reprinted at the bottom. Typing `y` first and shrinking to 80x18 → question and `y` both gone, reader still waiting, bottom of screen showing an old long-range scan.
+
+Suggestion: `"A question you had already begun answering may not come back at all, and what you are then looking at may be older conversation that reads exactly like a live prompt."` The following sentences need no change.
+
+### 3. should-fix — the height thresholds are in the wrong order (new paragraph 1)
+
+&gt; "...only a terminal shorter than the panels themselves costs them rows off the bottom... **Shorter still** there is no room for conversation at all..."
+
+Measured (`PANELH` is 13, `tui.c:15`; `msgh` at `tui.c:202`):
+
+- 14 rows — one conversation line left
+- 13 rows — no conversation at all, panels are the whole screen and complete
+- 12 rows — panels lose their tenth scan row
+- 11 rows — ninth row goes too
+
+So the conversation runs out *first*, at 13 rows, and panel clipping begins *below* that. "Shorter still" inverts the sequence, and a player following the text would expect a clipped scan while a prompt is still visible — which never happens.
+
+Suggestion: `"Shorter, it is the conversation that loses lines first, until at thirteen rows there is no room for it at all: the panels are the whole screen with no prompt on it. Shorter still and the panels lose rows off the bottom, the scan keeping its numbering so you can see where it stops. Nothing has gone wrong: grow the terminal back and both return."`
+
+### 4. nit — the fourteen-row pager trap is unmentioned
+
+`tui_pageheight()` is `LINES-PANELH-1` (`tui.c:987`), so at 14 rows it is 0. Verified at 80x14: `chart` printed nothing but `[HIT SPACE BAR TO CONTINUE]`, again and again, with no chart on screen. README documents this ("a scan pages past without showing any of itself"); the manual's "the conversation loses lines first" gives no hint of it, and to a player it reads as a hang rather than as a too-small window. One clause in the same sentence as the thresholds would cover it.
+
+### 5. nit — the thresholds are only ever relative
+
+"shorter than the panels themselves" is unactionable: nothing tells the player the panels are thirteen rows, and the section's only number is `72x24`. Naming the row counts (as README does) makes the paragraph checkable.
+
+### 6. nit — "answer N there and give the command over" over-generalizes
+
+At the post-game `Do you want to play again?` (`sst.c:507-508`) `N` ends the session, and there is no command to give over; and if the invisible reader is not a yes/no at all (a course, a number of units, the self-destruct password at `finish.c:25`) there is nothing to answer `N` to — Enter is still safe there, but the advice stops applying. Consider scoping it: "if what comes back is that re-ask, `N` declines whatever was asked and you can give the command again." Worth adding, too, that after Ctrl-U the player may simply type the answer they meant, once the re-ask has told them which question is waiting.
+
+### 7. nit — punctuation of the quoted re-ask
+
+`only as Please answer with "Y" or "N":, never repeating the question` puts a comma straight after the prompt's own colon. The manual quotes game text elsewhere with surrounding double quotes; quoting the whole prompt, or dropping its trailing colon, reads better in a plain-text file.
+
+### Not findings, verified correct
+
+- "safe at any point, including while the game waits for an answer or for a keystroke at a pause" — `tui_readline`/`tui_getch` both handle `KEY_RESIZE` between reads (`tui.c:860`, `tui.c:960`).
+- "a game already running is never dropped back to the classic display" — `tui_active` is only cleared in `tui_shutdown()` (`tui.c:722`); `make_windows()` never tears down.
+- The `&gt;` clip marker (`clip_at`, `tui.c:137`) — seen live at 66 columns as `Shields       DOWN, 100% 2500.0 u&gt;`.
+- Panels redraw whole after a 30x8 squeeze and return; conversation does not.
+- `SRSCAN`, `LRSCAN`, `STATUS`, `CHART`, `DAMAGES` all cost nothing — none sets `Time` or `hitme` in the dispatch (`sst.c:249-305`), consistent with `sst.doc:406`.
+- "first word... only its first letter" — `scan()` lowercases and stops at the first space (`sst.c:722-727`); `ja()` tests `*citem` (`sst.c:736-737`). An `N` after an unseen `y` does answer yes.
+- "Enter is safe" — `scan()` clears `*citem` first, so an empty line re-asks; the destruct password reads an empty answer as a rejection (`finish.c:27`); `pause()` accepts any key including Enter.
+- The re-ask text matches the game byte for byte, including the trailing colon and no repetition of the question.
+- "some of those questions can end the game" — the deathray confirmation (`planets.c:420`) and the quit/play-again path qualify.
+- Formatting: CRLF preserved, 2-space indent, longest new line 68 columns, blank-line spacing before `----------ACKNOWLEDGMENTS----------` unchanged.
+- Page-26 length (#121) and unreachability from in-game help (#120) are already filed; I did not re-raise them.
+
+## What I exercised
+
+- Read `git diff main -- sst.doc` plus the full working tree state (doc-only change, unstaged).
+- Code read: `tui.c` (`make_windows`, `panel_room`/`clip_at`, `note_out`, `restore_curline`, `sync_size`, `tui_readline`, `tui_getch`, `tui_pageheight`), `sst.c` (`scan`, `ja`, `pause`, command dispatch, `debugme`), `setup.c` (briefing, `starch` init), `reports.c` (`chart`), `events.c` (`wait`), `finish.c` (`dstrct`), and `fef362c` itself.
+- Plain mode: `printf 'regular\nshort\nnovice\nxyz\nchart\nlrscan\nquit\ny\n' | ./build/sst` — used to confirm the chart shows every starbase at game start.
+- TUI mode under tmux on my own socket (`-f /dev/null -L uirev`, killed at the end; no other socket touched): 80x24 novice game, then 72x14, 72x13, 72x12, 72x11, 66x24, 30x8 and back to 80x24; `lrscan`, `chart`; `rest 5000` confirmation restored after a shrink with nothing typed and lost after a shrink with `y` typed; `Ctrl-U`, `Enter`, `Please answer with "Y" or "N":`, `N`, back to `COMMAND&gt;`; `chart` at 80x14 to check the pager.
+- `gh issue list` to confirm #117, #120, #121 exist.
+- No files modified.</result>
+<usage><subagent_tokens>79986</subagent_tokens><tool_uses>50</tool_uses><duration_ms>544068</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aae4dd1f71fad83b1</task-id>
+<tool-use-id>toolu_01WRa91MER9SnzV17rGRZ51Z</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/aae4dd1f71fad83b1.output</output-file>
+<status>completed</status>
+<summary>Agent "ui-review round 3" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Clean — acceptable as-is.** All five rewrites check out against both the code and the running game; I could not break any of the new claims, and I found nothing left in these three paragraphs that a player could act on wrongly. The height thresholds are now exactly right (I reproduced 15/14/13/shorter and the "scan pages past showing none of itself" case verbatim), the starbase/chart correction is right, the "question you had already begun answering" wording matches the one gap that actually survives fef362c, and the Ctrl-U → Enter → `Please answer with "Y" or "N":` → `N` recovery works end to end in the exact state where the question and answer are both lost. What remains is four nits, one of which is really about `README.md` rather than this diff.
+
+## Findings
+
+**1. Nit — `sst.doc` (new paragraph 1, "Resizing the terminal is safe at any point")**
+"Safe" is the strongest word in the section and it sits two paragraphs above the warning that a resize can silently swallow a question *and* the answer you had begun typing, at a prompt where a hidden `y` can end the game. What the sentence actually means is proved: no crash, no teardown, no fallback to the classic display at any size I tried. A player who reads only paragraph 1 and drags mid-question is the one paragraph 3 exists for. Suggestion: say what "safe" means here — e.g. "Resizing the terminal never crashes the game or drops it back to the classic display, at any point…" — and let paragraph 3 keep the qualification. Low severity because the three paragraphs are contiguous.
+
+**2. Nit (outside this diff, worth filing) — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md:19-21` now contradicts the corrected `sst.doc`.** README says "both the question you were asked and the answer you were halfway through typing survive, **so long as there is still room for them**". I reproduced the counter-case where there *was* room: 80x24, the warp-time question (`moving.c:594`, a `prout` that ends its own line), `y` typed and not entered, squeeze to 80x14 — the one remaining conversation row came back reading `Helmsman Sulu- "Warp factor 1.0, Captain."`, i.e. old conversation, with the reader still holding the invisible `y`. README's own later paragraph (lines 53-56) describes that gap correctly, so the README is internally inconsistent, and the reassuring sentence is the one a player reads first. Related: `README.md:71-72` still carries "answer `N` there and you are back at the prompt, free to give the command again" — the over-generalization you just removed from `sst.doc` (nit 6). Both are pre-existing and belong in an issue (or as a comment on #117), not in this slice. Trivially, README's free-command list omits `lrscan`, which `sst.doc` now includes; both statements are true.
+
+**3. Nit — `sst.doc` (new paragraph 3, the Ctrl-U advice).** The advice assumes the waiting reader is a typed-answer reader. If what is waiting is a pause (`tui_getch`), Ctrl-U is simply the keystroke that satisfies it and pages past text. In practice this is near-harmless and hard to hit — `pause()` prints its prompt with `proutn`, so `curline` is non-empty and the pause prompt reliably comes back (I resized twice during `[HIT SPACE BAR TO CONTINUE]` and it survived both) — so the "question missing" state is essentially always a typed-answer state. No change needed unless you want a half-clause.
+
+**4. Nit — page length, already tracked as #121.** Worth recording that this change is what takes that page from long to very long: page 26 is now 122 lines against 46-66 for every other page in the file (it was 80 before). If the page break ever matters, a `^L` plus a `----------MODIFICATIONS (continued)----------  27` header before these three paragraphs is the mechanical fix. Deliberately out of scope here, per your note.
+
+**5. Nit — placement/discoverability.** Three paragraphs of second-person how-to ("look at it before you touch the keyboard", "press Ctrl-U first") inside a first-person changelog ("Modifications I made:") is a tonal shift; `MISCELLANEOUS NOTES` (`sst.doc:1302`) is the section a player would look in. Continuity with the existing `-t` paragraphs is a fair defence and #113 asked for it there, so I would not move it now — but it compounds #120 (`helpme()` can only reach `Mnemonic:` entries, all of which end well before line 1471, so this text is reachable only by reading the file).
+
+No finding on: the `&gt;` clipping claim, the 72-column framing, the "panels lose rows off the bottom, the scan keeping its numbering" claim, "growing back brings the panels", "a line that was cut short stays cut short", "SRSCAN/LRSCAN/STATUS/CHART/DAMAGES cost nothing", "the chart shows where the starbases are from the start", "some of those questions can end the game", or "nothing waiting behind a prompt commits you to anything" — all verified below.
+
+## What I exercised
+
+Doc/format: `git diff main -- sst.doc`; raw inspection with `cat -A` (CRLF intact on every added line, no trailing whitespace, no tabs); longest added line 68 columns; two blank lines before the `^L ACKNOWLEDGMENTS` page break, matching the pre-change shape; `--` dash style matches four existing uses in the file.
+
+Code: `tui.c:15` (`PANELH`), `:200-256` (`make_windows`, the `msgh`/`mvwin` reasoning), `:380-470` (`restore_curline`, including the `pending_answer` early return that is the #117 gap), `:107-139` (`panel_room`/`panel_has_row`/`clip_at`), `:880-988` (`tui_readline` Ctrl-U, `tui_getch`, `tui_pageheight`); `sst.c:205-250` (blank line at `COMMAND&gt;` just re-prompts), `:682-740` (`scan()` lowercases and takes the first word; `ja()` tests `*citem` only), `:755-830` (`pause()`, `skip()` pager gate); `setup.c:339` and `reports.c:225-245` (starbases as `.1.` from the start); `setup.c:405-440` (base locations are printed at every skill, novice long form or terse); no `Time`/`ididit` writes in `reports.c`; blank-input paths in `battle.c:825-900` (torpedoes), `battle.c:1195-1265` (phasers), `moving.c:673` (rest), `setup.c:42-49` (freeze), `finish.c:25-32` (self-destruct password) — none commit; `moving.c:501-503`, `:594` and the death-ray `ja()` confirm a "yes" can end the game; `sst.c:127-199` (`helpme` anchors on `  Mnemonic:  X`/` ABBREV`, last at line 1294 with terminators before 1471, so the new text cannot leak into any help entry).
+
+Running game (private socket `-L sstrev`, `-f /dev/null`, killed on that socket only; a fresh Debug build): novice/short/regular game as Kirk. Widths 80 → 60 → 40 → 30 → 20 → 72 → 80 (status clips with `&gt;` at 60, both panels at 20, everything fits at 72). Heights 24 → 15 → 14 → 13 → 12 → 10 → 8 → 24. At 15, output arrived one line per `[HIT SPACE BAR TO CONTINUE]`; at 14, `srscan` took twelve space presses showing nothing but the pager prompt before `COMMAND&gt;` returned; at 13, panels filled the screen with no prompt anywhere; at 12/10/8, grid rows dropped off the bottom with 1..9, 1..7, 1..5 still numbered. The game stayed alive and responsive at 13 and 8 rows and came back whole at 24 both times. A 40-column squeeze truncated the `srscan` conversation lines and they stayed truncated after growing back, while re-running `srscan`, `status` and `chart` cost nothing. `chart` at stardate 4000 showed `.1.` at quadrant 3-8, matching the opening `Starbase locations- 7-7 3-8 5-5 8-1`. Partial-answer resizes: the `probe` question (unfinished line) survived squeezes to 15, 14 and 13 with the typed `y` intact; the warp-time question (ended line) lost both question and answer at 14 and did not return at 24; Ctrl-U then Enter produced `Please answer with "Y" or "N":` with no repetition of the question, and `n` declined with 2 probes still left and the move aborted. Also `ctest --test-dir build`: 11/11 passed, including `instructions` and `golden` (doc-only change, so nothing was expected to move).</result>
+<usage><subagent_tokens>102234</subagent_tokens><tool_uses>84</tool_uses><duration_ms>1118338</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a776bd9bae568ad79</task-id>
+<tool-use-id>toolu_01VR9jnRnnQJg22U5hEqUGSE</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/a776bd9bae568ad79.output</output-file>
+<status>completed</status>
+<summary>Agent "ui-review round 4" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+Acceptable as-is. The reworded opening introduces no new factual error: both halves of its promise are ones the code keeps, the forward reference lands on a paragraph that really is about the hazard it names, and nothing downstream in the three paragraphs is knocked out of step by the change. I agree with all four resolutions, with one correction to the *reasoning* behind the Ctrl-U one (the conclusion survives it) and one small addition I'd make to issue #122. Everything below is a nit; none of it blocks the commit.
+
+## The three questions you asked
+
+**Does the promise hold in code?** Yes, on both halves.
+
+- *Never drops back to the classic display.* `tui_active` is set once in `tui_init()` (`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c:704`) and cleared only in `tui_shutdown()` (`tui.c:722`), which runs at exit. The `LINES &lt; 24 || COLS &lt; 72` test is inside `tui_init()` (`tui.c:696`) and is never consulted again. There is no mid-game path back to the scrolling display, so the sentence is unconditionally true rather than true-in-practice. Dropping the old "a game already running" qualifier costs nothing, because the preceding paragraph has already told the reader about the startup fallback and the new sentence's subject is *resizing*.
+- *Never crashes.* Held under everything I could throw at it (sizes below the accepted minimum, at a pause, at a question with a half-typed answer, at the command prompt): 100x30 → 40x10 → 30x8 → back, then 20x2, 72x3, 80x13, 80x14, 80x15, 30x5, 10x2, each followed by a command. The process never died and the panels rebuilt every time.
+
+**Does the forward reference land?** Yes. "these paragraphs" reads as the resize block, and its last paragraph is exactly the one about a question you had begun to answer. The alternative reading — the whole `-t` run starting at "In 2026 I added…" — has the same last paragraph, so there is no misdirection either way.
+
+**New error or ambiguity?** No error. Four small frictions, below.
+
+## Findings
+
+**Nit — the intro is not its own paragraph, so the forward reference interrupts.** `sst.doc:1551-1566`: "…which is what the last of these paragraphs is about." is followed immediately by "Narrower than 72 columns, …" with no blank line. The paragraph therefore opens with a promise, detours to paragraph three, and then starts on column and row geometry. The old single-sentence opener flowed into the geometry as a topic sentence; the new two-sentence one does not. A blank line after "…is about." would fix it, and "the last of these paragraphs" still lands with four paragraphs in the block rather than three.
+
+**Nit — "never crashes" and "None of these is a crash" now bookend the same paragraph.** Same paragraph, sixteen lines apart. As two paragraphs it reads as a promise and its payoff; as one it reads as a repeat. Resolved for free by the blank line above; otherwise consider trimming the closer to "however dead the screen looks, the game is still there."
+
+**Nit — "the last of these paragraphs" is undelimited.** A reader in a pager has no way to see where the block ends. "the last of these three paragraphs" makes it countable at the cost of one word — and if you take the blank-line suggestion, "the last of these four".
+
+**Nit — "cost you a question" understates, deliberately but perhaps too far.** What the third paragraph actually warns about is not a missing question but an invisible typed answer that a yes/no reader will act on, with the game possibly ending. The signpost promises a lost question; the payoff delivers something sharper. That is defensible for a pointer, and the correction to the old "safe" was the important part. If you want the signpost to carry the weight: "It can still take away a question you had begun to answer while the game goes on waiting for your answer to it — which is what the last of these paragraphs is about."
+
+**Nit — pronoun distance in sentence two.** "It can still cost you…" — the nearest preceding noun phrase is "the classic display"; the intended antecedent is "Resizing the terminal", two clauses back. "still" makes the contrast clear enough that I do not think anyone misreads it, but "Resizing can still cost you…" removes the question at no cost. Likewise "at any point" now trails both verbs rather than sitting beside the adjective it used to modify; "At any point — including while the game waits for an answer or for a keystroke at a pause — resizing the terminal never crashes it and never drops it back to the classic display" reads more directly, if you would rather not lead with the subordinate clause.
+
+## On your four resolutions
+
+**Ctrl-U at a pause — agree with the outcome, but the stated reason is wrong for one variant.** `pause(1)` prints its prompt with `prout`, not `proutn` (`/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.c:770-776` — the `[ANNOUNCEMENT ARRIVING...]` / `[IMPORTANT ANNOUNCEMENT ARRIVING -- HIT SPACE BAR TO CONTINUE]` pair), so `curline` is empty by the time its `getch()` waits. The prompt still comes back reliably, but via `lastline` in `restore_curline()`'s `curlen == 0` branch (`tui.c:426-440`): `tui_getch()` sets `reader_waiting` (`tui.c:948`), and `pending_answer` is NULL at a pause, so the `#117` carve-out — which is precisely "a typed answer exists, restore nothing" — cannot fire there. A pause never has a typed answer, which is the actual reason the state you were worried about is unreachable. Worth writing the rationale that way if it goes into the PR body, since the version you gave would stop being true the moment someone changed `pause(1)`. Second supporting point: Ctrl-U pressed at a pause is simply returned as the keystroke that dismisses the pause (`tui_getch`, `tui.c:952-955`), so a player who over-applies the third paragraph's advice loses nothing.
+
+**Page length / #121 — agree.** Page 26 was already 81 lines on `main`, the longest in the file against a 47-67 band, so the overflow predates this change; it goes to 125. #121 records both figures, which is what a reader needs. Fixing it in-slice would mean a new form feed, a continuation heading, renumbering ACKNOWLEDGMENTS from 27, and the matching table-of-contents entry — a mechanical change to the file's structure that has nothing to do with resizing. Correctly deferred.
+
+**Placement / #120 — agree, with one observation.** The reword slightly strengthens the case #120 makes: the old sentence was a statement about the game, whereas the new one contains a sentence about the *document's own structure* ("the last of these paragraphs"), which sits a little further from "Modifications I made:" and its first-person changelog voice. Not a reason to move anything now; it is evidence for whoever picks up #120.
+
+**README / #122 — agree, and one thing to add to it.** The issue is accurate and cites the real mechanism. But it names `README.md:19-21` and `71-72`, and misses the sentence that is the direct counterpart of the nit you just fixed: `README.md:17`, "Resizing the terminal is fine at any point." That is the same over-promise as the old "safe at any point", in a slightly stronger form, and it is now the first thing a README reader meets on the subject while `sst.doc` says something more careful. Suggest a comment on #122 adding line 17 to its scope rather than a new issue. It is also worth naming #122 in the PR body, so a reviewer who reads both files and finds them disagreeing knows the disagreement is filed rather than overlooked.
+
+## What I exercised
+
+- Read the full working-tree diff of `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.doc` against `main`, and the added region in raw bytes (CRLF intact, no stray CR-only lines, longest added line 68 columns, matching the file).
+- Verified the page-break arithmetic before and after (`awk` over form feeds): page 26 goes 81 → 125, every other page 47-67; blank lines before the ACKNOWLEDGMENTS break were already 2 on `main`, so the diff's extra `+` blank preserves rather than changes the spacing.
+- Read `tui.c` for the two claims: `tui_init` size gate, `tui_active`/`tui_shutdown`, `sync_size`, `restore_curline`, `note_out`/`end_line`, `tui_readline`, `tui_getch`; and `pause()` in `sst.c`.
+- Built Debug and drove `./build/sst -t` under tmux on a private socket (`-L uirev4`, `-f /dev/null`, killed only that socket at the end). Two sessions: (1) start → briefing pause → shrink 40x10, 30x8 → grow back — pause prompt restored, no crash; then `quit` → "Do you want to play again?" with `y` typed and not entered → 30x8 → back, and both the question and the invisible `y` came back as `Do you want to play again?y`. (2) A fresh novice game → shrink/grow cycle through 20x2, 72x3, 80x13, 80x14, 80x15, 30x5, 10x2, with a `srscan` or `chart` issued at each size; panels rebuilt each time, process alive throughout (one keystroke was eaten at 20x2, producing `rscan` and the legal-commands list — the harmless command-prompt version of what the third paragraph warns about, and already covered by its "look at it before you touch the keyboard").
+- Read issues #120, #121 and #122 in full to check the three deferrals against what was actually filed.
+- No files modified.</result>
+<usage><subagent_tokens>50400</subagent_tokens><tool_uses>26</tool_uses><duration_ms>373022</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a796f14614e98ae87</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/a796f14614e98ae87.output</output-file>
+<status>completed</status>
+<summary>Agent "ui-review round 5" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+Acceptable as-is. The new intro paragraph makes only claims the code and a live game keep, the forward reference still lands now that the block is four paragraphs, and the split reads better than the single paragraph it replaced — it turns the block into a clean promises → shrinking → growing back → hazard sequence, and "Narrower than 72 columns," opens its own paragraph without trouble because the number itself names the terminal and line 1544 has just established 72x24. I have no objection to leaving the count out; "the last of these paragraphs" resolves unambiguously since the section ends at the ACKNOWLEDGMENTS page break, and your staleness argument is the right one. Two nits below are on the one sentence you rewrote; neither blocks the verifier or code-review.
+
+## Findings
+
+**1. (nit) The new cleft reads as exclusive and competes with paragraph 3's cleft** — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.doc:1553-1556`
+
+"What resizing can still take from you **is** a question you had begun to answer" is an it-cleft: it asserts that the half-answered question is *the* residual cost. Two paragraphs later the doc says "**What is gone is** whatever the game said only once -- how hard the last salvo hit you, what your torpedo did." A reader arriving at 1577 has been told once already what resizing takes, and is now told something different. The old "It can still cost you" did not have this problem because "can still cost you X" is open-ended; the cleft is what closed it. The fix for nit 5 (naming the subject) does not require the cleft:
+
+    Resizing can still cost you a question you had begun to
+    answer, ... which is what the last of these paragraphs is about.
+
+That keeps the named subject, drops the pronoun distance, and stops competing with 1577.
+
+**2. (nit) "waiting for it unseen" — nearest antecedent gives the wrong reading** — `sst.doc:1554-1555`
+
+"a question you had begun to answer, with the game going on waiting for it unseen". The game waits for the *answer*, not for the question; "it" attaches to "a question", the nearest noun. The intended sense arrives on the second pass, but the first pass says the game is waiting for a question. "unseen" is also doing double duty — it is the question that is off screen, while the phrase parks it next to "waiting". Something like "leaving the game waiting unseen for the rest of it" puts the adverb on the waiting, where it is also true, and makes "the rest of it" clearly the answer.
+
+**3. (observation, no action asked) `Please answer with "Y" or "N"`** — `sst.doc:1594`, untouched by this round
+
+The game prints it with a trailing colon (`sst.c:738`: `proutn("Please answer with \"Y\" or \"N\":");`), and `README.md:70` quotes it with the colon. The doc quotes it bare. As running prose that is defensible; flagging only because the two documents now differ on the same string, and #122 is open on README's resize section anyway.
+
+Pagination: page 26 (`sst.doc:1471-1598`) is now 127 lines against a 47-67 line norm for its neighbours. Already filed as #121, already 81 lines before this change; no action here.
+
+## What I exercised
+
+- `git status`, `git diff main -- sst.doc`, plus a `cat -A` pass over 1520-1600: CRLF preserved on every added line including the blank separators, two-space indent matching the section, longest new line 68 columns, and the double blank before the ACKNOWLEDGMENTS form feed unchanged.
+- Read `tui.c` for the two claims in the new paragraph: `tui_active` is set at `tui.c:704` and cleared only in `tui_shutdown` (`tui.c:721-722`, reached via `atexit`); the 72x24 floor is tested once at startup (`tui.c:696`), never on resize — so "never drops it back to the classic display" holds by construction. `sync_size()` (`tui.c:636`) runs before every repaint, and `KEY_RESIZE` is handled inside both `tui_readline` and `tui_getch`.
+- Built Debug and played a scripted TUI journey on my own tmux socket (`-L sstrev5 -f /dev/null`, killed on that socket only): setup through the briefing at 100x30; resized to 72x24 and then 60x14 **while sitting at `[HIT SPACE BAR TO CONTINUE]`** — no crash, panels intact, prompt kept its one line; space still worked afterwards. In game at 80x24, typed a partial answer `srsc` at `COMMAND&gt;`, resized 72x24 → 50x13 → 80x24: at 50 columns the status panel clipped with `&gt;` as documented, at 13 rows there was no prompt anywhere on the screen (exactly the doc's "at thirteen there is none of it left at all"), and growing back restored ` COMMAND&gt; srsc` with the typed text intact; `an` then completed it and ran the scan. Ended with `quit`. No fallback to the classic display at any size, no garbling.
+- Checked open issues: #120, #121, #122 exist and cover the pagination and README items, so nothing new to file from this round.</result>
+<usage><subagent_tokens>41110</subagent_tokens><tool_uses>21</tool_uses><duration_ms>232723</duration_ms></usage>
+</task-notification>

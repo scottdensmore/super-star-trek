@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.9.0",
+  "checkpoint_id": "b75290a432cd",
+  "strategy": "manual-commit",
+  "branch": "docs/113-manual-resize",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "sst.doc"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b7/5290a432cd/0/metadata.json",
+      "transcript": "/b7/5290a432cd/0/full.jsonl",
+      "compact_transcript": "/b7/5290a432cd/0/transcript.jsonl",
+      "content_hash": "/b7/5290a432cd/0/content_hash.txt",
+      "prompt": "/b7/5290a432cd/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 171,
+    "cache_creation_tokens": 153660,
+    "cache_read_tokens": 9614556,
+    "output_tokens": 74395,
+    "api_call_count": 91
+  }
+}
