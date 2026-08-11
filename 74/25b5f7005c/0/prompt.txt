@@ -4748,3 +4748,95 @@ Secondary gaps, not blocking:
 - Mutants A–J built and run from copies under `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/712a4a2d-02c6-4bf5-8a02-29c0e1335445/scratchpad/mut/`; logs beside them as `tui-mut-&lt;X&gt;.log`.</result>
 <usage><subagent_tokens>124133</subagent_tokens><tool_uses>74</tool_uses><duration_ms>2696429</duration_ms></usage>
 </task-notification>
+
+---
+
+<task-notification>
+<task-id>a9e5fff6a57873374</task-id>
+<tool-use-id>toolu_018RNUbmEon1SxUTA4U5Ecio</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/d9b6ccf4-0167-4fe7-9619-cec1a908d2ed/tasks/a9e5fff6a57873374.output</output-file>
+<status>completed</status>
+<summary>Agent "Final code review of 112" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Verdict: **approve**
+
+State reviewed: branch `fix/tui-restore-completed-prompt` at `72e87a2`, plus three unstaged files and nothing else (no staged content, no untracked files).
+
+**Hashes verified.** The three digests you gave are sha256, and all three match byte for byte, unchanged before and after my review:
+
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c` — `1e0cacfa…`
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh` — `b6710f01…`
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md` — `fb14a3e2…`
+
+(`git hash-object` gives different values because those are blob SHA-1s — worth naming the algorithm next time so the check is unambiguous.)
+
+## The four judgements you asked for
+
+**1. The `\n`-only rule is right, and it is complete.** I traced every carriage return the game can emit: `grep '\\r' *.c` finds exactly one writer, `sst.c:784`, which is `pause()`'s own wipe. The other candidate — `sst.doc`'s CRLF — is stripped at `sst.c:662` before `prout()` sees it, so a doc line never reaches `note_out()` with a `\r`. `note_out()` is the only recorder, and every write to `wmsg` outside `restore_curline()` goes through `tui_puts`/`tui_puts_slow`/the reader's own `note_out("\n")`. So `\n` promotes exactly the lines the game finished, and `\r` clears exactly the wipe. The rule holds.
+
+**2. `lastline` can hold a non-prompt, but not a harmful one.** Two classes exist and I chased both:
+
+- `note_out("\n")` at `tui.c:903` fires on the player's Enter while `curline` still holds the game's half-written prompt, so `lastline` becomes e.g. `"COMMAND&gt; "` and outlives the command. For that to be restored as a fake prompt, some later reader would have to wait with `curlen == 0` and nothing printed in between. I checked every `ja()` call site (`planets.c`, `battle.c`, `events.c`, `finish.c`, `sst.c`) — all thirteen print their question immediately before, and `scan()` only reaches `readinput()` after a `chew()`, which `ja()` does at entry. I found no reachable path. Not a finding, but it is the shape a future prompt-less read would break, and it is not what the `lastline` comment warns about.
+- `lastline` as ordinary conversation (a `prout()` line followed by a prompt-less read). Benign by construction: nothing was printed after it, so it is still the last thing on screen and restoring it reproduces the screen rather than inventing a prompt.
+
+The `reader_waiting` gate is airtight — both `tui_readline()` exits and the single `tui_getch()` exit clear it, there is no nesting, and `tui_clearmsg()` clears `lastline` so the `pause(1)`/`clearscreen()` path cannot resurrect an announcement.
+
+**3. The one-row block asserts what it claims — measured, not taken on trust.** I copied the worktree twice outside the repo, configured fresh builds, and drove the exact sequence by hand on my own tmux socket:
+
+| build | 78x14 | 76x14 | 74x14 | 72x14 | back at 80x24 |
+|---|---|---|---|---|---|
+| good | 1 | 1 | 1 | 1 | 1 |
+| mutant J (`maxy &gt; 1` relaxed) | 0 | 0 | 0 | 0 | **1** |
+| mutant I (unconditional `wscrl`) | 0 | **1** | 0 | **1** | **1** |
+
+Both mutants recover at 80x24, which is precisely why the pre-existing `ended` block passed them. The new block fails both at the first width step. Your verifier finding and its fix are correct, and starting the drag at 80x24 rather than at 80x14 is load-bearing exactly as the comment says.
+
+I also confirmed the primary fix from the player's side: untouched, `Are you sure?` comes back once after a 20x8 corner drag (it read `Are you sure?` and nothing else).
+
+**4. The README reads correctly top to bottom, with one overstatement.** The three paragraphs scope cleanly — "that one" in the Ctrl-U paragraph binds to "a question you have already started answering", and the Enter paragraph is now gated on "and you had not started answering it", so the losing instruction is no longer the last one a reader meets. I verified the central warning empirically: `y` (unseen) then `N` then Enter runs `rest 5000` to completion and ends with *"Your time has run out and the Federation has been conquered."* The warning is accurate and worth the paragraph.
+
+**Build and tests on this exact state:** clean `-Werror` Debug build, `shellcheck -S warning tests/tui.sh` clean, `ctest` 11/11 including `tui` (115 s).
+
+## Findings
+
+### should-fix
+
+**`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c:333-337` — the surviving `note_out()` comment now states the opposite of the code, three lines above the code that contradicts it.**
+
+```c
+		/* A carriage return ends it as surely as a newline does:
+		   pause() wipes its own prompt with "\r ... \r", and
+		   ...  */
+		if (*s == '\n')
+			end_line();
+		else if (*s == '\r')
+			curlen = 0;	/* see end_line: a wipe, not a line */
+```
+
+Failure scenario: this is the comment a maintainer reads when deciding what `\r` should do here, and it says the two are equivalent — which is the licence for folding `\r` back into `end_line()` and reintroducing blocker 1 verbatim (the pager's `[HIT SPACE BAR TO CONTINUE]` restored over a question the game is really waiting on). The comment survives from before the change and was not updated with it. Fix: rewrite it to say the two are deliberately different and why — the `\r` case is a wipe whose bytes must not be recorded, the `\n` case is a finished line that must be.
+
+### nit
+
+**`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c:287-306` — the comment block sits on the wrong declaration and says the same thing twice.** Its first line ("Ends the line and keeps it…") describes `end_line()`, but it is attached to `lastline`/`lastlen`; paragraphs 1 and 3 both explain `pause()`'s `"\r ... \r"`, and paragraph 2 is the one that actually documents `lastline`. Fix: lead with paragraph 2 on the declaration, move the `end_line()` rationale onto `end_line()` at line 317, and drop one of the two `\r` paragraphs.
+
+**`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c:360` — 82 columns, the only line in the file over 76.** `awk 'length&gt;76'` returns it and nothing else. Rewrap.
+
+**`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh:1358-1397` — the one-row block is inside `for squeeze` but never reads `$1`/`$2`, so it runs three identical times.** It hard-codes 80x14 and widths 78/76/74/72, and its failure messages name only `${w}x14`, so a real failure is reported three times identically with nothing distinguishing the runs. Costs roughly 25 s of the `tui` test's 115 s for no coverage. Fix: hoist it out of the loop.
+
+**`/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md:62-63` — "ignore that; it clears when you press Enter" overstates what Enter clears.** Measured at 80x24 after a 20x8 squeeze with `y` part-typed: Ctrl-U rubbed out the `Y` of a live `You will have 4 su` line, `N` landed on top of it, and after Enter the row read ` N` — the newline cleared the text to the *right* of the cursor, but the character the player typed stayed on screen. Here that residue happens to look like a normal echo; where the cursor lands mid-line it will not. Fix: "the line it landed on clears when you press Enter, though what you typed stays where it fell." (Also `a `N`` at line 60 wants `an`.)
+
+**`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c:514-522` — the one-row branch puts the cursor at column 0 of the prompt when the prompt exactly fills the row.** With `maxy == 1` and `(found - joined) + linelen == width`, `i % width` is 0, so the cursor lands on the prompt's first character and the next keystroke overwrites it — the ` yyy you sure?` symptom the comment above it says it exists to prevent. Reachable: drag to 63x14 during a `pause(1)`, where `msgw` is 61 and `[IMPORTANT ANNOUNCEMENT ARRIVING -- HIT SPACE BAR TO CONTINUE]` is exactly 61 characters. Display-only — `buf` is unaffected, and `tui_getch()` does not echo, so at that one reachable size nothing is visibly wrong. Worth a line acknowledging the case rather than a fix; there is nowhere better to put a cursor in a one-row window.
+
+## Review coverage
+
+Your account holds up against the diff. The change plainly reaches the player, and `ui-review` saw the final state except for the last test-only block, which cannot. The coverage you named — the pager boundary at 80x15/16/17/18 across five widths, dragging with the pager up, both README routes end to end — maps onto what the diff can alter, and the one gap in that list (80x14, where the new `maxy &gt; 1` branches live) is covered by the new test block and by my own measurements above. `verifier` ran twice and `ctest` is green on the state I hashed. Nothing here is owed a pass that did not run.
+
+## What I could not review
+
+- The `ui-review` and `verifier` transcripts themselves — I have your summary and the diff, not their output. I substituted my own tmux measurements for the player-visible claims rather than accepting them.
+- Whether `#117` and `#118` were filed as described; I did not query the tracker.
+- The pre-existing `onscreen[512]`/`joined[2048]` row-alignment assumption breaks on terminals wider than 511 columns, and the new `(i / width + 1) * width` arithmetic inherits it. Not introduced here and not reachable at any size the display supports, so I did not pursue it.
+
+No files were modified. My builds and mutants live in the session scratchpad; the repository `build/` was not touched, and all tmux work was on a private `-L sstrev` socket, now shut down — the default socket was never addressed.</result>
+<usage><subagent_tokens>95294</subagent_tokens><tool_uses>48</tool_uses><duration_ms>1195008</duration_ms></usage>
+</task-notification>
