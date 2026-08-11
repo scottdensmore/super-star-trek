@@ -46,17 +46,30 @@ The line you are on usually comes back, and it is the one that matters:
 a question or a pause the game was part way through writing is written
 out again whole once there is room for it, so you are not left typing
 into the tail of a prompt. A few prompts finish their line before they
-stop to wait, and those get treated like any other older line — they
-scroll away, or come back cut off mid-sentence — while the game goes on
-waiting for the answer.
+stop to wait; those come back too, with the answer going on the row
+below the question — or after it, where the window is down to its last
+row.
+Only their final line comes back, so a question asked over several
+lines returns as the last of them. The one gap left is a question you
+have already started answering: that one is left exactly as it was
+before, so what comes back may be a stump of older conversation, or
+nothing, with the game still waiting behind it.
 
-If the prompt is missing, or cut off, press Enter. Nothing waiting
-behind one commits you to anything: a pause moves on, the
-self-destruct password reads the empty answer as a refusal and stands
-the sequence down, and a yes/no question comes back only as `Please
-answer with "Y" or "N":`, without saying again what it asked — answer
-`N` there and you are back at the prompt, free to give the command
-again.
+Do not just answer that one, and do not press Enter either: whatever
+you typed is still in the buffer, and a yes/no question reads the
+*first* letter, so an `N` typed after a `y` you cannot see answers yes.
+Press Ctrl-U first, which throws the line away, and then answer. What
+you type lands on whatever the window happens to be showing; the line
+it fell on clears when you press Enter, though the characters you
+typed stay where they landed.
+
+If the prompt is missing or cut off and you had not started answering
+it, press Enter. Nothing waiting behind one commits you to anything
+then: a pause moves on, the self-destruct password reads the empty
+answer as a refusal and stands the sequence down, and a yes/no
+question comes back only as `Please answer with "Y" or "N":`, without
+saying again what it asked — answer `N` there and you are back at the
+prompt, free to give the command again.
 
 If full-screen mode isn't possible — the terminal is too small, the
 game isn't attached to one (piped input, redirected output, a job with

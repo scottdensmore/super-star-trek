@@ -284,15 +284,57 @@ static int resized(void) {
 static char curline[256];
 static int curlen;
 
+/* The last line the game finished, kept for the prompts that end their
+ * own: prout() appends the newline, so by the time such a prompt stops
+ * to wait, curline is empty and there is nothing to put back. Those
+ * questions vanished on a resize while the reader went on waiting, and
+ * the next keystroke was eaten by a prompt that was not on screen.
+ * Issue #112.
+ *
+ * Only lines with something on them are kept. pause() wipes its own
+ * prompt with "\r ... \r", so a run of blanks arrives here as a
+ * finished line, and keeping it would put an empty row back in place of
+ * a question. */
+static char lastline[sizeof curline];
+static int lastlen;
+
+/* Whether a reader is waiting for the player right now. lastline is
+ * only worth putting back then: at a prompt it is the prompt, and
+ * anywhere else it is an old line that may have scrolled away for good
+ * reason. tui_readline() and tui_getch() are the two that wait;
+ * tui_gameover() also repaints, and has no prompt pending. */
+static int reader_waiting;
+
+static void end_line(void) {
+	int i;
+
+	for (i = 0; i < curlen; i++) {
+		if (curline[i] != ' ') {
+			memcpy(lastline, curline, (size_t)curlen);
+			lastline[curlen] = '\0';
+			lastlen = curlen;
+			break;
+		}
+	}
+	curlen = 0;
+}
+
 static void note_out(const char *s) {
 	for (; *s != '\0'; s++) {
-		/* A carriage return ends it as surely as a newline does:
-		   pause() wipes its own prompt with "\r ... \r", and
-		   keeping those bytes left curline holding 56 characters
-		   that render as an empty row, which then matched nothing
-		   on screen. */
-		if (*s == '\n' || *s == '\r')
-			curlen = 0;
+		/* The two end curline alike and are kept apart on
+		   purpose. A newline is the game finishing a line, so
+		   end_line() records it. A carriage return is pause()
+		   wiping its own prompt with "\r ... \r" -- and at the
+		   first of those curline still holds [HIT SPACE BAR TO
+		   CONTINUE], so recording there put the pager's prompt
+		   back over a question the game was really waiting on.
+		   Folding them together again reintroduces exactly that.
+		   The blanks between the two \r were always dropped; the
+		   prompt before the first one was the part that was not. */
+		if (*s == '\n')
+			end_line();
+		else if (*s == '\r')
+			curlen = 0;	/* see end_line: a wipe, not a line */
 		else if (curlen < (int)sizeof curline - 1)
 			curline[curlen++] = *s;
 	}
@@ -310,8 +352,9 @@ static const char *pending_answer;
  * with the answer to be written after it. The repaint runs whichever
  * way the terminal moved, so what a repaint leaves this false for is
  * having no part-written line to move the cursor to: a prompt that
- * ended its own line, which restore_curline() returns from at once and
- * cannot put back at all. Issue #112. It is also false where no
+ * ended its own line and was not kept -- see lastline, which covers
+ * most of those now, and #117 for the case it does not. It is also
+    false where no
  * repaint happened -- a KEY_RESIZE carrying no actual size change,
  * which sync_size() returns from before touching anything. */
 static int cursor_at_prompt;
@@ -366,21 +409,56 @@ static void restore_curline(int oldmsgw) {
 	   answer -- so a row with content past there cannot exist. Raise
 	   the input buffer and these want revisiting. */
 	char onscreen[512], want[sizeof curline + 160], joined[2048];
+	const char *line = curline;
 	char *found;
 	int r, last, maxy, width, i, tail_blank, wantlen;
+	int linelen = curlen, ended = FALSE;
 
-	if (curlen == 0) return;
+	/* Nothing part written means either that there is nothing to put
+	   back, or that the prompt ended its own line -- prout() appends
+	   the newline, so curline is already empty by the time such a
+	   question stops to wait. lastline is that line, and it is only
+	   worth putting back while a reader is waiting, since anywhere
+	   else it is old conversation that scrolled away for a reason. */
+	if (curlen == 0) {
+		if (!reader_waiting || lastlen == 0) return;
+		/* Only before the player has typed anything. Once there is
+		   an answer the two sit on separate rows with curses'
+		   padding between them, and every attempt at spanning that
+		   went wrong in a different way: dropping the answer from
+		   the comparison reprinted the question once per drag step,
+		   and padding it back turned a one-row height shrink into a
+		   second copy. What is left unfixed is milder than either
+		   -- what is left is exactly what the game did before this
+		   change, which at some shapes is a blank message window
+		   with the reader still waiting. Worse than restoring it
+		   would be; better than restoring it twice. Issue #117. */
+		if (pending_answer != NULL && *pending_answer != '\0')
+			return;
+		line = lastline;
+		linelen = lastlen;
+		ended = TRUE;
+	}
 	/* What the bottom of the conversation should read: the line the
 	   game is part way through, and after it whatever the reader has
 	   echoed of the answer. Comparing against the prompt alone made
 	   every pending answer look like something drawn over the line,
 	   so an ordinary drag reprinted the prompt at each step and stood
 	   eight copies of it up the window. */
-	snprintf(want, sizeof want, "%s%s", curline,
-		 pending_answer != NULL ? pending_answer : "");
-	wantlen = (int)strlen(want);
 	maxy = getmaxy(wmsg);
 	width = getmaxx(wmsg);
+	/* An ended line puts the answer on the row below, and curses pads
+	   the rest of the prompt's row with blanks to get there. Those
+	   blanks are in the joined rows, so they have to be in `want`
+	   too: without them the answer never matched, the tail test
+	   failed, and a drag reprinted the question at every step --
+	   the same copies-up-the-window this comparison exists to stop,
+	   reintroduced for the ended case. */
+	i = ended && width > 0 && linelen % width != 0
+	    ? width - linelen % width : 0;
+	snprintf(want, sizeof want, "%s%*s%s", line, i, "",
+		 pending_answer == NULL ? "" : pending_answer);
+	wantlen = (int)strlen(want);
 	for (r = maxy - 1; r >= 0; r--) {
 		if (!row_blank(r)) break;
 	}
@@ -415,10 +493,38 @@ static void restore_curline(int oldmsgw) {
 				   answer: the reader writes the answer
 				   again from here, over the identical
 				   characters already there. */
-				i = (int)(found - joined) + curlen;
-				wmove(wmsg, start + i / width, i % width);
-				cursor_at_prompt = TRUE;
-				return;
+				i = (int)(found - joined) + linelen;
+				/* A line that ended takes the answer on
+				   the row below it, not after it -- and
+				   that row can be off the bottom, where
+				   the prompt is the window's last. wmove()
+				   fails there and leaves the cursor where
+				   the row scan parked it, at column 0 of
+				   the question, so the echo typed the
+				   answer over it: ` yyy you sure?`. */
+				if (ended) i = (i / width + 1) * width;
+				r = start + i / width;
+				if (r > maxy - 1 && maxy > 1) {
+					wscrl(wmsg, 1);
+					r = maxy - 1;
+					i = 0;
+				} else if (r > maxy - 1) {
+					/* One row, so nothing below and
+					   nothing to scroll into: scrolling
+					   would discard the prompt just
+					   matched. Leave the cursor after
+					   it, as the write path does. */
+					r = maxy - 1;
+					i = (int)(found - joined) + linelen;
+				}
+				/* Only where the cursor really moved: a
+				   failed wmove leaves it wherever the row
+				   scan left it, and claiming otherwise is
+				   what puts the echo in the wrong column. */
+				if (wmove(wmsg, r, i % width) != ERR) {
+					cursor_at_prompt = TRUE;
+					return;
+				}
 			}
 		}
 	}
@@ -436,11 +542,24 @@ static void restore_curline(int oldmsgw) {
 	   A width that did not change is the other case, and the else
 	   below is where it is argued. */
 	if (oldmsgw > 0) {
-		int total = curlen;
+		int total = linelen;
 		int rows, rr;
 
 		if (pending_answer != NULL)
 			total += (int)strlen(pending_answer);
+		/* Apart, for an ended line: the answer starts a row of its
+		   own, so the two do not share one. Added together they
+		   under-count and the erase leaves a row of the stump. */
+		/* Defensive, not live: the #117 gate means pending_answer
+		   here is NULL or empty, and with an empty one the rounding
+		   leaves rows unchanged. It is right for the day #117 is
+		   fixed and an answer really does start its own row.
+		   Guarded like the padding above, and for the same reason:
+		   a prompt that exactly fills its row needs no filler, and
+		   adding one anyway made rows one too high, so the erase
+		   would take a row of live conversation with it. */
+		if (ended && pending_answer != NULL && linelen % oldmsgw != 0)
+			total += oldmsgw - linelen % oldmsgw;
 		/* One row per oldmsgw columns, and a line that fills its
 		   last row exactly needs no extra: total/oldmsgw+1 says
 		   two for a line of exactly one row's width, and with the
@@ -492,7 +611,13 @@ static void restore_curline(int oldmsgw) {
 		wscrl(wmsg, 1);
 		wmove(wmsg, maxy - 1, 0);
 	}
-	waddstr(wmsg, curline);
+	waddstr(wmsg, line);
+	/* Same again: the answer to a question that ended its own line
+	   belongs on the row after it -- unless there is no row after
+	   it. A one-row message window scrolls the prompt away the
+	   moment the newline lands, which is the blank screen #112 is
+	   about, reached by the fix for it. */
+	if (ended && maxy > 1) waddch(wmsg, '\n');
 	cursor_at_prompt = TRUE;
 }
 
@@ -728,6 +853,7 @@ int tui_readline(char *buf, int buflen) {
 	int len = 0, room = buflen-2, c;
 
 	if (room < 0) room = 0;	/* keep room for the "\n" and the NUL */
+	reader_waiting = TRUE;
 	tui_refresh_panels();
 	for (;;) {
 		c = wgetch(wmsg);
@@ -776,6 +902,7 @@ int tui_readline(char *buf, int buflen) {
 			buf[len] = 0;
 			strcat(buf, "\n");	/* the fgets-like contract;
 						   readinput() strips it */
+			reader_waiting = FALSE;
 			return TRUE;
 		}
 		if (c == '\004') {		/* Ctrl-D */
@@ -813,6 +940,7 @@ int tui_readline(char *buf, int buflen) {
 		}
 	}
 	buf[0] = 0;
+	reader_waiting = FALSE;
 	return FALSE;			/* no more input is coming */
 }
 
@@ -822,13 +950,17 @@ int tui_getch(void) {
 	/* Same as before a typed answer: a paging prompt is a moment the
 	   player is looking at the screen, so the panels beside the text
 	   should not be older than it. */
+	reader_waiting = TRUE;
 	tui_refresh_panels();
 	for (;;) {
 		c = wgetch(wmsg);
 		/* Not a keystroke, whatever curses calls it. Handing it back
 		   would let a window drag answer "hit space bar to continue"
 		   and page away text the player never read. */
-		if (c != KEY_RESIZE) return c;
+		if (c != KEY_RESIZE) {
+			reader_waiting = FALSE;
+			return c;
+		}
 		/* Redraw for the new size before waiting again. Safe
 		   because curses reports the resize by returning from
 		   wgetch, so nothing is reading the screen at this moment
@@ -847,6 +979,8 @@ void tui_clearmsg(void) {
 	curlen = 0;		/* nothing is part written any more */
 	curline[0] = '\0';
 	wrefresh(wmsg);
+	lastline[0] = '\0';	/* erased on purpose; do not resurrect it */
+	lastlen = 0;
 }
 
 int tui_pageheight(void) {
