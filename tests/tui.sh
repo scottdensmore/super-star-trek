@@ -1293,6 +1293,142 @@ else
 	done
 fi
 
+# --- a prompt that ended its own line comes back too -------------------
+# #100 put back the line the game was part way through. A prompt that
+# finished its line before it stopped to wait is the other half: prout
+# appends the newline, note_out() clears curline there, and
+# restore_curline() returns at once with nothing to put back. So the
+# question vanishes entirely while the reader goes on waiting behind
+# it, and the next keystroke is eaten by a prompt that is not on
+# screen. `rest 5000` is the shortest way to one -- events.c prouts
+# "Are you sure? " and then reads with ja().
+#
+# 20x8 for the corner drag; 80x14 for a height-only squeeze, which
+# reaches the other placement branch.
+# 80x23 is the one that matters for the duplication guard below. Both
+# regressions it was written for reproduce only on a one-row height
+# shrink: at 20x8 and 80x14 the count is 0 or 1 whatever the build, so
+# the guard was decorative until this size was added.
+for squeeze in "20 8" "80 14" "80 23"; do
+	# shellcheck disable=SC2086
+	set -- $squeeze
+	start 80 24 'tournament 7 short novice pw'
+	if ! to_command; then
+		fail "ended: the game never reached its command prompt"
+		dump
+	else
+		tm send-keys -t "$pane" 'rest 5000' Enter
+		if ! wait_for 'Are you sure'; then
+			fail "ended: rest did not ask whether it was wise"
+			dump
+		else
+			tm resize-window -t "$session" -x "$1" -y "$2"
+			sleep 1
+			tm resize-window -t "$session" -x 80 -y 24
+			sleep 1
+			if ! screen | awk '/Are you sure\?/ { n++ }
+			                   END { exit n == 1 ? 0 : 1 }'; then
+				fail "ended: after $1x$2 the question is not on screen exactly once"
+				dump
+			fi
+			# The reader is still the one waiting, and it is a
+			# y/n reader: N has to be taken as the answer rather
+			# than as the first letter of a command. A control --
+			# it passes against a build with the defect too, and
+			# would fail a "fix" that reprinted the question by
+			# re-asking it and left two readers stacked.
+			# Counted, not looked for: at a one-row height
+			# shrink the echoed `COMMAND> rest 5000` survives,
+			# so COMMAND> is already on screen before N is sent
+			# and a presence check cannot fail there. What N
+			# produces is one more of them.
+			before=$(screen | grep -c 'COMMAND>')
+			tm send-keys -t "$pane" N Enter
+			sleep 1
+			after=$(screen | grep -c 'COMMAND>')
+			if [ "$after" -le "$before" ]; then
+				fail "ended: after $1x$2 N did not answer the question"
+				dump
+			fi
+		fi
+	fi
+
+	# And once the answer is part typed, the question is left alone --
+	# #117 -- which has to be asserted as "never more than one", not
+	# as a restore. Both ways of spanning the row boundary between an
+	# ended prompt and its answer duplicated it instead: once per
+	# width step one way, once on a one-row height shrink the other.
+	#
+	# Its own session. Run on from the block above, the first `rest`
+	# has left its own answered question in the window, so two are on
+	# screen before this one starts and the count means nothing.
+	start 80 24 'tournament 7 short novice pw'
+	if ! to_command; then
+		fail "ended: the game never reached its command prompt to type at"
+		dump
+	else
+		tm send-keys -t "$pane" 'rest 5000' Enter
+		if ! wait_for 'Are you sure'; then
+			fail "ended: rest did not ask whether it was wise"
+			dump
+		else
+			tm send-keys -t "$pane" y
+			sleep 1
+			tm resize-window -t "$session" -x "$1" -y "$2"
+			sleep 1
+			tm resize-window -t "$session" -x 80 -y 24
+			sleep 1
+			if screen | awk '/Are you sure\?/ { n++ }
+			                 END { exit n > 1 ? 0 : 1 }'; then
+				fail "ended: after $1x$2 a part-typed answer duplicated the question"
+				dump
+			fi
+		fi
+	fi
+done
+
+# Looked at *during* the drag, not after it. At a one-row message
+# window -- fourteen rows or fewer -- both of this round's fixes
+# are invisible from the far end: the display recovers once the
+# terminal is back at 80x24, so a check that only looks there
+# passes against builds that lose the question at every other
+# step of the way.
+#
+# Two breaks it catches, both found by review and neither seen by
+# anything else in this file. Restoring the unconditional wscrl on
+# the found path discards the prompt it has just matched, so the
+# question alternates 0, 1, 0, 1 as the width steps. Relaxing the
+# maxy > 1 guard on the write path scrolls the prompt off the only
+# row there is, so it is 0 at every step.
+start 80 24 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "ended: the game never reached its command prompt at one row"
+	dump
+else
+	tm send-keys -t "$pane" 'rest 5000' Enter
+	if ! wait_for 'Are you sure'; then
+		fail "ended: rest did not ask at a one-row window"
+		dump
+	else
+		# Into the one-row window first, then along it.
+		# Starting there instead sees neither break: the
+		# height change is what leaves the prompt in the
+		# state the width steps then mishandle.
+		tm resize-window -t "$session" -x 80 -y 14
+		sleep 1
+		for w in 78 76 74 72; do
+			tm resize-window -t "$session" -x "$w" -y 14
+			sleep 1
+			if ! screen | awk '/Are you sure\?/ { n++ }
+			                   END { exit n == 1 ? 0 : 1 }'; then
+				fail "ended: at ${w}x14 the question is not on screen exactly once"
+				dump
+				break
+			fi
+		done
+	fi
+fi
+
 # --- Ctrl-D ends the session on its own keystroke ---------------------
 # Under cbreak() the tty does no end-of-file handling of its own, so
 # Ctrl-D arrives as a character. wgetnstr returned only on Enter, so it
@@ -1331,6 +1467,7 @@ if [ "$BUILD_TYPE" = "Debug" ]; then
 			tm send-keys -t "$pane" "$a" Enter
 			sleep 0.1
 		done
+
 		expect "sensors: the grid gives no reason for its dashes" \
 			"SENSORS DAMAGED"
 		# The caption is the fourth string in the panels written
