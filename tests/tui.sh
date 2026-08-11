@@ -1387,45 +1387,6 @@ for squeeze in "20 8" "80 14" "80 23"; do
 	fi
 done
 
-# --- Ctrl-D ends the session on its own keystroke ---------------------
-# Under cbreak() the tty does no end-of-file handling of its own, so
-# Ctrl-D arrives as a character. wgetnstr returned only on Enter, so it
-# used to take Ctrl-D *and* Enter to leave; every other way out of the
-# game takes one keystroke.
-start 80 24 'tournament 7 short novice pw'
-if ! to_command; then
-	fail "ctrl-d: the game never reached its command prompt"
-	dump
-else
-	tm send-keys -t "$pane" C-d
-	expect "ctrl-d: the session did not end on the keystroke alone" \
-		'May the Great Bird'
-fi
-
-# --- the panel says why the grid is masked ---------------------------
-# srscan() heads its grid with SHORT-RANGE SENSORS DAMAGED. The panel
-# has no line to spare for a heading, so it captions the box instead;
-# without it the dashes are a field of nothing with no reason given.
-#
-# Only in a debug build, because damaging a device on purpose is what
-# the debug command is for. Everything the caption depends on is in
-# tests/test_tuifmt.c, which runs in both.
-if [ "$BUILD_TYPE" = "Debug" ]; then
-	start 80 24 'tournament 7 short novice debug'
-	if ! to_command; then
-		fail "sensors: the game never reached its command prompt"
-		dump
-	else
-		unwanted "sensors: the caption is shown with the sensors working" \
-			"SENSORS DAMAGED"
-		# debugme(): three questions declined, then selective damage,
-		# then one answer per device. S. R. Sensors is the first.
-		tm send-keys -t "$pane" 'debug' Enter
-		for a in n n n y y n n n n n n n n n n n n n n n n n; do
-			tm send-keys -t "$pane" "$a" Enter
-			sleep 0.1
-		done
-
 # Looked at *during* the drag, not after it. At a one-row message
 # window -- fourteen rows or fewer -- both of this round's fixes
 # are invisible from the far end: the display recovers once the
@@ -1467,6 +1428,46 @@ else
 		done
 	fi
 fi
+
+# --- Ctrl-D ends the session on its own keystroke ---------------------
+# Under cbreak() the tty does no end-of-file handling of its own, so
+# Ctrl-D arrives as a character. wgetnstr returned only on Enter, so it
+# used to take Ctrl-D *and* Enter to leave; every other way out of the
+# game takes one keystroke.
+start 80 24 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "ctrl-d: the game never reached its command prompt"
+	dump
+else
+	tm send-keys -t "$pane" C-d
+	expect "ctrl-d: the session did not end on the keystroke alone" \
+		'May the Great Bird'
+fi
+
+# --- the panel says why the grid is masked ---------------------------
+# srscan() heads its grid with SHORT-RANGE SENSORS DAMAGED. The panel
+# has no line to spare for a heading, so it captions the box instead;
+# without it the dashes are a field of nothing with no reason given.
+#
+# Only in a debug build, because damaging a device on purpose is what
+# the debug command is for. Everything the caption depends on is in
+# tests/test_tuifmt.c, which runs in both.
+if [ "$BUILD_TYPE" = "Debug" ]; then
+	start 80 24 'tournament 7 short novice debug'
+	if ! to_command; then
+		fail "sensors: the game never reached its command prompt"
+		dump
+	else
+		unwanted "sensors: the caption is shown with the sensors working" \
+			"SENSORS DAMAGED"
+		# debugme(): three questions declined, then selective damage,
+		# then one answer per device. S. R. Sensors is the first.
+		tm send-keys -t "$pane" 'debug' Enter
+		for a in n n n y y n n n n n n n n n n n n n n n n n; do
+			tm send-keys -t "$pane" "$a" Enter
+			sleep 0.1
+		done
+
 		expect "sensors: the grid gives no reason for its dashes" \
 			"SENSORS DAMAGED"
 		# The caption is the fourth string in the panels written
