@@ -1548,6 +1548,52 @@ Modifications I made:
   game is not attached to one at all, -t says so and plays in the
   classic display rather than failing.
 
+  Resizing the terminal never crashes the game and never drops it
+  back to the classic display, at any point, including while the
+  game waits for an answer or for a keystroke at a pause. Resizing
+  can still cost you a question you had begun to answer, leaving
+  the game waiting unseen for the rest of your answer, which is
+  what the last of these paragraphs is about.
+
+  Narrower than 72 columns, the panel lines clip rather than wrap,
+  and a line with more to show than there is room for ends in ">",
+  so a shortened number is never mistaken for a small one. Shorter,
+  it is the conversation that gives up lines first, and it runs out
+  before the panels do: at fifteen rows it arrives a line at a time,
+  at fourteen the pager takes the only line there is and a scan
+  pages past without showing any of itself, and at thirteen there is
+  none of it left at all -- the panels are the whole screen, with no
+  prompt anywhere on it. Shorter still and the panels themselves
+  lose rows off the bottom, the scan keeping its numbering so you
+  can see where it stops. None of these is a crash, however dead the
+  screen looks.
+
+  Growing the terminal back brings the panels with it however far
+  the squeeze went, since they redraw from the game state. The
+  conversation does not come back that way, and a line that was cut
+  short stays cut short. Little goes with it: SRSCAN, LRSCAN,
+  STATUS, CHART and DAMAGES all cost nothing and can be asked again,
+  and the chart shows where the starbases are from the start,
+  briefing or no briefing. What is gone is whatever the game said
+  only once -- how hard the last salvo hit you, what your torpedo
+  did.
+
+  The line you were on usually comes back with the panels, but look
+  at it before you touch the keyboard, because it does not always.
+  A question you had already begun answering may not come back at
+  all, and what you are then looking at may be older conversation
+  that reads exactly like a live prompt. If the question and
+  everything you had typed are both on screen, carry on. If either
+  is missing, do not answer and do not press Enter: press Ctrl-U
+  first, which throws the line away. What you typed is still in it
+  unseen, and a yes/no question reads the first word of your answer
+  and only its first letter, so an "N" typed after a "y" you cannot
+  see answers yes -- and some of those questions can end the game.
+  With the line cleared, Enter is safe, since nothing waiting behind
+  a prompt commits you to anything. A yes/no question then asks
+  again only as Please answer with "Y" or "N", never repeating what
+  it wanted; answer N to decline whatever it was.
+
 
                ----------ACKNOWLEDGMENTS----------                    27
 
