@@ -75,7 +75,12 @@ tm() { tmux -f /dev/null -L "$socket" "$@"; }
 # where tmux puts them on both Linux and macOS: $TMUX_TMPDIR if it is
 # set, /tmp otherwise.
 cleanup() {
-	tm kill-server 2>/dev/null
+	# stdout as well as stderr, because this can run from the PIPE trap,
+	# where stdout is the pipe that has just been closed and a tmux writing
+	# to it would take the signal itself. kill-server writes nothing there
+	# today, so this is hardening and not a fix -- but a cleanup reached
+	# from a PIPE trap should not depend on the state of stdout at all.
+	tm kill-server >/dev/null 2>&1
 	rm -f "${TMUX_TMPDIR:-/tmp}/tmux-$(id -u)/$socket"
 }
 
@@ -92,6 +97,16 @@ trap 'finish' EXIT
 trap 'finish; exit 130' INT
 trap 'finish; exit 143' TERM
 trap 'finish; exit 129' HUP
+# PIPE too, which every other script here that sets traps already had.
+# Piping the output -- `head` to keep what broke and drop the pane behind
+# it, `grep -q` to ask whether anything did -- closes the pipe early, and
+# dash then dies of the signal with its EXIT trap unrun. bash runs that
+# trap before it re-raises, so this leaks where /bin/sh is dash and not
+# where it is bash. What is left is worse here than in the other scripts,
+# where an unrun EXIT trap strands a temporary directory: this one leaves
+# the private tmux server running with a game inside it, under a per-run
+# socket name nobody would think to look for.
+trap 'finish; exit 141' PIPE
 
 fails=0
 fail() {
