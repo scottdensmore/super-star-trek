@@ -1,0 +1,516 @@
+<task-notification>
+<task-id>a43c333dcaa6d50ee</task-id>
+<tool-use-id>toolu_01PzzwjP5FKseP6FTcd56ARp</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/a43c333dcaa6d50ee.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify AGENTS.md corrections" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Re-verification of `docs/agents-md-corrections` — Verdict: **FAIL** (one new finding; F1 confirmed fixed)
+
+F1 is genuinely fixed and the fix is better than the correction I asked for. Your three side findings are all in the text and all accurate. The new `instructions.sh` check works and its mutation proof reproduces. But the sentence that replaced the false one contains a **new** falsifiable claim, and it is false for half the scripts — and the new check's own comment repeats it. Same class as F1, in a branch whose purpose is to stop exactly this.
+
+---
+
+## F1 — fixed, and verified against all eight scripts
+
+`2&gt;&amp;1 | grep -E '^(FAIL|SKIP):'` needs no claim about summary shapes, and it is right. Measured against the four real failing transcripts I produced last pass:
+
+| transcript | grep lines | the script's own total |
+|---|---|---|
+| `tournament.sh` (broken `lrscan` packing) | 14 | `14 check(s) failed.` |
+| `tui.sh` (broken scan banner) | 6 | `6 check(s) failed.` |
+| `golden.sh` (same break) | 2 | `2 journey(s) changed.` |
+| `help.sh` (unbuilt copy) | 8 | `8 check(s) failed.` |
+
+`golden` is the case the old pattern got wrong, and the line count now equals its total, so "how many lines it prints is how many there were" holds where the previous sentence failed. Not one dump line survived the pattern in any of the four transcripts. `SKIP:` is right too: `tests/tui.sh:50` is the only `SKIP:` line in the suite, at column 0, with `exit 77` beside it. Dropping the "count comes last" claim removes the `journey.sh`/`golden.sh` counter-examples I raised. "The shell tests print one line on a pass" — checked all eight, all one line.
+
+The three side findings read accurately: the exit-status sentence is exactly right (non-zero iff nothing matched, which now means no failure *and* no skip), the skip rationale names the right script, and the dump/cascade sentence matches what I saw (`timeout: failed to execute process…`, the only line explaining eight failures, lives inside a dump).
+
+---
+
+## F2 (new, deterministic) — "every dump they print is indented or diff-prefixed" is false for four of the eight
+
+`AGENTS.md:396-398`:
+
+&gt; and every dump they print is indented or diff-prefixed, so `2&gt;&amp;1 | grep -E '^(FAIL|SKIP):'` comes back with the failures and nothing else
+
+Only the dump *headers* are indented. Four scripts write the dump **body raw, at column 0**:
+
+- `tests/eof.sh:83` — `tail -c "$DUMPBYTES" "$out" &gt;&amp;2`
+- `tests/help.sh:97` — same
+- `tests/journey.sh:202` — `head -c "$DUMPBYTES" "$out" &gt;&amp;2`
+- `tests/tournament.sh:663` — same
+
+Only three indent: `tests/tui.sh:162,168` (`sed 's/^/  | /'`), `tests/golden.sh:158,162` (`sed 's/^/  /'` — so it indents rather than relying on the diff prefix, making "diff-prefixed" imprecise even where it applies), and `tests/instructions.sh:296`. From the real `tournament.sh` failure transcript, lines 3-12, at column 0:
+
+```
+FAIL: seed 7: the long-range scan reads 406 where the quadrant holds K=4 B=0 stars=5 …
+  --- seed 7, last 3000 bytes ---
+sition      3 - 2, 7 - 9
+ 4  . . . . . . . . . .  Life Support  ACTIVE
+…
+COMMAND&gt; 
+```
+
+**The recommendation still works — but for a reason the paragraph does not give.** What actually keeps those raw dumps out of the filter is that the game never emits the tokens: `grep -c 'FAIL' *.c *.h` and the same for `SKIP` return zero across every source file. That is the real guarantee, it is weaker than the stated one, and nothing checks it — the new `instructions.sh` loop deliberately leaves dumps alone, and its comment (`tests/instructions.sh:236-238`) states the same false reason:
+
+&gt; What keeps them out of the filter is that they are indented or diff-prefixed, which is not one shape to match; the failure line is.
+
+So the false claim now lives in two files. The premise for excluding dumps from the check is itself the thing that is wrong.
+
+**Related imprecision, same sentence:** "Every one of them prints `FAIL: ` at column 0 **from the same `fail()`**". Every script *has* the canonical `fail()`, but 15 failure lines across 7 scripts are emitted by `echo`/inline `printf` instead — including `tests/score.sh:96` and `:141`, which are the primary output of `score.sh`'s main assertion (one line per misaligned column), and `tests/tui.sh:47,54,91,342`. They all happen to have the right shape today. Nothing holds them to it (see below).
+
+---
+
+## The new `tests/instructions.sh` check — verified, with two limits
+
+I reproduced your mutation proof independently on an `rsync` copy outside the repository, run as `tests/instructions.sh .` from inside it, and extended it. Baseline green; every mutation restored and re-verified green afterwards.
+
+| mutation | result |
+|---|---|
+| `tests/eof.sh` format → `'  FAIL: %s\n'` | caught, names `eof.sh` |
+| `tests/tournament.sh` format → `'FAILED: %s\n'` | caught, names `tournament.sh` |
+| **new `tests/newthing.sh` with no `fail()` at all** | **caught**, names `newthing.sh` |
+| **new script carrying the canonical `printf` but reporting failures via `echo "  FAIL: …"` and `printf 'PROBLEM: …'`** | **passes — green** |
+| `tests/help.sh` `fail()` re-indented with spaces, behaviour identical | fails, message says the script "does not print its failures as 'FAIL: ' at column 0" — untrue of that script |
+
+Answering your two questions directly:
+
+- **No `fail()` at all: covered.** A script lacking the canonical line is reported by name. Your claim holds.
+- **Failures printed by another route: not covered.** The check greps for the *presence of the helper's text*, not that failure output goes through it. A script can carry an unused canonical `fail()` and print every real failure indented, and `instructions` stays green — which is precisely the drift the check exists to prevent. This is not hypothetical: `score.sh`'s and `tui.sh`'s inline `FAIL:` emitters above are live, uncovered failure output, and `score.sh:96` is the one whose shape a reviewer tidying those 120-column lines would most plausibly disturb.
+- **Tab coupling (minor):** the pattern `^\t*printf 'FAIL: %s\n'` requires tab indentation of the *statement*. Every script here uses tabs, so it is not a live problem, but a space-indented `fail()` that behaves perfectly is failed with a message asserting something false about its output — an odd failure mode for a check whose subject is misleading claims. `^[[:space:]]*` would cost nothing.
+- **False-positive scope (minor):** the loop demands the canonical helper of *every* `tests/*.sh`. A future non-test helper under `tests/` (a shared `lib.sh`) would fail it — demonstrated by the empty-script mutation. Conservative rather than wrong, but "the check covers the ninth automatically" also means it constrains what the ninth may be.
+
+The rest of the block is sound: `ROOT` is defined at `tests/instructions.sh:20`, the `[ -f "$script" ] || continue` guards an unmatched glob, the quadruple backslash resolves correctly to a literal `\n` in the BRE, `instructions.sh` satisfies its own check, and `shellcheck` (default level, not just `-S warning`), `sh -n` and `bash -n` are all clean.
+
+---
+
+## Cosmetic
+
+`AGENTS.md:398` is 54 characters in a paragraph otherwise running 67-79 — the same ragged-wrap artifact you just fixed at the old line 175. Line 405 is 79, at the top of the file's range but not unique.
+
+---
+
+## Environment issues
+
+Unchanged from my last pass: **`cppcheck`, `clang-tidy` and `scan-build` are absent**, so no C static analysis ran. No C changed on this branch, so nothing was lost — but it is a gap, not a pass. `shellcheck`, `tmux` and `dash` (this box's `/bin/sh`) are present and were used.
+
+---
+
+## What ran
+
+State: branch `docs/agents-md-corrections`, three modified files, nothing staged, nothing untracked. Repository unmodified by me; all mutation work on `rsync` copies under `/tmp`, since deleted.
+
+- **`tests/tui.sh` re-confirmed comment-only:** stripping full-line comments makes it byte-identical to `main`.
+- **Full battery, both configurations, after the new edits:** `ctest --test-dir build-debug --output-on-failure` → 11/11 passed (267.8 s); `ctest --test-dir build-release --output-on-failure` → 11/11 passed (259.1 s). Run in that order, sequentially, so nothing contended with the tmux-timed `tui` test. Also `-R '^instructions$'` in both configurations separately before the full runs.
+- Builds were re-verified last pass on the same sources (`Debug`, `Release`, and `-DSST_WERROR=ON` per #125 — all clean); no C or CMake file changed since, so they were not rebuilt from scratch this round.
+- **Claim checks:** the new grep pattern replayed over four recorded failing transcripts (`tournament`, `tui`, `golden`, `help`) with line counts compared against each script's own total; dump-body indentation audited across all eight scripts by source *and* by transcript; `FAIL`/`SKIP` token search across every `.c`/`.h`; `SKIP:` shape and exit-77 audit; pass-line audit of all eight.
+- **Mutation proof of the new check:** five mutations on an out-of-repo copy, listed above, each restored and re-verified green.
+
+Nothing was flaky. F2 is a property of the source text and the scripts, not of a run; the wrong-reason pass of the new check reproduces every time.</result>
+<usage><subagent_tokens>105723</subagent_tokens><tool_uses>20</tool_uses><duration_ms>763473</duration_ms></usage>
+</task-notification>
+
+---
+
+add a .agentignore file with all the agent directories
+
+---
+
+actually don't do that
+
+---
+
+<task-notification>
+<task-id>a43c333dcaa6d50ee</task-id>
+<tool-use-id>toolu_01DxTDDU1rnMz7DEis4zwH9L</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/a43c333dcaa6d50ee.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify AGENTS.md corrections" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Re-verification of `docs/agents-md-corrections` — Verdict: **FAIL** (one new finding; F2 and the check gap confirmed fixed)
+
+The substance is now right: the filter recommendation is sound, its reason is the real one, and the wrong-reason pass in the check is genuinely closed — I reproduced all of it. But the sentence that replaced F2's false reason contains a new false statement of fact, in both files, and it is false for the same reason F2 was: it was verified with a command that did not cover what the sentence claims.
+
+---
+
+## F3 (new, deterministic) — "no `.c` or `.h` in this repository contains the token `FAIL` or `SKIP` at all" is false
+
+`AGENTS.md:398-400` and, in the same words, `tests/instructions.sh:233-235`.
+
+```
+$ grep -rnE 'FAIL|SKIP' --include='*.c' --include='*.h' .
+tests/test_tuifmt.c:13:		printf("FAIL %s\n  want: \"%s\"\n  got:  \"%s\"\n", what, want, got);
+tests/test_tuifmt.c:31:		printf("FAIL %s\n  want: %d%s\n  got:  %d%s\n",
+tests/test_tuifmt.c:359:		printf("%d test(s) FAILED\n", failures);
+tests/test_rules.c:29:		printf("FAIL %s\n  want: %g\n  got:  %g\n", what, want, got);
+tests/test_rules.c:37:		printf("FAIL %s\n  want: %g (within %g)\n  got:  %g\n",
+tests/test_rules.c:45:		printf("FAIL %s\n  want: %d\n  got:  %d\n", what, want, got);
+tests/test_rules.c:663:		printf("%d test(s) FAILED\n", failures);
+```
+
+Two `.c` files in this repository contain the token, and both **print it at column 0**. The repository has 19 `.c`/`.h` files; `grep -cE 'FAIL|SKIP' *.c *.h` — the command you ran — globs only the 17 at the top level and never sees `tests/`. That is the same shape as the original defect: a claim about the tree checked against part of the tree.
+
+**The conclusion still holds, for two reasons, neither of which is the one written down.** Those two files are the `tuifmt` and `rules` harnesses; they are not the game, they are run only by `ctest` directly, and no shell script ever dumps their output. And their token is `FAIL ` — a space, not a colon — so `^(FAIL|SKIP):` would not match them even if it saw them. So the filter is safe; the premise offered for it is not true.
+
+The narrower statements that *are* true, and that I verified across all 19 files: nothing compiled into the game contains either token, and nothing the game prints can start with `FAIL:` or `SKIP:`. The second is the one the argument actually needs.
+
+Everything else in the replacement is correct: "Four of them write the dump body raw at column 0 rather than indenting it" is exactly right (`eof.sh:83`, `help.sh:97`, `journey.sh:202`, `tournament.sh:663`), and dropping "from the same `fail()`" fixes the imprecision I raised, since `instructions.sh` now holds the inline emitters directly.
+
+---
+
+## The check gap — closed, and I reproduced your proof
+
+On a fresh `rsync` copy outside the repository, `tests/instructions.sh .` run from inside it, every mutation restored and re-verified green afterwards:
+
+| mutation | result |
+|---|---|
+| `score.sh:96` → `'  FAIL: finish.c:%s …'` | **caught by check 2**, names `score.sh`, prints `96:` with the offending line. `grep -c` for the canonical printf in the mutated file returns **1** — check 1 passes it over, so check 2 is carrying the case, exactly as you claimed |
+| my M4 verbatim — unused canonical `fail()`, real failure via `echo "  FAIL: …"` | **caught**. The wrong-reason pass is closed |
+| `eof.sh` format indented | caught by **both** checks (2 lines, which is the more useful report) |
+| new script with no `fail()` at all | still caught by name |
+| space-indented `fail()`, behaviour identical | **green** — the tab coupling is fixed, no more false message |
+| baseline, and after every restore | green |
+
+`if indented=$(grep …)` takes the command's status correctly under both `dash` and `bash`; the evidence lines are 9-space indented, so `instructions.sh`'s own dump stays out of the filter it is defending; the script passes its own two checks; `shellcheck` at default level (not just `-S warning`), `sh -n` and `bash -n` are all clean.
+
+**Residual limit, reported not demanded.** Two narrower forms still pass both checks, since the pattern looks for whitespace immediately inside the quotes:
+
+```sh
+printf '\tFAIL: indented by an escape\n' &gt;&amp;2          # green
+printf '%s\n' "  FAIL: indented by an argument" &gt;&amp;2   # green
+```
+
+I would not spend a round on these. No regex over source text catches every way to print an indented line, the check now covers the natural form and the demonstrated case, and — importantly — the comment beside the loop scopes its claim precisely ("whose FAIL sits behind whitespace inside the quotes"), so it does not overstate what it caught. Worth knowing, not worth blocking.
+
+---
+
+## Your resolved item — I think the trade is right
+
+A `tests/lib.sh` failing this loop is a loud failure at the moment it lands, with the real case in front of whoever fixes it, against a silent drift that survived years. That is the right way round, and I would not exempt anything speculatively.
+
+One rider, on the same theme as the tab coupling you just fixed: the message such a helper would produce says its "failures would not survive" the filter, which is a false statement about a script that has no failures. Whoever meets it spends a minute working out that the check is about a class the file does not belong to. A clause like "or has no failures to print, in which case this loop needs an exemption" would make it the one-line fix you describe rather than a small puzzle. Not blocking, and not something I would rerun for.
+
+---
+
+## Cosmetic — one ragged line survives
+
+`AGENTS.md:405` is 52 characters (`Two things that grep costs you, both worth knowing`) in a paragraph otherwise running 70-79. The line I flagged at the old 398 is fixed and is now 73; this one appears to be what the rewrap moved rather than removed, so "both cosmetic ragged lines rewrapped" is not quite the state on disk.
+
+---
+
+## Environment issues
+
+Unchanged: **`cppcheck`, `clang-tidy` and `scan-build` are absent**, so no C static analysis ran this round either. No C source changed on this branch, so nothing was lost, but the check did not run and is not a pass. `shellcheck`, `tmux` and `dash` (this box's `/bin/sh`) are present and were used.
+
+---
+
+## What ran
+
+State: branch `docs/agents-md-corrections`, three modified files, nothing staged, nothing untracked. Repository unmodified by me; all mutation work on an `rsync` copy under `/tmp`, since deleted.
+
+- **Full battery, both configurations, on the current tree:** `ctest --test-dir build-debug --output-on-failure` → 11/11 passed (267.9 s); `ctest --test-dir build-release --output-on-failure` → 11/11 passed (259.1 s). Run sequentially so nothing contended with the tmux-timed `tui` test. This is the third consecutive green pair; `instructions` passes in both.
+- **`tests/instructions.sh`:** `sh -n`, `bash -n`, `shellcheck` (default level) all clean; direct run green; six mutations as tabled above.
+- **`tests/tui.sh`:** unchanged since my first pass; re-confirmed comment-only against `main` (byte-identical after stripping full-line comments).
+- **Claim checks:** `FAIL`/`SKIP` token search across all 19 `.c`/`.h` files in the tree, not just the top-level glob (this is F3); the four-raw-of-eight dump fact re-audited by source and against recorded failing transcripts; paragraph line-length measurement.
+- Builds (`Debug`, `Release`, `-DSST_WERROR=ON` per #125) were verified clean in my first pass and no C or CMake file has changed since, so they were not rebuilt this round.
+
+Nothing was flaky. F3 is a property of the tree, not of a run, and reproduces with a single `grep -r`.</result>
+<usage><subagent_tokens>126372</subagent_tokens><tool_uses>9</tool_uses><duration_ms>714458</duration_ms></usage>
+</task-notification>
+
+---
+
+Tests should only go against product code nothing else in the repo
+
+---
+
+<task-notification>
+<task-id>a43c333dcaa6d50ee</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/a43c333dcaa6d50ee.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify AGENTS.md corrections" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Final re-verification — Verdict: **PASS**, with one re-opened coverage gap and one cosmetic
+
+**Say it plainly, as you asked: the substance is right.** Every factual claim in the changed prose is now true, and I checked each one against the files rather than against your description of them. F3 is correctly fixed, and the method you used to fix it is sound.
+
+But you need to know this first:
+
+---
+
+## The working tree changed while I was verifying, and it is no longer the three files you described
+
+Your message described three files, with the two-check loop present and improved. That is the state I read, mutated and ran a full green pair against. Partway through, the tree changed on disk:
+
+```
+2026-08-11 22:48:09  tests/instructions.sh   reverted to main's content
+2026-08-11 22:48:43  AGENTS.md               rewritten
+$ git status --short
+ M AGENTS.md
+ M tests/tui.sh
+```
+
+`git diff main -- tests/instructions.sh` is now **zero lines**. The entire check is gone. `AGENTS.md` was edited in step with it: the clause "and `tests/instructions.sh` holds them to it" is gone too, and `grep -n 'instructions.sh' AGENTS.md` returns nothing. So the state is **self-consistent** — the check was withdrawn and the sentence citing it was withdrawn with it, leaving no dangling claim. Nothing is broken by it. The tree has been stable for the ~5 minutes since.
+
+I have no way to tell whether that was a deliberate scope decision (the check is arguably a separate slice from the doc corrections, which step 3 would favour) or an accident. It was not me: I never wrote to any file in the repository, and every mutation ran inside `/tmp` copies. I am reporting the state on disk, and my verdict is about that state — not about the state your message described.
+
+---
+
+## F3 — fixed, and the method holds
+
+I checked the method as well as the result, since that is what failed twice.
+
+- **Your command, run verbatim** — `grep -rlE 'FAIL|SKIP' --include='*.c' --include='*.h' .` — returns exactly `tests/test_tuifmt.c` and `tests/test_rules.c`.
+- **An independent method agrees**: `git ls-files '*.c' '*.h'` gives 19 tracked files, and grepping those gives the same two. Two different routes, same answer.
+- One property of your method worth knowing rather than fixing: run from the repository root it also descends into the untracked `build*/` trees, which here hold 9 more `.c` files (CMake's `CMakeCCompilerId.c` copies). They contain neither token, so it came back clean — but the answer depended on that. `git ls-files` is the one that answers "in this repository" by construction, and it is the reason I ran it.
+
+Each part of the replacement, verified separately:
+
+- **"no source compiled into `sst` contains the token `FAIL` or `SKIP`"** — checked each of the 13 sources in `add_executable(sst …)` at `CMakeLists.txt:35` plus the 4 headers. Zero hits.
+- **"The two compiled harnesses do contain it — they print `FAIL ` without the colon"** — true: every occurrence is `printf("FAIL %s\n", …)` or `printf("%d test(s) FAILED\n", …)`. `grep -nE 'FAIL:|SKIP'` over both files returns nothing, so neither can produce a line the filter would match even if it saw one.
+- **"`ctest` runs them directly, so no script dumps their output"** — `CMakeLists.txt:53,59` register them as `COMMAND test_tuifmt` / `COMMAND test_rules`. The only mentions of either in `tests/*.sh` are comments (`tournament.sh:404`, `tui.sh:1723` — three now, since your own new comment was one of them, but all comments).
+
+The `tests/instructions.sh` comment carried the same correction. It has since gone with the file.
+
+**Your paragraph measurement claim was also right for the state you measured:** nothing under 60 columns except the paragraph's own final line.
+
+---
+
+## Re-opened: the missing-coverage item from my first pass
+
+With the loop withdrawn, `AGENTS.md:395-396` — "Every one of them prints `FAIL: ` at column 0" — is **true and unguarded**. I re-verified it holds today: all eight scripts carry the canonical `fail()` at column 0, and the 15 inline `FAIL:` emitters across seven scripts (`score.sh:96,141`, `tui.sh:47,54,91,342`, and the rest) are all at column 0 as well.
+
+That is the same shape as the claim this branch exists to correct, and it drifted for years unnoticed. The advice now depends on it, and nothing in the suite can tell you when it stops being true — a script whose failure line gets indented drops out of the filter silently, returning fewer failures rather than an obvious break.
+
+I am recording this as **missing coverage**, not as a failure, because the prose no longer claims a check exists. It was closed and then withdrawn, and I want the record to show the check worked when it was there. Everything below was verified green on the withdrawn version, so if it returns on another branch none of it needs redoing:
+
+| mutation | result on the withdrawn version |
+|---|---|
+| `score.sh:96` indented | caught by check 2, named, with the line printed; check 1 passed it over (`grep -c` = 1), so check 2 was carrying the case |
+| unused canonical `fail()` + `echo "  FAIL: …"` | caught — the wrong-reason pass I demonstrated was genuinely closed |
+| `eof.sh` format indented / reworded `FAILED:` | caught by both checks |
+| new `tests/lib.sh` with no `fail()` | caught, and the message ended "If it is not a test and has no failures to print, this loop needs an exemption for it" — the rider was taken and it read correctly |
+| space-indented `fail()`, behaviour identical | green — the tab coupling was fixed |
+| `printf '\tFAIL: …'`, `printf '%s\n' "  FAIL: …"` | green — the residual you and I both resolved rather than chased |
+
+---
+
+## Cosmetic — the ragged lines came back with the rewrite
+
+The withdrawal left two short lines mid-paragraph, at `AGENTS.md:402` (58 columns) and `:403` (40 columns, `` `2&gt;&amp;1 | grep -E '^(FAIL|SKIP):'` comes ``), in a paragraph otherwise 68-79. `:413` at 51 is the paragraph's final line and is fine. Your measurement discipline was right; the edit that followed it was not measured.
+
+---
+
+## Environment issues
+
+Unchanged across all four rounds: **`cppcheck`, `clang-tidy` and `scan-build` are absent**, so no C static analysis has run on this branch. No C source ever changed here, so nothing was lost — but the check did not run and I am not recording it as a pass.
+
+---
+
+## What ran
+
+Final state verified: branch `docs/agents-md-corrections`, **two** modified files (`AGENTS.md`, `tests/tui.sh`), nothing staged, nothing untracked. `tests/tui.sh` re-confirmed byte-identical to `main` after stripping full-line comments. Repository unmodified by me; all mutation work on `rsync` copies under `/tmp`, since deleted.
+
+- **Full battery against the tree as it now stands:** `ctest --test-dir build-debug --output-on-failure` → 11/11 passed (268.2 s).
+- **`instructions` in both configurations against the current `AGENTS.md`** → passes. It is the only test that reads either changed file: `journey.sh` mentions `AGENTS.md` only in comments.
+- **Three earlier full green pairs**, Debug and Release, on the three prior states of this branch (267.8/259.1, 267.9/259.1, 268.5/260.6 s). Builds — Debug, Release, and `-DSST_WERROR=ON` per #125 — were clean in my first pass and no C or CMake input has changed on this branch since.
+- **Claim checks this round:** the sst target's 17 sources and headers individually; both harness files for a colon-form or `SKIP` token; `CMakeLists.txt:35,53,59`; harness mentions across `tests/*.sh`; your `grep -r` method against a `git ls-files` method, including what the former reaches in `build*/`; paragraph line-length measurement over both edited blocks.
+- Earlier rounds' evidence still standing: the grep pattern validated against four real failing transcripts with line counts matched to each script's own total; the four-raw-of-eight dump audit; `Not Run` and the `cmake` invocation reproduced on a fresh copy; the PIPE-trap path exercised under `dash` with no leaked tmux server.
+
+No flakes in any round. Every finding I raised was deterministic and reproducible from the files.</result>
+<usage><subagent_tokens>149754</subagent_tokens><tool_uses>16</tool_uses><duration_ms>984848</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a43c333dcaa6d50ee</task-id>
+<tool-use-id>toolu_01Mz5TRvuPYj1P5DQPJxTC7S</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/a43c333dcaa6d50ee.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify AGENTS.md corrections" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Scoped check: the rewrap moved only line breaks — **confirmed**
+
+The word sequence is intact. I did not rely on my own transcription of what I passed: the session-recording ref carries the exact bytes, and I recovered them.
+
+## Reference bytes, identified by fingerprint
+
+`7cb671dc` (2026-08-11 22:49:23) matches the state I verified and passed on every marker I recorded at the time: 32180 bytes, no `instructions.sh` citation anywhere in the file, and short lines at exactly 402(58), 403(40), 413(51). That is the version my last report described, so it is the right baseline.
+
+## Four comparisons, all clean
+
+| check | result |
+|---|---|
+| paragraph word sequence, whitespace normalised | **identical — 354 words, same order** |
+| whole-file word sequence | **identical — 5425 words** |
+| everything outside the paragraph | **byte-identical** (`cmp`) |
+| total file size | **32180 bytes, unchanged** |
+
+And the structural checks that a bad seam would show up in: no doubled adjacent word anywhere in the paragraph; all 26 continuation lines are a plain two-space indent with no other leading whitespace; no trailing spaces and no tabs introduced; line count unchanged at 27.
+
+**Those last facts close the one hole in a word-level comparison.** Splitting on whitespace cannot by itself see a single space becoming two inside a line. Here it does not have to: the paragraph's byte count is fixed (total size equal, remainder byte-identical), its words are identical, its 27 indents are exactly two spaces each, and 354 words leave exactly 353 separators — every one of which must therefore be a single space or a single newline. There is no room in the byte budget for an extra space or a lost one. The only thing that moved is which of those separators is a newline.
+
+## Your width measurement, checked independently
+
+Lines 386-414: everything falls in 68-77 except **413(18): `  you are reading.`**, which is the paragraph's own final line. Nothing under 66 or over 80 otherwise. Your measurement was right.
+
+## State
+
+`instructions` passes in **both** configurations against the `AGENTS.md` now on disk — re-run rather than carried over, since the file changed at 23:03:46, after my previous run of it. Worktree is two files, `AGENTS.md` and `tests/tui.sh`, nothing staged, nothing untracked; `tests/tui.sh` re-confirmed comment-only against `main` (4 changed lines, all comment).
+
+## On the ruling
+
+Understood, and it answers the item cleanly: tests go against product code, the withdrawn loop tested sibling test scripts, so the coverage gap is not a gap in the suite but a documentation claim maintained by verification. That is the owner's call on scope and I have no quarrel with it. One thing worth having in the record for whoever reads the claim later: `AGENTS.md`'s "Every one of them prints `FAIL: ` at column 0" was true across all eight scripts as of this verification — the canonical `fail()` in each, plus the 15 inline emitters in seven of them, every one at column 0 — checked against the files on 2026-08-11. If it drifts, it drifts as a documentation bug, and that sentence is where to look.
+
+---
+
+# Final verdict for the branch: **PASS**
+
+Nothing outstanding. Across four rounds every claim in the changed prose has been checked against the files it describes rather than against a description of them:
+
+- the filter recommendation, validated against four real failing transcripts with line counts matched to each script's own total;
+- the per-failure dump interleaving, proved by breaking the game and running `tournament.sh`, `tui.sh`, `golden.sh` and `help.sh` against it;
+- the four-raw-of-eight dump fact, and the `FAIL`/`SKIP` token argument across all 19 tracked `.c`/`.h` files by two independent methods;
+- step 4's `cmake` invocation and the `Not Run` claim, reproduced on a fresh out-of-repo copy;
+- the `tests/tui.sh` comment, with the PIPE-trap path exercised under `dash` and no leaked tmux server.
+
+Builds are clean in Debug, Release and `-DSST_WERROR=ON` (issue #125), and the full `ctest` battery has come back 11/11 in both configurations on every state of this branch I have seen — four Debug runs and three Release. **The one environment gap stands and is not a pass:** `cppcheck`, `clang-tidy` and `scan-build` are absent from this machine, so no C static analysis ran; no C source changed on this branch, so nothing was lost by it.</result>
+<usage><subagent_tokens>163824</subagent_tokens><tool_uses>8</tool_uses><duration_ms>145279</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a43c333dcaa6d50ee</task-id>
+<tool-use-id>toolu_011SFeNjpuNeW5qvW5QGw27M</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/a43c333dcaa6d50ee.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify AGENTS.md corrections" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Scoped re-check — both claims verified true; one new imprecision in an adjacent sentence
+
+## 1. The `SKIP:` rationale under `ctest` — correct, checked against `ctest` itself
+
+`CMakeLists.txt:101` is `set_tests_properties(tui PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300)`. I ran the real thing, with `tmux` removed from `PATH` via a 1732-entry shadow directory:
+
+```
+$ env PATH=/tmp/fb ctest --test-dir build-debug -R '^tui$' --output-on-failure
+1/1 Test #7: tui ..............................***Skipped   0.01 sec
+100% tests passed, 0 tests failed out of 1
+The following tests did not run:
+	  7 - tui (Skipped)
+ctest exit=0
+```
+
+The script's `SKIP: tmux is not installed…` line is **not printed anywhere**, and piping that output through `grep -E '^(FAIL|SKIP):'` returns nothing (exit 1) — an empty result indistinguishable from a pass, exactly as the new prose says and exactly the hazard the review found. The claim "the skip shows up as `Skipped` in `ctest`'s own summary and nowhere in what you filtered" is true in both halves.
+
+One fact that reinforces it rather than contradicting it, worth knowing: `ctest` also prints `100% tests passed, 0 tests failed out of 1` and exits **0** for that run. So the summary a reader is redirected to says "100% passed" a line above the "did not run" block. The sentence does not claim otherwise, and the redirection is still right — the skip is visible there and nowhere else.
+
+## 2. The `sst.doc` half of the dump premise — correct, and now complete
+
+- `grep -cE 'FAIL|SKIP' sst.doc` → **0**.
+- `sst.c:160` is `fp = fopen("sst.doc", "r");`, on the `help` path.
+- `tests/help.sh:97` is one of the four raw `tail -c` dumps.
+
+I also closed the axis the review's finding opens, since "the game prints text it reads at runtime" invites the question of what else it reads. Every `fopen` in the game's sources: `sst.c:160` (`sst.doc`, read and printed), `setup.c:55,98` (the save file, `wb`/`rb`, binary, never printed), `finish.c:425` (opened for writing). So `sst.doc` is the only external text the game can put in a dump, and the premise now covers everything it names. The other conceivable route — the game echoing what a script typed at it — does not exist either: the unknown-command path prints the fixed string `prout("UNRECOGNIZED COMMAND.")` at `sst.c:244,246`, and no script feeds either token as input in any case.
+
+## 3. Verified from the same review's other fixes
+
+- **`TIMEOUT` has a real referent:** every registered shell test carries one (`CMakeLists.txt:69,83,86,89,101,112,120,125,134`), so "a script its `TIMEOUT` killed" is not hypothetical.
+- **`golden.sh`'s closing instruction** is the third cost, correctly: `tests/golden.sh:426-429` prints the count and then the three re-record lines, all after the last failure and all dropped by the filter.
+- **Step 4's failed-build claim, checked rather than inferred.** I broke `tuifmt.c` in an out-of-repo copy so compilation failed (`cmake --build` exit 2, 3 errors), then ran `ctest`:
+
+  ```
+  1 - tuifmt (Not Run)
+  2 - rules (Not Run)
+  ```
+
+  Identical to a copy never built — and note `rules`, whose own source compiled fine and which is `Not Run` only because the build stopped before linking it. That is precisely the case the new sentence says is easy to walk past.
+
+## 4. Structure of the split bullet — sound
+
+The separator at line 413 is a genuinely empty line (no trailing spaces); every other line in the item is either the `- ` marker or a plain two-space continuation indent, which is exactly the content column for a `- ` list, so the second paragraph stays inside the item. The section still holds its three bullets in order. No doubled adjacent words and no seam artifacts (double spaces mid-line, `,,`, `..`, space-before-comma) anywhere in either edited block.
+
+**The counted standard phrase is at 4**, its expected total — and a caution, since I nearly reported otherwise: `grep -c` said 2, because it counts *lines* and the phrase wraps across a line break in two of the four places. Flattening first gives 4 by two independent routes, matching `STANDARDS=4` and the script's own awk. Same shape of error as the ones this branch has been fixing; the instrument was wrong, not the file.
+
+---
+
+## One new imprecision, in an adjacent sentence of the same paragraph
+
+Not one of the two you asked about, and small — but it is the same shape, and it is in the sentence the review just rewrote:
+
+&gt; it comes back non-zero whenever nothing matched, which includes a suite that passed, **a `tui` that skipped**, and a script its `TIMEOUT` killed
+
+A skipped `tui` makes the pipeline non-zero **under `ctest` only**. Run directly — which is the case the two preceding sentences carve out as where `SKIP:` earns its place — the skip prints a matching line and the pipeline comes back **zero**:
+
+```
+$ env PATH=&lt;no tmux&gt; sh tests/tui.sh build-debug/sst Debug 2&gt;&amp;1 | grep -E '^(FAIL|SKIP):'
+SKIP: tmux is not installed, so there is no pty to test in
+grep exit=0
+```
+
+So the example is true in one of the two situations the paragraph has just distinguished and false in the other. A qualifier — "a `tui` that skipped under `ctest`" — is the whole fix. Your call whether that is worth reopening an edit you have declared closed; I would take it, because the sentence sits four lines below the distinction it elides, but I would not argue if you resolve it as too small to disturb a finished paragraph. Either way it is on the record here.
+
+---
+
+## State
+
+- **Full Debug battery on the final tree:** `ctest --test-dir build-debug --output-on-failure` → 11/11 passed, 268.3 s. `instructions` additionally re-run in **both** configurations against the `AGENTS.md` now on disk → passes.
+- Worktree: two files, `AGENTS.md` and `tests/tui.sh`; nothing staged, nothing untracked. `tests/tui.sh` remains comment-only against `main` (4 changed lines, all comment).
+- Scratch directories used for the `PATH` shadowing, the failed-build copy and the earlier mutation work are all deleted; nothing in the repository was modified by me at any point.
+- **Environment gap, unchanged and still not a pass:** `cppcheck`, `clang-tidy` and `scan-build` are absent, so no C static analysis has run on this branch. No C source changed here, so nothing was lost by it.
+
+**Verdict: pass**, with the one imprecision above outstanding and everything you asked me to check confirmed true.</result>
+<usage><subagent_tokens>184569</subagent_tokens><tool_uses>14</tool_uses><duration_ms>465558</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a36f3e7e830250f58</task-id>
+<tool-use-id>toolu_01LUa51obp7M5BjBusLKs1PG</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/a36f3e7e830250f58.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review AGENTS.md corrections" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Verdict: approve
+
+**State approved**: branch `docs/agents-md-corrections` at `58f5ea6` (still no commits over `main`), with the uncommitted modifications to `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md` (63 lines changed: the step-4 mutation-proof bullets at 168-202, and the "Keep what reaches the main agent's context small" shell-test bullet at 390-424, now two paragraphs) and `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh` (comment reword at 101-102). Nothing staged, nothing untracked. Approval covers exactly this worktree.
+
+## Re-verification of the six fixes
+
+I re-read both files from disk and re-checked every claim rather than taking the report:
+
+1. **`SKIP:` under `ctest`** — fixed correctly, and the new sentence matches what I reproduced independently: a `SKIP_RETURN_CODE 77` test's output is not printed by `ctest --output-on-failure`, and the skip appears only as `***Skipped` and in the "did not run" block. "Earns its place only when you run a script yourself" is the right shape of the qualifier.
+2. **`sst.doc`** — fixed, and the premise is now exhaustive rather than merely wider. I repeated the `fopen` audit: `sst.c:160` (`sst.doc`, "r", printed), `setup.c:55,98` ("wb"/"rb", binary save, never printed), `finish.c:425` ("w", write-only). `sst.doc` is genuinely the only external text that can land in a dump, and it contains neither token (grep count 0 for both). No source compiled into `sst` holds either token; only `tests/test_rules.c` and `tests/test_tuifmt.c` do.
+3. **The overstated iff** — the verifier's catch was right and the re-fix is right. "A `tui` that skipped under `ctest`" is now the only true form: run directly, `tui.sh:50` prints a matching `SKIP:` line and the pipeline returns zero. `TIMEOUT` has a referent on all nine registered shell tests (`journey` 120, `journey-tui` 120, `eof` 150, `help` 120, `tui` 300, `tournament` 300, `golden` 120, `instructions` 30, `score` 30), and "killed before it printed anything" is the correct qualifier, since a timeout with partial output does reach the filter.
+4. **"Built, and fresh"** — clean antecedent, and the two reasons now map onto it in order.
+5. **The failed build** — the clause is right and the verifier's check of it (breaking `tuifmt.c` so `rules` is also `Not Run`, despite compiling fine) is the better evidence. One residual wording nit below.
+6. **The third cost** — accurate: `tests/golden.sh:141-145` ends with `N journey(s) changed.` and the three-line re-record instruction, none of which matches `^(FAIL|SKIP):`.
+
+Also re-confirmed on this state: all eight `tests/*.sh` print `FAIL: ` at column 0; exactly four dump raw at column 0 (`eof.sh:83`, `help.sh:97`, `journey.sh:202`, `tournament.sh:663`); the two compiled harnesses print `FAIL ` without a colon and are run directly by `CMakeLists.txt:53,59`; no fail message spans two lines, so "how many lines it prints is how many there were" holds; `tests/instructions.sh .` and `tests/score.sh .` pass; the flattened standard-phrase count is 4; `git diff --check` is clean; `tests/tui.sh` is still byte-identical to `main` after stripping full-line comments.
+
+## Your two questions
+
+**The two-paragraph list item.** Right call, and structurally sound — I checked rather than eyeballed. Line 413 is a genuinely empty line (length 0, not whitespace), every continuation sits at the two-space content column, so the second paragraph stays inside the bullet in any CommonMark renderer. It is the only multi-paragraph `-` bullet in the file, but multi-paragraph list items are already the file's idiom in the numbered steps, so it reads as the same document rather than a new convention. The alternative — a fourth top-level bullet — would be worse: "Three things that grep costs you" is meaningless detached from the grep it qualifies. At 35 lines the item needed the break, and putting it before the enumerated costs is where a reader scanning for them will land.
+
+**Drift after seven rounds.** I read the whole bullet and both step-4 bullets cold, sentence by sentence, and only one has drifted — nit 1 below. Everything else says what it is trying to say; in particular the reordered `SKIP:` material reads better than the version I reviewed, because the direct-run case and the `ctest` case are now two sentences instead of one clause carrying both.
+
+## Findings
+
+### nit (does not block; your call whether an eighth round is worth it)
+
+**1. `AGENTS.md:201-202` — "Either way it comes back red whatever you did to the game" is now false of the branch the fix to my finding 5 just added.** In the never-built case the red is independent of your edit, which is what "whatever you did to the game" asserts. In the failed-build case it is not: the build failed *because* of what you did, and a syntactically valid break would have got past it. The practical point — that the red is the harness and not the test detecting your break — is right, and it is the point the following clause acts on. If you touch it, "Either way the red is the harness and not your break, so check the build succeeded before reading the test's verdict" says the same thing without the quantifier. If you would rather stop editing this paragraph, the sentence still leads the reader to the correct action, and I would not hold the commit for it.
+
+### Considered and deliberately not raised
+
+For the record, so you know it was looked at: on a tmux-less machine, "read the verdict from `ctest`" gives 0 and "100% tests passed" for the skipped `tui`. That is the pass/skip conflation reappearing one sentence after it was disposed of — but the preceding sentence has already sent the reader to `ctest`'s own summary for exactly that case, so the bullet does answer it. Not worth a change.
+
+## Not reviewed
+
+Nothing out of reach. I did not re-run the full battery (the verifier reports 11/11 Debug green on this tree); I ran `instructions` and `score` myself, the two that read the file this change edits, plus my own scratch `ctest` project to re-confirm the skip and `Not Run` behaviours against cmake 4.2.3.</result>
+<usage><subagent_tokens>74068</subagent_tokens><tool_uses>7</tool_uses><duration_ms>107406</duration_ms></usage>
+</task-notification>
