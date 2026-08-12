@@ -1,0 +1,184 @@
+I want you to take a look at the workflow in AGENTS.md using ultracode. Make sure the subagents make sense in the workflow and they are correct. Please suggest any changes
+
+---
+
+<task-notification>
+<task-id>wu4wxd5m8</task-id>
+<tool-use-id>toolu_01KTqJTTTVgZMb1es1kZPMZr</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/wu4wxd5m8.output</output-file>
+<status>completed</status>
+<summary>Dynamic workflow "Review AGENTS.md workflow and the three review sub-agent definitions for coherence and correctness" completed</summary>
+<result>{"report":"Root: `/home/scottdensmore/Developer/scottdensmore/super-star-trek` — paths below are relative to it.\n\n## Verdict\n\nThe workflow holds together as a design: the twelve steps, the \"Who runs which tests\" split, and \"Answering a finding\" are internally consistent and unusually well-reasoned about *why* each rule exists. What is broken is the seam between `AGENTS.md` and the three sub-agent definitions — the definitions are thinner than the rules they are supposed to enforce, and the two most load-bearing repository-specific rules (full-screen mode needs a pty; never re-record a golden fixture without an explanation) appear in neither of the passes that would catch a violation. Nothing in the wiring is unloadable or self-contradictory; the failures are all of the \"a required pass runs and looks at the wrong thing\" kind.\n\n## What works\n\n- **The `verifier`/main-agent test split** (AGENTS.md:338-359) draws the line on *what the change is about* rather than on test speed, and gives the reason step 4's loop cannot be delegated (each failure decides the next edit). That is a rule an agent can apply to a case the author did not anticipate.\n- **The staleness rule** (verifier.md:37-47, ui-review.md:19-20, code-review.md:44-46) — re-read cited files from disk, not from injected context — is stated with the concrete incident behind it, which is why it survives being skimmed.\n- **`code-review` as the process backstop** (code-review.md:41-62). Making the always-binding pass responsible for auditing the *skippable* pass, and explicitly refusing \"it ran\" as an answer, is the right structural move. It is also the hook the remaining gaps below should be hung on.\n- **Pointing per-tool definitions at `.claude/agents/*.md` instead of copying them** (AGENTS.md:461-467) is the one rule that keeps three harnesses reviewing the same thing.\n\n## Changes to make\n\n**Blocker — `ui-review` has no way to reach full-screen mode, and its only rendering criterion names plain mode**\n`.claude/agents/ui-review.md:35-38` and `:54-56`. Its whole exercise instruction is \"drive the affected behavior through `./build/sst`, scripting input via a pipe or heredoc\" — no `-t`, no pty; `grep -niE 'tmux|pty|full-screen|80x24|72x24'` over all three definitions returns only verifier.md:20's `build-release`. So a change to `tui.c`/`tuifmt.c` — the repo's recent norm (58f5ea6, 8fbb4db, fef362c) — gets a \"acceptable as-is\" verdict from a pass that rendered only the classic display, and Output item 3 (`:69-70`) asks what was exercised but never what was not, so the miss is invisible to `code-review`. Add a fourth item under \"How to review\": *\"4. Where the change can reach full-screen mode (`sst -t`), a pipe reaches only the no-terminal fallback. Drive it through a pty as \\\"TUI mode (`sst -t`)\\\" in `AGENTS.md` prescribes — read from the file in the repository — at both 80x24 and 72x24, following that section's tmux socket rules exactly.\"* Widen `:54` to *\"output renders sensibly in both displays — plain mode at 80 columns, and full-screen mode at 80x24 and 72x24\"*, and amend `:69-70` to require naming which display was exercised.\n\n**Should-fix — no pass is briefed on the golden recordings, and the explanation the rule demands lands where `code-review` cannot see it**\nAGENTS.md:89-93 vs `.claude/agents/code-review.md:23-46` and `verifier.md:27-30`. `grep -rn 'golden\\|fixture' .claude/agents/` is empty. An agent whose change moves the game's arithmetic can run `tests/golden.sh ./build/sst --update`, after which the verifier's `ctest` is green and `code-review` sees files under `tests/golden/` with nothing distinguishing them from an ordinary test edit — and the explanation AGENTS.md asks for goes in a commit message that does not exist yet at step 8. Same structural hole #72 was closed for. Add to code-review.md's \"What to look for\": *\"**Golden recordings**: a change under `tests/golden/` is a change to the game's arithmetic. Require the author to say what moved and why, per \\\"The golden recordings\\\" in `AGENTS.md`, and treat a re-record offered without that explanation as a blocker.\"* Add to verifier.md item 3: *\"If `tests/golden/` appears in the diff, say so under **What ran** — a passing `golden` over updated fixtures proves nothing.\"*\n\n**Should-fix — `verifier.md` builds Release and then never runs anything against it**\n`.claude/agents/verifier.md:19-20` configures both trees; item 3 (`:27-29`) names no build directory and item 4 (`:31-33`) pins journeys to `./build-debug/sst`. The configuration is load-bearing: CMakeLists.txt:30-31 adds `-DDEBUG` for Debug only, the shell tests take `$&lt;CONFIG&gt;` (CMakeLists.txt:62, 79, 100, 111) and branch on it (tests/tui.sh:1724, tests/journey.sh:177), and CI runs both (.github/workflows/ci.yml:24, :52). Since the main agent builds Debug (AGENTS.md:34), Release coverage exists only here — so a `#ifdef DEBUG` regression reaches CI after a `Verdict: pass`. In item 3 name the trees: *\"Run the registered suite in each configuration you built — `ctest --test-dir build-debug --output-on-failure` and the same for `build-release` — since Debug compiles in `-DDEBUG` and Release does not, and the shell tests branch on the configuration they are handed.\"* In item 4, replace `./build-debug/sst` with \"the built `sst` from each configuration you built\".\n\n**Should-fix — `AGENTS.md` routes resolved `verifier` findings to `code-review`, which is never told the verifier exists**\nAGENTS.md:501-507 says \"a `verifier` finding you resolve is one `code-review` should hear about\"; code-review.md:48-50 asks only for \"which passes ran, whether the last `ui-review` round saw the state being committed, and why any was skipped\", and everything after (`:51-62`) is about `ui-review` alone. `grep -c verifier .claude/agents/code-review.md` is 0. Because a resolution changes no code, no pass reruns, so `code-review` is the last reader — and it is not told to look. Extend `:48-50` to *\"...which passes ran, whether the last `ui-review` round saw the state being committed, why any was skipped, and any `ui-review` or `verifier` finding answered by resolving it rather than fixing it\"*, and add: *\"A resolution is an argument — judge it as one. Since a resolution triggers no rerun, you are the last pass that can dispute it before the commit exists.\"*\n\n**Should-fix — nothing checks step 4's mutation proof, though the artifact it requires is in the diff `code-review` already reads**\nAGENTS.md:161-163 requires the break to be recorded \"in a comment beside the assertion\", and AGENTS.md:199-202 requires an assertion that the needed case occurred; `code-review.md:39-40` asks only that \"tests match the behavior they claim to cover\", which a blind test satisfies by construction. AGENTS.md:204-209 is the record of this exact failure (#64, three assertions that \"read convincingly\"). Extend the Tests and docs bullet: *\"A test written against behavior that already existed owes the break that proved it can fail, recorded in a comment beside the assertion (AGENTS.md step 4). Ask for it when it is absent. Where a test reaches its subject only on some of its data, check that it asserts the case actually occurred.\"*\n\n**Should-fix — the `2&gt;&amp;1 | head` advice drops all but the first failure on the two scripts it is written for**\nAGENTS.md:383-384. The ordering (\"what broke, then the dump\") holds per failure, not per run: tests/tui.sh:112-115 `fail()` only counts, and a separate `dump()` (tests/tui.sh:160-163) is called at each of ~117 failure sites; the total is printed last (tests/tui.sh:2008-2010). AGENTS.md:407-408's own figure — 47 failures, 1209 lines — is ~25 pane lines per failure, so `head` shows failure 1, part of its pane, and no count. tests/tournament.sh:661-664 interleaves the same way. Replace the last clause with: *\"`2&gt;&amp;1 | grep -E '^(FAIL:|[0-9]+ check)'` keeps every failure and the closing count wh
+... (truncated 3838 chars, full result in /tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/wu4wxd5m8.output)</result>
+<diagnostics>Per-agent results: /home/scottdensmore/.claude/projects/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8d7c083c-191b-4397-a2c6-38a68873cbb0/subagents/workflows/wf_fa21574c-e2a/journal.jsonl — one {"type":"result",...} line per completed agent with its full return value.
+If the result above is empty or unexpected, Read this file BEFORE diagnosing — do not assume agents returned non-empty results.
+To re-run with edited post-processing: Workflow({scriptPath: '/home/scottdensmore/.claude/projects/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8d7c083c-191b-4397-a2c6-38a68873cbb0/workflows/scripts/agents-md-workflow-review-wf_fa21574c-e2a.js', resumeFromRunId: 'wf_fa21574c-e2a'}) — agents whose (prompt, opts) are unchanged replay from cache.</diagnostics>
+<usage><agent_count>11</agent_count><agents_done>11</agents_done><agents_error>0</agents_error><agents_skipped>0</agents_skipped><agents_empty_result>0</agents_empty_result><subagent_tokens>723534</subagent_tokens><tool_uses>205</tool_uses><duration_ms>1196590</duration_ms></usage>
+</task-notification>
+
+---
+
+Yep apply them
+
+---
+
+<task-notification>
+<task-id>a45e2a477da2e367b</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/a45e2a477da2e367b.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify reviewer-brief docs change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Rerun (scoped): what changed since the last verdict
+
+Verdict: **pass**, no findings. All three corrections hold, and my own outstanding nit from last turn was fixed as well. No rebuild, no retest — prose-only in three files, nothing that compiles. The earlier result stands (11/11 Debug, 11/11 Release, `-DSST_WERROR=ON`, zero warnings).
+
+**One correction to your framing:** `verifier.md` moved this round too, not just the two files you named. Its golden clause is no longer "a few guards in `golden.sh` survive an `--update` and the rest do not" — it now reads "the byte comparison does not survive an `--update`, though a few sanity guards in `golden.sh` do" (`verifier.md:38-39`). That is the fix for the nit I left standing, and it is now exactly true, so nothing is outstanding. Flagging it because a rerun told "nothing else moved" that then finds a third file changed is how a real change gets waved through.
+
+### 1. code-review.md — the rewritten **Golden recordings** bullet
+
+Every clause is true against `tests/golden.sh`, checked end to end.
+
+| Clause | Verdict |
+|---|---|
+| "a change under `tests/golden/` is a change to what a journey prints" | True — fixtures are the raw capture, `golden.sh:101` (`printf '%s' "$2" \| run "$SST" 2&gt;&amp;1`), stdout and stderr, no metadata |
+| "new arithmetic, new wording, or a journey nobody had recorded before" | All three are real cases. The third is reachable: `golden.sh:150-152` fails an unrecorded journey with "no recording -- run with --update to make one", so adding a journey necessarily shows up as a new file under `tests/golden/`. Dropping the old "is a change to the game's arithmetic" claim was right — that assertion was false for exactly this case |
+| "the fixture alone does not say which" | True — nothing in the file distinguishes them |
+| "Re-recording one takes the byte comparison with it, so `golden` goes green on the new output" | True — `--update` copies at `:146` and returns; the `cmp -s` at `:154` then matches the rewritten fixture on every later run |
+| "(a few sanity guards in `golden.sh` survive an `--update`; the comparison does not)" | **True, and now stated correctly.** Survive: the seven pre-copy assertions in `play()` (`:111-141` — exit status, `MAXBYTES`, `MINBYTES`, farewell as last non-blank line, no "Transmission ends", no `DEBUG:`, no trailing CR) across all eight `play` calls, plus the six literals in `covers won` (`:408-414`), which check the fixture *after* it is written. Does not survive: `cmp -s`. The existential "a few … survive" claims no proportion, so the count that made the old phrasing backwards no longer bites |
+| "a passing `verifier` says nothing about it" | True, and now consistent with its own parenthetical rather than contradicted by it |
+| ""The golden recordings" in `AGENTS.md` requires the author to work out why the output moved and say so" | True — `AGENTS.md:87-93` on disk: "Work out why and say so in the commit -- the fixture diff is the evidence a reviewer needs. Never re-record … without that explanation" |
+| "the commit that would carry that explanation does not exist yet when you review" | True — step 8 puts `code-review` before every commit; step 10 commits after |
+
+One case the three named ones do not cover, offered as a note rather than a finding: a fixture edited **by hand** rather than by `--update` is also a change under `tests/golden/`, and is the most dangerous kind — it defeats the `play()` guards too, since those only run on freshly generated output. The bullet's operative instruction (ask for the explanation; a re-record without one is a blocker) catches it anyway, so I would not lengthen the sentence for it.
+
+### 2. ui-review.md — step 3
+
+**The clause reads correctly in place.** "…says how to get one — read that section from the file in the repository, not from the copy in your context, which may predate a rule that keeps a tmux session alive — and its tmux rules are conditions rather than suggestions: your own socket via `-L`, …". The em-dash pair brackets the interpolation cleanly and the sentence resumes grammatically; the colon now introduces the condition list where the dash used to. "a rule that keeps a tmux session alive" is grounded — it is the destroyed eight-pane session at `AGENTS.md:73-77`. It also matches the pattern the file already uses in its Scope section (`ui-review.md:19-20`), applied to a second section rather than duplicating the first.
+
+**Nothing was dropped in the two rewraps.** The inline list carries the same four conditions as the version I verified last turn: `-L`, `-f /dev/null`, no bare `kill-server`, no redirection of the game's stdout — plus the sizes (80x24 and 72x24) and the ten-line message window. Byte-for-byte the content is unchanged; only the punctuation and line breaks moved.
+
+**Against `AGENTS.md:65-85`** (the tmux bullet begins at :65, not :66; the sizes bullet is :82-85), the list is complete but for one item: "never `kill-session` a session you did not create" (`AGENTS.md:77`) is not named inline. That omission is **pre-existing** — it was absent before the rewrap too, so the reflow did not cause it — and the new "read that section from the file in the repository" clause is precisely what covers it, since the reviewer is now told to go read the whole bullet. Mentioning it only because you asked for completeness against those lines; I would not add it, as the point of the new clause is to stop the inline list from having to be complete.
+
+**Numbering is correct.** `ui-review.md:33/35/39/51` → 1, 2, 3, 4 sequential; step 3's back-reference to "step 2" points at the build-and-pipe step, which is the one it means. The Output list (1, 2, 3 at :78/79/82) is separate and unaffected.
+
+### Housekeeping
+
+- `git diff --check` → clean, rc 0. Worktree still three modified files, no untracked (`git status --porcelain -uall`).
+- Front matter intact in all three: `---`, `name:` (`code-review` / `ui-review` / `verifier`), `description:`, `tools: Bash, Read, Grep, Glob`, closing `---` on line 5.
+- Wrap widths in display columns unchanged from `main`: 77 / 77 / 88 (`wc -L` on each body; the 88 is verifier.md's pre-existing cmake block).
+
+Files: `/home/scottdensmore/Developer/scottdensmore/super-star-trek/.claude/agents/code-review.md`, `/home/scottdensmore/Developer/scottdensmore/super-star-trek/.claude/agents/ui-review.md`, `/home/scottdensmore/Developer/scottdensmore/super-star-trek/.claude/agents/verifier.md`; evidence in `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/golden.sh` and `/home/scottdensmore/Developer/scottdensmore/super-star-trek/AGENTS.md`.</result>
+<usage><subagent_tokens>104996</subagent_tokens><tool_uses>8</tool_uses><duration_ms>113072</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a2a6f6008d2cd58bc</task-id>
+<tool-use-id>toolu_01W7VU79V8hsNAobDbztz9J7</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/a2a6f6008d2cd58bc.output</output-file>
+<status>completed</status>
+<summary>Agent "Code review reviewer-brief change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Approve** — the changed state, read from disk.
+
+Exact state reviewed: `HEAD` at `58f5ea6`, nothing staged, nothing untracked, three modified files with blob hashes `df8b4c6` (`code-review.md`), `ede7010` (`ui-review.md`), `aa1fe59` (`verifier.md`). That last hash is unchanged from my first pass — `verifier.md` is byte-identical to what I already reviewed, so your item 3 was indeed already in front of me. Approval is valid for those three blobs only.
+
+## The three fixes
+
+All good, and each addresses the finding rather than something adjacent.
+
+1. `code-review.md:49-58` — the premise is now true of every case I could construct, including the one the tree anticipates at `tests/golden.sh:151` and in the journey-list comment, and "the fixture alone does not say which" has a referent. The parenthetical matches `verifier.md`'s corrected form.
+2. `ui-review.md:42-45` — the fresh-read clause is attached where the dependence is, and "a rule that keeps a tmux session alive" names the stake accurately: `AGENTS.md:70-77` records the `-L`/bare-`kill-server` incident as exactly that.
+3. `verifier.md:37-40` — unchanged and still correct.
+
+## Item 4: the geometry
+
+**The number is right, and I checked it against the source rather than against your account of it.**
+
+- `tui.c:15` — `#define PANELH (13)`
+- `tui.c:202` — `msgh = LINES-PANELH &gt; 1 ? LINES-PANELH : 1;` → 11 at `LINES == 24`, at both 80 and 72 columns since only width differs
+- `tui.c:1073-1074` — `tui_pageheight()` returns `LINES-PANELH-1` → 10, and `tui.h:73` documents it as "usable message-window lines for paging"
+
+The "ten of text, with the pager's prompt on the last" clause is also right, and for the reason the wording implies rather than by coincidence: `sst.c:811` pages when `linecount &gt;= tui_pageheight()`, so ten text rows are on screen, and `pause(0)` at `sst.c:770` emits `proutn("\n")` before `[HIT SPACE BAR TO CONTINUE]` — which lands the prompt on row 11, the last row of the window. That is precisely why the two quantities differ by one, and the brief now says so.
+
+**Naming the issue inline is the right call, and I would not take it out.** It is not a stylistic choice — it is what `AGENTS.md` step 9 asks for in so many words: "Where the work depends on the unfixed behavior, name the issue in a comment beside it. Write that comment as part of the implementation, so it reaches the reviewer rather than arriving after approval." The brief depends on unfixed behaviour in its own cited source, and without the parenthetical the disagreement with `AGENTS.md:82-85` looks like a transcription error, which is exactly the "correction" back to ten that you are trying to prevent. A reader who wants the reasoning has an issue to open; a reader who does not has one clause to skip. The alternative — carrying an off-by-one into the brief that tells a reviewer what to check at those two sizes, while #95, #123 and #94 are open about thresholds one row apart — is plainly worse.
+
+Fixing the brief now rather than deferring it is also the correct side of the step 9 line: the sentence is text this change introduces, so it is yours to get right, not a finding about code the change did not touch.
+
+## Finding
+
+### nit — `#138` body, created stale by this round
+
+`#138` says the brief "quotes the phrase verbatim (added in `docs/reviewer-briefs`, faithfully to this source)" and its suggested fix is "Fix the quoting brief in the same change." Neither is true of the state now on disk: the brief no longer quotes it, and the work `#138` has left is (a) `AGENTS.md:82-85` and (b) deleting the parenthetical from `ui-review.md:47-48`, which will otherwise describe a rounding that is no longer there.
+
+Failure scenario: whoever picks up `#138` fixes `AGENTS.md`, sees the brief already agrees, and leaves the parenthetical in place — the same shape as the standing `AGENTS.md:369-371` caveat for `#125` that you already reasoned about, where closing the issue means deleting the note that papers over it.
+
+Suggested fix: a comment on `#138` saying the brief was made precise ahead of the source and that removing the parenthetical is part of the fix. Step 9's "add what you learned to that issue instead of opening a second one" covers this; a comment, not a body rewrite, keeps straight who said what.
+
+This is a nit about an issue, not about the diff. It does not gate the commit and needs no rerun of anything.
+
+## On the `verifier` rerun you offered
+
+**Yes, run it once over the current state before committing** — not because I doubt the geometry, which I verified independently above, but because step 11 conditions the rerun on a changed state and item 4 changed it. The pass will scale itself to a prose-only edit and read the claim against `tui.c`, which is the whole of what there is to check; the battery cannot have moved, and its first-pass result (11/11 Debug, 11/11 Release, both with `-DSST_WERROR=ON`) still stands on unchanged sources.
+
+My approval survives that rerun as long as it produces no edits. If it produces one, the state changes and this approval lapses with it.
+
+## Unchanged from my first pass
+
+- The `ui-review` skip is still right: no compiled file, no `sst.doc`/README, no feature flag or `-DDEBUG` decision moves.
+- The `#125` resolution still holds, and item 4 reinforces it — `#138` is now a second issue whose closure requires an `AGENTS.md` edit this branch does not make, which is the same reason `#125` belongs to the queued branch rather than this one.
+- Record in the commit and PR body, per "Answering a finding": the `ui-review` skip and its reason, the `#125` resolution, and the two issues filed (`#138`, and `#125` as pre-existing).
+
+## What I could not review
+
+- I did not rerun the battery; that is the `verifier`'s scope, and item 4 has not been through it yet.
+- I am still running `main`'s `code-review.md`, not the blob I am approving — disclosed, unchanged, and unresolvable from inside this pass.
+- Nothing has exercised these briefs as instructions. `#81` remains the standing gap that nothing checks the definitions load or agree with `AGENTS.md`.</result>
+<usage><subagent_tokens>75666</subagent_tokens><tool_uses>8</tool_uses><duration_ms>104657</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a45e2a477da2e367b</task-id>
+<tool-use-id>toolu_011HPq3PqZoCyz4rJBBUjT3F</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/50090799-9750-42a7-b869-18054e42aa96/tasks/a45e2a477da2e367b.output</output-file>
+<status>completed</status>
+<summary>Agent "Verify reviewer-brief docs change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Rerun (scoped): what changed since the last verdict
+
+Verdict: **pass**, no findings. The new sentence is correct in every part I can measure, including the clause you flagged as possibly a plausible-sounding gloss — it is not a gloss, it is what the code does and what the screen shows.
+
+No rebuild, no retest. One file moved (`ui-review.md` step 3), prose only; `git status --porcelain -uall` shows the same three ` M` entries and no untracked files. `code-review.md` and `verifier.md` are unchanged from the state I passed last turn. Earlier battery stands (11/11 Debug, 11/11 Release, `-DSST_WERROR=ON`, zero warnings).
+
+### The corrected sentence
+
+**"eleven rows" — true, at both sizes.** `PANELH` is 13 (`tui.c:15`), `msgh = LINES-PANELH &gt; 1 ? LINES-PANELH : 1` (`tui.c:202`), so 24 − 13 = 11. The expression reads only `LINES`, so width cannot move it — which is what makes "at both" sound rather than a coincidence of two measurements.
+
+**"ten of text" — true.** `tui_pageheight()` returns `LINES-PANELH-1` = 10 (`tui.c:1073-1074`), and that is the value the pager gates on: `sst.c:811`, `if (prompted &amp;&amp; linecount &gt;= (tui_active ? tui_pageheight() : 23)) pause(0);`.
+
+**"with the pager's prompt on the last" — true, and mechanically so, not incidentally.** The `-1` in `tui_pageheight()` is exactly the row `pause(0)` then writes into; ten lines accumulate, the eleventh row takes the prompt. Measured fresh on a pty this turn, both sizes, from a clean start:
+
+- **80x24**: panel bottom border on screen row 13; message window rows 14-24; text on 14-23 (ten rows, blanks included in the count); `[HIT SPACE BAR TO CONTINUE]` on row 24 — the eleventh and last row of the window.
+- **72x24** (same session resized, pane confirmed `72x24`): identical — border 13, text 14-23, prompt on 24.
+- Paged on with Space: the next screenful fills rows 14-23 again and lands `COMMAND&gt;` on row 24, so the last row is the window's prompt row generally, not a one-off of the briefing.
+
+**"(`AGENTS.md` rounds this to ten lines, which is the pageable height rather than the window; #138.)" — the substance is right and #138 is real**: open, titled "AGENTS.md calls the message window ten lines; it is eleven". `AGENTS.md:84-85` does say "the message window is only ten lines at both". Optional nit, take it or leave it: "rounds" is a touch generous — `AGENTS.md` is not rounding 11 to 10, it is naming the pageable height and calling it the window — but the clause says precisely that in its next breath, so no reader is misled. Filing #138 rather than editing `AGENTS.md` in this branch is right under step 9.
+
+**Nothing else in step 3 broke in the rewrap.** All four tmux conditions still present and unaltered (`-L`, `-f /dev/null`, no bare `kill-server`, no redirection of the game's stdout); the read-it-from-the-repository clause intact with its em-dash pair balanced; both sizes still named; the back-reference to "step 2" still points at the build-and-pipe step. Steps run 1, 2, 3, 4 at lines 33/35/39/53, and the separate Output list 1, 2, 3 at 80/81/84.
+
+### Housekeeping
+
+- `git diff --check` → clean, rc 0.
+- Wrap widths in display columns unchanged: 77 / 77 / 88 (`wc -L` per body; 88 is verifier.md's pre-existing cmake block). The added parenthetical did not push step 3 over.
+- Front matter intact in all three: `---`, `name:` (`code-review` / `ui-review` / `verifier`), `description:`, `tools: Bash, Read, Grep, Glob`, closing `---` on line 5.
+- tmux hygiene: own socket `-L vfy2` with `-f /dev/null`, only the session I created, `kill-server` on that socket alone.
+
+File: `/home/scottdensmore/Developer/scottdensmore/super-star-trek/.claude/agents/ui-review.md`; evidence in `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c` (`:15`, `:202`, `:1073-1074`) and `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.c:811`.</result>
+<usage><subagent_tokens>114603</subagent_tokens><tool_uses>8</tool_uses><duration_ms>96766</duration_ms></usage>
+</task-notification>
