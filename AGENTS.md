@@ -166,13 +166,16 @@ Every coding agent working in this repository must follow this workflow.
      the whole game and read what it printed.
    - Break it outside the repository. Copy the working tree — the current
      one, uncommitted test and all — somewhere else, leave `build/`
-     behind, and configure a fresh one there: a copied `build/` still
-     names the original source directory in its cache, so building in the
-     copy compiles the original's sources — your break never reaches the
-     binary, and the test passes for the wrong reason. It prints a
-     cache-path error and exits 0 while it does it, and a regeneration
-     can rewrite the original's build files on the way past. Most tests
-     here take the binary as an argument. Run from inside the copy:
+     behind, and configure and build a fresh one there — `cmake -S . -B
+     build -DCMAKE_BUILD_TYPE=Debug && cmake --build build`. Built, and
+     fresh: a copy configured and not built has no binary for the test
+     to run, and a copied `build/` still names the original source
+     directory in its cache, so building in the copy compiles the
+     original's sources — your break never reaches the binary, and the
+     test passes for the wrong reason. It prints a cache-path error and
+     exits 0 while it does it, and a regeneration can rewrite the
+     original's build files on the way past. Most tests here take the
+     binary as an argument. Run from inside the copy:
      `cd <copy> && tests/tournament.sh build/sst Debug`, or `ctest
      --test-dir build -R '^(tuifmt|rules)$'` for the two compiled ones.
      From inside, because for some of them the script decides which tree
@@ -192,7 +195,14 @@ Every coding agent working in this repository must follow this workflow.
      comes from somewhere independent — `sst.doc`, a literal, a subsystem
      that does not share the representation.
    - A green run means one of two things: the test is blind, or the break
-     was. Rule out the second before touching the test.
+     was. Rule out the second before touching the test. Red needs the same
+     care in the other direction: check that the failure names your break
+     and not the harness. `Not Run` from `ctest`, or a complaint that the
+     binary is missing or not executable, is a copy that was never built —
+     or one whose build failed, which looks identical from the test and is
+     easy to walk past when `cmake --build` scrolled by in the same
+     command. Either way the red is the harness and not your break, so
+     check the build succeeded before reading the test's verdict.
    - This proof, unlike the loop above, is one a sub-agent can run for you.
      "Who runs which tests" says when that is worth doing, and what the
      sub-agent has to report back for the record this asks you to keep.
@@ -379,9 +389,40 @@ this split is worth stating, and it is mechanical:
   since it is a regex: `-R tui` picks up `tuifmt` and `journey-tui` with it.
 - The shell tests print one line on a pass, so they need no filtering. On a
   failure they print what broke and then dump the evidence behind it — a
-  pane, a slice of game output, a diff, depending on the script — in that
-  order, so it is the first lines that are worth reading and not the last:
-  `2>&1 | head` keeps what broke, where `tail` keeps the dump and loses it.
+  pane, a slice of game output, a diff, depending on the script. That order
+  holds per failure and not per run: the next failure follows the previous
+  one's dump. So `head` keeps the first failure and part of the evidence
+  beside it and loses every failure after it — 46 of the 47 below — where
+  `tail` keeps the last dump and loses everything above it. What keeps every
+  failure and drops every dump is a grep for the shape of the line rather
+  than for a position in the output. Every one of them prints `FAIL: ` at
+  column 0. Four of them write the dump body raw at column 0 rather than
+  indenting it, so what keeps a dump out of the filter is not the dump's
+  shape but what the game puts in it: neither the token `FAIL` nor `SKIP`
+  appears in any source compiled into `sst`, or in `sst.doc`, which `help`
+  prints at runtime and `help.sh` dumps raw. The two compiled harnesses do
+  hold the token — they print `FAIL ` without the colon, and `ctest` runs
+  them directly, so no script dumps their output either way. So
+  `2>&1 | grep -E '^(FAIL|SKIP):'` comes back with the failures and nothing
+  else, and how many lines it prints is how many there were. `SKIP:` earns
+  its place only when you run a script yourself: `tui.sh` skips without
+  tmux, and a filtered skip is otherwise indistinguishable from a pass, an
+  empty result either way. Under `ctest` it does not reach you at all — a
+  skipped test's output is not printed, so the skip shows up as `Skipped`
+  in `ctest`'s own summary and nowhere in what you filtered.
+
+  Three things that grep costs you, all worth knowing before you rely on
+  it. The pipeline's exit status is the grep's and not the test's: it comes
+  back non-zero whenever nothing matched, which includes a suite that
+  passed, a `tui` that skipped under `ctest`, and a script its `TIMEOUT`
+  killed before it printed anything — read the verdict from `ctest` or the
+  script's own status, never from the pipe. The line that explains a
+  cascade is sometimes inside a dump rather than in a `FAIL:` of its own,
+  so go back for the dump once you know which failure you are reading. And
+  a script's closing lines go with the dumps: `golden.sh` ends by naming
+  how many journeys changed and how to re-record them, which is the one
+  instruction you want in front of you when that test is the one that
+  failed.
 - Grep a tmux pane for the string being asserted rather than capturing it
   whole. `capture-pane -p` is twenty-odd lines of screen and a TUI check
   makes many; capture the pane when the grep fails, which is when its
