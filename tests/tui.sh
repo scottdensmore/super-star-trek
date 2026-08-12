@@ -98,8 +98,8 @@ trap 'finish; exit 130' INT
 trap 'finish; exit 143' TERM
 trap 'finish; exit 129' HUP
 # PIPE too, which every other script here that sets traps already had.
-# Piping the output -- `head` to keep what broke and drop the pane behind
-# it, `grep -q` to ask whether anything did -- closes the pipe early, and
+# Piping the output -- `head` to take the first lines, `grep -q` to ask
+# whether anything failed at all -- closes the pipe early, and
 # dash then dies of the signal with its EXIT trap unrun. bash runs that
 # trap before it re-raises, so this leaks where /bin/sh is dash and not
 # where it is bash. What is left is worse here than in the other scripts,
