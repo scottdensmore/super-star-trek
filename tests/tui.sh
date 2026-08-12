@@ -1368,11 +1368,15 @@ for squeeze in "20 8" "80 14" "80 23"; do
 		fi
 	fi
 
-	# And once the answer is part typed, the question is left alone --
-	# #117 -- which has to be asserted as "never more than one", not
-	# as a restore. Both ways of spanning the row boundary between an
-	# ended prompt and its answer duplicated it instead: once per
-	# width step one way, once on a one-row height shrink the other.
+	# And once the answer is part typed, both come back -- #117 --
+	# which is asserted as the pair and not just the question, since
+	# the answer is the half that ends games: at 80x23 the question
+	# used to return without it, and a screen showing a clean
+	# unanswered question is what makes a player type over a `y` they
+	# cannot see. The count stays exact because both ways of spanning
+	# the row boundary between an ended prompt and its answer
+	# duplicated it instead: once per width step one way, once on a
+	# one-row height shrink the other.
 	#
 	# Its own session. Run on from the block above, the first `rest`
 	# has left its own answered question in the window, so two are on
@@ -1393,14 +1397,264 @@ for squeeze in "20 8" "80 14" "80 23"; do
 			sleep 1
 			tm resize-window -t "$session" -x 80 -y 24
 			sleep 1
-			if screen | awk '/Are you sure\?/ { n++ }
-			                 END { exit n > 1 ? 0 : 1 }'; then
-				fail "ended: after $1x$2 a part-typed answer duplicated the question"
+			# Both halves, and both of them matter. The question
+			# exactly once is the duplication guard the two
+			# failed attempts needed. The answer under it is
+			# #117 itself: at 80x23 the question came back
+			# without it, which is the shape that ends games --
+			# the screen reads as a fresh unanswered question
+			# while the reader still holds the `y`, so a typed
+			# `N` submits `yN` and ja() takes the y.
+			if ! screen | awk '/Are you sure\?/ { n++; q = NR }
+			                   { row[NR] = $0 }
+			                   END {
+			                       if (n != 1) exit 1
+			                       a = row[q + 1]
+			                       gsub(/^[ \t]+|[ \t]+$/, "", a)
+			                       exit (a == "y") ? 0 : 1
+			                   }'; then
+				fail "ended: after $1x$2 the question and its part-typed answer are not both back, once each"
 				dump
 			fi
 		fi
 	fi
 done
+
+# --- and a wrapping answer to an ended prompt ---------------------------
+# The block above types one character, so it only ever exercises an
+# answer of a single row. An ended prompt's answer has a row of its
+# own, and the read-back has to step past all of them: allowing it
+# exactly one row puts the question outside the rows the search joins,
+# the match misses, and the height-only branch scrolls and writes
+# without erasing -- a fresh copy of question and answer at every step.
+# Three of them up the window over the drag below, with the conversation
+# pushed off the top, which is the failure the old #117 gate existed to
+# prevent and the reason this case is asserted separately.
+#
+# 87 characters at 80 columns: the message window is 78, so the answer
+# takes two rows and the pair takes three. ja() reads the first letter
+# of the first word, so a run of b's after the y is still a valid
+# pending answer.
+start 80 24 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "wrapped answer: the game never reached its command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'rest 5000' Enter
+	if ! wait_for 'Are you sure'; then
+		fail "wrapped answer: rest did not ask whether it was wise"
+		dump
+	else
+		tm send-keys -t "$pane" 'ybbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+		sleep 1
+		# That the answer really did wrap, before dragging anything.
+		# The block exists for the case where it takes more than one
+		# row, and the question count alone passes just as well on a
+		# screen with no answer on it at all -- so a send-keys that
+		# a later edit shortened, or that the game stopped taking,
+		# would leave this asserting the one-row case it was added
+		# to go beyond. The answer starts at column 0 of its own
+		# row here, so unlike the wrapping block above it can be
+		# read a row at a time.
+		#
+		# Proved by shortening the literal above to 'ybbb': both
+		# this and the check after the drag fail, where the
+		# question count alone stays green -- which is the whole
+		# of the degradation this guards against.
+		if ! screen | awk '/Are you sure\?/ { q = NR }
+		                   { row[NR] = $0 }
+		                   END {
+		                       if (q == 0) exit 1
+		                       a = row[q + 1]; b = row[q + 2]
+		                       gsub(/^[ \t]+|[ \t]+$/, "", a)
+		                       gsub(/^[ \t]+|[ \t]+$/, "", b)
+		                       exit (a ~ /^yb+$/ && b ~ /^b+$/) ? 0 : 1
+		                   }'; then
+			fail "wrapped answer: the answer did not wrap, so the drag below proves nothing"
+			dump
+		fi
+		for h in 23 24 23 24; do
+			tm resize-window -t "$session" -y "$h"
+			sleep 1
+			if ! screen | awk '/Are you sure\?/ { n++ }
+			                   END { exit n == 1 ? 0 : 1 }'; then
+				fail "wrapped answer: at 80x$h the question is not on screen exactly once"
+				dump
+				break
+			fi
+		done
+		# Width as well as height, because they take different
+		# branches and only this one reaches the erase. A width
+		# change works out how many rows the stump occupies and
+		# rubs them out before writing, and for an ended line that
+		# count has to include the padding between the question and
+		# its answer -- drop that and the erase leaves a row behind,
+		# so the drag stacks one more question at every step: 2, 3,
+		# 4, 5 across the four widths below. The height loop above
+		# cannot see it, since its branch scrolls instead of
+		# erasing, and the one-character answer in the block before
+		# never mangles the pair at all.
+		#
+		# 72 is the narrowest the display will start at -- the drag
+		# would work below it, nothing re-checks the floor -- and
+		# the answer still wraps there: the window is 70, so 70
+		# and 17.
+		#
+		# Proved against a copy of the tree outside the repository
+		# with that padding line deleted: it fails here at the
+		# first width step, where before this loop existed it left
+		# the whole suite green.
+		for w in 76 72 76 80; do
+			tm resize-window -t "$session" -x "$w"
+			sleep 1
+			if ! screen | awk '/Are you sure\?/ { n++ }
+			                   END { exit n == 1 ? 0 : 1 }'; then
+				fail "wrapped answer: at ${w}x24 the question is not on screen exactly once"
+				dump
+				break
+			fi
+		done
+		# The state both documents describe to the player, asserted
+		# where they describe it rather than only after recovery.
+		# sst.doc and README.md promise that a window too short to
+		# hold the pair keeps the answer and loses the question --
+		# and every other check here looks at the screen only after
+		# growing back, so a change that kept the question and
+		# dropped the answer would leave both documents wrong with
+		# the suite green, and a player typing over a `y` they
+		# cannot see. Two message rows at fifteen, which is exactly
+		# the answer and no room for the question above it.
+		#
+		# Proved against a broken game, which is what step 4 asks of
+		# a test that runs one: `maxy > 1` -> `maxy > 2` on the
+		# newline guard in restore_curline() suppresses the newline
+		# only at a two-row window, so the pair packs onto the two
+		# rows -- `Are you sure? ybbb...` over `bbb...`, the
+		# question kept and the answer displaced. Built in a copy
+		# outside the repository, that fails here and nowhere else
+		# in this file.
+		tm resize-window -t "$session" -y 15
+		sleep 1
+		if ! screen | awk '/Are you sure\?/ { q++ }
+		                   /^ *yb+$/ { a++ }
+		                   /^ *b+$/ { c++ }
+		                   END { exit (q == 0 && a == 1 && c == 1) ? 0 : 1 }'; then
+			fail "wrapped answer: at 80x15 the answer did not survive without its question"
+			dump
+		fi
+		tm resize-window -t "$session" -y 24
+		sleep 1
+		# And whole again at the end, which is what the drag was for:
+		# the question count alone never looks at the half a player
+		# is typing.
+		if ! screen | awk '/Are you sure\?/ { q = NR }
+		                   { row[NR] = $0 }
+		                   END {
+		                       if (q == 0) exit 1
+		                       a = row[q + 1]; b = row[q + 2]
+		                       gsub(/^[ \t]+|[ \t]+$/, "", a)
+		                       gsub(/^[ \t]+|[ \t]+$/, "", b)
+		                       exit (a ~ /^yb+$/ && b ~ /^b+$/) ? 0 : 1
+		                   }'; then
+			fail "wrapped answer: after the drag the answer is not back whole under its question"
+			dump
+		fi
+		# The control every other block here has, and the one this
+		# one most needs: the assertions above read the screen, and
+		# the claim the fix makes -- the one sst.doc now makes to
+		# the player -- is that what is on screen is what the game
+		# will act on. Only Enter proves the reader still holds the
+		# `y` the restore put back. This block is the one where the
+		# restore does the most work, moving into the middle of the
+		# window and relying on the echo to rewrite the answer
+		# there.
+		#
+		# Proved by sending C-u before the Enter, which clears the
+		# reader without touching the screen: this fires, where
+		# every assertion above it stays green.
+		tm send-keys -t "$pane" Enter
+		if ! wait_for 'It is stardate'; then
+			fail "wrapped answer: the restored answer was not what the reader held"
+			dump
+		fi
+	fi
+fi
+
+# --- and a terminal too wide to read a row of --------------------------
+# The joined-row search needs every row it appends to be exactly the
+# window's width, since that is what makes its arithmetic mean columns.
+# mvwinnstr() reads at most its buffer, so past that a row comes back
+# short, the rows stop lining up, and the search misses a pair that is
+# perfectly intact -- after which the write path stacks a copy at every
+# step. An ended line with an answer is the only thing that spans two
+# rows at this width, which is why nothing reached it before.
+#
+# 600 columns, well past the 511 the buffer holds. Deleting the guard
+# leaves every other check in this file green: nothing else here runs
+# wider than 82 columns. Proved that way -- a copy of the tree outside
+# the repository with the guard deleted, built there, fails at the
+# first step here and nowhere else.
+start 600 24 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "wide: the game never reached its command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'rest 5000' Enter
+	if ! wait_for 'Are you sure'; then
+		fail "wide: rest did not ask whether it was wise"
+		dump
+	else
+		tm send-keys -t "$pane" 'y'
+		sleep 1
+		# The control this block cannot do without. The guard only
+		# fires for an ended line with something typed, so with no
+		# pending answer nothing below exercises it: the question
+		# restores through the ordinary path and the keystroke
+		# lands after it, and both checks hold for the wrong
+		# reason. Proved by replacing the send-keys above with a
+		# no-op, which leaves the whole suite green -- and with the
+		# control here, that same no-op fails on this line instead.
+		if ! screen | awk '/Are you sure\?/ { q = NR }
+		                   { row[NR] = $0 }
+		                   END {
+		                       if (q == 0) exit 1
+		                       a = row[q + 1]
+		                       gsub(/^[ \t]+|[ \t]+$/, "", a)
+		                       exit (a == "y") ? 0 : 1
+		                   }'; then
+			fail "wide: the answer never reached the reader, so the drags below prove nothing"
+			dump
+		fi
+		for h in 23 24 23; do
+			tm resize-window -t "$session" -y "$h"
+			sleep 1
+			if ! screen | awk '/Are you sure\?/ { n++ }
+			                   END { exit n == 1 ? 0 : 1 }'; then
+				fail "wide: at 600x$h the question is not on screen exactly once"
+				dump
+				break
+			fi
+		done
+		# And the cursor with it. The guard has to sit above the row
+		# scan, which moves the cursor as it reads: returning past
+		# it parks the next keystroke at column 0, so a typed
+		# character lands on the question's first letter --
+		# `Zre you sure?`.
+		#
+		# Column 0 is the whole of what this distinguishes. At this
+		# width nothing is restored either way, so the keystroke
+		# lands on the question's second column regardless and the
+		# screen reads `AZe you sure?` on a correct build and on
+		# main alike. That is the state to match; a `Z` in column 0
+		# is the misplaced guard and nothing else.
+		tm send-keys -t "$pane" 'Z'
+		sleep 1
+		if screen | grep -q 'Zre you sure'; then
+			fail "wide: the guard ran after the row scan and moved the cursor to column 0"
+			dump
+		fi
+	fi
+fi
 
 # Looked at *during* the drag, not after it. At a one-row message
 # window -- fourteen rows or fewer -- both of this round's fixes

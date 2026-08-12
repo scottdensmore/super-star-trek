@@ -50,14 +50,27 @@ stop to wait; those come back too, with the answer going on the row
 below the question — or after it, where the window is down to its last
 row.
 Only their final line comes back, so a question asked over several
-lines returns as the last of them. The one gap left is a question you
-have already started answering: that one is left exactly as it was
-before, so what comes back may be a stump of older conversation, or
-nothing, with the game still waiting behind it.
+lines returns as the last of them. An answer you had already started
+typing usually comes back with its question, on the row below it. You
+may get back only one of them: usually the window is too short to hold
+the pair and the question is what goes, leaving your own typing with
+nothing above it to say what it answers, and on a very wide terminal it
+is the answer that goes instead, however tall the window is. Shorter
+still and only part of whichever survived is left, and sometimes
+neither comes back, leaving older conversation on screen with the game
+waiting behind it.
 
-Do not just answer that one, and do not press Enter either: whatever
-you typed is still in the buffer, and a yes/no question reads the
-*first* letter, so an `N` typed after a `y` you cannot see answers yes.
+When the question and everything you typed are both on screen, carry on
+and answer — that is the ordinary case now. When they are not, give the
+terminal another row or two first: that usually brings it back with
+your typing untouched, which beats retyping it. A very wide terminal is
+the exception — more rows will not bring the answer back there, though
+making it narrow enough will.
+
+If it does not come back, or the terminal cannot grow, do not just
+answer it, and do not press Enter either: whatever you typed is still
+in the buffer, and a yes/no question reads the *first* letter, so an
+`N` typed after a `y` you cannot see answers yes.
 Press Ctrl-U first, which throws the line away, and then answer. What
 you type lands on whatever the window happens to be showing; the line
 it fell on clears when you press Enter, though the characters you
