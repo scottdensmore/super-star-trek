@@ -353,10 +353,11 @@ static const char *pending_answer;
  * way the terminal moved, so what a repaint leaves this false for is
  * having no part-written line to move the cursor to: a prompt that
  * ended its own line and was not kept -- see lastline, which covers
- * most of those now, and #117 for the case it does not. It is also
-    false where no
- * repaint happened -- a KEY_RESIZE carrying no actual size change,
- * which sync_size() returns from before touching anything. */
+ * those now, and the answer to one with them. It is also false where
+ * the repaint declined to place the line at all -- see the width guard
+ * in restore_curline() -- and where no repaint happened, a KEY_RESIZE
+ * carrying no actual size change, which sync_size() returns from
+ * before touching anything. */
 static int cursor_at_prompt;
 
 /* Whether a window row holds nothing but blanks. */
@@ -386,7 +387,10 @@ static int row_blank(int r) {
  * player then types into an old command and the game reads a line the
  * screen never showed. A match counts only as the last thing on the
  * screen: nothing but blanks after it on its row, and nothing but blank
- * rows below.
+ * rows below. An ended prompt is the exception, and the one this had to
+ * grow for: its answer is on the row under it by design, so what counts
+ * as the last thing there is the question, its padding, and as much of
+ * the answer as survived.
  *
  * Missing, and it gets a row of its own. The window scrolls by one
  * first, because writing a newline would clear to the end of the row
@@ -406,8 +410,12 @@ static void restore_curline(int oldmsgw) {
 	   onscreen and row_blank's row are smaller than a very wide
 	   terminal on purpose -- nothing the game writes reaches column
 	   255, the longest line being a prompt plus that 126-character
-	   answer -- so a row with content past there cannot exist. Raise
-	   the input buffer and these want revisiting. */
+	   answer -- so a row with content past there cannot exist. That
+	   is a claim about content, and the join below needs more than
+	   content: every row it appends has to be its full width,
+	   blanks and all, or the column arithmetic stops meaning
+	   columns. See the width guard there. Raise the input buffer and
+	   these want revisiting. */
 	char onscreen[512], want[sizeof curline + 160], joined[2048];
 	const char *line = curline;
 	char *found;
@@ -422,19 +430,6 @@ static void restore_curline(int oldmsgw) {
 	   else it is old conversation that scrolled away for a reason. */
 	if (curlen == 0) {
 		if (!reader_waiting || lastlen == 0) return;
-		/* Only before the player has typed anything. Once there is
-		   an answer the two sit on separate rows with curses'
-		   padding between them, and every attempt at spanning that
-		   went wrong in a different way: dropping the answer from
-		   the comparison reprinted the question once per drag step,
-		   and padding it back turned a one-row height shrink into a
-		   second copy. What is left unfixed is milder than either
-		   -- what is left is exactly what the game did before this
-		   change, which at some shapes is a blank message window
-		   with the reader still waiting. Worse than restoring it
-		   would be; better than restoring it twice. Issue #117. */
-		if (pending_answer != NULL && *pending_answer != '\0')
-			return;
 		line = lastline;
 		linelen = lastlen;
 		ended = TRUE;
@@ -447,18 +442,42 @@ static void restore_curline(int oldmsgw) {
 	   eight copies of it up the window. */
 	maxy = getmaxy(wmsg);
 	width = getmaxx(wmsg);
-	/* An ended line puts the answer on the row below, and curses pads
-	   the rest of the prompt's row with blanks to get there. Those
-	   blanks are in the joined rows, so they have to be in `want`
-	   too: without them the answer never matched, the tail test
-	   failed, and a drag reprinted the question at every step --
-	   the same copies-up-the-window this comparison exists to stop,
-	   reintroduced for the ended case. */
-	i = ended && width > 0 && linelen % width != 0
-	    ? width - linelen % width : 0;
-	snprintf(want, sizeof want, "%s%*s%s", line, i, "",
-		 pending_answer == NULL ? "" : pending_answer);
+	/* The pair shares a row only when the line did not end. An ended
+	   one puts the answer on the row below, so on screen they are two
+	   strings and not one, and joining them here is what both failed
+	   attempts at this did: leaving the answer out made the tail test
+	   fail against an answer that was there, and padding it to the
+	   row boundary made it fail against one that was not. Neither can
+	   be right, because a height shrink cuts the answer's row and
+	   keeps the question's -- so what is on screen is half of what
+	   was written, and a single string can only match all or none of
+	   it. Look for the question, and let the tail test below account
+	   for the answer separately. */
+	snprintf(want, sizeof want, "%s%s", line,
+		 ended || pending_answer == NULL ? "" : pending_answer);
 	wantlen = (int)strlen(want);
+	/* mvwinnstr() reads at most its buffer, so a window wider than
+	   that hands back a short row -- and then the joined rows do not
+	   line up end to end, the question's padding runs into the answer
+	   at the buffer's end instead of at the row boundary, and the
+	   tail test fails against a pair that is perfectly intact.
+	   Falling through from there is the worst of the outcomes: the
+	   write path stacks a copy at every step of a drag, which is what
+	   the comparison exists to stop. Reproduced at 600 columns, the
+	   question alternating on and off with the echo typed over its
+	   first character -- `yre you sure?` -- twice up the window.
+	   Only where more than one row is joined, which at these widths
+	   means an ended line with something typed: nothing else spans
+	   two rows when one row is five hundred columns. That is why this
+	   could not be reached until such a line got here at all.
+	   Before the row scan below, not after it, because row_blank()
+	   moves the cursor: returning past it left the player's next
+	   keystroke at column 0 of the question, which is worse than the
+	   copies and was not what the old gate did. Leaving both alone is
+	   what this did before, and it is the safe end of the trade. */
+	if (width >= (int)sizeof onscreen && ended
+	    && pending_answer != NULL && *pending_answer != '\0')
+		return;
 	for (r = maxy - 1; r >= 0; r--) {
 		if (!row_blank(r)) break;
 	}
@@ -470,7 +489,21 @@ static void restore_curline(int oldmsgw) {
 	   copies up the window over a slow drag. Curses pads each row to
 	   the full width, so joining them rebuilds the text exactly. */
 	if (r >= 0 && width > 0) {
-		int start = r - wantlen / width;
+		/* Further back for an ended line by every row its answer
+		   takes, since those rows sit below the question and
+		   `wantlen` no longer counts them. Without that the
+		   question is never in the rows this joins -- the answer is
+		   the last non-blank row and the question is above it -- so
+		   the search misses, and on a height-only change the branch
+		   below scrolls and writes without erasing: a fresh copy of
+		   the pair at every step of the drag. One row was not
+		   enough, which is the same failure one row further up:
+		   an answer of eighty-seven characters at eighty columns
+		   takes two. */
+		int alen = ended && pending_answer != NULL
+			   ? (int)strlen(pending_answer) : 0;
+		int arows = alen > 0 ? (alen - 1) / width + 1 : 0;
+		int start = r - wantlen / width - arows;
 		int rr;
 
 		if (start < 0) start = 0;
@@ -484,9 +517,53 @@ static void restore_curline(int oldmsgw) {
 		}
 		found = strstr(joined, want);
 		if (found != NULL) {
+			int skip = (int)(found - joined) + wantlen;
+
+			/* What follows an ended question is curses' padding
+			   to the end of its row and then the answer on the
+			   next one, and neither is something drawn over the
+			   line. Step over both before asking whether the
+			   rest is blank. Either may be absent: a height
+			   shrink cuts the answer's row, and then there is
+			   nothing after the padding to step over. Anything
+			   else found on the way is a real overwrite, and
+			   the scan below reports it by finding a non-blank
+			   where this one stopped. */
+			if (ended) {
+				/* No padding at all where the question
+				   filled its row: it already ends on the
+				   boundary, and rounding up from there
+				   would step over the answer's whole row
+				   as if it were blank. */
+				int bound = skip % width == 0 ? skip
+					    : (skip / width + 1) * width;
+
+				while (skip < bound && joined[skip] == ' ')
+					skip++;
+				/* As much of the answer as is on screen,
+				   which is not always all of it: the
+				   height shrink that cuts the answer's
+				   last row is the shape this whole branch
+				   is for, and demanding the whole string
+				   there fails against our own answer
+				   truncated -- the match misses and the
+				   pair is stamped out again. What is left
+				   is still ours, so a prefix is the right
+				   test; anything else in those columns
+				   fails it and the scan below reports the
+				   overwrite as before. */
+				if (skip == bound && alen > 0) {
+					int have = (int)strlen(joined + skip);
+					int n = alen < have ? alen : have;
+
+					if (n > 0 && strncmp(joined + skip,
+							     pending_answer,
+							     (size_t)n) == 0)
+						skip += n;
+				}
+			}
 			tail_blank = TRUE;
-			for (i = (int)(found - joined) + wantlen;
-			     joined[i] != '\0'; i++)
+			for (i = skip; joined[i] != '\0'; i++)
 				if (joined[i] != ' ') tail_blank = FALSE;
 			if (tail_blank) {
 				/* At the end of the prompt, not of the
@@ -502,7 +579,13 @@ static void restore_curline(int oldmsgw) {
 				   the row scan parked it, at column 0 of
 				   the question, so the echo typed the
 				   answer over it: ` yyy you sure?`. */
-				if (ended) i = (i / width + 1) * width;
+				/* Guarded as the padding above is: a
+				   question that filled its row already
+				   ends on the boundary, and rounding up
+				   would put the cursor a row past its
+				   answer. */
+				if (ended && i % width != 0)
+					i = (i / width + 1) * width;
 				r = start + i / width;
 				if (r > maxy - 1 && maxy > 1) {
 					wscrl(wmsg, 1);
@@ -547,13 +630,10 @@ static void restore_curline(int oldmsgw) {
 
 		if (pending_answer != NULL)
 			total += (int)strlen(pending_answer);
-		/* Apart, for an ended line: the answer starts a row of its
-		   own, so the two do not share one. Added together they
-		   under-count and the erase leaves a row of the stump. */
-		/* Defensive, not live: the #117 gate means pending_answer
-		   here is NULL or empty, and with an empty one the rounding
-		   leaves rows unchanged. It is right for the day #117 is
-		   fixed and an answer really does start its own row.
+		/* Live since #117: an ended line's answer starts a row of
+		   its own, so the two do not share one -- added together
+		   they under-count and the erase leaves a row of the
+		   stump behind.
 		   Guarded like the padding above, and for the same reason:
 		   a prompt that exactly fills its row needs no filler, and
 		   adding one anyway made rows one too high, so the erase
@@ -617,7 +697,14 @@ static void restore_curline(int oldmsgw) {
 	   it. A one-row message window scrolls the prompt away the
 	   moment the newline lands, which is the blank screen #112 is
 	   about, reached by the fix for it. */
-	if (ended && maxy > 1) waddch(wmsg, '\n');
+	/* The last of the same guard -- the erase above has the third --
+	   and this is the one that shows: waddstr has already wrapped the
+	   cursor to the next row where the line filled this one exactly,
+	   so the newline would leave a blank row between the question and
+	   its answer -- and the search above would then not find the pair
+	   it had just written. */
+	if (ended && maxy > 1 && (width <= 0 || linelen % width != 0))
+		waddch(wmsg, '\n');
 	cursor_at_prompt = TRUE;
 }
 
