@@ -36,7 +36,21 @@ and feel to a player.
    cmake --build build`) and drive the affected behavior through
    `./build/sst`, scripting input via a pipe or heredoc when interactive play
    is impractical.
-3. Consult `sst.doc` and the README so your judgment matches the game's
+3. Where the change can reach full-screen mode (`sst -t`), drive it there as
+   well. A pipe or a heredoc is not a terminal, so step 2 renders the classic
+   display whatever the change touched — reviewing a full-screen change that
+   way reports on a surface it never altered. Full-screen mode needs a pty:
+   "TUI mode (`sst -t`)" in `AGENTS.md` says how to get one — read that
+   section from the file in the repository, not from the copy in your
+   context, which may predate a rule that keeps a tmux session alive — and
+   its tmux rules are conditions rather than suggestions: your own socket
+   via `-L`, `-f /dev/null`, no bare `kill-server`, and no redirection of
+   the game's stdout. Check the sizes that section names, 80x24 and 72x24,
+   and not only a comfortable one: at both, the message window is eleven
+   rows — ten of text, with the pager's prompt on the last — and that is
+   where the paging bugs live. (`AGENTS.md` rounds this to ten lines, which
+   is the pageable height rather than the window; #138.)
+4. Consult `sst.doc` and the README so your judgment matches the game's
    documented behavior and the conventions of the original game.
 
 ## What to evaluate
@@ -51,9 +65,10 @@ and feel to a player.
   decision is asked for.
 - **Discoverability**: new or changed behavior is reachable through help,
   command lists, or documentation (`sst.doc`).
-- **Terminal correctness**: output renders sensibly in a plain 80-column
-  terminal; no garbled control sequences, truncated lines, or misaligned
-  charts.
+- **Terminal correctness**: output renders sensibly in both displays — the
+  plain 80-column terminal, and full-screen mode at 80x24 and 72x24; no
+  garbled control sequences, truncated lines, misaligned charts, or text a
+  panel edge has clipped.
 - **Regressions**: existing journeys (starting a game, moving, combat,
   docking, reports, ending a game) still behave and read correctly where the
   change could plausibly affect them.
@@ -66,5 +81,10 @@ Do not modify any files. Report:
 2. Actionable findings, each with severity (blocker / should-fix / nit), the
    affected file and behavior, what a player experiences, and a concrete
    suggestion.
-3. What you actually exercised (commands run, journeys played) so the main
-   agent knows the coverage of this review.
+3. What you actually exercised (commands run, journeys played) and in which
+   display — plain, full-screen, or both, naming the sizes — so the main
+   agent knows the coverage of this review. Say what you did not exercise as
+   well, and why. A change that reaches full-screen mode and was read only in
+   the plain display is a review with a hole in it, and `code-review` is told
+   to weigh this list against the diff; coverage left unstated reads as
+   coverage you had.

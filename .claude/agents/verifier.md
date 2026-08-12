@@ -24,13 +24,24 @@ staged, unstaged, and untracked files first), but a full pass covers:
    `cppcheck`, `clang-tidy`, or `scan-build` is installed, run it over the
    changed files; if none is installed, report that as an environment gap
    rather than silently skipping.
-3. **Tests.** Run the project's test suite if one exists (check
-   `CMakeLists.txt` and the tree for test targets; use `ctest` when
-   registered). If the change is testable but has no covering test, report
-   that as missing coverage.
+3. **Tests.** Run the registered suite in each configuration you built —
+   `ctest --test-dir build-debug --output-on-failure`, then the same for
+   `build-release`. Both, not whichever is convenient: Debug compiles in
+   `-DDEBUG` and Release does not, `tests/tui.sh` is handed the
+   configuration and gates a section of its checks on Debug, and the main
+   agent builds only Debug — so Release coverage exists nowhere but here,
+   and a regression that hides behind `#ifdef DEBUG`, or that only appears
+   without it, reaches CI if you skip it. If the change is testable but has
+   no covering test, report that as missing coverage. If `tests/golden/`
+   appears in the diff, say so under **What ran**: those fixtures are the
+   recorded output the `golden` test compares against, so re-recording one
+   takes the comparison with it — the byte comparison does not survive an
+   `--update`, though a few sanity guards in `golden.sh` do — and a green
+   `golden` then says nothing about the arithmetic that moved.
 4. **Journey coverage.** Exercise the built game end-to-end for the journeys
-   the change could affect by scripting input to `./build-debug/sst` (pipe or
-   heredoc). At minimum confirm the game starts, accepts commands, and exits
+   the change could affect by scripting input to the built `sst` (pipe or
+   heredoc) — from each configuration you built, for the reason item 3
+   gives. At minimum confirm the game starts, accepts commands, and exits
    cleanly; add journeys targeted at the changed behavior. Watch for crashes,
    hangs, and garbled output.
 
