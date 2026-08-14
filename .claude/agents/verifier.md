@@ -13,24 +13,42 @@ fix anything yourself — fixing is the main agent's job.
 Scale the checks to the change (inspect the branch diff against `main` plus
 staged, unstaged, and untracked files first), but a full pass covers:
 
-1. **Builds.** Configure and build both types — the build type flag is
-   mandatory in this project:
+1. **Builds.** Build through the presets in `CMakePresets.json` — never by
+   spelling out flags, which is how this brief came to be building without
+   `-Werror` while CI built with it:
    ```sh
-   cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build-debug
-   cmake -S . -B build-release -DCMAKE_BUILD_TYPE=Release && cmake --build build-release
+   cmake --preset ci-debug   && cmake --build --preset ci-debug
+   cmake --preset ci-release && cmake --build --preset ci-release
    ```
-2. **Static checks.** Rebuild the changed files with warnings raised
-   (`-Wall -Wextra` via `CMAKE_C_FLAGS`) and report new warnings. If
-   `cppcheck`, `clang-tidy`, or `scan-build` is installed, run it over the
-   changed files; if none is installed, report that as an environment gap
-   rather than silently skipping.
-3. **Tests.** Run the project's test suite if one exists (check
-   `CMakeLists.txt` and the tree for test targets; use `ctest` when
-   registered). If the change is testable but has no covering test, report
-   that as missing coverage.
+   The `ci-*` presets are the ones CI runs and they carry `-Werror`, so a
+   warning fails here exactly as it would there. That is the point of
+   running them: every pass before CI is otherwise blind to a warning CI
+   will reject, and "zero warnings" from a build never asked to treat them
+   as errors is a stronger claim than it sounds. `cmake --list-presets`
+   shows what else is available.
+2. **Static checks.** The `ci-*` builds above already raise every warning
+   this project turns on and make them fatal, so report what they print
+   rather than re-deriving flags by hand. If `cppcheck`, `clang-tidy`, or
+   `scan-build` is installed, run it over the changed files; if none is
+   installed, report that as an environment gap rather than silently
+   skipping.
+3. **Tests.** Run the suite through the test preset matching each build
+   above — `ctest --preset ci-debug`, then `ctest --preset ci-release`.
+   Both, because Release is not the same binary checked twice: without
+   `-DDEBUG` the `debug` command and the code behind it are not compiled
+   in, so the journeys drive something different, and `-Werror` over
+   optimised code reaches warnings Debug never emits. `tests/tui.sh` is
+   the one test that branches on the configuration and the block it
+   branches on runs only in Debug, so Release is the thinner run and
+   needs its own pass rather than less of one. CI runs both and would
+   otherwise reach a Release-only failure first. The presets already carry
+   `--output-on-failure` and `--no-tests=error`, so a suite that registered
+   nothing fails rather than reporting success over an empty run. If the
+   change is testable but has no covering test, report that as missing
+   coverage.
 4. **Journey coverage.** Exercise the built game end-to-end for the journeys
-   the change could affect by scripting input to `./build-debug/sst` (pipe or
-   heredoc). At minimum confirm the game starts, accepts commands, and exits
+   the change could affect by scripting input to `./build/ci-debug/sst` (pipe
+   or heredoc). At minimum confirm the game starts, accepts commands, and exits
    cleanly; add journeys targeted at the changed behavior. Watch for crashes,
    hangs, and garbled output.
 

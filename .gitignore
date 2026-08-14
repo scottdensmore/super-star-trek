@@ -194,6 +194,14 @@ Temporary Items
 build/
 build-*/
 
+# A contributor's own presets. CMake reads this file alongside
+# CMakePresets.json, which is the shared source of truth and is checked
+# in; this one is where personal paths, generators and toolchains go, and
+# committing it would put them in everyone's build. Anchored to the root
+# for the same reason /CLAUDE.local.md is: a copy in a subdirectory is
+# shared drift rather than personal, and should stay visible.
+/CMakeUserPresets.json
+
 # Personal, unshared agent instructions -- shared rules go in AGENTS.md.
 # Anchored to the root, matching the only path tests/instructions.sh
 # exempts; a CLAUDE.local.md in a subdirectory is shared drift, not

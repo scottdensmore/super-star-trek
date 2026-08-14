@@ -32,10 +32,15 @@ and feel to a player.
 
 1. Read the diff to understand which commands, prompts, messages, or screens
    are affected.
-2. Build the game if needed (`cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug &&
-   cmake --build build`) and drive the affected behavior through
-   `./build/sst`, scripting input via a pipe or heredoc when interactive play
-   is impractical.
+2. Build the game if needed (`cmake --preset debug && cmake --build --preset
+   debug`) and drive the affected behavior through `./build/debug/sst`,
+   scripting input via a pipe or heredoc when interactive play is
+   impractical. `CMakePresets.json` carries every build option this
+   project sets, so do not pass any by hand. It is not where the compiler
+   flags live: the feature flags that decide which commands exist at all
+   (`-DSCORE -DCAPTURE -DCLOAKING`), the warning set, and the `-DDEBUG`
+   that Debug adds are all in `CMakeLists.txt`, and AGENTS.md's "Build and
+   run" states the split.
 3. Consult `sst.doc` and the README so your judgment matches the game's
    documented behavior and the conventions of the original game.
 
