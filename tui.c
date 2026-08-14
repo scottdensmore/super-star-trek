@@ -724,6 +724,29 @@ static void sync_size(void) {
 	cursor_at_prompt = FALSE;
 	resize_term(0, 0);	/* adopt whatever the terminal is now */
 	make_windows();		/* which is what moves builtlines/builtcols on */
+	/* The screen has columns no window owns. The message window is inset
+	   a column on each side -- newwin(msgh, msgw, PANELH, 1), with msgw
+	   asked for as COLS-2 rather than COLS-1 -- to give it a margin
+	   under the panels, so the first and last columns of the screen
+	   belong to no window, and nothing else in the game writes to
+	   stdscr -- which means nothing erased what a wider render left in
+	   either of them. After a shrink the tails of words stayed there: at
+	   41 columns a short-range scan left a character from each of the
+	   status lines still on screen down the right-hand edge, in a column
+	   that by then belonged to nothing.
+
+	   Erasing stdscr rather than widening the window, because the margin
+	   is deliberate. It is queued before the windows are, so their
+	   contents land on top of the blanks in the same doupdate() -- the
+	   panels' from tui_refresh_panels(), which is the only caller and
+	   refreshes all three after this returns, and the conversation's
+	   from the wnoutrefresh() below. Reversing that order would blank
+	   the screen instead of cleaning its edges.
+
+	   Only on a real resize, since that is the only way the columns get
+	   dirty, and this function has already returned if there was none. */
+	werase(stdscr);
+	wnoutrefresh(stdscr);
 	touchwin(wmsg);		/* the panels redraw themselves; this does not */
 	/* On a grow as well as a shrink. A shrink writes the line into
 	   whatever room is left, which can be one row and narrower than
