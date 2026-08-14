@@ -29,7 +29,7 @@
 # When a change alters output on purpose, re-record and say so in the
 # commit -- the diff of the fixtures is the evidence:
 #
-#     tests/golden.sh ./build/sst --update
+#     tests/golden.sh ./build/debug/sst --update
 #
 # Usage: golden.sh /path/to/sst [--update]
 

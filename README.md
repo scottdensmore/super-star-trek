@@ -91,18 +91,24 @@ no tty), or `TERM` names a terminal that can't address the cursor —
 
 ### Building
 
-The build is CMake, and a build type is required:
+The build is CMake, driven through presets:
 
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug   # or Release
-cmake --build build
-./build/sst
+cmake --preset debug           # or release
+cmake --build --preset debug
+./build/debug/sst
 ```
 
-You need a C17 compiler and ncurses (`libncurses-dev` on Debian and
-Ubuntu; already present on macOS). `ctest --test-dir build` runs the
-test suite, which includes a full-screen session driven through a real
-terminal and needs `tmux` — without it that one test reports as skipped.
+You need a C17 compiler, CMake 3.21 or newer, and ncurses
+(`libncurses-dev` on Debian and Ubuntu; already present on macOS).
+`ctest --preset debug` runs the test suite, which includes a full-screen
+session driven through a real terminal and needs `tmux` — without it
+that one test reports as skipped.
+
+`cmake --list-presets` shows them all. There are four: `debug` and
+`release`, and `ci-debug` and `ci-release`, which add `-Werror` and are
+exactly what CI runs — so you can reproduce a CI warning locally rather
+than discovering it in a pull request.
 
 ### Windows
 

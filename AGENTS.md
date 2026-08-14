@@ -30,17 +30,43 @@ is on and CI builds with `-Werror`.
 
 ## Build and run
 
+`CMakePresets.json` is the single source of truth for how this project is
+built and tested. Use a preset; do not spell the flags out.
+
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug   # build type is required; Debug adds -DDEBUG
-cmake --build build
-./build/sst
+cmake --preset debug
+cmake --build --preset debug
+./build/debug/sst
+ctest --preset debug            # --output-on-failure is already in the preset
 ```
 
-Note: `CMakeLists.txt` compares `CMAKE_BUILD_TYPE` directly, so configuring
-without `-DCMAKE_BUILD_TYPE=...` fails. `-Wall -Wextra` is always on; CI
-also configures with `-DSST_WERROR=ON`, so pass that locally to see what
-CI will refuse. Feature flags `-DSCORE -DCAPTURE
--DCLOAKING` are always enabled.
+Four presets, each with its own build directory under `build/`:
+
+| Preset | Build type | `-Werror` |
+| --- | --- | --- |
+| `debug` | Debug (adds `-DDEBUG`) | no |
+| `release` | Release | no |
+| `ci-debug` | Debug | **yes** |
+| `ci-release` | Release | **yes** |
+
+The `ci-*` presets are what CI runs, command for command, so
+`cmake --build --preset ci-debug` is how you find out what CI will refuse
+before it refuses it. The flags themselves live in `CMakeLists.txt`, not in
+the presets: `-Wall -Wextra -Wmissing-prototypes` on GCC and Clang, and the
+feature flags `-DSCORE -DCAPTURE -DCLOAKING` on every compiler. A preset
+decides only the build type and whether warnings are fatal.
+
+Configuring by hand still works, but it is how the recipe drifted in the
+first place. Five files wrote it down, three of them identically. Only CI
+carried `-DSST_WERROR=ON`, and `verifier.md` — the pass that stands
+between a change and CI — omitted it where the omission mattered, and
+built somewhere else besides. So the one build meant to predict CI was
+the one build that could not. A sixth file, `tests/golden.sh`, named only
+the binary's path, which is why a sweep for the recipe missed it. If you
+find yourself typing `-DCMAKE_BUILD_TYPE=`, you want a preset. Add one to
+`CMakePresets.json` rather than passing flags a reader of this file cannot
+see. (`CMakeLists.txt` compares `CMAKE_BUILD_TYPE` directly, so a bare
+`cmake -S . -B build` fails outright.)
 
 ## TUI mode (`sst -t`)
 
@@ -49,7 +75,7 @@ CI will refuse. Feature flags `-DSCORE -DCAPTURE
   `fgets` silently bypasses the full-screen mode.
 - Plain mode (no `-t`) must not change as an unintended side effect of any
   change; verify with a piped scripted journey (e.g.
-  `printf 'regular\nshort\nnovice\nxyz\nsrscan\nquit\nn\n' | ./build/sst`).
+  `printf 'regular\nshort\nnovice\nxyz\nsrscan\nquit\nn\n' | ./build/debug/sst`).
   If a change alters plain-mode output on purpose, say so in the commit
   and explain why.
 - Text the game prints must not end in a carriage return. `sst.doc` is
@@ -61,10 +87,10 @@ CI will refuse. Feature flags `-DSCORE -DCAPTURE
 - The panel formatters in `tuifmt.c` must mirror `srscan()` in `reports.c`
   exactly — it is the spec, including sensor-damage masking and the `-f`
   coordinate transposition (x is the column). Keep `tests/test_tuifmt.c` in
-  sync (`ctest --test-dir build -R '^tuifmt$'`).
+  sync (`ctest --preset debug -R '^tuifmt$'`).
 - Testing the TUI needs a pty: use tmux, and always on your own socket via
   `-L`, with `-f /dev/null` so the config does not follow — `tmux -f /dev/null
-  -L sst new-session -d -x 100 -y 30 -s t './build/sst -t; sleep 30'`, drive
+  -L sst new-session -d -x 100 -y 30 -s t './build/debug/sst -t; sleep 30'`, drive
   with `tmux -f /dev/null -L sst send-keys -t t 'cmd' Enter` (input is
   line-based; keys need Enter), inspect with `capture-pane -t t -p`, and clean
   up with `kill-server` on that same socket. Without `-f /dev/null` a setting
@@ -173,8 +199,8 @@ Every coding agent working in this repository must follow this workflow.
      cache-path error and exits 0 while it does it, and a regeneration
      can rewrite the original's build files on the way past. Most tests
      here take the binary as an argument. Run from inside the copy:
-     `cd <copy> && tests/tournament.sh build/sst Debug`, or `ctest
-     --test-dir build -R '^(tuifmt|rules)$'` for the two compiled ones.
+     `cd <copy> && tests/tournament.sh build/debug/sst Debug`, or `ctest
+     --preset debug -R '^(tuifmt|rules)$'` for the two compiled ones.
      From inside, because for some of them the script decides which tree
      is read and not the binary: `help` and `tui` find `sst.doc` from
      their own path, and `golden` its fixtures. The original's script
@@ -359,24 +385,43 @@ The entanglement is the reason, so a faster harness would not change it, and
 neither would a focused test cheap enough to look worth handing over.
 
 What the `verifier` owns is everything the loop did not reach: the rest of
-`ctest`, the full journey and golden battery, and the configurations the
-main agent did not build — Release, `-DSST_WERROR=ON`, whatever the platform
-adds. It decides that scope for itself: step 7 gives it the criterion, and
+`ctest`, the full journey and golden battery, and the presets the main
+agent did not build — the two `ci-*` ones, which between them cover both
+build types with warnings fatal, and whatever the platform adds. That is
+the set `verifier.md` names, and the two files have to keep naming the
+same one. It decides that scope for itself: step 7 gives it the criterion, and
 step 8 says the decision is the verifier's own. This says only that it
 should not be asked to skip what the main agent happened to run, and that
 the main agent should not pre-run the battery to save it the trouble.
 Running the suite twice buys nothing and costs the whole of it: a full
-`ctest` here is about four minutes per configuration. One caveat while it
-stands: `verifier.md` does not yet ask for `-DSST_WERROR=ON`, which is
-#125, so say so when invoking the pass.
+`ctest` here is about four minutes per configuration.
+
+The `ci-*` presets are not optional for that pass. A warning CI will reject
+is invisible to every pass that runs before CI, and a `verifier` reporting
+"zero warnings" from a build never asked to treat them as errors is making
+the stronger claim by accident. It does not need asking for: the presets
+carry `-Werror`, so running the `ci-*` pair is the whole of it.
+
+Both of them, which is what `verifier.md` asks for. Release is not the
+same binary with the same checks run twice: without `-DDEBUG` the `debug`
+command and the code behind it are not compiled in at all, so the
+journeys drive something different, and `-Werror` over optimised code
+reaches warnings that Debug never emits — on GCC, `-Wmaybe-uninitialized`
+is in `-Wall` and needs the dataflow analysis only optimisation runs.
+`tests/tui.sh` is the one test that branches on the configuration and the
+block it branches on runs only in Debug, so Release is the thinner run
+and needs its own pass rather than less of one.
 
 **Keep what reaches the main agent's context small.** That is the reason
 this split is worth stating, and it is mechanical:
 
-- `ctest` prints no test output on a pass at all, and `--output-on-failure`
-  costs nothing there while saving the second run a failure would otherwise
-  need. `-R` scopes it to the test being worked on — anchor the pattern,
-  since it is a regex: `-R tui` picks up `tuifmt` and `journey-tui` with it.
+- `ctest` prints no test output on a pass at all, and the test presets
+  already carry `--output-on-failure`, which costs nothing there while
+  saving the second run a failure would otherwise need. What is left to
+  add is `-R`, scoping it to the test being worked on — anchor the
+  pattern, since it is a regex: `-R tui` picks up `tuifmt` and
+  `journey-tui` with it. An anchored pattern that matches nothing is an
+  error rather than a pass, since the presets set `--no-tests=error`.
 - The shell tests print one line on a pass, so they need no filtering. On a
   failure they print what broke and then dump the evidence behind it — a
   pane, a slice of game output, a diff, depending on the script — in that

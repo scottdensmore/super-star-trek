@@ -14,14 +14,18 @@ concurrency:
 
 jobs:
   build-and-test:
-    name: build-and-test (${{ matrix.os }}, ${{ matrix.build_type }})
+    name: build-and-test (${{ matrix.os }}, ${{ matrix.preset }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
       fail-fast: false
+      # Preset names rather than build types, because the preset is what
+      # this job actually runs. A matrix of build types would have to be
+      # mapped back to a preset in three separate steps, which is the
+      # kind of restatement CMakePresets.json exists to remove.
       matrix:
         os: [ubuntu-latest, macos-latest]
-        build_type: [Debug, Release]
+        preset: [ci-debug, ci-release]
 
     steps:
       - uses: actions/checkout@v4
@@ -41,12 +45,21 @@ jobs:
           HOMEBREW_NO_AUTO_UPDATE: 1
         run: brew list tmux >/dev/null 2>&1 || brew install tmux
 
-      # -Werror only here: see SST_WERROR in CMakeLists.txt.
+      # Every flag these steps would otherwise spell out lives in
+      # CMakePresets.json instead: the build type, -Werror via SST_WERROR,
+      # and ctest's --output-on-failure and --no-tests=error. Anyone can
+      # now run exactly what CI runs with the same three commands, which
+      # was not true while this file was one of five writing the recipe
+      # down. Three of those five were identical. Only this file carried
+      # SST_WERROR, and the verifier's brief -- the pass that stands
+      # between a change and CI -- omitted it where the omission
+      # mattered, so the one build meant to predict CI was the one that
+      # could not.
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DSST_WERROR=ON
+        run: cmake --preset ${{ matrix.preset }}
 
       - name: Build
-        run: cmake --build build
+        run: cmake --build --preset ${{ matrix.preset }}
 
       - name: Test
-        run: ctest --test-dir build --output-on-failure --no-tests=error
+        run: ctest --preset ${{ matrix.preset }}

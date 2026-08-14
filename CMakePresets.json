@@ -1,0 +1,105 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "description": "The generator is pinned because CMakeLists.txt assumes a single-config one: it reads CMAKE_BUILD_TYPE at configure time to decide -DDEBUG, and compares it directly so an empty value fails outright. Under a multi-config generator (Ninja Multi-Config, Xcode) the build type is chosen at build time instead, so that variable would still be set and -DDEBUG would reach every configuration, while ctest would report every test Not Run without a -C these test presets do not pass. A command-line -G still overrides this and still writes to the binaryDir below; changing generator in a tree already configured needs a fresh directory, as it does anywhere in CMake.",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/${presetName}"
+    },
+    {
+      "name": "debug",
+      "inherits": "base",
+      "displayName": "Debug",
+      "description": "Everyday build. Debug adds -DDEBUG; warnings are on but not fatal.",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release",
+      "inherits": "base",
+      "displayName": "Release",
+      "description": "Optimised build. Some warnings only appear here.",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "ci-debug",
+      "inherits": "base",
+      "displayName": "Debug, warnings fatal",
+      "description": "What CI builds. -Werror, so a warning fails here as it would there.",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SST_WERROR": "ON"
+      }
+    },
+    {
+      "name": "ci-release",
+      "inherits": "base",
+      "displayName": "Release, warnings fatal",
+      "description": "What CI builds. -Werror, so a warning fails here as it would there.",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SST_WERROR": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "ci-debug",
+      "configurePreset": "ci-debug"
+    },
+    {
+      "name": "ci-release",
+      "configurePreset": "ci-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "test-base",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "debug",
+      "inherits": "test-base",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "inherits": "test-base",
+      "configurePreset": "release"
+    },
+    {
+      "name": "ci-debug",
+      "inherits": "test-base",
+      "configurePreset": "ci-debug"
+    },
+    {
+      "name": "ci-release",
+      "inherits": "test-base",
+      "configurePreset": "ci-release"
+    }
+  ]
+}
