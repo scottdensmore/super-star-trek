@@ -157,6 +157,87 @@ uniform_col() {
 		END { exit (n > 0 && !bad) ? 0 : 1 }'
 }
 
+# Wait for column $1 to be blank on every row from $2 to $3, up to about
+# four seconds. Polled rather than asked once, for the reason wait_gone
+# gives: a resize is not instantaneous, and a capture taken before the
+# game has repainted still holds the old image -- tmux truncates its own
+# buffer on a shrink but keeps the character in the last column, so
+# asking too early sees the stale cell that is about to be erased.
+#
+# The direction is safe either way. A column that is going to come clean
+# does so within the timeout; one that is not, never does, and a screen
+# still showing the wider render fails rather than passes while it
+# waits.
+#
+# The row count carries the same caveat as uniform_col's, and no more of
+# one: it rules out a capture with nothing in it, not a capture of
+# nothing. Only a capture that came back empty altogether -- no session,
+# no server, and `screen` swallows the error -- or a pane shorter than
+# $2 is caught here. A game that died with its pane still open is not:
+# capture-pane emits a row per pane row whether anything is running in
+# it or not, so the rows are all present and blank, and what decides the
+# verdict then is whether the dead screen happens to hold a character in
+# that column. Prove the panels are drawn before asking.
+wait_col_clean() {
+	i=0
+	while [ "$i" -lt 40 ]; do
+		screen | awk -v col="$1" -v lo="$2" -v hi="$3" '
+			NR >= lo && NR <= hi {
+				n++
+				c = substr($0, col, 1)
+				if (c != "" && c != " ") dirty = 1
+			}
+			END { exit (n > 0 && !dirty) ? 0 : 1 }' && return 0
+		i=$((i + 1))
+		sleep 0.1
+	done
+	return 1
+}
+
+# Wait until $1 is on screen on at least $2 lines. For text the game
+# prints that the panels print too: one line is the panel that was
+# always there, and only the second says the command actually ran.
+# `wait_for` cannot tell those apart, so it returns before the command
+# has printed anything and the caller measures the screen it meant to
+# replace.
+#
+# Lines and not occurrences -- grep -c counts a line once however many
+# times it matches. Every caller so far wants text the panels put on a
+# row of their own, so the two are the same here; a caller counting
+# something that can repeat on one row would undercount, and see a
+# timeout blaming its command.
+wait_count() {
+	i=0
+	while [ "$i" -lt 40 ]; do
+		[ "$(screen | grep -cF -- "$1")" -ge "$2" ] && return 0
+		i=$((i + 1))
+		sleep 0.1
+	done
+	return 1
+}
+
+# The mirror of wait_col_clean: wait for column $1 to carry something on
+# some row from $2 to $3. Used for the precondition of a check that the
+# column comes clean, where asking once races the render it is waiting
+# for.
+#
+# No row-count guard, because this one cannot pass without a row: it
+# succeeds only on having seen a character.
+wait_col_dirty() {
+	i=0
+	while [ "$i" -lt 40 ]; do
+		screen | awk -v col="$1" -v lo="$2" -v hi="$3" '
+			NR >= lo && NR <= hi {
+				c = substr($0, col, 1)
+				if (c != "" && c != " ") seen = 1
+			}
+			END { exit seen ? 0 : 1 }' && return 0
+		i=$((i + 1))
+		sleep 0.1
+	done
+	return 1
+}
+
 dump() {
 	printf '  --- screen ---\n' >&2
 	screen | sed 's/^/  | /' >&2
@@ -799,6 +880,107 @@ else
 	tm send-keys -t "$pane" 'art' Enter
 	expect "shrink history: the command typed after the shrink did not run" \
 		'STAR CHART'
+fi
+
+# --- no column keeps text from a wider terminal -----------------------
+# The message window is inset a column on each side -- newwin(msgh,
+# msgw, PANELH, 1), with msgw asked for as COLS-2 rather than COLS-1 --
+# so the first and last columns of the screen belong to no curses
+# window at all. Only sync_size() writes to stdscr, and only to erase
+# it, so before that nothing erased what a wider render left in them:
+# after a shrink the tails of words stayed there. At 41x24 a short-range
+# scan left `4`, `G`, `3`, `A`, `5` down the right-hand edge, one from
+# each of the status lines still on screen, and a stray digit beside the
+# COMMAND> prompt.
+#
+# Only the rows below the panels. The panels span the full width
+# between them -- quadw plus statw is COLS -- so their own rows have no
+# unowned column, which is why the right-hand edge is clean for the
+# first thirteen rows and dirty under them.
+#
+# The left inset column is unowned in exactly the same way, but nothing
+# checks it here because nothing can put text there: below the panels
+# it is unowned at every width, so it is blank from startup and stays
+# blank. Asserting it would be asserting a constant.
+start 100 30 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "edge columns: the game never reached its command prompt"
+	dump
+# The full-screen display has to be up before the count below can mean
+# anything. `to_command` matches the prompt in classic mode too, and
+# there the panels are not on screen at all -- so the panel's own
+# "Klingons Left" is missing, the scan's is the only one, the count
+# never reaches two, and the failure would blame the scan for a
+# fallback. The panel checks after the shrink would catch it in the end,
+# but only after saying something untrue on the way past.
+elif ! screen | grep -qF ' Status '; then
+	fail "edge columns: the full-screen display never came up"
+	dump
+else
+	# A scan, because it is the widest thing the game prints: its
+	# status column runs well past column 41, which is where the
+	# screen's last column will be after the shrink.
+	#
+	# Waited for by counting, not by `to_command` and not by `wait_for`.
+	# `to_command` returns on its first look, because the prompt the
+	# scan was typed at is still on screen -- every other caller in this
+	# file runs it where no prompt is up yet. `wait_for` on the scan's
+	# own text returns just as early, because the status panel prints
+	# the same words: at 100 columns "Klingons Left" is on screen before
+	# the scan runs, and it is the second occurrence that is the scan.
+	#
+	# Sequencing it matters beyond tidiness. Unsynchronised, the resize
+	# can beat the scan to the screen, and the case then measures the
+	# banner it was supposed to replace -- still a real test of the
+	# stale column, but not the one the comments here describe.
+	tm send-keys -t "$pane" 'srscan' Enter
+	if ! wait_count 'Klingons Left' 2; then
+		fail "edge columns: the scan never reached the screen"
+		dump
+	# Something has to occupy that column at the wide size on a row the
+	# shrink keeps. If nothing does, the shrink leaves nothing behind
+	# and the check below passes by describing a screen that was blank
+	# there all along.
+	#
+	# Rows 14 to 24 rather than 14 down, because the shrink is to 24
+	# rows and takes the ones below that with it. Text at column 41 on
+	# row 25 would satisfy a precondition for staleness that the shrink
+	# then discards, leaving the assertion below with nothing to find
+	# and no way to say so.
+	#
+	# The scan is what puts it there in practice -- `4 G 3 A 5`, one per
+	# status line -- but the banner above reaches that column too, so
+	# this asserts only that the column is occupied, which is all the
+	# check below needs.
+	elif ! wait_col_dirty 41 14 24; then
+		fail "edge columns: nothing occupied column 41 on a row the shrink keeps, so there was no stale text to leave behind"
+		dump
+	else
+		tm resize-window -t "$session" -x 41 -y 24
+		sleep 1
+		# The panels have to have followed the shrink and the terminal
+		# has to have shrunk at all, or what follows measures an empty
+		# screen. Not a fallback check: `tui_active` is set once in
+		# tui_init() and cleared only in tui_shutdown(), so a resize
+		# cannot drop the game back to the classic display -- that is
+		# what the ` Status ` guard before the scan is for, where the
+		# display might never have come up in the first place.
+		if ! screen | head -1 | grep -qF 'Quadrant' ||
+		   ! screen | head -1 | grep -qF 'Status'; then
+			fail "edge columns: the panels are not on the top row at 41 columns"
+			dump
+		elif [ "$(screen | head -1 | wc -c)" -gt 46 ]; then
+			fail "edge columns: the terminal did not shrink"
+			dump
+		# Row 13 is the panels' bottom border, so 14 down is the message
+		# area. Column 41 is the last column of the screen: the message
+		# window is 39 wide at x-offset 1, so it owns 2 through 40 and
+		# nothing owns 41.
+		elif ! wait_col_clean 41 14 24; then
+			fail "edge columns: the last column kept text from the wider terminal"
+			dump
+		fi
+	fi
 fi
 
 # --- a shrink past the minimum clips instead of wrapping ---------------
