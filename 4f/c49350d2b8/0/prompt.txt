@@ -1,0 +1,1 @@
+should we fix the verifier or shouldn't we have a make file that has this in it. We should simplify this
