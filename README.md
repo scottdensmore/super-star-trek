@@ -94,7 +94,10 @@ prompt, free to give the command again.
 If full-screen mode isn't possible — the terminal is too small, the
 game isn't attached to one (piped input, redirected output, a job with
 no tty), or `TERM` names a terminal that can't address the cursor —
-`-t` prints a notice and plays in the classic display instead.
+`-t` prints a notice and plays in the classic display instead, and
+stays classic for the rest of the session: the choice is made once at
+startup, so enlarging the window afterwards will not bring the panels,
+and neither will starting a second game from the play-again prompt.
 
 ### Building
 

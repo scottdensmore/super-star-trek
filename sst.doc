@@ -1546,14 +1546,18 @@ Modifications I made:
 
   If the terminal is too small, cannot address the cursor, or the
   game is not attached to one at all, -t says so and plays in the
-  classic display rather than failing.
+  classic display rather than failing, and stays classic for the
+  rest of the session -- the choice is made once at startup, so a
+  second game started from the play-again prompt is classic too.
 
   Resizing the terminal never crashes the game and never drops it back
   to the classic display, at any point, including while the game waits
   for an answer or for a keystroke at a pause. It can still cost you
   one of the two -- the question you were part way through answering,
   or on a very wide terminal the answer itself -- which is what the
-  last of these paragraphs is about.
+  last of these paragraphs is about. Resizing is safe in that classic
+  display too: it neither answers a question nor turns a page for you,
+  and what you had already typed is still there.
 
   Narrower than 72 columns, the panel lines clip rather than wrap,
   and a line with more to show than there is room for ends in ">",
