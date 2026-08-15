@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "3571c61090aa",
+  "strategy": "manual-commit",
+  "branch": "fix/clipped-prompt-overwrite",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "tests/tui.sh",
+    "tui.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/35/71c61090aa/0/metadata.json",
+      "transcript": "/35/71c61090aa/0/full.jsonl",
+      "compact_transcript": "/35/71c61090aa/0/transcript.jsonl",
+      "content_hash": "/35/71c61090aa/0/content_hash.txt",
+      "prompt": "/35/71c61090aa/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 602,
+    "cache_creation_tokens": 1406061,
+    "cache_read_tokens": 89013904,
+    "output_tokens": 278319,
+    "api_call_count": 318
+  }
+}
