@@ -983,6 +983,334 @@ else
 	fi
 fi
 
+# --- a restored prompt does not land on live conversation --------------
+# restore_curline()'s erase branch works out how many rows the pair
+# occupies at the old width and rubs out that many, counting back from
+# the last row with anything on it. That is right when those rows really
+# are the stump of the line -- a width change truncates the line in
+# place and leaves it there.
+#
+# A height shrink does not. wresize() keeps the top of the window and
+# drops the rows below the cut, and the pending prompt is the last thing
+# written, so the cut reaches it. Here it takes the whole of it, the
+# pair being one row; a pair that wraps can lose its lower rows and keep
+# its first, which is `half stump:` further down. Either way the rows
+# the erase counts back over are older conversation, and the reprint
+# lands on top of it.
+#
+# Three asks with the first two answered, then 80x24 to 78x20: the
+# window drops from eleven rows to seven, taking the pending question
+# with it, and the reprint overwrote the `n` that answered the second
+# ask. What is left reads as though the game asked the same question
+# twice in a row, which it never does -- every ask is answered before
+# the next, so two adjacent identical questions cannot be a real
+# transcript. That is what this asserts.
+#
+# `rest 5000` because "Are you sure?" is written with prout, which ends
+# its own line: the ended branch is the one that reaches the erase with
+# a question whose answer sits on the row below.
+start 80 24 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "reprint: the game never reached its command prompt"
+	dump
+elif ! screen | grep -qF ' Status '; then
+	fail "reprint: the full-screen display never came up"
+	dump
+else
+	# Two asks, each answered, then a third left pending.
+	askfail=
+	for answered in 1 2; do
+		tm send-keys -t "$pane" 'rest 5000' Enter
+		wait_for 'Are you sure' || askfail="ask $answered never came"
+		tm send-keys -t "$pane" 'n' Enter
+		to_command || askfail="ask $answered never came back to the prompt"
+	done
+	tm send-keys -t "$pane" 'rest 5000' Enter
+	wait_for 'Are you sure' || askfail="the third ask never came"
+	if [ -n "$askfail" ]; then
+		fail "reprint: $askfail"
+		dump
+	# The conversation has to have the shape the defect needs before the
+	# resize: three questions and the two answers between them, all on
+	# screen at once. Without that the shrink has nothing live to
+	# overwrite and the check below passes on a screen that could not
+	# have shown the fault.
+	elif [ "$(screen | sed -n '14,24p' | grep -cF 'Are you sure')" -ne 3 ] ||
+	     [ "$(screen | sed -n '14,24p' | grep -cx ' *n *')" -ne 2 ]; then
+		fail "reprint: the conversation is not three asks and two answers, so the shrink has nothing live to overwrite"
+		dump
+	else
+		tm resize-window -t "$session" -x 78 -y 20
+		sleep 1
+		# Load-bearing twice over, so do not weaken it to a plain panel
+		# check. tmux scrolls the panel top out of row 1 on a height
+		# shrink, so a game that has not repainted by the time the
+		# sleep expires fails here rather than passing the assertion
+		# below on a screen that never had the shape. Verified by
+		# stopping the game with SIGSTOP across the resize: this is the
+		# check that fires.
+		if ! screen | head -1 | grep -qF 'Quadrant'; then
+			fail "reprint: the panels are not on the top row after the shrink, so the game had not repainted"
+			dump
+		# Rows 14 down are the message area at twenty lines. Two
+		# adjacent rows carrying the same question is the artifact:
+		# the game answers each ask before the next, so it cannot
+		# have printed that.
+		elif screen | awk 'NR >= 14 {
+		                     t = $0
+		                     sub(/^ +/, "", t); sub(/ +$/, "", t)
+		                     if (t != "" && t == prev) { found = 1 }
+		                     prev = t
+		                   }
+		                   END { exit found ? 0 : 1 }'; then
+			fail "reprint: the restored question was printed over live conversation, leaving the same line twice in a row"
+			dump
+		fi
+	fi
+fi
+
+# --- a wrapped prompt is not stacked when the terminal widens ----------
+# row_starts_line() compares the row on screen against the line as it
+# was, and bounds how much it compares by the narrower of the two
+# widths. The row holds real characters only where they agree: a shrink
+# truncates it to the new width, a grow keeps what the old width held
+# and pads the rest. Comparing past that runs into the padding and
+# mismatches against a stump that is perfectly intact, which sends a
+# width change down the scroll path and leaves the stump standing with a
+# fresh copy under it.
+#
+# It takes a line longer than the old message window, and that needs no
+# long line: make_windows() caps quadw at QUADW but lets msgw keep
+# tracking COLS down, so 50 columns gives a 48-column message window and
+# the 57-character skill question wraps in it. Widening from there is the
+# shape. Without the bound this leaves two copies, and each further step
+# that keeps the question wrapped adds another -- 50, 55, 58, 100 gives
+# one, two, three, four. Once the window is wide enough to hold the
+# question on one row the next grow matches and erases again, so a drag
+# straight out to 120 stops at two rather than climbing.
+#
+# The setup conversation rather than a game, because that question is the
+# ready-made line longer than the window. `rest 5000`'s ask is the
+# fourteen characters of `prout("Are you sure? ")` at events.c:420,
+# trailing space included -- end_line() keeps it -- and the case above
+# only ever narrows to 78 columns, so it cannot reach this bound. It
+# would below sixteen, where msgw drops under fourteen and even that
+# question wraps; nothing sends it there.
+start 80 24
+if ! wait_for 'regular, tournament, or frozen'; then
+	fail "stacking: the game never asked its first question"
+	dump
+elif ! screen | grep -qF ' Status '; then
+	fail "stacking: the full-screen display never came up"
+	dump
+else
+	setupfail=
+	tm send-keys -t "$pane" 'tournament' Enter
+	wait_for 'tournament number' || setupfail="the tournament number was never asked"
+	tm send-keys -t "$pane" '7' Enter
+	wait_for 'Short, Medium, or Long' || setupfail="the length was never asked"
+	tm send-keys -t "$pane" 'short' Enter
+	wait_for 'Are you a Novice' || setupfail="the skill question never came"
+	if [ -n "$setupfail" ]; then
+		fail "stacking: $setupfail"
+		dump
+	else
+		tm resize-window -t "$session" -x 50 -y 24
+		sleep 1
+		# The question has to have actually wrapped, or the grow below
+		# has no over-long line to mismatch on and the count passes
+		# without exercising the bound at all. Two rows: the first cut
+		# at 48 columns, the tail on the next.
+		if [ "$(screen | grep -c 'Are you a Novice')" -ne 1 ] ||
+		   ! screen | grep -qx ' *s player? *'; then
+			fail "stacking: the skill question did not wrap at 50 columns, so the widening below cannot reach the bound"
+			dump
+		else
+			tm resize-window -t "$session" -x 100 -y 24
+			sleep 1
+			# One copy. Counting the question's opening rather than
+			# the whole of it, so the wrapped stump's first row
+			# counts too -- that row is what a second copy leaves
+			# behind.
+			if [ "$(screen | grep -c 'Are you a Novice')" -ne 1 ]; then
+				fail "stacking: widening the terminal left more than one copy of the wrapped question"
+				dump
+			# And one copy whole, on a row of its own, with the tail
+			# the 48-column wrap left gone. Counting openings alone
+			# says nothing about what follows them: an erase that
+			# rubbed out the stump's first row and left its tail
+			# behind counts one and reads
+			#     Are you a Novice, ... player?
+			#     s player?
+			# on screen. This is also the repaint guard for the
+			# widening -- the panel check that guards the shrink in
+			# the case above cannot serve here, because a width-only
+			# resize never scrolls the panels out of row 1, so a
+			# screen that has not repainted still passes it. Neither
+			# half of this can be satisfied by the stale 50-column
+			# screen, which has the question cut at `Emeritu`.
+			elif ! screen | grep -qx ' *Are you a Novice, Fair, Good, Expert, or Emeritus player? *' ||
+			     screen | grep -qx ' *s player? *'; then
+				fail "stacking: the widened screen does not show the question once and whole, with the wrapped tail gone"
+				dump
+			fi
+		fi
+	fi
+fi
+
+# --- a stump taller than the window is still rubbed out ----------------
+# The erase branch anchors `rows` back from the last non-blank row and
+# clamps a negative result to 0. Clamping means the stump does not fit:
+# its own top has scrolled off, so row 0 holds a middle row of it and
+# not its first. row_starts_line() rightly says that row does not begin
+# the line -- and taking the scroll path on the strength of that keeps
+# what is left of the stump and writes a fresh copy under it, which is
+# the stacking the erase exists to prevent.
+#
+# So the clamp is its own answer: it only happens when the stump is
+# taller than the window, and a stump taller than the window is one that
+# is certainly on screen. Erase unconditionally there.
+#
+# 30x15 gives a two-row message window 28 columns wide, and the skill
+# question needs three rows in it. Widening to 60 leaves the tail behind
+# without this -- a lone ` ?` row above the restored question, which is
+# what a player sees.
+start 80 24
+if ! wait_for 'regular, tournament, or frozen'; then
+	fail "tall stump: the game never asked its first question"
+	dump
+elif ! screen | grep -qF ' Status '; then
+	fail "tall stump: the full-screen display never came up"
+	dump
+else
+	tallfail=
+	tm send-keys -t "$pane" 'tournament' Enter
+	wait_for 'tournament number' || tallfail="the tournament number was never asked"
+	tm send-keys -t "$pane" '7' Enter
+	wait_for 'Short, Medium, or Long' || tallfail="the length was never asked"
+	tm send-keys -t "$pane" 'short' Enter
+	wait_for 'Are you a Novice' || tallfail="the skill question never came"
+	if [ -n "$tallfail" ]; then
+		fail "tall stump: $tallfail"
+		dump
+	else
+		tm resize-window -t "$session" -x 30 -y 15
+		sleep 1
+		# The stump has to be taller than the conversation on screen,
+		# or the anchor is never clamped and the widening below proves
+		# nothing. Three rows needed, two available, so the question's
+		# own opening scrolls off: what is left is ` , Expert, or
+		# Emeritus player` and a lone ` ?`.
+		#
+		# The absent opening is the assertion that pins it, and it is
+		# the one worth keeping. Wrapping alone does not: one row
+		# taller, at 30x16, the message window is three rows, the whole
+		# stump fits, nothing clamps -- and a check of "not whole on
+		# any row" plus a surviving fragment passes there just the
+		# same, leaving the case testing the unclamped path in silence.
+		if screen | grep -qF 'Are you a Novice' ||
+		   ! screen | grep -qF 'Emeritus player'; then
+			fail "tall stump: the question is not clipped across more rows than the window has, so the erase anchor is not clamped"
+			dump
+		else
+			tm resize-window -t "$session" -x 60 -y 15
+			sleep 1
+			# Whole, once, and nothing of the old wrap left above
+			# it. The tail row is what the clamp used to strand:
+			# at 28 columns the question breaks so that its last
+			# row is a lone `?`.
+			if ! screen | grep -qx ' *Are you a Novice, Fair, Good, Expert, or Emeritus player? *'; then
+				fail "tall stump: the widened screen does not show the question once and whole"
+				dump
+			elif screen | grep -qx ' *? *'; then
+				fail "tall stump: a row of the old wrap was left above the restored question"
+				dump
+			fi
+		fi
+	fi
+fi
+
+# --- half a wrapped stump is still found ------------------------------
+# A height shrink does not always take the pending line away entire. It
+# drops the rows below the cut, so a pair that wraps can lose its lower
+# rows and keep its first -- the stump is then shorter than the row
+# count says and begins further down than the arithmetic does.
+#
+# Asking only at the calculated row missed it, took the scroll path, and
+# wrote a second copy under the row that had survived: the whole
+# ` COMMAND> phasers manual ...` line twice, one above the other. The
+# search now runs from the bottom up over as many rows as the pair could
+# occupy, so it finds a stump wherever the cut left it.
+#
+# Both axes at once, which is what makes it reachable, and at sizes the
+# display supports rather than below the minimum: 80x25 to 79x24. None
+# of the three cases above can get here -- `reprint:` shrinks the height
+# with a one-row pair, and `stacking:` and `tall stump:` change the
+# width alone.
+#
+# A command typed and not entered, because the pair has to be longer
+# than the window: `proutn("COMMAND> ")` at sst.c:214 is nine columns --
+# the space before it on screen is the window's own margin, not part of
+# the prompt -- and the text is seventy-five, against a seventy-eight
+# column window at 80 columns. So six characters land on the second row.
+# It is never submitted, so nothing depends on the command being
+# sensible.
+LONGCMD='phasers manual 100 200 300 400 500 600 700 800 900 1000 1100 1200 1300 1400'
+start 80 25 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "half stump: the game never reached its command prompt"
+	dump
+elif ! screen | grep -qF ' Status '; then
+	fail "half stump: the full-screen display never came up"
+	dump
+else
+	# A scan first, so the conversation fills the window and the pair
+	# sits on its last two rows -- which is what puts the cut through
+	# the middle of the pair rather than above it.
+	tm send-keys -t "$pane" 'srscan' Enter
+	if ! to_command; then
+		fail "half stump: the scan never came back to the command prompt"
+		dump
+	else
+		tm send-keys -t "$pane" "$LONGCMD"
+		sleep 0.5
+		# It has to have wrapped, or the cut cannot fall inside it and
+		# the case tests nothing new. A row holding the opening and the
+		# end together is a pair that fits on one row.
+		# The whole command has to be echoed before the wrap test
+		# below can mean anything: that test reads "the row holding
+		# the opening does not hold the end", which is equally true
+		# of a pair that wrapped and of one only half echoed. Taking
+		# the second for the first would run the case on an unwrapped
+		# pair, where the assertion passes without reaching the scan.
+		#
+		# The last four characters and not the last nine: the wrap
+		# falls between them, so the second row reads `0 1400` and a
+		# search for `1300 1400` finds nothing on a pair that is
+		# perfectly whole.
+		if ! screen | grep -q 'phasers manual 100'; then
+			fail "half stump: the typed command never reached the screen"
+			dump
+		elif ! screen | grep -q '1400'; then
+			fail "half stump: the typed command is not fully echoed, so the wrap test below cannot tell a wrap from a half-drawn line"
+			dump
+		elif screen | grep 'phasers manual 100' | grep -q '1400'; then
+			fail "half stump: the command did not wrap, so the shrink cannot cut through the middle of it"
+			dump
+		else
+			tm resize-window -t "$session" -x 79 -y 24
+			sleep 1
+			if ! screen | head -1 | grep -qF 'Quadrant'; then
+				fail "half stump: the panels are not on the top row after the shrink, so the game had not repainted"
+				dump
+			elif [ "$(screen | grep -c 'phasers manual 100')" -ne 1 ]; then
+				fail "half stump: the surviving row of the stump was kept and a second copy written under it"
+				dump
+			fi
+		fi
+	fi
+fi
+
 # --- a shrink past the minimum clips instead of wrapping ---------------
 # make_windows() promises that a terminal shrunk below the 72x24 the
 # display asks for "keeps its size and the screen clips". It did not
