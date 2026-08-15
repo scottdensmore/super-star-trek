@@ -25,14 +25,19 @@ Dragged smaller than the 72x24 the panels ask for, they clip rather
 than rearrange themselves. A line with more to show than there is room
 for ends in `>`, so a shortened number is never mistaken for a small
 one, and a heading with no room left is dropped rather than shortened.
-A terminal shorter than the panels themselves loses rows off the bottom
-of them, the grid keeping its numbering so you can see where it stops.
-
-Shorter than fourteen rows there is no room left for the conversation
-at all: the panels are the whole screen and the prompt is not on it.
-Just above that there is barely more — at fourteen rows the one line
-left over goes entirely to the pager, so a scan pages past without
-showing any of itself; at fifteen it comes one line at a time.
+A terminal too short for the panels is the panels' problem, not the
+conversation's: they lose rows off the bottom, the grid keeping its
+numbering for as long as it has rows to number, and the conversation
+keeps three rows down to six — two of it and the line the prompt or the
+pager sits on. Below six there is not that much left to divide and it
+keeps what there is: two rows at five and one at four. So the prompt
+stays on screen down to four rows, and down to six a paged command shows
+a line of itself before stopping to ask — at five its one line goes to
+the blank that `lrscan`, `chart` and `status` open with, though
+`srscan`, which has none, still shows a line there, and at four the
+pager takes the only row and a paged command shows nothing of itself at
+all. Shorter than four the panels have taken the screen: the game still
+reads what you type, with nothing on it to say so.
 
 Growing the terminal back brings the panels with it, however far the
 squeeze went: they redraw from the game state, so they return full of
@@ -52,13 +57,15 @@ row.
 Only their final line comes back, so a question asked over several
 lines returns as the last of them. An answer you had already started
 typing usually comes back with its question, on the row below it. You
-may get back only one of them: usually the window is too short to hold
-the pair and the question is what goes, leaving your own typing with
-nothing above it to say what it answers, and on a very wide terminal it
-is the answer that goes instead, however tall the window is. Shorter
-still and only part of whichever survived is left, and sometimes
-neither comes back, leaving older conversation on screen with the game
-waiting behind it.
+may get back only one of them. Where the question ended its own line the
+two sit on separate rows, so a wrapped answer needs three rows and a
+window of one or two — five rows or fewer — cannot hold the pair; a
+question that has itself wrapped needs a row more again. The question is
+what goes, leaving your own typing with nothing above it to say what it
+answers, and on a very wide terminal it is the answer that goes instead,
+however tall the window is. Shorter still and only part of whichever
+survived is left, and sometimes neither comes back, leaving older
+conversation on screen with the game waiting behind it.
 
 When the question and everything you typed are both on screen, carry on
 and answer — that is the ordinary case now. When they are not, give the

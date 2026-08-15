@@ -884,7 +884,7 @@ fi
 
 # --- no column keeps text from a wider terminal -----------------------
 # The message window is inset a column on each side -- newwin(msgh,
-# msgw, PANELH, 1), with msgw asked for as COLS-2 rather than COLS-1 --
+# msgw, panelh, 1), with msgw asked for as COLS-2 rather than COLS-1 --
 # so the first and last columns of the screen belong to no curses
 # window at all. Only sync_size() writes to stdscr, and only to erase
 # it, so before that nothing erased what a wider render left in them:
@@ -1171,10 +1171,18 @@ fi
 # taller than the window, and a stump taller than the window is one that
 # is certainly on screen. Erase unconditionally there.
 #
-# 30x15 gives a two-row message window 28 columns wide, and the skill
+# 30x5 gives a two-row message window 28 columns wide, and the skill
 # question needs three rows in it. Widening to 60 leaves the tail behind
 # without this -- a lone ` ?` row above the restored question, which is
 # what a player sees.
+#
+# Five rows and not fifteen. The panels used to take PANELH rows at any
+# height, so fifteen left the two this needs; they yield to the
+# conversation now, which keeps a floor of MSGMIN, so a two-row window
+# only happens where there are not even MSGMIN rows to give. The wrap
+# is unchanged at 30 columns, which is why only the height moved -- and
+# the precondition below is what caught the change rather than the case
+# going quietly green on an unclamped anchor.
 start 80 24
 if ! wait_for 'regular, tournament, or frozen'; then
 	fail "tall stump: the game never asked its first question"
@@ -1194,7 +1202,7 @@ else
 		fail "tall stump: $tallfail"
 		dump
 	else
-		tm resize-window -t "$session" -x 30 -y 15
+		tm resize-window -t "$session" -x 30 -y 5
 		sleep 1
 		# The stump has to be taller than the conversation on screen,
 		# or the anchor is never clamped and the widening below proves
@@ -1204,7 +1212,7 @@ else
 		#
 		# The absent opening is the assertion that pins it, and it is
 		# the one worth keeping. Wrapping alone does not: one row
-		# taller, at 30x16, the message window is three rows, the whole
+		# taller, at 30x6, the message window is three rows, the whole
 		# stump fits, nothing clamps -- and a check of "not whole on
 		# any row" plus a surviving fragment passes there just the
 		# same, leaving the case testing the unclamped path in silence.
@@ -1213,7 +1221,7 @@ else
 			fail "tall stump: the question is not clipped across more rows than the window has, so the erase anchor is not clamped"
 			dump
 		else
-			tm resize-window -t "$session" -x 60 -y 15
+			tm resize-window -t "$session" -x 60 -y 5
 			sleep 1
 			# Whole, once, and nothing of the old wrap left above
 			# it. The tail row is what the clamp used to strand:
@@ -1490,6 +1498,176 @@ else
 	fi
 fi
 
+# --- the conversation keeps rows however short the terminal ------------
+# The panels are PANELH rows deep and used to take them whatever the
+# terminal had. At thirteen rows and fewer that was the whole screen:
+# the message window was placed at row PANELH, off the bottom, so the
+# player saw no conversation, no COMMAND> prompt and no sign the game
+# was waiting -- and it was, since typing still worked, blind. #94.
+#
+# Just above that band the display was on screen and empty instead. The
+# pager's page height was LINES-PANELH-1, which is zero at fourteen rows
+# and one at fifteen, so a command that pages went by screen after
+# screen of `[HIT SPACE BAR TO CONTINUE]` with nothing above it. #95.
+#
+# The panels now give up rows rather than the conversation: the message
+# window keeps a floor of three, two of text and the row the prompt or
+# the pager sits on. Nothing changes at sixteen rows and above, where
+# the panels already fit with that much left over.
+start 100 30 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "short conversation: the game never reached its command prompt"
+	dump
+else
+	# Down to four, which is where the prompt stops fitting: the panels
+	# keep PANELMIN and the conversation gets what is left, one row at
+	# four and none at three. Both documents state that floor, so it is
+	# asserted rather than left to be found by hand.
+	for h in 15 14 13 11 9 6 5 4; do
+		tm resize-window -t "$session" -x 72 -y "$h"
+		sleep 1
+		# The panels have to still be drawn, or what follows passes by
+		# describing a screen with nothing on it.
+		if ! screen | head -1 | grep -qF 'Quadrant'; then
+			fail "short conversation: the panels are not on screen at 72x$h"
+			dump
+		# The prompt is the whole point: at these heights it was off
+		# the bottom of the screen and the game read commands blind.
+		elif ! screen | grep -qF 'COMMAND'; then
+			fail "short conversation: no COMMAND prompt on screen at 72x$h, so nothing shows the game is waiting"
+			dump
+		fi
+	done
+	# And the game is still answering, not merely showing a prompt.
+	# Waited for by the scan's own output and not by `to_command`,
+	# which returns on its first look -- the command is sent at a live
+	# prompt, so the echoed ` COMMAND> srscan` satisfies it before the
+	# game has done anything, and a hung game would pass. The file
+	# documents that trap beside the `reprint:` case.
+	tm resize-window -t "$session" -x 72 -y 13
+	sleep 1
+	tm send-keys -t "$pane" 'lrscan' Enter
+	expect_re "short conversation: the game stopped answering at 72x13" "$LRSCAN"
+	# And the floor below it, which is the other thing both documents
+	# now promise: at three rows the message window's origin is off the
+	# bottom, mvwin() refuses it, and nothing of the conversation is
+	# drawn -- the game still reads what is typed, with nothing on
+	# screen to say so. Nothing else in this file reaches that path any
+	# more: it used to be everything at thirteen rows and below, and
+	# the panels yielding rows moved it to three.
+	#
+	# Growing back is half the point. The refused move is what used to
+	# strand the window below the screen for good, so the recovery is
+	# asserted with it rather than left to the cases above.
+	#
+	# Asked of what the conversation is actually holding, not of
+	# `COMMAND`. The `lrscan` above leaves the game at its pause
+	# prompt, so `COMMAND` is already off the screen before the shrink
+	# and its absence afterwards would hold whatever the geometry did
+	# -- a PANELMIN of 2 would put a one-row conversation here and
+	# redraw the pause prompt into it, and a check for `COMMAND` would
+	# still pass.
+	tm resize-window -t "$session" -x 72 -y 3
+	sleep 1
+	if screen | grep -qE 'CONTINUE|HIT SPACE BAR|Long-range'; then
+		fail "short conversation: the conversation is on screen at 72x3, where the documents say there is none"
+		dump
+	fi
+	tm resize-window -t "$session" -x 72 -y 24
+	sleep 1
+	if ! to_command; then
+		fail "short conversation: the conversation did not come back after 72x3"
+		dump
+	fi
+fi
+
+# --- and paged output has something to page ----------------------------
+# The other half of the same geometry. With a page height of zero every
+# line of a paged command triggered a pause, and the message window was
+# one row, so the line was printed and immediately written over by
+# `[HIT SPACE BAR TO CONTINUE]`. What a player saw was the prompt alone,
+# again and again, and never a word of the scan.
+#
+# Fourteen rows because that is where the page height was exactly zero.
+start 100 30 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "short paging: the game never reached its command prompt"
+	dump
+else
+	tm resize-window -t "$session" -x 72 -y 14
+	sleep 1
+	if ! screen | head -1 | grep -qF 'Quadrant'; then
+		fail "short paging: the panels are not on screen at 72x14"
+		dump
+	else
+		tm send-keys -t "$pane" 'lrscan' Enter
+		# Wait for the pause itself before measuring. Asking too early
+		# finds neither the prompt nor the output and would report the
+		# defect on a screen that had simply not been drawn yet.
+		i=0
+		saw_pause=
+		while [ "$i" -lt 40 ]; do
+			if screen | grep -qE 'CONTINUE|HIT SPACE BAR'; then
+				saw_pause=yes
+				break
+			fi
+			i=$((i + 1))
+			sleep 0.1
+		done
+		# A line of what is being paged, not just the prompt asking to
+		# page it. LRSCAN matches the scan's own heading in either of
+		# its forms. Only the working one can appear here -- a new
+		# game zeroes every damage[] and no time passes between the
+		# prompt and this scan -- but the shared pattern costs
+		# nothing and needs no special case.
+		if [ -z "$saw_pause" ]; then
+			fail "short paging: the scan never paused at 72x14, so there is no paging to measure"
+			dump
+		elif ! screen | grep -qE "$LRSCAN"; then
+			fail "short paging: the scan paused with none of its output on screen at 72x14"
+			dump
+		fi
+	fi
+fi
+
+# --- and six rows is where that stops being true ----------------------
+# The floor both documents give. A two-row window pages one line, and
+# LRSCAN spends it on the blank it opens with (`skip(1)`, reports.c),
+# so five rows shows the pager over an empty row -- which is why the
+# documents say six for a paged command and note that SRSCAN, having no
+# leading blank, still shows a line at five.
+#
+# Asserted because the sentence was wrong the first time it was written
+# and had to be measured by hand to find out. Six is the boundary; the
+# case above already covers well inside it.
+start 100 30 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "paging floor: the game never reached its command prompt"
+	dump
+else
+	tm resize-window -t "$session" -x 72 -y 6
+	sleep 1
+	if ! screen | head -1 | grep -qF 'Quadrant'; then
+		fail "paging floor: the panels are not on screen at 72x6"
+		dump
+	else
+		tm send-keys -t "$pane" 'lrscan' Enter
+		i=0
+		while [ "$i" -lt 40 ]; do
+			screen | grep -qE 'CONTINUE|HIT SPACE BAR' && break
+			i=$((i + 1))
+			sleep 0.1
+		done
+		if ! screen | grep -qE 'CONTINUE|HIT SPACE BAR'; then
+			fail "paging floor: the scan never paused at 72x6"
+			dump
+		elif ! screen | grep -qE "$LRSCAN"; then
+			fail "paging floor: at 72x6 the scan paused with none of its output on screen, so the six-row floor both documents give is wrong"
+			dump
+		fi
+	fi
+fi
+
 # --- a shrink past the panels' height clips too ------------------------
 # The width sweep above is only half of it. The panels are PANELH rows
 # deep, and a terminal shorter than that shrinks them with it -- but the
@@ -1500,8 +1678,13 @@ fi
 # the cursor where it was, and the line landed on the row above --
 # `mq 9  . . . . . . . . . .10 .x`, two grid rows and the border in one.
 #
-# Twelve and eleven because they are those two cases; nine for a shrink
-# well past both.
+# Those two cases are panel heights of twelve and eleven, which used to
+# mean screens of twelve and eleven rows. The panels yield MSGMIN to the
+# conversation now, so a panel of twelve rows is a screen of fifteen and
+# one of eleven a screen of fourteen -- and a sweep of 12/11/9 alone
+# stopped visiting either, leaving the block catching over-draw in
+# general but neither of the boundaries it was written for. So 15 and 14
+# for those, and 12/11/9 kept for shrinks well past both.
 start 100 30 'tournament 7 short novice pw'
 if ! to_command; then
 	fail "short: the game never reached its command prompt"
@@ -1530,17 +1713,25 @@ else
 		fail "short: the last status line is missing at 80x24"
 		dump
 	fi
-	for h in 12 11 9; do
+	for h in 15 14 12 11 9; do
 		tm resize-window -t "$session" -x 72 -y "$h"
 		sleep 1
-		# The panels fill a screen this short, so the last row of it
-		# is their bottom border. Nothing numeric belongs there --
+		# Nothing numeric belongs on the panels' bottom border --
 		# the only caption it ever carries is SENSORS DAMAGED -- and
 		# a grid line that landed on it brings its row label along.
+		#
+		# Row h-3, not row h. The panels used to fill a screen this
+		# short, so the last row of it was their border; they yield
+		# MSGMIN rows to the conversation now, so the border is at
+		# LINES-MSGMIN and row h is the conversation's last row,
+		# which at this point holds ` COMMAND>`. Asserted at row h
+		# the check still passed while a grid line landed on the
+		# border at row h-3 -- the regression this block exists for,
+		# invisible.
 		if ! screen | head -1 | grep -qF 'Quadrant'; then
 			fail "short: the panels are not on screen at 72x$h"
 			dump
-		elif ! screen | awk -v h="$h" 'NR == h && /[0-9]/ { bad = 1 }
+		elif ! screen | awk -v h="$h" 'NR == h - 3 && /[0-9]/ { bad = 1 }
 		                               END { exit bad ? 1 : 0 }'; then
 			fail "short: a panel line was drawn onto the bottom border at 72x$h"
 			dump
@@ -1834,6 +2025,15 @@ fi
 # regressions it was written for reproduce only on a one-row height
 # shrink: at 20x8 and 80x14 the count is 0 or 1 whatever the build, so
 # the guard was decorative until this size was added.
+#
+# Those two counts were measured when the panels took PANELH rows at
+# any height, so 20x8 and 80x14 left a one-row or off-screen window.
+# They leave three rows each now that the panels yield. The sizes are
+# kept because what they exercise -- the corner drag and the
+# height-only branch -- does not depend on that, and every assertion
+# below runs at 80x24, which the change does not reach. The reason
+# 80x23 had to be added is the part that no longer describes these
+# two.
 for squeeze in "20 8" "80 14" "80 23"; do
 	# shellcheck disable=SC2086
 	set -- $squeeze
@@ -2024,16 +2224,25 @@ else
 				break
 			fi
 		done
-		# The state both documents describe to the player, asserted
-		# where they describe it rather than only after recovery.
-		# sst.doc and README.md promise that a window too short to
-		# hold the pair keeps the answer and loses the question --
-		# and every other check here looks at the screen only after
-		# growing back, so a change that kept the question and
-		# dropped the answer would leave both documents wrong with
-		# the suite green, and a player typing over a `y` they
-		# cannot see. Two message rows at fifteen, which is exactly
-		# the answer and no room for the question above it.
+		# Two heights, because the panels yielding rows moved what
+		# each one shows, and the order between them matters.
+		#
+		# Five first, and reached straight from 24: this is the only
+		# thing in this file that reaches the `maxy > 1` guard, and
+		# the guard only fires while the pair is being rebuilt into
+		# a two-row window. Coming here by way of fifteen instead
+		# rebuilds it there, where the guard is satisfied either
+		# way, and the shrink that follows only truncates what is
+		# already right -- a broken build and a working one then
+		# render identically at five rows. Measured: they do.
+		#
+		# This is the state both documents describe to the player --
+		# a window too short to hold the pair keeps the answer and
+		# loses the question -- and every other check here looks at
+		# the screen only after growing back, so a change that kept
+		# the question and dropped the answer would leave both
+		# documents wrong with the suite green, and a player typing
+		# over a `y` they cannot see.
 		#
 		# Proved against a broken game, which is what step 4 asks of
 		# a test that runs one: `maxy > 1` -> `maxy > 2` on the
@@ -2043,13 +2252,30 @@ else
 		# question kept and the answer displaced. Built in a copy
 		# outside the repository, that fails here and nowhere else
 		# in this file.
-		tm resize-window -t "$session" -y 15
+		tm resize-window -t "$session" -y 5
 		sleep 1
 		if ! screen | awk '/Are you sure\?/ { q++ }
 		                   /^ *yb+$/ { a++ }
 		                   /^ *b+$/ { c++ }
 		                   END { exit (q == 0 && a == 1 && c == 1) ? 0 : 1 }'; then
-			fail "wrapped answer: at 80x15 the answer did not survive without its question"
+			fail "wrapped answer: at 80x5 the answer did not survive without its question"
+			dump
+		fi
+		# Back up, so fifteen is reached from a window that holds the
+		# whole pair rather than from the stump five left.
+		tm resize-window -t "$session" -y 24
+		sleep 1
+		# Fifteen rows used to leave a two-row message window and now
+		# leaves three, so all of it fits. Strictly the better
+		# outcome and asserted as such rather than relaxed: exactly
+		# one question, and both rows of the answer under it.
+		tm resize-window -t "$session" -y 15
+		sleep 1
+		if ! screen | awk '/Are you sure\?/ { q++ }
+		                   /^ *yb+$/ { a++ }
+		                   /^ *b+$/ { c++ }
+		                   END { exit (q == 1 && a == 1 && c == 1) ? 0 : 1 }'; then
+			fail "wrapped answer: at 80x15 the question and its wrapped answer are not all on screen"
 			dump
 		fi
 		tm resize-window -t "$session" -y 24
@@ -2167,11 +2393,18 @@ else
 fi
 
 # Looked at *during* the drag, not after it. At a one-row message
-# window -- fourteen rows or fewer -- both of this round's fixes
-# are invisible from the far end: the display recovers once the
-# terminal is back at 80x24, so a check that only looks there
-# passes against builds that lose the question at every other
-# step of the way.
+# window both of this round's fixes are invisible from the far end:
+# the display recovers once the terminal is back at 80x24, so a check
+# that only looks there passes against builds that lose the question
+# at every other step of the way.
+#
+# Four rows, where this used to say fourteen. The panels took PANELH
+# rows at any height then, so fourteen left one; they yield to the
+# conversation now, which keeps MSGMIN, and a one-row window only
+# happens where there is not that much to give -- LINES of 4. Moved
+# rather than relaxed: the guard this reaches is `maxy > 1` on the
+# write path, which is about a window of one row and nothing else, so
+# testing it anywhere else would be testing nothing.
 #
 # Two breaks it catches, both found by review and neither seen by
 # anything else in this file. Restoring the unconditional wscrl on
@@ -2193,14 +2426,14 @@ else
 		# Starting there instead sees neither break: the
 		# height change is what leaves the prompt in the
 		# state the width steps then mishandle.
-		tm resize-window -t "$session" -x 80 -y 14
+		tm resize-window -t "$session" -x 80 -y 4
 		sleep 1
 		for w in 78 76 74 72; do
-			tm resize-window -t "$session" -x "$w" -y 14
+			tm resize-window -t "$session" -x "$w" -y 4
 			sleep 1
 			if ! screen | awk '/Are you sure\?/ { n++ }
 			                   END { exit n == 1 ? 0 : 1 }'; then
-				fail "ended: at ${w}x14 the question is not on screen exactly once"
+				fail "ended: at ${w}x4 the question is not on screen exactly once"
 				dump
 				break
 			fi
@@ -2290,8 +2523,12 @@ if [ "$BUILD_TYPE" = "Debug" ]; then
 		# Asked of the row rather than of the screen: the fix is
 		# about which row the caption lands on, and a whole-screen
 		# search would pass a build that drew it over a grid line.
-		# Eleven rows of panel, so its bottom border is row 11.
-		if ! screen | awk 'NR == 11 && /SENSORS DAMAGED/ { seen = 1 }
+		# Row 8, not row 11: the panels give rows up to the
+		# conversation on a short terminal, so at eleven lines they
+		# are LINES-MSGMIN deep and their bottom border is row 8.
+		# It was row 11 while they took the whole screen, which is
+		# the state #94 was about.
+		if ! screen | awk 'NR == 8 && /SENSORS DAMAGED/ { seen = 1 }
 		                   END { exit seen ? 0 : 1 }'; then
 			fail "sensors: the dashes lost their reason on a short terminal"
 			dump
