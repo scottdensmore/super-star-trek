@@ -1557,16 +1557,19 @@ Modifications I made:
 
   Narrower than 72 columns, the panel lines clip rather than wrap,
   and a line with more to show than there is room for ends in ">",
-  so a shortened number is never mistaken for a small one. Shorter,
-  it is the conversation that gives up lines first, and it runs out
-  before the panels do: at fifteen rows it arrives a line at a time,
-  at fourteen the pager takes the only line there is and a scan
-  pages past without showing any of itself, and at thirteen there is
-  none of it left at all -- the panels are the whole screen, with no
-  prompt anywhere on it. Shorter still and the panels themselves
-  lose rows off the bottom, the scan keeping its numbering so you
-  can see where it stops. None of these is a crash, however dead the
-  screen looks.
+  so a shortened number is never mistaken for a small one. Shorter, it
+  is the panels that give up lines: they lose rows off the bottom, the
+  scan keeping its numbering for as long as it has rows to number, and
+  the conversation keeps three rows down to six -- two of it and the
+  line the prompt or the pager sits on. Below six there is not that
+  much left to divide and it keeps what there is, two rows at five and
+  one at four. So the prompt is on screen down to four rows, and down
+  to six a paged command shows a line of itself before stopping to ask
+  -- at five its one line goes to the blank that LRSCAN, CHART and
+  STATUS open with, though SRSCAN, which has none, still shows a line
+  there, and at four the pager takes the only row and a paged command
+  shows nothing of itself at all. None of this is a crash, however
+  cramped or dead the screen looks.
 
   Growing the terminal back brings the panels with it however far
   the squeeze went, since they redraw from the game state. The
@@ -1581,26 +1584,29 @@ Modifications I made:
   The line you were on usually comes back with the panels, and so does
   whatever you had typed of an answer to it -- but look at both before
   you touch the keyboard, because you may get back only one of them.
-  Usually the window is too short to hold the pair and the question is
-  what goes, leaving you looking at what you typed with nothing on
-  screen to say what it answers; on a very wide terminal it is the
-  answer that goes instead, however tall the window is, leaving a
-  question that looks as though nothing had been typed at all. Shorter
-  still and only a piece of whichever survived is left, and sometimes
+  Where the question ended its own line, your answer starts the row
+  below it, so a wrapped answer needs three rows and a window of one
+  or two -- five rows or fewer -- cannot hold the pair; a question
+  that has itself wrapped needs a row more again. The question is what
+  goes, leaving you looking at what you typed with nothing on screen
+  to say what it answers; on a very wide terminal it is the answer
+  that goes instead, however tall the window is, leaving a question
+  that looks as though nothing had been typed at all. Shorter still
+  and only a piece of whichever survived is left, and sometimes
   neither comes back, leaving older conversation on screen with the
-  game waiting behind it. If the question and everything you had typed
-  are both on screen, carry on. If either is missing, give the
-  terminal another row or two before anything else: that usually
-  brings it back with your typing untouched, which beats retyping it
-  -- the self-destruct password can be nine characters. A very wide
-  terminal is the exception: more rows will not bring the answer back
-  there, though making it narrow enough will. If it does not come
-  back, or the terminal cannot grow, do not answer and do not press
-  Enter: press Ctrl-U first, which throws the line away. What you
-  typed is still in it unseen, and a yes/no question reads the first
-  word of your answer and only its first letter, so an "N" typed after
-  a "y" you cannot see answers yes -- and some of those questions can
-  end the game. With the line cleared, Enter is safe, since nothing
+  game waiting behind it. If the question and all you had typed are
+  both on screen, carry on. If either is missing, give the terminal
+  another row or two before anything else: that usually brings it back
+  with your typing untouched, which beats retyping it -- the
+  self-destruct password can be nine characters. A very wide terminal
+  is the exception: more rows will not bring the answer back there,
+  though making it narrow enough will. If it does not come back, or
+  the terminal cannot grow, do not answer and do not press Enter:
+  press Ctrl-U first, which throws the line away. What you typed is
+  still in it unseen, and a yes/no question reads the first word of
+  your answer and only its first letter, so an "N" typed after a "y"
+  you cannot see answers yes -- and some of those questions can end
+  the game. With the line cleared, Enter is safe, since nothing
   waiting behind a prompt commits you to anything. A yes/no question
   then asks again only as Please answer with "Y" or "N", never
   repeating what it wanted; answer N to decline whatever it was.

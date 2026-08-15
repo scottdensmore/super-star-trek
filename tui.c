@@ -15,6 +15,29 @@
 #define PANELH (13)		/* border + header + 10 grid rows + border */
 #define QUADW (29)		/* border + 25-char grid line + padding */
 
+/* The fewest rows the conversation is left with, and the fewest the
+ * panels are worth drawing in.
+ *
+ * The panels used to take PANELH rows whatever the terminal had, and
+ * the conversation whatever was left -- which at thirteen rows and
+ * fewer was nothing at all, the message window sitting at row PANELH
+ * off the bottom of the screen. The player then saw no conversation, no
+ * prompt and no sign the game was waiting; it was, and typing still
+ * worked, blind. #94. Just above that band the window existed but was
+ * one row, so a paged command printed a line and wrote the pause prompt
+ * straight over it -- screen after screen of the prompt and never a
+ * word of the scan. #95.
+ *
+ * Three rows: two of conversation and the one the prompt or the pager
+ * sits on. Fewer than that and paging shows a line at a time, which is
+ * barely better than none.
+ *
+ * PANELMIN is a box with an inside -- two borders and a row between
+ * them. Below it the panels would be borders drawn on borders, which is
+ * the shape #141 is about at the other axis. */
+#define MSGMIN (3)
+#define PANELMIN (3)
+
 int tui_active;		/* declared in tui.h; see the note there */
 int tui_ingame;
 
@@ -197,15 +220,35 @@ static void make_windows(void) {
 	   resize, which left it taller than the screen, its bottom border
 	   off the bottom, and its last line drawn where that border should
 	   have been. */
-	panelh = LINES < PANELH ? LINES : PANELH;
+	/* The panels yield first. They are the part of the display a
+	   player can do without -- the same reading is a command away --
+	   where the conversation is how the game says anything at all.
+	   At PANELH + MSGMIN rows and above this changes nothing: the
+	   panels get the full PANELH and the conversation everything
+	   under it, which is what every size the display accepts at
+	   startup has. */
+	panelh = LINES - MSGMIN;
+	if (panelh > PANELH) panelh = PANELH;
+	if (panelh < PANELMIN) panelh = PANELMIN;
+	if (panelh > LINES) panelh = LINES;
 	quadw = COLS < QUADW ? COLS : QUADW;
-	msgh = LINES-PANELH > 1 ? LINES-PANELH : 1;
+	/* What is left, and never nothing: a window of no rows is not a
+	   window curses will make, which is all the clamp is for. It never
+	   changes anything above four rows, and not at four either: the
+	   panels keep PANELMIN there and the subtraction already gives
+	   the one row the conversation gets, its own row under them. Only
+	   at three and below would it reach zero -- and there the
+	   window's origin is off the bottom of the screen anyway, so
+	   mvwin() refuses it and the ERR path below takes over. Nothing
+	   of the conversation is drawn, which is the floor both documents
+	   give. */
+	msgh = LINES - panelh > 1 ? LINES - panelh : 1;
 	statw = COLS-QUADW > 1 ? COLS-QUADW : 1;
 	msgw = COLS-2 > 1 ? COLS-2 : 1;
 	if (wmsg == NULL) {
-		wquad = newwin(PANELH, QUADW, 0, 0);
-		wstat = newwin(PANELH, statw, 0, QUADW);
-		wmsg = newwin(msgh, msgw, PANELH, 1);
+		wquad = newwin(panelh, QUADW, 0, 0);
+		wstat = newwin(panelh, statw, 0, QUADW);
+		wmsg = newwin(msgh, msgw, panelh, 1);
 	} else {
 		/* Resized rather than remade, because the message window
 		   holds the conversation and a fresh one would be empty --
@@ -246,10 +289,10 @@ static void make_windows(void) {
 
 		   The return is dropped on purpose: ERR comes back only
 		   where there is nowhere legal to put the window -- LINES
-		   at or under PANELH, or fewer than two columns -- and at
+		   at or under PANELMIN, or fewer than two columns -- and at
 		   those sizes the panels are the whole screen and nothing
 		   is drawn below them anyway. The next resize asks again. */
-		mvwin(wmsg, PANELH, 1);
+		mvwin(wmsg, panelh, 1);
 	}
 	/* Set every time, not only on the first: keypad in particular is
 	   what turns a resize into KEY_RESIZE rather than into whatever
@@ -377,9 +420,10 @@ static int cursor_at_prompt;
  * the last thing written, so what happens to it is decided by where
  * the cut falls. Below the last row with anything on it -- a shallow
  * shrink, or one that reaches only the blank rows a conversation has
- * left below itself -- only blank rows go and the line stays put. Deeper, and the cut
- * reaches live rows in any state, setup included: 80x24 to 30x15 takes
- * the skill question with it, which is `tall stump:` in tests/tui.sh.
+ * left below itself -- only blank rows go and the line stays put.
+ * Deeper, and the cut reaches live rows in any state, setup included:
+ * 80x24 to 30x5 takes the skill question with it, which is
+ * `tall stump:` in tests/tui.sh.
  * What it takes is then the whole of the line, or, where the pair
  * wraps, its lower rows only. Where the whole of it went, the rows at
  * the bottom are older conversation, this returns false for them, and
@@ -872,7 +916,7 @@ static void sync_size(void) {
 	resize_term(0, 0);	/* adopt whatever the terminal is now */
 	make_windows();		/* which is what moves builtlines/builtcols on */
 	/* The screen has columns no window owns. The message window is inset
-	   a column on each side -- newwin(msgh, msgw, PANELH, 1), with msgw
+	   a column on each side -- newwin(msgh, msgw, panelh, 1), with msgw
 	   asked for as COLS-2 rather than COLS-1 -- to give it a margin
 	   under the panels, so the first and last columns of the screen
 	   belong to no window, and nothing else in the game writes to
@@ -1240,6 +1284,22 @@ void tui_clearmsg(void) {
 	lastlen = 0;
 }
 
+/* Asked of the window rather than worked out from LINES, because the
+ * panels give rows up on a short terminal and the arithmetic no longer
+ * knows how many. LINES-PANELH-1 was zero at fourteen rows and negative
+ * below, and a page height of zero pauses after every line: #95.
+ *
+ * One row goes to the pause prompt itself, which is why this is a row
+ * short of the window. The floor at one is defensive rather than
+ * load-bearing: sst.c compares after incrementing the line count, so a
+ * page height of nought and one both pause after every line, and
+ * removing the clamp changes nothing observable. It is here so the
+ * value never reads as "no lines at all", which is what the old
+ * LINES-PANELH-1 returned below fourteen rows. */
 int tui_pageheight(void) {
-	return LINES-PANELH-1;
+	int h;
+
+	if (wmsg == NULL) return MSGMIN - 1;
+	h = getmaxy(wmsg) - 1;
+	return h > 1 ? h : 1;
 }
