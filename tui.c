@@ -360,6 +360,81 @@ static const char *pending_answer;
  * before touching anything. */
 static int cursor_at_prompt;
 
+/* Whether window row r begins the line being restored -- that is,
+ * whether it is the stump's first row rather than older conversation.
+ *
+ * The erase branch below counts rows back from the bottom of the window
+ * and rubs them out, on the understanding that they are what is left of
+ * the line. A width change does leave that: curses truncates each row
+ * where it stands, so the line stays put and its first row still starts
+ * with the line's first characters at column 0. Both kinds of line
+ * start there -- prout ends its own line, and curline is whatever
+ * proutn has written since the last newline -- so column 0 is where to
+ * look.
+ *
+ * A height shrink can move it or take it. wresize() keeps the top of
+ * the window and drops the rows below the cut, and the pending line is
+ * the last thing written, so what happens to it is decided by where
+ * the cut falls. Below the last row with anything on it -- a shallow
+ * shrink, or one that reaches only the blank rows a conversation has
+ * left below itself -- only blank rows go and the line stays put. Deeper, and the cut
+ * reaches live rows in any state, setup included: 80x24 to 30x15 takes
+ * the skill question with it, which is `tall stump:` in tests/tui.sh.
+ * What it takes is then the whole of the line, or, where the pair
+ * wraps, its lower rows only. Where the whole of it went, the rows at
+ * the bottom are older conversation, this returns false for them, and
+ * the caller scrolls instead of erasing: #118, where erasing took the
+ * answer to an earlier question with it and left the same question
+ * standing twice in a row. Where part of it survived, this is what
+ * finds the part -- which is why the caller asks at every row the pair
+ * could occupy rather than only at the one the arithmetic names.
+ *
+ * It answers "does this row begin the line" and not "how much of the
+ * line is below it". A row that repeats the line, or that merely begins
+ * like it once the comparison is bounded below, satisfies this without
+ * being the stump -- and since the caller asks at every row from the
+ * bottom up, any of them can be the false match, not just the one the
+ * arithmetic names. The erase is then no worse than it was before this
+ * check existed -- the caller's topmost candidate is the row it used to
+ * erase from unconditionally, so whatever the scan picks, the rows
+ * rubbed out are a subset of what was rubbed out then.
+ *
+ * Nothing at or below the matched row is left stale either: it is the
+ * first row the erase rubs out, and is rewritten in place. What that
+ * does not rule out is a match *below* the stump's own first row, which
+ * leaves that row standing above the rewrite -- #118's artifact by
+ * another route. The caller reaches it only on a string the player
+ * typed, and says there why it is left alone.
+ *
+ * How much to compare is bounded by both widths, because the row holds
+ * real characters only where the two agree. A shrink truncates the row
+ * to the new width; a grow keeps what the old width held and pads the
+ * rest. Comparing further than the narrower of them runs into curses'
+ * padding and mismatches against a stump that is perfectly intact --
+ * which would send a width change down the scroll path and leave the
+ * stump standing with a copy under it, the stacking the erase branch
+ * exists to prevent.
+ *
+ * Reaching that needs a line longer than the old width, which does not
+ * need a long line: make_windows() caps quadw at QUADW but lets msgw
+ * keep tracking COLS down, so a terminal dragged to 50 columns has a
+ * 48-column message window and setup.c's 57-character skill question
+ * wraps in it. Widening from there is the shape this bound is for --
+ * 80x24 to 50x24 to 100x24 with that question pending stacked a second
+ * copy without it. */
+static int row_starts_line(int r, const char *line, int linelen, int width,
+			   int oldwidth) {
+	char row[sizeof curline];
+	int n = width < oldwidth ? width : oldwidth;
+
+	if (linelen < n) n = linelen;
+	if (r < 0 || n <= 0) return FALSE;
+	if (n > (int)sizeof row - 1) n = (int)sizeof row - 1;
+	row[0] = '\0';
+	if (mvwinnstr(wmsg, r, 0, row, n) == ERR) return FALSE;
+	return (int)strlen(row) >= n && strncmp(row, line, (size_t)n) == 0;
+}
+
 /* Whether a window row holds nothing but blanks. */
 static int row_blank(int r) {
 	char row[256];
@@ -626,7 +701,7 @@ static void restore_curline(int oldmsgw) {
 	   below is where it is argued. */
 	if (oldmsgw > 0) {
 		int total = linelen;
-		int rows, rr;
+		int rows, rr, k, bottom;
 
 		if (pending_answer != NULL)
 			total += (int)strlen(pending_answer);
@@ -652,13 +727,85 @@ static void restore_curline(int oldmsgw) {
 		   setup conversation and after every clearscreen() -- there
 		   the live line sits mid-window, and writing at the bottom
 		   left the stump above it with blank rows in between. */
-		r = (last >= 0 ? last : maxy - 1) - rows + 1;
-		if (r < 0) r = 0;
-		for (rr = r; rr < maxy; rr++) {
-			wmove(wmsg, rr, 0);
-			wclrtoeol(wmsg);
+		bottom = last >= 0 ? last : maxy - 1;
+		/* Where the stump begins, found rather than calculated. The
+		   arithmetic above says which row that would be if the stump
+		   were whole; it cannot say whether there is one, nor how much
+		   of it is left.
+		   How much matters, because a height shrink does not always
+		   take the line away entire. It drops the rows below the cut,
+		   and a pair that wraps can have its lower rows dropped and
+		   its first row kept -- the stump is then shorter than `rows`
+		   and begins further down than the arithmetic says. Asking
+		   only at the calculated row missed it, took the scroll path,
+		   and wrote a second copy under the row that had survived:
+		   80x25 to 79x24 with a wrapped command half typed showed the
+		   whole COMMAND> line twice.
+		   So look from the bottom up, over as many rows as the pair
+		   could occupy. The lowest match is the one to take. Only the
+		   stump's own first row begins the line, and where an older
+		   identical line is on screen too it is further up, never
+		   nearer the bottom than a survivor.
+		   Anchoring too high is what the scan cannot do: its topmost
+		   candidate is the row the arithmetic names, which is where
+		   this erased from unconditionally before any of these checks
+		   existed. So whatever it picks, the rows rubbed out are a
+		   subset of what was rubbed out then.
+		   Too low it can, but only on text the player typed: every
+		   row below a surviving stump row is stump, so a false match
+		   has to be the answer's own echo. Typing a string that
+		   contains this line and lands at exactly the wrap column
+		   duplicates the pair once -- 68 characters then " COMMAND> "
+		   at 80 columns, narrowed by one. Left alone deliberately.
+		   Ruling it out means rebuilding the anchor from a join of
+		   rows r..bottom tested as a prefix of `want`, which is a
+		   bigger change than a shape no ordinary input reaches, and
+		   this function's history is that re-deriving the anchor is
+		   where the next defect comes from.
+		   Reset first: r is the row scan's loop variable further up,
+		   and it still holds where that stopped. */
+		r = -1;
+		for (k = 0; k < rows && bottom - k >= 0; k++) {
+			if (row_starts_line(bottom - k, line, linelen, width,
+					    oldmsgw)) {
+				r = bottom - k;
+				break;
+			}
 		}
-		wmove(wmsg, r, 0);
+		/* Nothing found and the arithmetic runs off the top: the pair
+		   takes more rows than the conversation on screen occupies, so
+		   row 0 holds a middle row of the stump and no row of it
+		   begins the line where this could see it. The scroll path
+		   would keep what is left and write a copy under it, which is
+		   the stacking this branch exists to prevent and a regression
+		   against erasing unconditionally.
+		   Erasing anyway, and not because a stump is guaranteed: rows
+		   is counted at the old width where maxy and last are the new
+		   geometry, so a resize that moved the height can reach this
+		   with the line already discarded. The argument is narrower.
+		   Erasing here is what this branch did before any of these
+		   checks existed, so it cannot be worse than it was, where
+		   taking the scroll path on rows that merely failed to match
+		   is a fresh way to stack. */
+		if (r < 0 && bottom - rows + 1 < 0) r = 0;
+		/* And only where one of them is the stump. Where none is, the
+		   line really is gone -- a height shrink that cut all of its
+		   rows -- and the rows at the bottom are live conversation.
+		   Rubbing them out cost the answer to an earlier question and
+		   left that question standing twice in a row. #118.
+		   Falling through to the scroll below there, because that path
+		   is written for exactly this state: the line is gone and the
+		   bottom rows are worth keeping. */
+		if (r >= 0) {
+			for (rr = r; rr < maxy; rr++) {
+				wmove(wmsg, rr, 0);
+				wclrtoeol(wmsg);
+			}
+			wmove(wmsg, r, 0);
+		} else {
+			wscrl(wmsg, 1);
+			wmove(wmsg, maxy - 1, 0);
+		}
 	} else {
 		/* A width that did not change is the other case, and it
 		   comes both ways. Lost rows: the line is gone altogether
