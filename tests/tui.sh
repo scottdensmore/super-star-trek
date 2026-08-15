@@ -238,6 +238,25 @@ wait_col_dirty() {
 	return 1
 }
 
+# Wait until the pane's $1 (a tmux format, e.g. '#{pane_width}') is $2.
+#
+# Every resize assertion in this file that expects a *change* fails
+# loudly if the resize did nothing. The two that expect nothing to
+# change do not: an older tmux without `resize-window`, a window-size
+# setting that refuses it, or a session that has died all leave
+# `resize-window` writing to a stderr nobody reads, and a case that
+# asserts "the game did not end" then passes without a SIGWINCH ever
+# being delivered. So ask the pane, and fail if the resize never took.
+wait_pane() {
+	i=0
+	while [ "$i" -lt 40 ]; do
+		[ "$(tm display-message -p -t "$pane" "$1" 2>/dev/null)" = "$2" ] && return 0
+		i=$((i + 1))
+		sleep 0.1
+	done
+	return 1
+}
+
 dump() {
 	printf '  --- screen ---\n' >&2
 	screen | sed 's/^/  | /' >&2
@@ -2751,6 +2770,163 @@ fallback() {
 fallback "TERM=dumb" 80 24 "cannot do full-screen mode" 'env TERM=dumb'
 # Smaller than the panels need. 72x24 is the floor; 70x20 is under it.
 fallback "undersized terminal" 70 20 "Terminal too small" ''
+
+# --- and a resize does not end a game that fell back ------------------
+# The fallback exists to keep the player playing on a terminal the
+# panels cannot use. It printed "Terminal too small (need 72x24)" and
+# then ended the game the moment the player did the obvious thing about
+# that and made the window bigger:
+#
+#      COMMAND> rest 5000
+#      Are you sure?
+#      [Transmission ends.]
+#
+# readinput() reads the classic display with fgets, which returns NULL
+# for a read that was interrupted as well as for one that reached the
+# end of the input -- and the session ends either way. tui_init()'s
+# giving up is what makes the difference: initscr() has already run and
+# installed a SIGWINCH handler, and endwin() does not take it away, so
+# the resize interrupts the read. A game started without -t never
+# installs one and survives the same resize. Measured at the failure:
+# feof 0, ferror 1, errno EINTR.
+#
+# Any resize does it, in either direction, from any start below 72x24 --
+# the grow is not what matters, the interrupted read is. 40x10 to 100x30
+# is simply the shape a player would produce.
+start 40 10 'tournament 7 short novice pw'
+if ! wait_scrollback 'Terminal too small'; then
+	fail "resize fallback: the game did not fall back to the classic display at 40x10"
+	dump_scrollback
+elif ! wait_for 'COMMAND'; then
+	fail "resize fallback: the classic display never reached a command prompt"
+	dump
+else
+	# A question pending, so the resize lands while a read is waiting --
+	# which is the only time the interrupted read can be mistaken for
+	# the end of the input.
+	tm send-keys -t "$pane" 'rest 5000' Enter
+	if ! wait_for 'Are you sure'; then
+		fail "resize fallback: rest did not ask whether it was wise"
+		dump
+	else
+		tm resize-window -t "$session" -x 100 -y 30
+		if ! wait_pane '#{pane_width}' 100; then
+			fail "resize fallback: the terminal never resized, so nothing was tested"
+			dump
+		elif screen | grep -qF 'Transmission ends'; then
+			fail "resize fallback: growing the terminal ended the game"
+			dump
+		# The question has to still be pending, not merely the game
+		# alive. sst.doc promises the resize neither answers a
+		# question nor turns a page, and a build that answered it
+		# with an empty line would leave the game running and pass a
+		# liveness check on its own.
+		elif [ "$(screen | grep -c 'Are you sure')" -ne 1 ]; then
+			fail "resize fallback: the question is not on screen exactly once after the resize"
+			dump
+		else
+			# Alive, not merely silent: it still answers. Asked
+			# for something only a live game produces -- after
+			# the bug fired the screen still read ` COMMAND> rest
+			# 5000` above `[Transmission ends.]`, so waiting for
+			# `COMMAND` matched the dead game's own stale prompt
+			# and only the grep above was doing any work. Nothing
+			# has printed `Time Left` in this session: the classic
+			# display has no panels, so it can only come from the
+			# scan.
+			tm send-keys -t "$pane" 'n' Enter
+			tm send-keys -t "$pane" 'srscan' Enter
+			expect "resize fallback: the game stopped answering after the resize" \
+				'Time Left'
+			# `Please answer with "Y" or "N":`, not `Beg your
+			# pardon`: ja() loops until it sees y or n, so an
+			# empty answer is re-asked rather than falling back
+			# to the command prompt -- it never reaches the
+			# unrecognised-command path. That is the one thing on
+			# screen that separates a question answered by the
+			# resize from one still pending, and it is looked for
+			# after the poll above, so the game has had its say.
+			unwanted "resize fallback: the resize answered the question with an empty line" \
+				'Please answer'
+		fi
+	fi
+fi
+
+# --- and a resize does not answer a pause either ----------------------
+# The same fault at the other reader. getch() in osx.c reads the pause
+# prompt with read(), and a read the resize interrupted came back as a
+# keypress -- so the resize answered `[HIT SPACE BAR TO CONTINUE]` and
+# the page the player had not finished went by. At pause(1) the
+# clearscreen() after it takes the screen with it.
+#
+# sst.doc promises against both in one sentence: resizing is safe
+# "while the game waits for an answer or for a keystroke at a pause".
+# Fixing only the answer half would have left the sentence half true.
+#
+# 60x20 so the terminal is under the panels' minimum and the help text
+# is long enough to page.
+start 60 20 'tournament 7 short novice pw'
+if ! wait_scrollback 'Terminal too small'; then
+	fail "resize pause: the game did not fall back to the classic display at 60x20"
+	dump_scrollback
+elif ! wait_for 'COMMAND'; then
+	fail "resize pause: the classic display never reached a command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'help move' Enter
+	if ! wait_for 'HIT SPACE BAR'; then
+		fail "resize pause: help did not stop to page"
+		dump
+	else
+		# The last line of the page being read, remembered before the
+		# resize and compared with the last line after it.
+		#
+		# Two weaker forms of this do not work, both measured against
+		# a build with the retry removed. A pause prompt on screen
+		# afterwards proves nothing: an answered pause prints the
+		# *next* page and stops at its own prompt, so `HIT SPACE BAR`
+		# is there either way. And asking merely whether the
+		# remembered line is still *somewhere* on screen proves
+		# nothing either: the terminal grew, so the old page is still
+		# above the new one, scrolled up rather than gone. It is the
+		# position that moves -- the line above the prompt is the last
+		# line of whichever page is being shown.
+		lastline() {
+			screen | grep -v '^ *$' | grep -v 'HIT SPACE BAR' \
+				| tail -1 | sed 's/^ *//; s/ *$//'
+		}
+		marker=$(lastline)
+		if [ -z "$marker" ]; then
+			fail "resize pause: no help text on screen to remember before the resize"
+			dump
+		else
+			# Height only, deliberately. The signal is what matters,
+			# and a width change makes tmux reflow the wrapped help
+			# text -- which would move `lastline` for a reason
+			# having nothing to do with the fix, failing the case
+			# loudly but wrongly the day the paragraph shifts.
+			tm resize-window -t "$session" -x 60 -y 30
+			if ! wait_pane '#{pane_height}' 30; then
+				fail "resize pause: the terminal never resized, so nothing was tested"
+				dump
+			elif [ "$(lastline)" != "$marker" ]; then
+				fail "resize pause: growing the terminal answered the pause and took the page with it"
+				dump
+			elif ! screen | grep -qF 'HIT SPACE BAR'; then
+				fail "resize pause: the pause prompt is gone after the resize"
+				dump
+			else
+				# And a real keystroke still answers it, so the
+				# retry has not made the pause unanswerable.
+				tm send-keys -t "$pane" Space
+				if ! to_command; then
+					fail "resize pause: the pause no longer answers to a keystroke"
+					dump
+				fi
+			fi
+		fi
+	fi
+fi
 
 if [ "$fails" -ne 0 ]; then
 	printf '\n%d check(s) failed.\n' "$fails" >&2

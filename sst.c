@@ -1,5 +1,6 @@
 #define INCLUDED	// Define externs here
 #include "sst.h"
+#include <errno.h>
 #include <stdint.h>
 #include "tui.h"
 #include <ctype.h>
@@ -463,9 +464,32 @@ int main(int argc, char **argv) {
 			prout("Full-screen mode needs a terminal -- using the classic display.");
 		else if (!tui_terminal_capable())
 			prout("This terminal cannot do full-screen mode -- using the classic display.");
-		else
-			/* Short: this one only ever prints on a narrow terminal. */
+		else {
+			/* Two lines, and the game breaks them rather than the
+			   terminal. There is no width this can count on: the
+			   fallback is LINES < 24 || COLS < 72, so height alone
+			   reaches it and the notice prints on a 100-column screen
+			   as readily as a 40-column one, and the first line here
+			   is 57 columns and does wrap mid-word below that -- at
+			   50 it reads "classic d" / "isplay.". What the split
+			   buys is that the sentence added below did not lengthen
+			   a line that already wraps.
+			   The second is worth its line: the next thing a player
+			   does about a terminal called too small is make it
+			   bigger, and then waits for panels that are not coming,
+			   the choice having been made at startup. Only worth
+			   saying since #150 -- before that the resize ended the
+			   game, so nobody got as far as waiting.
+			   It names sst and the size rather than saying "until you
+			   restart": this game asks "Do you want to play again?",
+			   where a player can read restarting as starting another
+			   game -- and a second game from that prompt is classic
+			   too, tui_init() having run once before the loop. 57
+			   columns, the same as the line above, so it wraps
+			   wherever that already does and nowhere new. */
 			prout("Terminal too small (need 72x24) -- using classic display.");
+			prout("It stays classic: restart sst at 72x24 to get the panels.");
+		}
 	}
 
 	prelim();
@@ -652,8 +676,38 @@ void readinput(char *buf, int buflen) {
 
 	if (tui_active)
 		got = tui_readline(buf, buflen);
-	else
-		got = fgets(buf, buflen, stdin) != NULL;
+	else {
+		/* fgets says NULL for a read that was interrupted as well
+		   as for one that reached the end of the input, and only
+		   the second means no answer is ever coming. Telling them
+		   apart is not hypothetical here: tui_init() runs initscr()
+		   before it discovers the terminal is too small for the
+		   panels, and endwin() does not take back the SIGWINCH
+		   handler initscr() installed -- so once the game has
+		   fallen back to the classic display, resizing the terminal
+		   interrupts the read. It then ended the game mid-question,
+		   which is what a player got for doing the obvious thing
+		   about "Terminal too small (need 72x24)". Issue #150.
+		   A game started without -t installs no handler and never
+		   saw it, which is why this looked like a classic-display
+		   fault and is not one.
+		   feof() is the question worth asking, and errno == EINTR
+		   the answer worth retrying. Anything else -- a real read
+		   error -- still ends the session, as it did.
+		   One limit, left alone: glibc returns NULL having already
+		   copied part of a line, and the retry then starts again
+		   at buf[0] with those bytes gone. Canonical mode delivers
+		   a line whole or not at all, so reaching it takes
+		   something like an end-of-file mid-line and a resize on
+		   top of it -- and the old code ended the session there,
+		   so it is not a regression either way. */
+		errno = 0;
+		while ((got = fgets(buf, buflen, stdin) != NULL) == 0
+		       && !feof(stdin) && errno == EINTR) {
+			clearerr(stdin);
+			errno = 0;
+		}
+	}
 	if (got) {
 		/* Hand the line back with nothing trailing. \r as well as
 		   \n: a script written on Windows would otherwise have

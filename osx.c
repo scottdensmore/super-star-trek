@@ -7,6 +7,7 @@
 #include "tui.h"
 #include <stdio.h>
 #ifndef WINDOWS
+#include <errno.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
@@ -38,6 +39,7 @@ int stdio_is_terminal(void) {
 
 int getch(void) {
     char chbuf[1];
+    ssize_t n;
     struct termios oldstate, newstate;
     if (tui_active)
         return tui_getch();
@@ -47,12 +49,22 @@ int getch(void) {
 	newstate.c_lflag &= ~ICANON;
 	newstate.c_lflag &= ~ECHO;
 	tcsetattr(0, TCSANOW,  &newstate);
-	/* At end of input there is no keypress to report; say so rather
+	/* A read the terminal changing shape interrupted is not a
+	   keypress, and reporting one lets a resize answer the pause: the
+	   page the player had not finished goes by, and at pause(1) the
+	   clearscreen() after it takes the screen with it. Same cause as
+	   readinput()'s, and sst.doc promises against both in one
+	   sentence -- resizing is safe "while the game waits for an
+	   answer or for a keystroke at a pause". Issue #150.
+	   At end of input there is no keypress to report; say so rather
 	   than handing back whatever was on the stack. Play continues
 	   here, unlike readinput(), which ends the session: this is the
 	   paging prompt, and quitting from it would cut off end-of-game
 	   output mid-score. The session ends at the next real prompt. */
-	if (read(0, &chbuf, 1) != 1)
+	do {
+		n = read(0, &chbuf, 1);
+	} while (n < 0 && errno == EINTR);
+	if (n != 1)
 		chbuf[0] = '\0';
 	tcsetattr(0, TCSANOW, &oldstate);
         return chbuf[0];
