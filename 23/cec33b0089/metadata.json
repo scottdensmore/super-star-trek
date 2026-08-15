@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "23cec33b0089",
+  "strategy": "manual-commit",
+  "branch": "fix/resize-ends-fallback-game",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "README.md",
+    "osx.c",
+    "sst.c",
+    "sst.doc",
+    "tests/tui.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/23/cec33b0089/0/metadata.json",
+      "transcript": "/23/cec33b0089/0/full.jsonl",
+      "compact_transcript": "/23/cec33b0089/0/transcript.jsonl",
+      "content_hash": "/23/cec33b0089/0/content_hash.txt",
+      "prompt": "/23/cec33b0089/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 131,
+    "cache_creation_tokens": 817324,
+    "cache_read_tokens": 54238587,
+    "output_tokens": 79191,
+    "api_call_count": 71
+  }
+}
