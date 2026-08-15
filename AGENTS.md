@@ -234,6 +234,34 @@ Every coding agent working in this repository must follow this workflow.
    whose opening quadrant holds a starbase had to be added before that
    assertion meant anything. All three read convincingly.
 
+   **The same holds for what a comment claims, testable change or not.**
+   Comments here are read as specification: the review passes take them
+   as the reason the code is the way it is, and dispute them on those
+   terms. So a comment that states a number, a bound, or what can and
+   cannot reach the code should say where that came from — measured on a
+   terminal resized to 72x14, counted in `reports.c`, derived from
+   `PANELH`, read off the gate in `tui_init()`. A claim carrying its
+   source is one the next reader checks in a minute; one without it they
+   have to trust or re-derive.
+
+   Not a call for precision in general. It is the sentence that says
+   *why* that a later change quietly falsifies, and that a reviewer
+   cannot dispute without redoing the work. #156 collects what prompted
+   this, from three changes in one session: "the longest line that gets
+   here is the 57-character skill question", where 57 was right and the
+   reachability wrong — the line is whatever the game last finished; "a
+   height shrink takes the pending line whole", stated in three places,
+   where a wrapped pair can lose its lower rows and keep its first; and a
+   notice described as printing only below 72 columns, where the gate is
+   `LINES < 24 || COLS < 72` and it prints on a 100-column screen. Twice
+   the wrong claim was inside text written to answer the round before,
+   about exactly this.
+
+   That third one is the reason this is a rule and not an aspiration. It
+   shipped in #18 and stayed on `main` until #155 — every pass that read
+   the file in between took it on trust. A wrong comment can outlive the
+   review that should have caught it.
+
 5. **Inspect the complete diff.** Review the branch diff plus all staged,
    unstaged, and untracked files. Remove accidental or unrelated changes while
    preserving work that belongs to the user. What you drop because it was
