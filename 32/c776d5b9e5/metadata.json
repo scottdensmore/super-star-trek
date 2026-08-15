@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "32c776d5b9e5",
+  "strategy": "manual-commit",
+  "branch": "fix/short-terminal-conversation",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "README.md",
+    "sst.doc",
+    "tests/tui.sh",
+    "tui.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/32/c776d5b9e5/0/metadata.json",
+      "transcript": "/32/c776d5b9e5/0/full.jsonl",
+      "compact_transcript": "/32/c776d5b9e5/0/transcript.jsonl",
+      "content_hash": "/32/c776d5b9e5/0/content_hash.txt",
+      "prompt": "/32/c776d5b9e5/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 212,
+    "cache_creation_tokens": 699398,
+    "cache_read_tokens": 70605549,
+    "output_tokens": 125267,
+    "api_call_count": 115
+  }
+}
