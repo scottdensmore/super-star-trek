@@ -682,15 +682,25 @@ void readinput(char *buf, int buflen) {
 		   the second means no answer is ever coming. Telling them
 		   apart is not hypothetical here: tui_init() runs initscr()
 		   before it discovers the terminal is too small for the
-		   panels, and endwin() does not take back the SIGWINCH
-		   handler initscr() installed -- so once the game has
-		   fallen back to the classic display, resizing the terminal
-		   interrupts the read. It then ended the game mid-question,
-		   which is what a player got for doing the obvious thing
-		   about "Terminal too small (need 72x24)". Issue #150.
-		   A game started without -t installs no handler and never
-		   saw it, which is why this looked like a classic-display
-		   fault and is not one.
+		   panels, and endwin() did not take back the SIGWINCH
+		   handler initscr() installed -- so a game that had fallen
+		   back to the classic display had its reads interrupted by
+		   a resize, and this ended the game mid-question. That is
+		   what a player got for doing the obvious thing about
+		   "Terminal too small (need 72x24)". Issue #150.
+		   Past tense since #152, which restores that disposition on
+		   the give-up path, so no resize reaches here now. Nothing
+		   else does either. Read off SigCgt in /proc/<pid>/status and
+		   off sa_flags after an initscr()/endwin() pair, against
+		   ncurses 6.6: the fallback game then catches SIGINT,
+		   SIGTERM and SIGTSTP and nothing more, SIGCONT is not
+		   caught at all, and curses' SIGTSTP handler carries
+		   SA_RESTART -- so neither a Ctrl-Z nor a stop-and-continue
+		   makes this read return.
+		   The retry stays anyway. Treating an interrupted read as
+		   the end of the input is wrong whatever the signals happen
+		   to be, and the next handler installed anywhere in the
+		   classic path would make it wrong in the way #150 was.
 		   feof() is the question worth asking, and errno == EINTR
 		   the answer worth retrying. Anything else -- a real read
 		   error -- still ends the session, as it did.

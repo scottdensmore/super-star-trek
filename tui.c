@@ -1,6 +1,7 @@
 #include "sst.h"
 #include "tui.h"
 #include <curses.h>
+#include <signal.h>
 #include <term.h>
 
 /* Curses backend for the full-screen interface (sst -t).
@@ -986,6 +987,9 @@ int tui_terminal_capable(void) {
 }
 
 int tui_init(void) {
+	struct sigaction oldwinch;
+	int havewinch;
+
 	/* Both checks come before initscr(): with no terminal, or one it
 	   cannot drive, curses either kills the process outright or leaves
 	   the player staring at a screen that never fills in. */
@@ -993,9 +997,40 @@ int tui_init(void) {
 		return FALSE;
 	if (!tui_terminal_capable())
 		return FALSE;
+	/* What SIGWINCH was set to before curses, so giving up can put it
+	   back. initscr() installs a handler for it and endwin() does not
+	   take it away, so a game that fell back to the classic display
+	   used to carry curses' handler for the rest of the session --
+	   where a game started without -t has none.
+	   That is not cosmetic. It is what made every blocking read in the
+	   classic path interruptible there and nowhere else: readinput()
+	   read the interrupted read as end of input and ended the game,
+	   and getch() read it as a keypress and answered a pause. #150
+	   fixed both by retrying on EINTR, which is the right fix for the
+	   readers; this removes what made them need it. Not a blanket
+	   immunity for whatever is added to that path later: the fallback
+	   game still carries curses' SIGTSTP handler, and select() and
+	   poll() are never restarted whatever SA_RESTART says, so a
+	   Ctrl-Z would reach one of those. read() and fgets() are
+	   restarted, which is why nothing reaches them now. #152.
+	   Saved and restored rather than set to SIG_DFL, which is what the
+	   game happens to want today: nothing installs a handler before
+	   this runs, so the two are the same, and restoring says what is
+	   meant without depending on that staying true.
+	   Whichever way, taking the handler back is one-shot: curses will
+	   not put it there again. Measured against ncurses 6.6 with an
+	   initscr()/endwin() pair, a restore, and a second initscr() --
+	   SIGWINCH stays SIG_DFL, _nc_signal_handler having a static guard.
+	   Harmless while tui_init() runs once, which it does; a second call
+	   added later -- #154 asks for exactly that, so the panels can come
+	   back on a terminal that grew -- would come up full-screen with no
+	   resize handling and nothing on screen to say so, and would have
+	   to install SIGWINCH itself. */
+	havewinch = sigaction(SIGWINCH, NULL, &oldwinch) == 0;
 	initscr();
 	if (LINES < 24 || COLS < 72) {
 		endwin();
+		if (havewinch) sigaction(SIGWINCH, &oldwinch, NULL);
 		return FALSE;
 	}
 	cbreak();

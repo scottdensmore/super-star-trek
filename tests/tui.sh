@@ -2771,6 +2771,118 @@ fallback "TERM=dumb" 80 24 "cannot do full-screen mode" 'env TERM=dumb'
 # Smaller than the panels need. 72x24 is the floor; 70x20 is under it.
 fallback "undersized terminal" 70 20 "Terminal too small" ''
 
+# --- the fallback leaves no curses signal handler behind ---------------
+# tui_init() calls initscr() before it can know the terminal is too
+# small for the panels, and endwin() does not take back the SIGWINCH
+# handler initscr() installed. So a game that fell back to the classic
+# display carried a handler for the rest of the session, where a game
+# started without -t has none -- which is what made every blocking read
+# in the classic path interruptible there and nowhere else. That was
+# #150, fixed by retrying on EINTR in both readers; this is the cause
+# behind it. #152.
+#
+# The retries mean there is nothing left to see in what the game prints:
+# both builds behave identically. So this asks the kernel instead.
+# /proc/<pid>/status gives SigCgt, the mask of signals the process has
+# handlers for, and SIGWINCH is 28 -- so bit 27. Linux only; skipped
+# elsewhere, since the fix is worth having either way and the rest of
+# this file already runs on macOS.
+#
+# Three arms, because two of them cannot tell each other apart. The
+# fallback game and the plain game both expect "no", so a
+# sigwinch_caught() that answered "no" for any reason -- an awk slip, a
+# /proc format that moved -- would satisfy both and the case would pass
+# having measured nothing. The full-screen game at 80x24 is the arm that
+# expects "yes": it is the one that fails if the reading stops working,
+# and it pins the other half of the fix besides, that the restore runs
+# only on the give-up path and leaves real curses alone.
+if [ ! -r /proc/self/status ]; then
+	# A developer on macOS gets a note. Linux CI does not: /proc is the
+	# only way to see this, so a leg where it went missing -- hidepid, an
+	# unusual container, a format that moved -- would otherwise report a
+	# plain pass with the three arms silently absent, which under ctest
+	# shows no output at all. Same reasoning as the tmux guard at the top
+	# of this file.
+	if [ -n "${CI:-}" ] && [ "$(uname -s)" = Linux ]; then
+		fail "sigwinch: no readable /proc on Linux CI, so the disposition went unchecked"
+	else
+		printf 'note: no /proc, so the SIGWINCH disposition went unchecked\n' >&2
+	fi
+else
+	if ! command -v pgrep >/dev/null 2>&1; then
+		fail "sigwinch: pgrep is missing, so the game's process could not be found"
+	fi
+	sigwinch_caught() {
+		# $1 is the pane's shell; sst is its child.
+		# The game, not whatever else the pane's shell has going.
+		# Taking the first child would read `sleep 30` under a shell
+		# that keeps it as one -- dash does; bash execs it into the
+		# pane pid and leaves no children at all -- and `sleep`'s mask
+		# is 0, which is the answer two of the three arms want, so
+		# they would pass on a corpse. Either shell now answers nopid
+		# instead, which fails.
+		gamepid=
+		for c in $(pgrep -P "$1" 2>/dev/null); do
+			case $(tr '\0' ' ' < "/proc/$c/cmdline" 2>/dev/null) in
+			*sst*) gamepid=$c; break ;;
+			esac
+		done
+		[ -n "$gamepid" ] || { echo "nopid"; return; }
+		mask=$(awk '/^SigCgt:/ { print $2 }' "/proc/$gamepid/status" 2>/dev/null)
+		[ -n "$mask" ] || { echo "nomask"; return; }
+		awk -v m="$mask" 'BEGIN {
+			n = 0
+			for (i = 1; i <= length(m); i++) {
+				c = index("0123456789abcdef", substr(m, i, 1)) - 1
+				n = (n * 16) + c
+			}
+			# bit 27, reached by halving rather than shifting:
+			# POSIX awk has no >> operator.
+			for (i = 0; i < 27; i++) n = int(n / 2)
+			print (n % 2) ? "yes" : "no"
+		}'
+	}
+	for arm in 'fallback:-t:40:10:no' 'plain::40:10:no' 'full-screen:-t:80:24:yes'; do
+		mode=$(echo "$arm" | cut -d: -f1)
+		flag=$(echo "$arm" | cut -d: -f2)
+		cols=$(echo "$arm" | cut -d: -f3)
+		rows=$(echo "$arm" | cut -d: -f4)
+		want=$(echo "$arm" | cut -d: -f5)
+		cleanup
+		if ! tm new-session -d -x "$cols" -y "$rows" -s "$session" \
+				-c "$startdir" \
+				"'$sstq' $flag tournament 7 short novice pw; sleep 30" \
+				2>/dev/null; then
+			fail "sigwinch: could not start a ${cols}x${rows} tmux session for the $mode game"
+			continue
+		fi
+		# The fallback arms have to have actually fallen back. "no" is
+		# also the answer from a game that never reached initscr() at
+		# all -- an unknown TERM sends tui_init() home before it, and
+		# the arm would then pass having exercised none of this. The
+		# full-screen arm does not cover that: it takes another branch
+		# and still says "yes".
+		if [ "$want" = no ] && [ "$flag" = -t ] &&
+		   ! wait_scrollback 'Terminal too small'; then
+			fail "sigwinch: the $mode game did not fall back, so the arm would prove nothing"
+			dump_scrollback
+			continue
+		fi
+		if ! wait_for 'COMMAND'; then
+			fail "sigwinch: the $mode game never reached its command prompt"
+			dump
+			continue
+		fi
+		got=$(sigwinch_caught "$(tm display-message -p -t "$pane" '#{pane_pid}')")
+		if [ "$got" = nopid ] || [ "$got" = nomask ]; then
+			fail "sigwinch: could not read the $mode game's signal mask ($got)"
+		elif [ "$got" != "$want" ]; then
+			fail "sigwinch: the $mode game's SIGWINCH handler is '$got' where '$want' was wanted"
+			dump
+		fi
+	done
+fi
+
 # --- and a resize does not end a game that fell back ------------------
 # The fallback exists to keep the player playing on a terminal the
 # panels cannot use. It printed "Terminal too small (need 72x24)" and
@@ -2783,12 +2895,27 @@ fallback "undersized terminal" 70 20 "Terminal too small" ''
 #
 # readinput() reads the classic display with fgets, which returns NULL
 # for a read that was interrupted as well as for one that reached the
-# end of the input -- and the session ends either way. tui_init()'s
-# giving up is what makes the difference: initscr() has already run and
-# installed a SIGWINCH handler, and endwin() does not take it away, so
-# the resize interrupts the read. A game started without -t never
-# installs one and survives the same resize. Measured at the failure:
-# feof 0, ferror 1, errno EINTR.
+# end of the input -- and the session ended either way. tui_init()'s
+# giving up was what made the difference: initscr() had already run and
+# installed a SIGWINCH handler, and endwin() did not take it away, so
+# the resize interrupted the read, where a game started without -t
+# installs no handler and survived the same resize. Measured at the
+# failure: feof 0, ferror 1, errno EINTR.
+#
+# Past tense since #152, which puts that disposition back on the give-up
+# path -- so the resize no longer reaches the read at all.
+#
+# Which leaves this case pinning the promise rather than either half of
+# the fix. Delete the retry and it stays green, because nothing
+# interrupts the read; delete the restore and it stays green too,
+# because the retry catches it, as it did from #150 to #152. Only losing
+# both brings the ending back. Measured, not reasoned: built with the
+# retry gone and the restore kept, the whole file passes.
+#
+# The arms above pin the restore on its own. Nothing pins the retry by
+# observation -- no signal the fallback game now carries can interrupt
+# an fgets -- and it stays because reading an interrupted read as the
+# end of the input is wrong whatever the signals happen to be.
 #
 # Any resize does it, in either direction, from any start below 72x24 --
 # the grow is not what matters, the interrupted read is. 40x10 to 100x30
@@ -2882,7 +3009,18 @@ else
 		# resize and compared with the last line after it.
 		#
 		# Two weaker forms of this do not work, both measured against
-		# a build with the retry removed. A pause prompt on screen
+		# a build with the retry removed -- before #152. That
+		# measurement is not reproducible now: with the SIGWINCH
+		# disposition put back, a retry-removed build passes the whole
+		# file, measured the same way. Like its twin above, this case
+		# pins the promise rather than either half of the fix; the
+		# sigwinch arms pin the restore, nothing pins getch()'s retry
+		# by observation, and it stays for the reason osx.c gives --
+		# reading an interrupted read as a keypress is wrong whatever
+		# the signals happen to be. The two weaker forms are still
+		# weaker, which is why they are recorded.
+		#
+		# A pause prompt on screen
 		# afterwards proves nothing: an answered pause prints the
 		# *next* page and stops at its own prompt, so `HIT SPACE BAR`
 		# is there either way. And asking merely whether the

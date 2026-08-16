@@ -56,6 +56,12 @@ int getch(void) {
 	   readinput()'s, and sst.doc promises against both in one
 	   sentence -- resizing is safe "while the game waits for an
 	   answer or for a keystroke at a pause". Issue #150.
+	   No resize reaches here since #152 put the SIGWINCH disposition
+	   back, and nothing else does either -- SIGCONT is not caught and
+	   curses' SIGTSTP handler carries SA_RESTART, read off SigCgt in
+	   /proc/<pid>/status and off sa_flags after initscr()/endwin(). The
+	   retry stays anyway: reading an interrupted read as a keypress is
+	   wrong whatever the signals happen to be.
 	   At end of input there is no keypress to report; say so rather
 	   than handing back whatever was on the stack. Play continues
 	   here, unlike readinput(), which ends the session: this is the
