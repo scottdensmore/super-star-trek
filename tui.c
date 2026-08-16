@@ -194,13 +194,23 @@ static void draw_status_line(int row, int line, const char *s) {
 	if (a != A_NORMAL) wattroff(wstat, a);
 }
 
-/* The size the windows were last built for, so a read that comes back
- * empty can be told apart from one interrupted by the terminal
- * changing shape. */
+/* The size the windows were last built for, which is what resized()
+ * compares the current one against.
+ *
+ * It used to say it was here to tell a read that came back empty from
+ * one the terminal interrupted. That was true when it was written, at
+ * #47, where the reader ran `if (got || !resized()) break;` after a
+ * wgetnstr -- and it went when that reader did. Neither reader asks
+ * now: tui_readline() takes ERR as the end of the input and handles a
+ * resize through KEY_RESIZE, and sync_size() is resized()'s only
+ * caller. #163. */
 static int builtlines, builtcols;
 
 /* Lay the three windows out for the terminal as it is now. Called
- * again after a resize, so it deletes what was there first.
+ * again after a resize, and it resizes and moves what is there rather
+ * than remaking it -- there is no delwin in this file. The else branch
+ * below says why: a fresh message window would be empty, and the
+ * mvwin() beside it is needed only because the old one is kept.
  *
  * A terminal that has shrunk below the 72x24 the display asks for at
  * startup is not torn down mid-game: the panels keep their size and
@@ -280,6 +290,16 @@ static void make_windows(void) {
 		   prompt and all, on a screen with eleven empty rows waiting
 		   for it.
 
+		   That is curses' own resize_term(), the one it runs when it
+		   takes a resize in. Not the resize_term(0, 0) sync_size()
+		   used to make, which is gone, and not the one tui_init()
+		   calls either: every path that returns FALSE from
+		   tui_init() returns before make_windows(), sst.c retries
+		   only while !tui_active, and tui_shutdown() -- the one
+		   thing that clears that flag once the windows do exist --
+		   ends the process in both its callers. So a retry finds no
+		   windows to shift. #163.
+
 		   After the resizes, not before. mvwin() refuses a move that
 		   would not fit at the destination *at the window's current
 		   size*, so moving first asks to put a window still as wide
@@ -305,9 +325,26 @@ static void make_windows(void) {
 }
 
 /* Whether the terminal changed shape since the windows were built.
- * Asked of the terminal rather than of LINES and COLS: those are only
- * brought up to date when curses processes the resize, and a read that
- * came back empty needs the answer before that has happened. */
+ *
+ * Asked of curses, not of the terminal, whatever the name suggests:
+ * is_term_resized() compares its arguments against the screen size
+ * curses has cached, which is what LINES and COLS report. So this is
+ * the same question as builtlines != LINES || builtcols != COLS for
+ * the positive sizes make_windows() records -- not in general, since
+ * is_term_resized() answers 0 for a non-positive argument whatever the
+ * cache holds, measured: is_term_resized(0, 0) is 0 where the direct
+ * comparison is 1. Those sizes cannot be non-positive by the time this
+ * is asked: they are zero only before the first make_windows(), which
+ * tui_init() runs before anything can reach sync_size(). Either way it
+ * is answerable only once curses has processed the resize.
+ *
+ * Measured against ncurses 6.6.20251231, pane grown from 100x30 to
+ * 120x40 with the windows built at the old size: before any curses
+ * call LINES and COLS still read 100x30 and this answered 0; the first
+ * doupdate() moved them to 120x40 and it answered 1. Asking
+ * is_term_resized(LINES, COLS) instead would prove nothing either way
+ * -- both sides come from the one cache, so it is 0 whatever the
+ * terminal has done. #163. */
 static int resized(void) {
 	return is_term_resized(builtlines, builtcols);
 }
@@ -901,21 +938,42 @@ static void restore_curline(int oldmsgw) {
 	cursor_at_prompt = TRUE;
 }
 
-/* Adopt a new terminal size if there is one. Called before every
- * repaint rather than only where a resize is reported, because the
- * report does not always come: a terminal dragged while the game is
- * blocked reading a line gives curses nothing to hand back, and the
- * next thing that happens is a repaint.
+/* Rebuild the windows if the terminal has changed shape. Called before
+ * every repaint rather than only where a resize is reported, because a
+ * drag can land while no reader is waiting -- setting a quadrant up,
+ * printing a destruct countdown -- and the repaint would then be drawn
+ * to the old geometry. Measured: dragged 80x24 to 100x30 during that
+ * countdown, this ran with the windows still built at 80x24. It takes
+ * some curses call since the drag for this to notice at all -- the
+ * comment above resized() says why -- and the countdown supplies one:
+ * tui_puts_slow() refreshes after every character. Where a repaint is
+ * itself the first call after a drag, resized() says no and the frame
+ * goes out stale; the doupdate() ending that repaint moves the cache,
+ * so the next one or the reader's KEY_RESIZE puts it right. A reader
+ * that goes on to wait does still get a KEY_RESIZE for the same drag,
+ * so this is not the only way a resize is noticed; what calling it
+ * here buys is the frame in between.
  *
- * The message window's contents are lost -- curses cannot reflow them
- * and the game keeps no transcript -- so the panels come back and the
- * conversation carries on from wherever it had got to. */
+ * It does not adopt the size, though it used to say so and used to
+ * call resize_term(0, 0) to do it. By the time this runs curses has
+ * taken the new size itself -- the same measurement, LINES and COLS at
+ * 100x30 against windows still built at 80x24 -- and that call
+ * returned ERR every time it was logged in a running game, ncurses
+ * wanting a positive size. Rebuilding the windows is what is left, and
+ * that is make_windows(). #163.
+ *
+ * The conversation survives a grow: wresize() keeps what is in the
+ * window, measured, a whole status readout still on screen after
+ * 90x30 became 110x36. A shrink is what costs, and permanently --
+ * curses clips the rows off the bottom, it cannot reflow them back
+ * when the terminal grows again, and the game keeps no transcript to
+ * redraw from. That is why restore_curline() goes to the trouble it
+ * does for the one line that matters. #166. */
 static void sync_size(void) {
 	int oldcols = builtcols;
 
 	if (!resized()) return;
 	cursor_at_prompt = FALSE;
-	resize_term(0, 0);	/* adopt whatever the terminal is now */
 	make_windows();		/* which is what moves builtlines/builtcols on */
 	/* The screen has columns no window owns. The message window is inset
 	   a column on each side -- newwin(msgh, msgw, panelh, 1), with msgw
