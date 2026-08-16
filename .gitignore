@@ -202,6 +202,28 @@ build-*/
 # shared drift rather than personal, and should stay visible.
 /CMakeUserPresets.json
 
+# Saved games. freeze opens the name it was given without qualifying it
+# (setup.c:55), so an ordinary one lands in whatever directory the game
+# is playing in -- and that is the source tree: AGENTS.md's "Build and
+# run" says ./build/debug/sst from the root, and the in-game help reads
+# sst.doc from the current directory (sst.c:161), so playing anywhere
+# else is awkward. The emergency exit, emexit, freezes to a fixed
+# emsave.trk the same way (sst.c:356, setup.c:38-39). Unanchored,
+# unlike the two rules around it, because the game plays in whatever
+# directory it was started from, and that need not be the root.
+#
+# The rule keys on the extension, so what it catches follows from what
+# freeze does to the name you type: scan() lowercases it and keeps the
+# first nine characters (sst.c:788), then .trk is appended only if what
+# survives has no dot (setup.c:51-53). So `freeze mygame` is caught, and
+# so is a typed `freeze save.trk`; `freeze save.dat` is not, and neither
+# is `freeze mysave.trk`, which truncates to mysave.tr -- dot intact --
+# before the extension is ever considered. The plaque at the end of a
+# game gets none of that shaping: it goes through readinput rather than
+# scan, so it opens the name as typed, with neither the nine characters
+# nor the extension applied to it (finish.c:422-425).
+*.trk
+
 # Personal, unshared agent instructions -- shared rules go in AGENTS.md.
 # Anchored to the root, matching the only path tests/instructions.sh
 # exempts; a CLAUDE.local.md in a subdirectory is shared drift, not
