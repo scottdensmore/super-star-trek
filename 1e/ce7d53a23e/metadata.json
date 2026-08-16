@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "1ece7d53a23e",
+  "strategy": "manual-commit",
+  "branch": "feat/tui-retry-per-game",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "README.md",
+    "sst.c",
+    "sst.doc",
+    "tests/tui.sh",
+    "tui.c",
+    "tui.h"
+  ],
+  "sessions": [
+    {
+      "metadata": "/1e/ce7d53a23e/0/metadata.json",
+      "transcript": "/1e/ce7d53a23e/0/full.jsonl",
+      "compact_transcript": "/1e/ce7d53a23e/0/transcript.jsonl",
+      "content_hash": "/1e/ce7d53a23e/0/content_hash.txt",
+      "prompt": "/1e/ce7d53a23e/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 17871,
+    "cache_creation_tokens": 386021,
+    "cache_read_tokens": 40620132,
+    "output_tokens": 173276,
+    "api_call_count": 165
+  }
+}
