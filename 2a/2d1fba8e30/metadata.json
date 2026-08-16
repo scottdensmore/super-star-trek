@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "2a2d1fba8e30",
+  "strategy": "manual-commit",
+  "branch": "fix/restore-sigwinch",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "osx.c",
+    "sst.c",
+    "tests/tui.sh",
+    "tui.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/2a/2d1fba8e30/0/metadata.json",
+      "transcript": "/2a/2d1fba8e30/0/full.jsonl",
+      "compact_transcript": "/2a/2d1fba8e30/0/transcript.jsonl",
+      "content_hash": "/2a/2d1fba8e30/0/content_hash.txt",
+      "prompt": "/2a/2d1fba8e30/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 101,
+    "cache_creation_tokens": 96987,
+    "cache_read_tokens": 50863315,
+    "output_tokens": 68509,
+    "api_call_count": 55
+  }
+}

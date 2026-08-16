@@ -1,0 +1,52 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "2a2d1fba8e30",
+  "session_id": "8bd691e1-6038-4f0d-82d9-378514dcc470",
+  "strategy": "manual-commit",
+  "created_at": "2026-08-16T02:48:23.502752582Z",
+  "branch": "fix/restore-sigwinch",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "osx.c",
+    "sst.c",
+    "tests/tui.sh",
+    "tui.c"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5[1m]",
+  "turn_id": "eb24531fcef5",
+  "checkpoint_transcript_start": 2579,
+  "transcript_lines_at_start": 2579,
+  "compact_transcript_start": 557,
+  "token_usage": {
+    "input_tokens": 101,
+    "cache_creation_tokens": 96987,
+    "cache_read_tokens": 50863315,
+    "output_tokens": 68509,
+    "api_call_count": 55
+  },
+  "session_metrics": {
+    "turn_count": 15
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-08-16T02:48:21.933650241Z",
+    "agent_lines": 202,
+    "agent_removed": 16,
+    "human_added": 2,
+    "human_modified": 1,
+    "human_removed": 0,
+    "total_committed": 205,
+    "total_lines_changed": 221,
+    "agent_percentage": 98.64253393665159,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}
