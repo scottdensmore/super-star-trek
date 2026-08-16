@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "9815eb1bb06f",
+  "strategy": "manual-commit",
+  "branch": "fix/tui-resize-comments",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "tui.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/98/15eb1bb06f/0/metadata.json",
+      "transcript": "/98/15eb1bb06f/0/full.jsonl",
+      "compact_transcript": "/98/15eb1bb06f/0/transcript.jsonl",
+      "content_hash": "/98/15eb1bb06f/0/content_hash.txt",
+      "prompt": "/98/15eb1bb06f/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 72,
+    "cache_creation_tokens": 480099,
+    "cache_read_tokens": 17407810,
+    "output_tokens": 52164,
+    "api_call_count": 39
+  }
+}
