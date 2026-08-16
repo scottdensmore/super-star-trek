@@ -31,6 +31,18 @@
 
 set -u
 
+# tmux hands the client's environment to the pane, so an exported LINES
+# or COLUMNS in whoever is running this reaches the game -- and curses
+# believes those over the terminal. The panels would then be sized to a
+# number that has nothing to do with the pane: measured with
+# COLUMNS=190 exported, the "half grown" case below saw `Terminal is
+# 190x22` where it asserts 80x22, and the "regrown" case drew 190-column
+# panels inside a 100-column pane and never reached a prompt. The two
+# cases that want these variables set them through start's env prefix,
+# so clearing them here costs nothing. Before the first tm call, because
+# the tmux server captures its environment when it is created.
+unset LINES COLUMNS
+
 SST="${1:-./sst}"
 BUILD_TYPE="${2:-}"
 case "$SST" in
@@ -2771,6 +2783,94 @@ fallback "TERM=dumb" 80 24 "cannot do full-screen mode" 'env TERM=dumb'
 # Smaller than the panels need. 72x24 is the floor; 70x20 is under it.
 fallback "undersized terminal" 70 20 "Terminal too small" ''
 
+# --- an exported size still has the last word -------------------------
+# tui_init() asks the terminal its size with an ioctl, because a second
+# initscr() re-reads nothing and a retry would otherwise see the size it
+# was turned down at. That override stops at LINES and COLUMNS.
+#
+# ncurses honours those over the terminal, and a dimension it has taken
+# from the environment stops following the terminal thereafter. With
+# both pinned nothing about the size can move at all, so the display
+# would never follow the window again -- worse than a classic display
+# that resizes correctly. With one, the free dimension still moves.
+# pinned()'s comment in tui.c carries the measurement for the one-pinned
+# case; the both-pinned half follows from resized() being a single
+# yes/no over the pair, which tui_init()'s comment says.
+# So a pinned dimension is left alone, and this is the arm that holds
+# that line for the case where both are pinned.
+#
+# LINES=20 COLUMNS=70 is under the 72x24 floor while the terminal is
+# comfortably over it, so believing the environment is the whole
+# difference between the panels and the fallback.
+#
+# Proved by deleting the getenv pair, so the ioctl overrode the
+# environment again, and running this file on a copy of the tree outside
+# the repository: this check alone failed.
+start 100 30 'tournament 7 short novice pw' 'env LINES=20 COLUMNS=70'
+if ! wait_scrollback 'Terminal too small'; then
+	fail "env size: an exported 20x70 did not refuse the panels in a 100x30 terminal"
+	dump_scrollback
+elif ! wait_for 'COMMAND'; then
+	fail "env size: the game never reached a command prompt"
+	dump
+else
+	# And the same at the play-again boundary, which is where both of
+	# this arm's defects lived. The size the game uses is pinned, so
+	# nothing about it can have changed and there is nothing to say --
+	# but the two sides of that judgment read different sources for a
+	# while: the refusal size came from curses, which the environment
+	# pins, and the comparison from the terminal, which it does not.
+	# They could never agree, so the notice printed every game, quoting
+	# a size that was not the player's window. Nothing here resizes,
+	# which is the point.
+	tm send-keys -t "$pane" 'quit' Enter
+	if ! wait_for 'score recorded'; then
+		fail "env size: quit did not reach the end-of-game questions"
+		dump
+	else
+		tm send-keys -t "$pane" 'n' Enter
+		if ! wait_for 'play again'; then
+			fail "env size: never asked about another game"
+			dump
+		else
+			tm send-keys -t "$pane" 'y' Enter
+			if ! wait_for 'regular, tournament, or frozen'; then
+				fail "env size: the second game never started"
+				dump
+			else
+				# A retry that succeeds switches to the
+				# alternate screen and wipes what is on it; a
+				# refused one leaves the classic conversation
+				# where it was. So the question from before
+				# the retry is still on screen exactly when
+				# the panels did not come up.
+				#
+				# Not a grep for " Quadrant ": the first
+				# game's own setup line, "The Enterprise is
+				# currently in Quadrant 3 - 2  Sector 7 - 9",
+				# is still on this screen and matches it. That
+				# check failed here on a correct build.
+				#
+				# Proved against the narrower fix that was
+				# proposed first -- the guard on tui_init()'s
+				# first call only, leaving a retry free to
+				# override -- built on a copy of the tree
+				# outside the repository. That alternative
+				# passes every other check in this file; this
+				# one is what says no to it.
+				if ! screen | grep -qF 'play again'; then
+					fail "env size: the retry overrode a pinned size"
+					dump
+				fi
+				if scrollback | grep -qF 'staying classic'; then
+					fail "env size: a player who changed nothing was told the terminal moved"
+					dump_scrollback
+				fi
+			fi
+		fi
+	fi
+fi
+
 # --- the fallback leaves no curses signal handler behind ---------------
 # tui_init() calls initscr() before it can know the terminal is too
 # small for the panels, and endwin() does not take back the SIGWINCH
@@ -3060,6 +3160,306 @@ else
 				if ! to_command; then
 					fail "resize pause: the pause no longer answers to a keystroke"
 					dump
+				fi
+			fi
+		fi
+	fi
+fi
+
+# --- a terminal that grew gets the panels for the next game -----------
+# The full-screen decision was made once, at startup, and never
+# revisited: tui_init() ran before the play-again loop, so a player who
+# started too small, grew the terminal, finished the game and answered
+# yes got a second classic game on a terminal that would now hold the
+# panels. Nothing on screen said so -- the startup notice had scrolled
+# away a game ago. #154.
+#
+# The grow lands while the play-again question is pending, which is the
+# shape a player produces: the notice tells them the terminal is too
+# small, and making it bigger is the next thing they do about that.
+#
+# 70x20 is under the 72x24 floor, and 100x30 is clear of it.
+start 70 20 'tournament 7 short novice pw'
+if ! wait_scrollback 'Terminal too small'; then
+	fail "regrown: the game did not fall back to the classic display at 70x20"
+	dump_scrollback
+elif ! wait_scrollback 'the next game gets panels'; then
+	# The second line of the notice, which nothing used to assert --
+	# so its wording could drift, and did, without a test noticing.
+	# It is the only place the game tells a player what to do about
+	# a terminal it turned down.
+	fail "regrown: the notice does not say a bigger terminal gets the next game panels"
+	dump_scrollback
+elif ! wait_for 'COMMAND'; then
+	fail "regrown: the classic display never reached a command prompt"
+	dump
+else
+	# That the first game is classic needs no check of its own: the
+	# notice above prints only where tui_init() gave up, and it
+	# returns FALSE there, so the panels cannot be up. Checking the
+	# screen for " Quadrant " instead was wrong twice over -- the
+	# classic display prints `Entering Quadrant 5 - 3` from cramlc()
+	# on any move between quadrants, so it fires on a correct build.
+	tm send-keys -t "$pane" 'quit' Enter
+	if ! wait_for 'score recorded'; then
+		fail "regrown: quit did not reach the end-of-game questions"
+		dump
+	else
+		# No: yes stops to ask for a file name and strands the test
+		# there. Same reason as the replay case above.
+		tm send-keys -t "$pane" 'n' Enter
+		if ! wait_for 'play again'; then
+			fail "regrown: never asked about another game"
+			dump
+		else
+			tm resize-window -t "$session" -x 100 -y 30
+			if ! wait_pane '#{pane_width}' 100; then
+				fail "regrown: the terminal never resized, so nothing was tested"
+				dump
+			else
+				tm send-keys -t "$pane" 'y' Enter
+				if ! wait_for 'regular, tournament, or frozen'; then
+					fail "regrown: the second game never started"
+					dump
+				else
+					tm send-keys -t "$pane" 'regular' Enter
+					expect "regrown: the second game lost the first answer" \
+						'Short, Medium, or Long'
+					tm send-keys -t "$pane" 'short' Enter
+					expect "regrown: setup did not reach the skill question" \
+						'Novice, Fair, Good, Expert'
+					tm send-keys -t "$pane" 'novice' Enter
+					sleep 0.5
+					tm send-keys -t "$pane" 'xyz' Enter
+					if ! to_command; then
+						fail "regrown: the second game never reached its prompt"
+						dump
+					else
+						# Both panels, not just the frame: an
+						# empty box would also appear if the
+						# retry came up but the game state
+						# never reached it.
+						#
+						# These two failed before the retry
+						# existed, and again on a copy built
+						# with tui_init()'s ioctl size query
+						# deleted -- a second initscr() reports
+						# the size the first one was turned
+						# down at, so the retry turns itself
+						# down.
+						want_quadtitle "regrown: the second game has no panels on a terminal that now fits"
+						expect_status "regrown: the status panel is empty in the second game" \
+							"Stardate"
+						# And the panels that came back follow a
+						# resize like any others. This is the
+						# arm that pins the SIGWINCH handler
+						# tui_init() re-installs on a retry:
+						# curses installs one per process, so
+						# the second initscr() gets none, and
+						# without it no KEY_RESIZE ever arrives
+						# and sync_size() is never told the
+						# terminal moved. The panels would sit
+						# at 100 columns on a 110-column screen,
+						# which is what column 110 is asked
+						# about -- blank if the display never
+						# grew, the status panel's right border
+						# if it did.
+						#
+						# Proved by deleting that re-install
+						# and running this file on a copy of
+						# the tree outside the repository: this
+						# check alone failed, and nothing else
+						# in the file noticed.
+						tm resize-window -t "$session" -x 110 -y 34
+						if ! wait_pane '#{pane_width}' 110; then
+							fail "regrown: the terminal never grew again, so the resize went untested"
+							dump
+						elif ! wait_col_dirty 110 2 5; then
+							fail "regrown: the panels do not follow a resize after coming back"
+							dump
+						fi
+					fi
+				fi
+			fi
+		fi
+	fi
+fi
+
+# --- a pinned dimension is not a pinned terminal ----------------------
+# ncurses honours LINES and COLUMNS one at a time, so the arm above --
+# where both are pinned -- says nothing about the far commoner case of
+# one. COLUMNS alone is exported by plenty of Docker images, CI runners
+# and shell profiles, and it is usually the right width; height is what
+# is normally wrong. Taking either variable to pin the whole terminal
+# would stand the retry down for all of them, silently.
+#
+# LINES= is exported empty on purpose. ncurses ignores any value that
+# does not parse whole to a positive int -- empty, 0, negative,
+# trailing rubbish -- and takes the terminal instead, so testing merely
+# that the variable is set is stricter than ncurses and would stand the
+# retry down again. This arm fails under either mistake.
+#
+# 80x20 is short and wide enough that only the free dimension has to
+# move: growing to 80x30 clears 72x24 without the pinned width changing.
+#
+# This check was written before the fix and failed on the build that
+# took either variable to pin the whole terminal. It fails under the
+# set-or-not test too, which is the other mistake it is here for.
+start 80 20 'tournament 7 short novice pw' 'env LINES= COLUMNS=80'
+if ! wait_scrollback 'Terminal too small'; then
+	fail "one pinned: 80x20 did not refuse the panels"
+	dump_scrollback
+elif ! wait_for 'COMMAND'; then
+	fail "one pinned: the classic display never reached a command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'quit' Enter
+	if ! wait_for 'score recorded'; then
+		fail "one pinned: quit did not reach the end-of-game questions"
+		dump
+	else
+		tm send-keys -t "$pane" 'n' Enter
+		if ! wait_for 'play again'; then
+			fail "one pinned: never asked about another game"
+			dump
+		else
+			tm resize-window -t "$session" -x 80 -y 30
+			if ! wait_pane '#{pane_height}' 30; then
+				fail "one pinned: the terminal never resized, so nothing was tested"
+				dump
+			else
+				tm send-keys -t "$pane" 'y' Enter
+				if ! wait_for 'regular, tournament, or frozen'; then
+					fail "one pinned: the second game never started"
+					dump
+				else
+					tm send-keys -t "$pane" 'regular' Enter
+					expect "one pinned: the second game lost the first answer" \
+						'Short, Medium, or Long'
+					tm send-keys -t "$pane" 'short' Enter
+					expect "one pinned: setup did not reach the skill question" \
+						'Novice, Fair, Good, Expert'
+					tm send-keys -t "$pane" 'novice' Enter
+					sleep 0.5
+					tm send-keys -t "$pane" 'xyz' Enter
+					if ! to_command; then
+						fail "one pinned: the second game never reached its prompt"
+						dump
+					else
+						want_quadtitle "one pinned: a pinned width stood the whole retry down"
+					fi
+				fi
+			fi
+		fi
+	fi
+fi
+
+# --- and a terminal grown but not grown enough is told so --------------
+# The notice tells the player to grow the terminal. A player who does
+# that and misses -- 80x22, or "80x24" inside tmux, where the status bar
+# leaves the pane 23 rows -- used to get classic again in silence, and
+# no way to tell a mis-sized window from a broken promise.
+#
+# Silence is still right for a player who did nothing: they were told at
+# startup and nothing has changed since. So the line prints only where
+# the terminal is a different size than the one that was turned down.
+# That is the discrimination this case exists for, which is why it
+# resizes rather than simply answering yes at 70x20.
+#
+# 80x22 is wide enough and one row short, so it fails on height alone.
+start 70 20 'tournament 7 short novice pw'
+if ! wait_scrollback 'Terminal too small'; then
+	fail "half grown: the game did not fall back to the classic display at 70x20"
+	dump_scrollback
+elif ! wait_for 'COMMAND'; then
+	fail "half grown: the classic display never reached a command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'quit' Enter
+	if ! wait_for 'score recorded'; then
+		fail "half grown: quit did not reach the end-of-game questions"
+		dump
+	else
+		tm send-keys -t "$pane" 'n' Enter
+		if ! wait_for 'play again'; then
+			fail "half grown: never asked about another game"
+			dump
+		else
+			tm resize-window -t "$session" -x 80 -y 22
+			if ! wait_pane '#{pane_height}' 22; then
+				fail "half grown: the terminal never resized, so nothing was tested"
+				dump
+			else
+				tm send-keys -t "$pane" 'y' Enter
+				if ! wait_for 'regular, tournament, or frozen'; then
+					fail "half grown: the second game never started"
+					dump
+				# Said again, because the player acted on what
+				# they were told and it did not work. This
+				# check was written before the line existed
+				# and failed on the build without it.
+				#
+				# The size it measured, not just the size it
+				# wants: a player who grew a tmux pane to
+				# "80x24" and lost the row to the status bar
+				# has been told 72x24 twice already and
+				# believes their window is right. 80x22 is
+				# that mistake, one row further out. Asserting
+				# the number is what makes this a check of
+				# what the game measured rather than of what
+				# it was compiled to want.
+				elif ! wait_scrollback 'Terminal is 80x22'; then
+					fail "half grown: the game did not say what size it measured"
+					dump_scrollback
+				elif ! wait_scrollback 'staying classic'; then
+					fail "half grown: nothing said it is staying in the classic display"
+					dump_scrollback
+				fi
+			fi
+		fi
+	fi
+fi
+
+# --- but a player who did not resize is not told twice -----------------
+# The mirror of the case above, and the reason it cannot be satisfied by
+# printing the line every time. Nothing changed, so the notice from
+# startup still stands and repeating it is noise.
+start 70 20 'tournament 7 short novice pw'
+if ! wait_for 'COMMAND'; then
+	fail "unchanged: the classic display never reached a command prompt at 70x20"
+	dump
+else
+	tm send-keys -t "$pane" 'quit' Enter
+	if ! wait_for 'score recorded'; then
+		fail "unchanged: quit did not reach the end-of-game questions"
+		dump
+	else
+		tm send-keys -t "$pane" 'n' Enter
+		if ! wait_for 'play again'; then
+			fail "unchanged: never asked about another game"
+			dump
+		else
+			tm send-keys -t "$pane" 'y' Enter
+			if ! wait_for 'regular, tournament, or frozen'; then
+				fail "unchanged: the second game never started"
+				dump
+			else
+				# Waited for by the check above, so the game
+				# has had every chance to print it.
+				#
+				# Proved by dropping the resized test from
+				# sst.c, so the line printed on every failed
+				# retry, and running this file on a copy of
+				# the tree outside the repository: this check
+				# alone failed.
+				# Through the scrollback, not the visible
+				# pane: "staying classic" appears nowhere
+				# else in this journey, so the wider search
+				# is free and cannot go vacuous the day
+				# setup() prints another line or two.
+				if scrollback | grep -qF 'staying classic'; then
+					fail "unchanged: the terminal did not move and was told about it anyway"
+					dump_scrollback
 				fi
 			fi
 		fi

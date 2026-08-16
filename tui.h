@@ -62,6 +62,12 @@ extern int tui_ingame;	/* a game is set up, so the panels have something
 
 int tui_init(void);		/* returns TRUE if the TUI started */
 int tui_terminal_capable(void);	/* TERM is known and can address the cursor */
+int tui_size_changed_since_refusal(void);	/* the terminal is a
+						   different size than when
+						   the panels were last
+						   turned down for size */
+void tui_refused_size(int *cols, int *rows);	/* and the size of that
+						   refusal */
 void tui_shutdown(void);
 void tui_gameover(void);	/* the game has ended; clear the panels */
 void tui_puts(char *s);

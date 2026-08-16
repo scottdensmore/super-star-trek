@@ -2,6 +2,7 @@
 #include "tui.h"
 #include <curses.h>
 #include <signal.h>
+#include <sys/ioctl.h>
 #include <term.h>
 
 /* Curses backend for the full-screen interface (sst -t).
@@ -986,8 +987,87 @@ int tui_terminal_capable(void) {
 	return capable;
 }
 
+/* What the first initscr() installed for SIGWINCH, kept so a later one
+ * can put it back. See the note in tui_init() for why curses will not
+ * do that itself. */
+static struct sigaction cursewinch;
+static int havecursewinch = FALSE;
+
+/* The terminal size the panels were last turned down at, or 0 if they
+ * have not been turned down for size. */
+static int refusedlines, refusedcols;
+
+/* Whether the environment pins one of the terminal's dimensions.
+ *
+ * The rule is ncurses' own, from _nc_getenv_num: strtol with base 0, so
+ * 0x50 and 030 count, and the result must be above zero and fit an int.
+ * Everything else -- unset, empty, 0, negative, trailing rubbish, or too
+ * large -- ncurses ignores, taking the terminal instead. Measured
+ * against ncurses 6.6.20251231 at a 70x20 pane: LINES=0x50 gives 80,
+ * LINES=030 gives 24, LINES=99999999999999999999 is ignored. Testing
+ * merely that the variable is set would be stricter than ncurses and
+ * would stand the panels down where nothing was pinned at all.
+ *
+ * Asked per variable because ncurses honours them per variable. With
+ * LINES=20 alone, in a pane grown from 70x20 to 100x30, curses reports
+ * 20x100 and still delivers KEY_RESIZE: the pinned dimension stays put
+ * and the free one follows. Taking either to pin both would stand the
+ * retry down for anyone with COLUMNS exported -- Docker images, CI
+ * runners and shell profiles all do it -- on a terminal whose height
+ * was the only thing ever wrong.
+ *
+ * Both places that reason about size ask this, and for the same reason:
+ * a pinned dimension cannot change, so it must neither be overridden
+ * nor counted as having moved. */
+static int pinned(const char *name) {
+	const char *v = getenv(name);
+	char *end;
+	long n;
+
+	if (v == NULL || *v == '\0') return FALSE;
+	n = strtol(v, &end, 0);
+	return *end == '\0' && n > 0 && (int)n == n;
+}
+
+/* Whether the terminal is a different size than when the panels were
+ * last refused for being too small.
+ *
+ * It answers one question, asked between games: has the player done
+ * anything about the terminal? One who has -- grown it, and missed --
+ * acted on what the notice told them and is owed an answer. One who has
+ * not was told at startup, and telling them again every game is noise.
+ * FALSE where the refusal was not about size at all (no terminal, or
+ * one curses cannot drive): those do not change with a resize, and
+ * refusedlines stays 0 to say so. */
+int tui_size_changed_since_refusal(void) {
+	struct winsize ws;
+
+	if (refusedlines == 0) return FALSE;
+	/* A pinned dimension is skipped rather than compared. The two
+	   sides come from different places -- the refusal from curses, the
+	   answer from the terminal -- and pinning holds those apart for
+	   good: curses reports what was exported, the ioctl reports the
+	   window. Compared anyway they could never agree, so this said the
+	   terminal had moved on every game, and the caller quoted a size
+	   that was not the player's window. */
+	if (ioctl(fileno(stdout), TIOCGWINSZ, &ws) != 0) return FALSE;
+	if (!pinned("LINES") && ws.ws_row != refusedlines) return TRUE;
+	if (!pinned("COLUMNS") && ws.ws_col != refusedcols) return TRUE;
+	return FALSE;
+}
+
+/* The size of that refusal, for a caller that wants to say what was
+ * measured rather than only what is wanted. Only meaningful once
+ * tui_size_changed_since_refusal() has said the terminal moved, which
+ * is the only time the game asks. */
+void tui_refused_size(int *cols, int *rows) {
+	*cols = refusedcols;
+	*rows = refusedlines;
+}
+
 int tui_init(void) {
 	struct sigaction oldwinch;
+	struct winsize winsz;
 	int havewinch;
 
 	/* Both checks come before initscr(): with no terminal, or one it
@@ -1018,21 +1098,83 @@ int tui_init(void) {
 	   this runs, so the two are the same, and restoring says what is
 	   meant without depending on that staying true.
 	   Whichever way, taking the handler back is one-shot: curses will
-	   not put it there again. Measured against ncurses 6.6 with an
-	   initscr()/endwin() pair, a restore, and a second initscr() --
-	   SIGWINCH stays SIG_DFL, _nc_signal_handler having a static guard.
-	   Harmless while tui_init() runs once, which it does; a second call
-	   added later -- #154 asks for exactly that, so the panels can come
-	   back on a terminal that grew -- would come up full-screen with no
-	   resize handling and nothing on screen to say so, and would have
-	   to install SIGWINCH itself. */
+	   not put it there again. Measured against ncurses 6.6.20251231
+	   with an initscr()/endwin() pair, a restore, and a second
+	   initscr() -- SIGWINCH stays SIG_DFL, _nc_signal_handler having a
+	   static guard. #152.
+	   That is why cursewinch below exists. #154 made this function
+	   retryable, so the panels can come back on a terminal that grew,
+	   and a second initscr() alone would come up full-screen with no
+	   resize handling at all and nothing on screen to say so: measured
+	   the same way, a terminal resized under getch() after that second
+	   initscr() produces no KEY_RESIZE, and no keypress either, so the
+	   read simply stays blocked. Putting curses' own handler back makes
+	   it arrive again -- KEY_RESIZE, 410. Captured rather than written
+	   here because what it has to do is set the flag wgetch() reads,
+	   which is private to ncurses. */
 	havewinch = sigaction(SIGWINCH, NULL, &oldwinch) == 0;
 	initscr();
+	if (!havecursewinch)
+		havecursewinch = sigaction(SIGWINCH, NULL, &cursewinch) == 0;
+	/* Ask the terminal its size rather than believing curses' cache.
+	   A second initscr() does not re-ask: the size is cached from the
+	   first, and the resize that matters here arrived while SIGWINCH
+	   was back at the disposition the give-up path restored, so
+	   nothing recorded it. LINES and COLS would still be the size that
+	   was turned down and the gate below would turn it down again --
+	   which is the whole of what a retry is for. Measured against
+	   ncurses 6.6.20251231, started at 70x20 and grown to 100x30
+	   before the second initscr(): it reports 20x70, and only the
+	   ioctl moves it.
+	   Per dimension, and never for one the environment has pinned --
+	   see pinned() above, which carries the measurement. A dimension
+	   ncurses took from LINES or COLUMNS stops tracking the terminal
+	   and keeps that value however the window moves. resized() is one
+	   yes/no over both, so with a single dimension pinned sync_size()
+	   still runs and the free one still follows; it is only with both
+	   pinned that it returns early for the rest of the session.
+	   Overriding the cache is worth doing; overriding a size somebody
+	   set on purpose would buy panels that never follow the terminal
+	   again, which is worse than the classic display they replaced. So
+	   a pinned dimension keeps curses' value, a free one takes the
+	   terminal's, and the ws_row/ws_col guard leaves the whole call
+	   alone where the ioctl has no answer to give.
+	   What this does not fix is the gate below being asked about a
+	   pinned number at all. It has two terms, so a COLUMNS above 72
+	   clears its column half whatever the window is, and where the
+	   height also passes the panels are drawn wider than the terminal.
+	   That predates the retry and is reachable at startup on its own,
+	   so it is #164 rather than something to fix here -- but the retry
+	   is a second way to reach it, which is why the manual now warns
+	   about an exported size.
+	   One effect worth knowing: the first read after a retry comes
+	   back KEY_RESIZE with nothing having moved. ncurses checks the
+	   terminal against its own cache on that read and finds the gap
+	   this has just closed. Measured over the whole sequence -- first
+	   initscr() at 70x20, give up, grow to 100x30, retry -- 410 on the
+	   first getch(); resize_term() on its own queues nothing, even to
+	   a different size, so it is the retry that produces it. Harmless,
+	   and already provided for: both readers loop on KEY_RESIZE rather
+	   than returning it as input, and sync_size() returns early from
+	   one carrying no size change, which the note above cursor_at_prompt
+	   already names. */
+	if (ioctl(fileno(stdout), TIOCGWINSZ, &winsz) == 0 &&
+	    winsz.ws_row > 0 && winsz.ws_col > 0)
+		resize_term(pinned("LINES") ? LINES : winsz.ws_row,
+			    pinned("COLUMNS") ? COLS : winsz.ws_col);
 	if (LINES < 24 || COLS < 72) {
+		/* Kept so the caller can tell a player who resized and
+		   missed from one who did nothing. */
+		refusedlines = LINES;
+		refusedcols = COLS;
 		endwin();
 		if (havewinch) sigaction(SIGWINCH, &oldwinch, NULL);
 		return FALSE;
 	}
+	/* A no-op on the first call, where this is what curses just
+	   installed; on a retry it is the whole of the resize handling. */
+	if (havecursewinch)
+		sigaction(SIGWINCH, &cursewinch, NULL);
 	cbreak();
 	noecho();
 	start_colour();
