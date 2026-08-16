@@ -447,6 +447,7 @@ static void makemoves(void) {
 
 int main(int argc, char **argv) {
 	int usetui = 0;
+	int resized, refcols, refrows;
 
 	while (argc > 1) { // look for -f and -t options
 		if (strcmp(argv[1], "-f") == 0)
@@ -476,19 +477,21 @@ int main(int argc, char **argv) {
 			   a line that already wraps.
 			   The second is worth its line: the next thing a player
 			   does about a terminal called too small is make it
-			   bigger, and then waits for panels that are not coming,
-			   the choice having been made at startup. Only worth
-			   saying since #150 -- before that the resize ended the
-			   game, so nobody got as far as waiting.
-			   It names sst and the size rather than saying "until you
-			   restart": this game asks "Do you want to play again?",
-			   where a player can read restarting as starting another
-			   game -- and a second game from that prompt is classic
-			   too, tui_init() having run once before the loop. 57
-			   columns, the same as the line above, so it wraps
-			   wherever that already does and nowhere new. */
+			   bigger, and then waits for panels that are not coming
+			   to this game. Only worth saying since #150 -- before
+			   that the resize ended the game, so nobody got as far
+			   as waiting.
+			   It says the next game because that is when the choice
+			   is made again: #154 put a tui_init() retry at the foot
+			   of the play-again loop, so growing the terminal does
+			   nothing for the game in progress and everything for
+			   the one after it. It says "the terminal" rather than
+			   "it": the line above ends in "classic display", which
+			   is the wrong thing to grow. 57 columns, the same as
+			   that line, so it wraps wherever that already does and
+			   nowhere new. */
 			prout("Terminal too small (need 72x24) -- using classic display.");
-			prout("It stays classic: restart sst at 72x24 to get the panels.");
+			prout("Grow the terminal to 72x24 and the next game gets panels.");
 		}
 	}
 
@@ -530,6 +533,41 @@ int main(int argc, char **argv) {
 		}
 		proutf("Do you want to play again?");
 		if (!ja()) break;
+		/* The terminal may have grown since the choice was made
+		   at startup, and a player told it was too small has
+		   every reason to have made it bigger. Asked again per
+		   game rather than per resize: mid-game is the one time
+		   there is a game on screen to lose, and between games
+		   there is nothing the panels can be wrong about --
+		   tui_gameover() has already cleared tui_ingame.
+		   Whether to say anything when it fails again turns on
+		   what the player did. One who left the terminal alone
+		   was told at startup and does not need telling every
+		   game. One who grew it and missed -- 80x22, or "80x24"
+		   inside tmux, where the status bar leaves the pane 23
+		   rows -- did what the notice asked and has no way to
+		   tell a mis-sized window from a broken promise. Asked
+		   before the retry, which is what updates the size the
+		   answer is measured against. #154. */
+		if (usetui && !tui_active) {
+			resized = tui_size_changed_since_refusal();
+			if (!tui_init() && resized) {
+				/* What was measured, not only what is
+				   wanted. By here the player has been told
+				   72x24 twice and believes the window is
+				   right; the number they have never seen is
+				   the one the game read back. Read after the
+				   retry, which is what refreshed it. 49
+				   columns at two-digit sizes, inside the 57
+				   the other notices hold. */
+				tui_refused_size(&refcols, &refrows);
+				proutf("Terminal is %dx%d -- need 72x24, staying classic.",
+				       refcols, refrows);
+				skip(1);	/* proutf does not end the line,
+						   where prout is exactly that
+						   pair. #162 */
+			}
+		}
 	}
 	tui_shutdown();		/* so the farewell survives the screen restore */
 	skip(1);

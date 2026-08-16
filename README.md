@@ -11,7 +11,8 @@ Super Star Trek is probably the most famous early text-only game ever created an
 Run `sst -t` for a full-screen interface: the short-range scan and the
 ship's status stay on screen in two panels while the usual game
 conversation scrolls below them. It needs a terminal of at least 72x24
-and can be combined with the fixed-coordinate option (`sst -f -t`).
+(columns by rows) and can be combined with the fixed-coordinate option
+(`sst -f -t`).
 Without `-t` the game uses its classic scrolling display.
 
 Resizing the terminal is fine at any point. The display follows it
@@ -94,10 +95,34 @@ prompt, free to give the command again.
 If full-screen mode isn't possible — the terminal is too small, the
 game isn't attached to one (piped input, redirected output, a job with
 no tty), or `TERM` names a terminal that can't address the cursor —
-`-t` prints a notice and plays in the classic display instead, and
-stays classic for the rest of the session: the choice is made once at
-startup, so enlarging the window afterwards will not bring the panels,
-and neither will starting a second game from the play-again prompt.
+`-t` prints a notice and plays in the classic display instead. That
+game stays classic to the end — enlarging the window will not bring the
+panels up part way through it.
+
+A game that went classic gets the choice made again for the next one,
+though. So if the terminal was too small and you have since made it
+bigger, answering yes to "Do you want to play again?" starts the next
+game with the panels. If you resized it and it is still too small, the
+game says what size it read back rather than leaving you to wonder —
+72x24 is the whole of what it takes, and a tmux status bar can cost you
+the row that decides it. Leave the terminal alone and it stays quiet:
+you were told at startup and nothing has changed since.
+
+If the size it names is not your window's, something has exported
+`LINES` or `COLUMNS`. Curses believes those over the terminal, so the
+game is measuring what they say — which is how a 100x30 window can be
+told it is too small. Resizing moves only whichever of the two was not
+pinned, and if that carries the measurement past 72x24 the panels come
+up at the pinned size rather than your window's. Pinned smaller, they
+are drawn narrow or short in a window with room to spare, and they stay
+that way however you drag it; pinned larger, they are drawn as though
+the window were bigger, so the frame runs off the edge and wraps back
+onto the row below — the worse of the two, and not the tidy clipping a
+window merely dragged small would get. Unset them and start again.
+
+It only goes that way. Panels that are up stay up for the rest of the
+session however you resize, as above: they clip rather than give way to
+the classic display.
 
 ### Building
 
