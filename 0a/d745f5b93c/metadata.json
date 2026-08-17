@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "0ad745f5b93c",
+  "strategy": "manual-commit",
+  "branch": "test/analyze-explosion-factor",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "CMakeLists.txt",
+    "tests/analyze.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0a/d745f5b93c/0/metadata.json",
+      "transcript": "/0a/d745f5b93c/0/full.jsonl",
+      "compact_transcript": "/0a/d745f5b93c/0/transcript.jsonl",
+      "content_hash": "/0a/d745f5b93c/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 10,
+    "cache_creation_tokens": 11656,
+    "cache_read_tokens": 803662,
+    "output_tokens": 2385,
+    "api_call_count": 5
+  }
+}
