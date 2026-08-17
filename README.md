@@ -144,9 +144,12 @@ cmake --build --preset debug
 
 You need a C17 compiler, CMake 3.21 or newer, and ncurses
 (`libncurses-dev` on Debian and Ubuntu; already present on macOS).
-`ctest --preset debug` runs the test suite, which includes a full-screen
-session driven through a real terminal and needs `tmux` — without it
-that one test reports as skipped.
+`ctest --preset debug` runs the test suite. Two of its tests report as
+skipped rather than failing where what they need is missing: the
+full-screen session, which is driven through a real terminal and needs
+`tmux`, and the static analysis, which needs a compiler offering
+`gcc -fanalyzer` — and which stays off on macOS even where one is
+installed, unless `CC` names it or the tree was configured with it.
 
 `cmake --list-presets` shows them all. There are four: `debug` and
 `release`, and `ci-debug` and `ci-release`, which add `-Werror` and are
