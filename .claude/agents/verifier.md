@@ -28,10 +28,30 @@ staged, unstaged, and untracked files first), but a full pass covers:
    shows what else is available.
 2. **Static checks.** The `ci-*` builds above already raise every warning
    this project turns on and make them fatal, so report what they print
-   rather than re-deriving flags by hand. If `cppcheck`, `clang-tidy`, or
-   `scan-build` is installed, run it over the changed files; if none is
-   installed, report that as an environment gap rather than silently
-   skipping.
+   rather than re-deriving flags by hand. Static analysis proper is the
+   `analyze` test in the suite: `gcc -fanalyzer` over the sources the
+   game is built from, any diagnostic fatal. It runs as part of step 3
+   and needs nothing of you beyond reporting what it says.
+
+   Do not substitute a hand-rolled analyser run for it. Three passes
+   reported `gcc -fanalyzer -fsyntax-only` as clean; `-fsyntax-only`
+   does not run the analyzer at all, so those runs were vacuous and
+   read exactly like a pass. The test will not use a compiler that
+   fails to flag a deliberate use-after-free, so an analyzer gone inert
+   surfaces as SKIPPED here — and as a failure on Linux CI — rather
+   than as a pass. If `cppcheck`, `clang-tidy` or `scan-build` happens
+   to be installed, running it is a bonus worth reporting; its absence
+   is no longer a gap, because it is no longer what this step rests on.
+
+   Two things a passing `analyze` does not mean. A SKIPPED one means no
+   static analysis ran here: on Linux, or anywhere GCC is the build's
+   compiler, that is an environment gap to report as one, the same
+   standard as a skipped `tui`; on macOS it is the documented default,
+   which skips unless `CC` names an analyzer-capable compiler or the
+   tree was configured with one, and is worth a word rather than a
+   finding. And its depth is uneven — gcc reaches some functions and not
+   others, and says nothing where it gives up — so do not report it as
+   tree-wide. #147, #171.
 3. **Tests.** Run the suite through the test preset matching each build
    above — `ctest --preset ci-debug`, then `ctest --preset ci-release`.
    Both, because Release is not the same binary checked twice: without

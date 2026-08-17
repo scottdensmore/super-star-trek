@@ -132,3 +132,70 @@ add_test(NAME score
          COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/score.sh
                  ${CMAKE_CURRENT_SOURCE_DIR})
 set_tests_properties(score PROPERTIES TIMEOUT 30)
+
+# Static analysis, which is a different question from the warnings the
+# ci-* presets make fatal: those are what the compiler notices while
+# generating code, where this walks paths and tracks what has been
+# written to. verifier.md's step 2 used to ask for cppcheck, clang-tidy
+# or scan-build "if installed" and none of the three was, anywhere, so
+# the leg never ran. gcc -fanalyzer is what the project actually has.
+# The script skips where no compiler offers it and fails rather than
+# skipping on Linux CI, where GCC is the compiler the build already
+# uses. Darwin skips by default even where a Homebrew gcc-N is on the
+# path: turning that loose on the macOS SDK under -Werror risks a red
+# job from a Darwin-only warning, on a check Linux has already
+# delivered. Naming CC, or configuring the tree with such a compiler,
+# asks for it there deliberately.
+#
+# Two things the flags below leave out on purpose. CMAKE_C_FLAGS_<CONFIG>
+# is not passed, so this analyses unoptimised code in every preset --
+# -O3 makes -fanalyzer slower and noisier, and nothing in the tree reads
+# NDEBUG, which is the only thing dropping the Release flags would
+# otherwise change. And the script adds -Werror whatever SST_WERROR says, so
+# `ctest --preset debug` is warning-fatal for this one test where the
+# build it was configured from is not. That is deliberate and it is the
+# one place this file departs from the policy above: gating on
+# SST_WERROR would leave the test with nothing to fail on, since
+# deciding which diagnostics count by pattern is what the first version
+# tried and got wrong. The cost lands wherever the analyzer differs from
+# the one this was written against, older or newer. CI's own gcc is not
+# the one it was developed on, so the first run of this test on a pull
+# request is the first time the tree meets that analyzer. The same holds
+# for a contributor's own gcc, which reddens their ctest rather than CI;
+# an ubuntu-latest default bump would redden every pull request and main
+# alike, with no local change to blame. Saying at the site why a
+# diagnostic is wrong does not clear it -- under -Werror a comment
+# silences nothing. Two things do clear it. Restructuring so the
+# analyzer can see the invariant is one, and is what #147 did for
+# newqad(), which is why that line moved rather than merely gaining a
+# comment. A scoped #pragma GCC diagnostic, with the same justification
+# beside it, is the other. Widening the gate is neither. #147.
+#
+# The flags come from here rather than being written out again in the
+# script. CMAKE_C_FLAGS already carries the defines, the warning set and
+# the -DDEBUG a Debug build adds, and the standard and curses includes
+# are the two the build adds separately. Restating any of it in a sixth
+# file is how the build recipe drifted before -- see AGENTS.md's note on
+# the presets -- and it had already started: the first version of this
+# test passed no -std at all, so it analysed as C23 while every preset
+# compiled as gnu17.
+set(analyze_flags "-std=gnu${CMAKE_C_STANDARD} ${CMAKE_C_FLAGS}")
+foreach(dir ${CURSES_INCLUDE_DIRS})
+    set(analyze_flags "${analyze_flags} -I${dir}")
+endforeach()
+# The compiler and the source list come from the build too, for the
+# same reason as the flags: a tree configured with a different
+# CMAKE_C_COMPILER would otherwise be analysed by whatever gcc the
+# script found, and a source added later would go unanalysed with
+# nothing to notice. The canary still decides whether the compiler
+# named here can analyse at all, so an AppleClang still skips. On
+# Darwin only CC and this compiler are tried, never a gcc that merely
+# happens to be on the path.
+add_test(NAME analyze
+         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/analyze.sh
+                 "${analyze_flags}" "${CMAKE_C_COMPILER}"
+                 "$<TARGET_PROPERTY:sst,SOURCES>")
+# SKIP_RETURN_CODE, or the 77 the script exits with where no compiler
+# offers -fanalyzer is just a failure -- which is what macOS CI and any
+# clang-only machine would have seen.
+set_tests_properties(analyze PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 180)

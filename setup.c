@@ -659,7 +659,16 @@ void newqad(int shutup) {
 			if (d.cx[i]==quadx && d.cy[i]==quady) break;
 			
 		if (i <= d.remcom) {
-			quad[ix][iy] = IHC;
+			/* The last Klingon dropped in becomes the commander --
+			   the square the line below already names with
+			   kpower[klhere]. It was written as quad[ix][iy], which
+			   is the same square but only because the loop above
+			   ran, and gcc -fanalyzer could not see that it must
+			   have: klhere is quadnum/100, set before the
+			   quadnum >= 100 that opens this block, and nothing
+			   between the two touches quadnum -- both decrements of
+			   it come after the test. #147. */
+			quad[kx[klhere]][ky[klhere]] = IHC;
 			kpower[klhere] = 950.0+400.0*Rand()+50.0*skill;
 			comhere = 1;
 		}
