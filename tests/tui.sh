@@ -35,11 +35,14 @@ set -u
 # or COLUMNS in whoever is running this reaches the game -- and curses
 # believes those over the terminal. The panels would then be sized to a
 # number that has nothing to do with the pane: measured with
-# COLUMNS=190 exported, the "half grown" case below saw `Terminal is
-# 190x22` where it asserts 80x22, and the "regrown" case drew 190-column
-# panels inside a 100-column pane and never reached a prompt. The two
-# cases that want these variables set them through start's env prefix,
-# so clearing them here costs nothing. Before the first tm call, because
+# COLUMNS=190 exported, before #164 refused such a size, the "half
+# grown" case below saw `Terminal is 190x22` where it asserts 80x22 and
+# the "regrown" case drew 190-column panels inside a 100-column pane,
+# never reaching a prompt. Since #164 that leak refuses instead, so the
+# panel cases would fail on their panels being absent rather than
+# broken -- a different failure, the same cause. The cases below that
+# want these variables set them through start's env prefix, so clearing
+# them here costs nothing. Before the first tm call, because
 # the tmux server captures its environment when it is created.
 unset LINES COLUMNS
 
@@ -2013,6 +2016,18 @@ if ! wait_for 'regular, tournament, or frozen'; then
 	fail "wrap: the game never asked its first question"
 	dump
 else
+	# 72x24 is the floor exactly, so this asserts the gate accepts
+	# its own minimum -- MINROWS and MINCOLS are the numbers under
+	# test. Not the only guard: raising MINCOLS to 73 on a copy of
+	# the tree outside the repository failed four checks -- the two
+	# "72x24:" ones, the briefing that carries on from them, and this.
+	# It costs no session of its own, and the
+	# boundary is worth saying out loud in the block that sits on it.
+	# The frame, not want_quadtitle: setup has not run, so the
+	# quadrant panel has no coordinates in its title yet. " Quadrant "
+	# is what the fallback helper greps for to prove the panels are
+	# *absent* at this same moment, so it is the right positive too.
+	expect "wrap: the panels were refused at exactly 72x24" ' Quadrant '
 	# The question is 53 columns and the window 70, so an answer this
 	# long puts the pair over two rows and into the joined path.
 	tm send-keys -t "$pane" 'regularbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
@@ -2783,6 +2798,73 @@ fallback "TERM=dumb" 80 24 "cannot do full-screen mode" 'env TERM=dumb'
 # Smaller than the panels need. 72x24 is the floor; 70x20 is under it.
 fallback "undersized terminal" 70 20 "Terminal too small" ''
 
+# --- and a size bigger than the terminal is refused -------------------
+# The gate is LINES < 24 || COLS < 72, asked of curses -- and where the
+# environment has pinned a dimension, curses' number need not be the
+# window's. A pinned size that clears the floor is drawn whatever the
+# terminal is, and the display then does not fit the screen it is on.
+#
+# Both axes break, differently. COLUMNS=190 in a 100-column pane runs
+# the frame off the edge so it wraps back over the quadrant panel's
+# coordinate row. LINES=40 in a 20-row pane draws the panels fine --
+# they cap at PANELH -- and puts the message window's lower rows off
+# the bottom, so the conversation walks off screen and what is left
+# reads as garbage: measured, ` COMMAND> t     7.00`, a prompt on top
+# of half a status line.
+#
+# The height case is run at 30 rows rather than the 20 it was measured
+# at, and not because 20 fails the floor -- with LINES=40 curses says
+# 40, so the floor gate never fires and the refusal is the oversize one
+# either way. It is the advice that differs. A 20-row window is under
+# the floor, so the notice takes the compound form, "Grow to 72x24,
+# unset LINES, and rerun sst -t." -- whose "unset" is lowercase, where
+# this greps for "Unset LINES". 30 rows clears the floor and gets the
+# capitalised form.
+#
+# Neither is the clipping the manual promises for a small terminal.
+# Falling back is: the classic display fits any window. #164.
+fallback "oversize COLUMNS" 100 30 "LINES/COLUMNS make it" 'env COLUMNS=190'
+# Asserting the advice rather than the size report, which the COLUMNS
+# case above already covers -- smallwindow picks that line from the
+# window, not from which axis is at fault, so both cases take the same
+# branch for it.
+#
+# What this reaches and nothing else does is the LINES-only return in
+# tui_refusal_blame(): every other single-blame case here is a COLUMNS
+# fault. It does not cover the 24 that blames() is passed, though --
+# with curses at 40 against a 30-row window the oversize half answers
+# first and the floor is never looked at. "env size" is what guards
+# the 24, its LINES=20 being under it.
+#
+# Proved by forcing the LINES half to FALSE on a copy of the tree
+# outside the repository: this check failed, and so did "env size",
+# which wants both variables named. Nothing else in the file noticed.
+fallback "oversize LINES" 100 30 "Unset LINES" 'env LINES=40'
+
+# The other direction of the same fault, and the reason the advice is
+# chosen from the window rather than from curses: a pin *below* the
+# floor in a window with room to spare. COLUMNS=60 in a 100-column
+# terminal is refused for being under 72, and telling the player to grow
+# a window that is already 100 wide is advice that cannot work -- it is
+# the case README and sst.doc name, how a 100x30 window comes to be
+# refused. Growing was what the game said here until #164.
+# The whole line, tail and all, because README.md and sst.doc quote it
+# verbatim. Grepping only "Unset COLUMNS" would let the rest drift and
+# leave both manuals quoting a line the game does not print.
+fallback "undersize pin" 100 30 "Unset COLUMNS, rerun sst -t -- classic for now." 'env COLUMNS=60'
+
+# And a pin that matches the window exactly, which is the half of the
+# rule nothing else reaches. COLUMNS=70 in a 70-column window is under
+# the floor and invisible to a size comparison -- curses says 70 and so
+# does the terminal -- so blames() has to ask pinned() rather than
+# compare. Left to a comparison the player is told to grow the window,
+# grows it, and the pin refuses them again in silence.
+#
+# Proved by replacing that half with `curses_v < floor_v && curses_v !=
+# term_v` on a copy outside the repository: this check failed and every
+# other check in the file passed.
+fallback "pin equal to the window" 70 24 "Grow to 72x24, unset COLUMNS" 'env COLUMNS=70'
+
 # --- an exported size still has the last word -------------------------
 # tui_init() asks the terminal its size with an ioctl, because a second
 # initscr() re-reads nothing and a retry would otherwise see the size it
@@ -2805,9 +2887,18 @@ fallback "undersized terminal" 70 20 "Terminal too small" ''
 #
 # Proved by deleting the getenv pair, so the ioctl overrode the
 # environment again, and running this file on a copy of the tree outside
-# the repository: this check alone failed.
+# the repository: this check failed. It was the only one at the time.
+# Of the pinned cases added since, the oversize and undersize-pin ones
+# depend on the same override and would fail with it; "pin equal to the
+# window" would not, its pin matching the window exactly, which is what
+# that case is for.
 start 100 30 'tournament 7 short novice pw' 'env LINES=20 COLUMNS=70'
-if ! wait_scrollback 'Terminal too small'; then
+if ! wait_scrollback 'Unset LINES and COLUMNS'; then
+	# Both pins are under the floor in a window with room for the
+	# panels, so both are named -- and the notice is the pin's rather
+	# than "Terminal too small", which would be false of a 100x30
+	# window. That naming is also the both-blamed form of the blame
+	# rule, which no other case reaches.
 	fail "env size: an exported 20x70 did not refuse the panels in a 100x30 terminal"
 	dump_scrollback
 elif ! wait_for 'COMMAND'; then
@@ -3186,8 +3277,9 @@ if ! wait_scrollback 'Terminal too small'; then
 elif ! wait_scrollback 'the next game gets panels'; then
 	# The second line of the notice, which nothing used to assert --
 	# so its wording could drift, and did, without a test noticing.
-	# It is the only place the game tells a player what to do about
-	# a terminal it turned down.
+	# It is what the game tells a player about a terminal turned down
+	# for size alone -- the pinned refusals have advice of their own,
+	# which the cases above assert.
 	fail "regrown: the notice does not say a bigger terminal gets the next game panels"
 	dump_scrollback
 elif ! wait_for 'COMMAND'; then
@@ -3348,6 +3440,78 @@ else
 					else
 						want_quadtitle "one pinned: a pinned width stood the whole retry down"
 					fi
+				fi
+			fi
+		fi
+	fi
+fi
+
+# --- an oversize pin is worded as one at the play-again prompt too -----
+# The retry's notice quotes the size of the refusal, and since #164 made
+# an oversize pin a refusal that size can be curses' rather than the
+# window's. Left alone, a player who did exactly what the startup notice
+# asked -- grow the terminal -- was answered with `Terminal is 190x30 --
+# need 72x24, staying classic.`: a size that is not their window's, and
+# a requirement the quoted size plainly clears.
+#
+# 100x20 with COLUMNS=190 refuses for height at startup, so the player
+# gets the ordinary grow-the-terminal advice; growing to 100x30 clears
+# that and leaves only the oversize width, which is the collision.
+start 100 20 'tournament 7 short novice pw' 'env COLUMNS=190'
+if ! wait_scrollback 'Terminal too small'; then
+	fail "oversize retry: 100x20 did not refuse for height at startup"
+	dump_scrollback
+elif ! wait_scrollback 'Grow to 72x24, unset COLUMNS'; then
+	# Both actions in one line, because at 100x20 with COLUMNS=190 the
+	# window is short *and* the width is over it. Unsetting alone
+	# leaves a 20-row window, and growing alone would need 190
+	# columns, which nothing here drives -- so both actions really
+	# are wanted in this shape. What the line must not say is "grow
+	# the terminal and the next game gets panels", which the retry
+	# below cannot keep.
+	fail "oversize retry: startup promised panels a pinned width cannot give"
+	dump_scrollback
+elif scrollback | grep -qF 'the next game gets panels'; then
+	fail "oversize retry: startup gave the grow-it advice over a pinned width"
+	dump_scrollback
+elif ! wait_for 'COMMAND'; then
+	fail "oversize retry: the classic display never reached a prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'quit' Enter
+	if ! wait_for 'score recorded'; then
+		fail "oversize retry: quit did not reach the end-of-game questions"
+		dump
+	else
+		tm send-keys -t "$pane" 'n' Enter
+		if ! wait_for 'play again'; then
+			fail "oversize retry: never asked about another game"
+			dump
+		else
+			tm resize-window -t "$session" -x 100 -y 30
+			if ! wait_pane '#{pane_height}' 30; then
+				fail "oversize retry: the terminal never resized, so nothing was tested"
+				dump
+			else
+				tm send-keys -t "$pane" 'y' Enter
+				if ! wait_for 'regular, tournament, or frozen'; then
+					fail "oversize retry: the second game never started"
+					dump
+				# Proved by putting the old single-branch
+				# notice back, on a copy of the tree outside
+				# the repository: this check failed. It greps
+				# for "LINES/COLUMNS make it" rather than
+				# "Terminal is" because the old wording
+				# contains the latter. The check below never
+				# ran on that build -- the elif chain stops
+				# here -- and would have failed too, the old
+				# wording being exactly what it forbids.
+				elif ! wait_scrollback 'LINES/COLUMNS make it'; then
+					fail "oversize retry: the pinned size was not named at the play-again prompt"
+					dump_scrollback
+				elif scrollback | grep -qF 'need 72x24, staying classic'; then
+					fail "oversize retry: asked for a 72x24 the terminal already has"
+					dump_scrollback
 				fi
 			fi
 		fi

@@ -445,9 +445,111 @@ static void makemoves(void) {
 }
 
 
+/* The two lines that explain a refused full-screen display.
+ *
+ * Each turns on a different fact, and they are chosen separately
+ * because both can be true at once. The first is about the size: is
+ * the window itself under the 72x24 the panels need, or is it fine
+ * and only what curses was told to believe that is wrong? The second
+ * is about what the player can do, and the ordinary advice -- grow
+ * to 72x24 and the next game gets panels -- cannot be relied on
+ * once a pin has refused them. It is the size that line names that
+ * fails: 72x24 exactly still loses to a pin under the floor, and
+ * loses to one over the window unless the pin is 72 or 24 itself.
+ * Growing is not useless, though -- COLUMNS=72 in a 70-column
+ * window is taken at exactly 72x24, measured, and a bigger pin as
+ * soon as the window catches up with it. It is not something to
+ * promise, which is what the ordinary line does.
+ *
+ * Shared by the startup notice and the one the play-again retry
+ * prints, which is the point: they described the same state two
+ * different ways for as long as they each worded it themselves. The
+ * retry differs in two places only -- it says what it measured,
+ * since the player has just resized and the number is the thing they
+ * cannot otherwise get, and it stays quiet where there is nothing to
+ * add. Both gates rewrite all four refused* statics, so havesizes
+ * reflects the ioctl inside this attempt's tui_init(), not an
+ * earlier one. Where that ioctl gave nothing, a retry prints the
+ * action line alone, or nothing at all if no pin is to blame --
+ * it needs the ioctl to fail there having worked in
+ * tui_size_changed_since_refusal() a moment before, which could
+ * not be constructed on a tty.
+ *
+ * The game breaks these lines rather than the terminal: the floor is
+ * LINES < 24 || COLS < 72, so height alone reaches it and a notice
+ * prints on a 100-column screen as readily as a 40-column one. The
+ * eight forms with no numbers in run 45 to 57 columns, four of them
+ * at 57: the two plain lines and the two that name both variables.
+ * At 50 the too-small line breaks mid-word, "classic d" /
+ * "isplay.", which is the shape the budget exists to stop
+ * spreading; the grow-it line breaks cleanly there.
+ *
+ * The two that carry numbers get no column count here. Five attempts
+ * to state one were wrong, four of them caught in review: a bound has
+ * to be computed over the shapes that reach the line, and the numbers
+ * come from the terminal, which goes wider than anyone assumes -- tmux
+ * alone will make a pane 10000 columns. What holds without a count,
+ * computed over those shapes: the size report needs both terminal axes
+ * past the floor, and comes out at least fifteen columns inside the
+ * window it prints on, so it cannot wrap at all. Fifteen exactly, and
+ * only just: at 72x10000 with COLUMNS pinned and LINES left free the
+ * line is 57 columns in a 72-column window. That rests on ncurses
+ * clamping an exported size to 512, measured, which is what holds the
+ * pinned axis to three digits; the free one follows the window and can
+ * be five. Unclamped the worst case is 69 in 72, so the conclusion
+ * survives without it and the number does not. The retry line does
+ * print on small windows, but under 72 columns it cannot pass 52,
+ * inside the 57 the fixed lines already reach there. So neither wraps
+ * anywhere the others do not, which is the whole of what the width
+ * mattered for.
+ *
+ * The skip(1) after each proutf is not decoration: proutf does not
+ * end its line, where prout is exactly that pair. #162. */
+static void refusal_notice(int retry) {
+	const char *blame = tui_refusal_blame();
+	int cols, rows, termcols, termrows;
+	int havesizes = tui_refused_sizes(&cols, &rows, &termcols, &termrows);
+	int smallwindow = !havesizes || termrows < MINROWS ||
+			  termcols < MINCOLS;
+
+	if (!smallwindow) {
+		proutf("Terminal is %dx%d but LINES/COLUMNS make it %dx%d.",
+		       termcols, termrows, cols, rows);
+		skip(1);
+	}
+	else if (retry && havesizes) {
+		proutf("Terminal is %dx%d -- need 72x24, staying classic.",
+		       termcols, termrows);
+		skip(1);
+	}
+	else if (!retry)
+		prout("Terminal too small (need 72x24) -- using classic display.");
+	if (blame != NULL && smallwindow) {
+		/* Both, because for a pin under the floor neither alone
+		   gets the player there: unset it and the window is still
+		   short, grow the window and the pin still refuses. Told
+		   one at a time it takes two runs to find that out.
+		   Not so for a pin merely bigger than the window, which
+		   a big enough window accepts: COLUMNS=75 at 70x20 comes
+		   here, and growing to 100x30 alone brings the panels up
+		   at 75 columns, measured. The line asks that player for
+		   one action more than they need rather than splitting
+		   into a further two forms. */
+		proutf("Grow to 72x24, unset %s, and rerun sst -t.", blame);
+		skip(1);
+	}
+	else if (blame != NULL) {
+		proutf("Unset %s, rerun sst -t -- classic for now.", blame);
+		skip(1);
+	}
+	else if (!retry)
+		prout("Grow the terminal to 72x24 and the next game gets panels.");
+}
+
+
 int main(int argc, char **argv) {
 	int usetui = 0;
-	int resized, refcols, refrows;
+	int resized;
 
 	while (argc > 1) { // look for -f and -t options
 		if (strcmp(argv[1], "-f") == 0)
@@ -465,34 +567,8 @@ int main(int argc, char **argv) {
 			prout("Full-screen mode needs a terminal -- using the classic display.");
 		else if (!tui_terminal_capable())
 			prout("This terminal cannot do full-screen mode -- using the classic display.");
-		else {
-			/* Two lines, and the game breaks them rather than the
-			   terminal. There is no width this can count on: the
-			   fallback is LINES < 24 || COLS < 72, so height alone
-			   reaches it and the notice prints on a 100-column screen
-			   as readily as a 40-column one, and the first line here
-			   is 57 columns and does wrap mid-word below that -- at
-			   50 it reads "classic d" / "isplay.". What the split
-			   buys is that the sentence added below did not lengthen
-			   a line that already wraps.
-			   The second is worth its line: the next thing a player
-			   does about a terminal called too small is make it
-			   bigger, and then waits for panels that are not coming
-			   to this game. Only worth saying since #150 -- before
-			   that the resize ended the game, so nobody got as far
-			   as waiting.
-			   It says the next game because that is when the choice
-			   is made again: #154 put a tui_init() retry at the foot
-			   of the play-again loop, so growing the terminal does
-			   nothing for the game in progress and everything for
-			   the one after it. It says "the terminal" rather than
-			   "it": the line above ends in "classic display", which
-			   is the wrong thing to grow. 57 columns, the same as
-			   that line, so it wraps wherever that already does and
-			   nowhere new. */
-			prout("Terminal too small (need 72x24) -- using classic display.");
-			prout("Grow the terminal to 72x24 and the next game gets panels.");
-		}
+		else
+			refusal_notice(FALSE);
 	}
 
 	prelim();
@@ -551,22 +627,8 @@ int main(int argc, char **argv) {
 		   answer is measured against. #154. */
 		if (usetui && !tui_active) {
 			resized = tui_size_changed_since_refusal();
-			if (!tui_init() && resized) {
-				/* What was measured, not only what is
-				   wanted. By here the player has been told
-				   72x24 twice and believes the window is
-				   right; the number they have never seen is
-				   the one the game read back. Read after the
-				   retry, which is what refreshed it. 49
-				   columns at two-digit sizes, inside the 57
-				   the other notices hold. */
-				tui_refused_size(&refcols, &refrows);
-				proutf("Terminal is %dx%d -- need 72x24, staying classic.",
-				       refcols, refrows);
-				skip(1);	/* proutf does not end the line,
-						   where prout is exactly that
-						   pair. #162 */
-			}
+			if (!tui_init() && resized)
+				refusal_notice(TRUE);
 		}
 	}
 	tui_shutdown();		/* so the farewell survives the screen restore */

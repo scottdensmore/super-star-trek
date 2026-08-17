@@ -92,9 +92,10 @@ question comes back only as `Please answer with "Y" or "N":`, without
 saying again what it asked — answer `N` there and you are back at the
 prompt, free to give the command again.
 
-If full-screen mode isn't possible — the terminal is too small, the
-game isn't attached to one (piped input, redirected output, a job with
-no tty), or `TERM` names a terminal that can't address the cursor —
+If full-screen mode isn't possible — the terminal is too small, an
+exported `LINES` or `COLUMNS` is one the panels can't use, the game
+isn't attached to a terminal at all (piped input, redirected output, a
+job with no tty), or `TERM` names one that can't address the cursor —
 `-t` prints a notice and plays in the classic display instead. That
 game stays classic to the end — enlarging the window will not bring the
 panels up part way through it.
@@ -108,21 +109,28 @@ game says what size it read back rather than leaving you to wonder —
 the row that decides it. Leave the terminal alone and it stays quiet:
 you were told at startup and nothing has changed since.
 
-If the size it names is not your window's, something has exported
-`LINES` or `COLUMNS`. Curses believes those over the terminal, so the
-game is measuring what they say — which is how a 100x30 window can be
-told it is too small. Resizing moves only whichever of the two was not
-pinned, and if that carries the measurement past 72x24 the panels come
-up at the pinned size rather than your window's. Pinned smaller, they
-are drawn narrow or short in a window with room to spare, and they stay
-that way however you drag it; pinned larger, they are drawn as though
-the window were bigger, so the frame runs off the edge and wraps back
-onto the row below — the worse of the two, and not the tidy clipping a
-window merely dragged small would get. Unset them and start again.
+An exported `LINES` or `COLUMNS` can refuse you as well, and the game
+names the one that did: `Unset COLUMNS, rerun sst -t -- classic for
+now.` Curses believes those over the terminal, so the game is measuring
+what they say. Bigger than your window and the display would run off the
+edge of it; smaller than 72x24 and it fails the floor however much room
+the window has. That is how a 100x30 window comes to be refused. A pin
+under 72x24 is then refused however large the window gets, since
+resizing moves the window and never the pin. One merely bigger than
+your window is different — it is taken as soon as the window catches
+up with it — and a window itself under 72x24 has to grow regardless,
+which is when the game asks for both.
+
+Only a pin the panels can live with is left alone: no bigger than your
+window and still 72x24 or more, where they are drawn narrow or short
+with room to spare, and stay that way as long as the window stays at
+least that big. Shrink it below the pin and they no longer fit — the
+pin does not follow the window down, and nothing redraws to suit it.
 
 It only goes that way. Panels that are up stay up for the rest of the
 session however you resize, as above: they clip rather than give way to
-the classic display.
+the classic display — except under a pin, where they overflow the
+window instead of clipping, the pin not following it down.
 
 ### Building
 
