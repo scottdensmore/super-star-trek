@@ -1051,9 +1051,19 @@ int tui_terminal_capable(void) {
 static struct sigaction cursewinch;
 static int havecursewinch = FALSE;
 
-/* The terminal size the panels were last turned down at, or 0 if they
- * have not been turned down for size. */
+/* The size curses was working from when the panels were last turned
+ * down, or 0 if they have not been turned down for size. Written by
+ * both gates -- the floor and the one that refuses a size bigger than
+ * the window -- so a reader should not assume a too-small terminal. */
 static int refusedlines, refusedcols;
+
+/* And the terminal's own size at that refusal, or 0 where the ioctl
+ * had nothing to say. Kept for every refusal, not only the oversize
+ * one: the too-small branch can be reached with a pin already bigger
+ * than the window -- 100x20 with COLUMNS=190 fails on height first --
+ * and a caller that does not know cannot tell the player that growing
+ * the terminal will not help them. */
+static int refusedtermlines, refusedtermcols;
 
 /* Whether the environment pins one of the terminal's dimensions.
  *
@@ -1088,7 +1098,8 @@ static int pinned(const char *name) {
 }
 
 /* Whether the terminal is a different size than when the panels were
- * last refused for being too small.
+ * last turned down for size, whether for the floor or for not fitting
+ * the window.
  *
  * It answers one question, asked between games: has the player done
  * anything about the terminal? One who has -- grown it, and missed --
@@ -1107,26 +1118,81 @@ int tui_size_changed_since_refusal(void) {
 	   good: curses reports what was exported, the ioctl reports the
 	   window. Compared anyway they could never agree, so this said the
 	   terminal had moved on every game, and the caller quoted a size
-	   that was not the player's window. */
+	   that was not the player's window.
+	   Skipping costs more than that, though: a player who resizes
+	   the pinned axis is then treated as having done nothing, and the
+	   retry says nothing back. The refusal's own terminal size is
+	   recorded and would answer it -- terminal against terminal, which
+	   is a comparison the mismatch above does not touch. #169. */
 	if (ioctl(fileno(stdout), TIOCGWINSZ, &ws) != 0) return FALSE;
 	if (!pinned("LINES") && ws.ws_row != refusedlines) return TRUE;
 	if (!pinned("COLUMNS") && ws.ws_col != refusedcols) return TRUE;
 	return FALSE;
 }
 
-/* The size of that refusal, for a caller that wants to say what was
- * measured rather than only what is wanted. Only meaningful once
- * tui_size_changed_since_refusal() has said the terminal moved, which
- * is the only time the game asks. */
-void tui_refused_size(int *cols, int *rows) {
+/* Whether a pinned dimension is what refused the player, and which.
+ *
+ * Two ways to be to blame, and they are asked differently. An axis
+ * bigger than the terminal's is one only an exported LINES or COLUMNS
+ * can produce, so the size comparison is the whole test. An axis under
+ * the floor asks pinned() instead, because there the pinned value need
+ * not differ from the window at all. Both directions bite: COLUMNS=190
+ * in a 100-column window is drawn off the edge, and COLUMNS=60 in the
+ * same window is under the 72 the panels need, on a terminal with 100
+ * to give.
+ *
+ * A pin that differs harmlessly is not named. With COLUMNS=80 and
+ * LINES=40 in a 100x30 window only LINES refuses anything -- COLUMNS=80
+ * is the pinned-smaller case the manual says works -- so naming both
+ * would ask the player to unset one the game tolerates and leave them
+ * to guess which number was wrong. Unset the wrong one and they are
+ * refused again.
+ *
+ * A pin that matches the window exactly still counts, which is why the
+ * under-the-floor half asks pinned() rather than comparing the two
+ * sizes. COLUMNS=70 in a 70-column window looks like no pin at all by
+ * comparison, and it is the commonest shape there is -- a profile or a
+ * container image exporting COLUMNS, in a window narrower than the
+ * panels need. Left unblamed, the player was told to grow the terminal,
+ * did, and got a second classic game with no advice they could act
+ * on, because the pin does not move when the window does.
+ *
+ * NULL where no pin is to blame, which is the ordinary too-small
+ * terminal.
+ *
+ * The floor the caller passes is the gate's own, MINROWS or MINCOLS. */
+static int blames(const char *name, int curses_v, int term_v, int floor_v) {
+	if (term_v != 0 && curses_v > term_v) return TRUE;
+	return curses_v < floor_v && pinned(name);
+}
+
+const char *tui_refusal_blame(void) {
+	int l = blames("LINES", refusedlines, refusedtermlines, MINROWS);
+	int c = blames("COLUMNS", refusedcols, refusedtermcols, MINCOLS);
+
+	if (l && c) return "LINES and COLUMNS";
+	if (l) return "LINES";
+	if (c) return "COLUMNS";
+	return NULL;
+}
+
+/* Both sizes from the last refusal, curses' and the terminal's, which
+ * between them are the whole of what a notice has to say. FALSE where
+ * the ioctl had nothing to give, and the caller then has only the
+ * requirement to talk about. */
+int tui_refused_sizes(int *cols, int *rows, int *termcols, int *termrows) {
+	if (refusedtermlines == 0) return FALSE;
 	*cols = refusedcols;
 	*rows = refusedlines;
+	*termcols = refusedtermcols;
+	*termrows = refusedtermlines;
+	return TRUE;
 }
 
 int tui_init(void) {
 	struct sigaction oldwinch;
 	struct winsize winsz;
-	int havewinch;
+	int havewinch, haveterm;
 
 	/* Both checks come before initscr(): with no terminal, or one it
 	   cannot drive, curses either kills the process outright or leaves
@@ -1197,14 +1263,12 @@ int tui_init(void) {
 	   a pinned dimension keeps curses' value, a free one takes the
 	   terminal's, and the ws_row/ws_col guard leaves the whole call
 	   alone where the ioctl has no answer to give.
-	   What this does not fix is the gate below being asked about a
-	   pinned number at all. It has two terms, so a COLUMNS above 72
-	   clears its column half whatever the window is, and where the
-	   height also passes the panels are drawn wider than the terminal.
-	   That predates the retry and is reachable at startup on its own,
-	   so it is #164 rather than something to fix here -- but the retry
-	   is a second way to reach it, which is why the manual now warns
-	   about an exported size.
+	   What this cannot do is stop the gate below being asked about a
+	   pinned number at all: leaving the pin alone is the whole point.
+	   A COLUMNS above 72 clears the gate's column half whatever the
+	   window is, and the panels were then drawn wider than the screen
+	   they were on. That is why the gate below refuses a size bigger
+	   than the terminal as well as one under the floor. #164.
 	   One effect worth knowing: the first read after a retry comes
 	   back KEY_RESIZE with nothing having moved. ncurses checks the
 	   terminal against its own cache on that read and finds the gap
@@ -1216,15 +1280,42 @@ int tui_init(void) {
 	   than returning it as input, and sync_size() returns early from
 	   one carrying no size change, which the note above cursor_at_prompt
 	   already names. */
-	if (ioctl(fileno(stdout), TIOCGWINSZ, &winsz) == 0 &&
-	    winsz.ws_row > 0 && winsz.ws_col > 0)
+	haveterm = ioctl(fileno(stdout), TIOCGWINSZ, &winsz) == 0 &&
+		   winsz.ws_row > 0 && winsz.ws_col > 0;
+	if (haveterm)
 		resize_term(pinned("LINES") ? LINES : winsz.ws_row,
 			    pinned("COLUMNS") ? COLS : winsz.ws_col);
-	if (LINES < 24 || COLS < 72) {
+	if (LINES < MINROWS || COLS < MINCOLS) {
 		/* Kept so the caller can tell a player who resized and
 		   missed from one who did nothing. */
 		refusedlines = LINES;
 		refusedcols = COLS;
+		refusedtermlines = haveterm ? winsz.ws_row : 0;
+		refusedtermcols = haveterm ? winsz.ws_col : 0;
+		endwin();
+		if (havewinch) sigaction(SIGWINCH, &oldwinch, NULL);
+		return FALSE;
+	}
+	/* Clearing the floor is not enough: the panels are drawn to the
+	   size curses holds, and where the environment pinned a dimension
+	   that size need not be the window's. Bigger than the window and
+	   the display does not fit the screen it is on -- which is not the
+	   clipping a terminal dragged small gets, but a frame running off
+	   the edge and wrapping back over the row above, or a message
+	   window whose lower rows are off the bottom so the conversation
+	   walks off screen. Measured at COLUMNS=190 in a 100-column pane
+	   and LINES=40 in a 20-row one; the second leaves a prompt written
+	   over half a status line. The classic display fits any window, so
+	   that is the better answer. #164.
+	   Smaller than the window is left alone: the panels are then drawn
+	   narrow or short with room to spare, which works, and refusing it
+	   would take the display away from anyone whose profile exports a
+	   COLUMNS that happens to be right. */
+	if (haveterm && (LINES > winsz.ws_row || COLS > winsz.ws_col)) {
+		refusedlines = LINES;
+		refusedcols = COLS;
+		refusedtermlines = winsz.ws_row;
+		refusedtermcols = winsz.ws_col;
 		endwin();
 		if (havewinch) sigaction(SIGWINCH, &oldwinch, NULL);
 		return FALSE;

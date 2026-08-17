@@ -46,6 +46,20 @@ int sensors_masked(void);		/* the grid is hiding cells */
 int cell_class(char c);			/* colour class of a shown cell */
 int status_class(int i);		/* colour class of a status line */
 
+/* The smallest terminal the full-screen display will start on.
+ *
+ * Three places compare against it and all three have to agree: the gate
+ * in tui_init(), the floor blames() judges a pinned size against, and
+ * the smallwindow test in sst.c that picks which refusal notice to
+ * print. Judged against a stale floor the second names a pin the gate
+ * did not refuse on, or stays silent about one it did; the third calls
+ * a window too short for the panels big enough, and tells the player to
+ * unset a variable when they also need a taller window. In both the
+ * advice goes wrong rather than the refusal, which is the quiet kind.
+ * Here rather than in tui.c because sst.c is the third caller. */
+#define MINROWS (24)
+#define MINCOLS (72)
+
 /* Curses backend (tui.c) */
 
 /* Plain extern, and defined in tui.c, rather than going through the
@@ -66,8 +80,13 @@ int tui_size_changed_since_refusal(void);	/* the terminal is a
 						   different size than when
 						   the panels were last
 						   turned down for size */
-void tui_refused_size(int *cols, int *rows);	/* and the size of that
-						   refusal */
+const char *tui_refusal_blame(void);	/* the pinned variable that
+					   refused the player, or NULL */
+int tui_refused_sizes(int *cols, int *rows, int *termcols, int *termrows);
+					/* curses' size at the refusal and
+					   the terminal's own; FALSE where
+					   the ioctl gave nothing, and the
+					   four outputs are then unset */
 void tui_shutdown(void);
 void tui_gameover(void);	/* the game has ended; clear the panels */
 void tui_puts(char *s);
