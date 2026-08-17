@@ -101,13 +101,14 @@ game stays classic to the end — enlarging the window will not bring the
 panels up part way through it.
 
 A game that went classic gets the choice made again for the next one,
-though. So if the terminal was too small and you have since made it
-bigger, answering yes to "Do you want to play again?" starts the next
-game with the panels. If you resized it and it is still too small, the
-game says what size it read back rather than leaving you to wonder —
-72x24 is the whole of what it takes, and a tmux status bar can cost you
-the row that decides it. Leave the terminal alone and it stays quiet:
-you were told at startup and nothing has changed since.
+though. So if you put right what refused you — usually a window that
+needs to be bigger — answering yes to "Do you want to play again?"
+starts the next game with the panels. If you resized it and are
+refused again, the game says what size it read back rather than leaving
+you to wonder — for a window simply too small, 72x24 is the whole of
+what it takes, and a tmux status bar can cost you the row that decides
+it. Leave the terminal alone and it stays quiet: you were told at
+startup and nothing has changed since.
 
 An exported `LINES` or `COLUMNS` can refuse you as well, and the game
 names the one that did: `Unset COLUMNS, rerun sst -t -- classic for

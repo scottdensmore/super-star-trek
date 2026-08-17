@@ -146,6 +146,13 @@ wait_scrollback() {
 	return 1
 }
 
+# How many lines of the scrollback carry $1. For a line the retry
+# repeats word for word, presence proves nothing: the startup notice
+# already put one copy there, so it is the second that is the retry's.
+scrollback_count() {
+	scrollback | grep -cF -- "$1"
+}
+
 # Whether every row from $2 to $3 carries the same character in column
 # $1. That is how a wrapped line shows up: the panel borders run down a
 # column, and text that spilled onto the next row lands on one of them.
@@ -2829,16 +2836,25 @@ fallback "oversize COLUMNS" 100 30 "LINES/COLUMNS make it" 'env COLUMNS=190'
 # window, not from which axis is at fault, so both cases take the same
 # branch for it.
 #
-# What this reaches and nothing else does is the LINES-only return in
-# tui_refusal_blame(): every other single-blame case here is a COLUMNS
-# fault. It does not cover the 24 that blames() is passed, though --
-# with curses at 40 against a 30-row window the oversize half answers
-# first and the floor is never looked at. "env size" is what guards
-# the 24, its LINES=20 being under it.
+# What this reaches is the LINES-only return in tui_refusal_blame(),
+# which the COLUMNS cases cannot: they are a COLUMNS fault. It was the
+# only arm reaching it until the pinned-height pair added for #169 --
+# "pinned height" and "pinned height unchanged" -- which run the same
+# LINES=40 in a 100x30 pane, and the first of them asserts the same
+# advice line. This one still earns its place as the startup half:
+# those two are about the play-again retry, which a fallback() arm
+# never reaches.
+#
+# It does not cover the 24 that blames() is passed, though -- with
+# curses at 40 against a 30-row window the oversize half answers first
+# and the floor is never looked at. "env size" is what guards the 24,
+# its LINES=20 being under it.
 #
 # Proved by forcing the LINES half to FALSE on a copy of the tree
 # outside the repository: this check failed, and so did "env size",
-# which wants both variables named. Nothing else in the file noticed.
+# which wants both variables named. That was two arms when it was
+# written and is three now, "pinned height" having joined them --
+# measured again on the #169 branch rather than assumed.
 fallback "oversize LINES" 100 30 "Unset LINES" 'env LINES=40'
 
 # The other direction of the same fault, and the reason the advice is
@@ -3518,6 +3534,293 @@ else
 	fi
 fi
 
+# --- and resizing the pinned axis itself is an act, not silence -------
+# The "oversize retry" arm resizes the free axis. This one resizes the
+# pinned one, which used to be skipped outright: at the size below,
+# curses' 190 and this pane's 100 are held apart for good, so comparing
+# them said "moved" every game, and the skip that fixed it took the real
+# move with it. A player who widened the window was then treated as
+# having done nothing -- the one case where the game watches a player
+# act and says nothing back. #169.
+#
+# Scoped to this pane on purpose: a pin *equal* to the window compared
+# perfectly well, and axis_moved()'s comment in tui.c has the general
+# statement. It is the pin that differs that does the damage.
+#
+# COLUMNS=190 in a 100x30 pane clears the floor and is refused only for
+# being bigger than the window, so width is both the pinned axis and the
+# one to blame. Widening the pane to 150 moves that axis and nothing
+# else: the height is free and never changes, so no comparison but the
+# pinned one can produce a notice here.
+#
+# 190 is still over 150, so the retry refuses again and both halves of
+# the notice have something to say -- the first line from the window,
+# the second from the blame. The report is asserted by the new number,
+# which startup's 100x30 line does not contain; the advice by its second
+# copy, the first being startup's.
+start 100 30 'tournament 7 short novice pw' 'env COLUMNS=190'
+if ! wait_scrollback 'LINES/COLUMNS make it'; then
+	fail "pinned axis: 100x30 with COLUMNS=190 was not refused as oversize"
+	dump_scrollback
+elif ! wait_for 'COMMAND'; then
+	fail "pinned axis: the classic display never reached a command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'quit' Enter
+	if ! wait_for 'score recorded'; then
+		fail "pinned axis: quit did not reach the end-of-game questions"
+		dump
+	else
+		tm send-keys -t "$pane" 'n' Enter
+		if ! wait_for 'play again'; then
+			fail "pinned axis: never asked about another game"
+			dump
+		else
+			tm resize-window -t "$session" -x 150 -y 30
+			if ! wait_pane '#{pane_width}' 150; then
+				fail "pinned axis: the terminal never widened, so nothing was tested"
+				dump
+			else
+				tm send-keys -t "$pane" 'y' Enter
+				# The whole notice is printed before setup()
+				# asks anything, so waiting for the question
+				# is what makes the two checks below race
+				# neither line of it.
+				#
+				# The size-report check below failed on the
+				# build this was written against -- the skip
+				# that #169 is about -- so this arm had its
+				# failing first run rather than needing one
+				# planted. Only that one: the advice count
+				# after it never ran, the elif chain stopping
+				# at the first failure, and it would have
+				# failed too, there being no second notice at
+				# all to carry either line.
+				if ! wait_for 'regular, tournament, or frozen'; then
+					fail "pinned axis: the second game never started"
+					dump
+				elif ! scrollback | grep -qF 'Terminal is 150x30 but LINES/COLUMNS make it 190x30.'; then
+					fail "pinned axis: widening the pinned axis got no notice at all"
+					dump_scrollback
+				elif [ "$(scrollback_count 'Unset COLUMNS, rerun sst -t -- classic for now.')" -lt 2 ]; then
+					fail "pinned axis: the notice reported the size but gave no advice"
+					dump_scrollback
+				fi
+			fi
+		fi
+	fi
+fi
+
+# --- the same on the other axis, which is a different call site --------
+# The "pinned axis" and "pinned unchanged" arms pin the width, so
+# axis_moved()'s pinned branch is reached there only through its COLUMNS
+# call; the LINES call runs in them too, but on the free branch. Three
+# arms reach that call with the height pinned -- "env size"
+# (LINES=20 COLUMNS=70), "pinned height unchanged" below, and this one
+# -- and the first two never resize, so their pinned LINES call only
+# ever answers FALSE. This is the only arm where it answers TRUE, and
+# answering TRUE is what a build that skips a pinned axis cannot do:
+# measured against main's tui.c, on a copy of the tree outside the
+# repository, this arm failed there.
+#
+# What it does not do is tell which pair of statics that call is handed,
+# and the first version of this comment claimed it did. At these numbers
+# every comparison in play answers "moved", so the notice prints
+# whichever pair is read -- measured, with refusedcols and
+# refusedtermcols substituted at the LINES site, this arm passes
+# unchanged. Call that mutation the transposed pair; it is caught by the
+# silence arms instead, which need a comparison that answers FALSE, and
+# it fails exactly three of them: "pinned height unchanged" below,
+# "pinned unchanged" after it, and the older "unchanged" arm at the end
+# of the file.
+#
+# LINES=40 in a 100x30 pane is the height mirror of the "pinned axis"
+# arm: it clears the floor and is refused only for being taller than
+# the window. Growing the pane to 35 rows moves the pinned axis and
+# nothing else, and 40 is still over 35, so the retry refuses again and
+# names the height.
+#
+# Asserted by the new number, which the startup notice (100x30) does not
+# carry, and by the advice naming LINES -- blames() leaves a COLUMNS of
+# 100 in a 100-column window unnamed.
+start 100 30 'tournament 7 short novice pw' 'env LINES=40'
+if ! wait_scrollback 'LINES/COLUMNS make it 100x40.'; then
+	fail "pinned height: 100x30 with LINES=40 was not refused as oversize"
+	dump_scrollback
+elif ! wait_for 'COMMAND'; then
+	fail "pinned height: the classic display never reached a command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'quit' Enter
+	if ! wait_for 'score recorded'; then
+		fail "pinned height: quit did not reach the end-of-game questions"
+		dump
+	else
+		tm send-keys -t "$pane" 'n' Enter
+		if ! wait_for 'play again'; then
+			fail "pinned height: never asked about another game"
+			dump
+		else
+			tm resize-window -t "$session" -x 100 -y 35
+			if ! wait_pane '#{pane_height}' 35; then
+				fail "pinned height: the terminal never grew, so nothing was tested"
+				dump
+			else
+				tm send-keys -t "$pane" 'y' Enter
+				# Proved by building main's tui.c against this
+				# file, on a copy of the tree outside the
+				# repository: the size-report check below
+				# failed, the pinned axis being skipped
+				# there. Only that one -- the advice count
+				# after it never ran, the elif chain stopping
+				# at the first failure, and it would have
+				# failed too, there being no second notice at
+				# all to carry either line.
+				if ! wait_for 'regular, tournament, or frozen'; then
+					fail "pinned height: the second game never started"
+					dump
+				elif ! scrollback | grep -qF 'Terminal is 100x35 but LINES/COLUMNS make it 100x40.'; then
+					fail "pinned height: growing the pinned height got no notice at all"
+					dump_scrollback
+				elif [ "$(scrollback_count 'Unset LINES, rerun sst -t -- classic for now.')" -lt 2 ]; then
+					fail "pinned height: the notice named the wrong variable or none"
+					dump_scrollback
+				fi
+			fi
+		fi
+	fi
+fi
+
+# --- and a pinned height nobody touched is still silence ---------------
+# The half the "pinned height" arm cannot prove, and the gap was not
+# theoretical: measured, a build whose pinned LINES branch always
+# answers "moved" passed the whole of this file before this arm existed,
+# while showing a player who changed nothing the notice a second time.
+# That is the defect #165 was for, surviving on the height because the
+# one other arm that pins it cannot fail.
+#
+# That arm is "env size", which is already in this scenario and does not
+# notice: the line it greps for is one its pane cannot print -- #176.
+# This arm does not fix that one; it covers the axis, and leaves #176 to
+# be fixed where it lives.
+start 100 30 'tournament 7 short novice pw' 'env LINES=40'
+if ! wait_scrollback 'LINES/COLUMNS make it 100x40.'; then
+	fail "pinned height unchanged: 100x30 with LINES=40 was not refused"
+	dump_scrollback
+elif ! wait_for 'COMMAND'; then
+	fail "pinned height unchanged: the classic display never reached a prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'quit' Enter
+	if ! wait_for 'score recorded'; then
+		fail "pinned height unchanged: quit did not reach the end-of-game questions"
+		dump
+	else
+		tm send-keys -t "$pane" 'n' Enter
+		if ! wait_for 'play again'; then
+			fail "pinned height unchanged: never asked about another game"
+			dump
+		else
+			tm send-keys -t "$pane" 'y' Enter
+			# Exactly one, for the reason its width sibling
+			# gives: a capture that came back empty counts 0
+			# and would pass a -gt test proving nothing.
+			#
+			# Proved by pinned-LINES-always-moved: prefixing
+			# the LINES call site with pinned("LINES") ||,
+			# so a pinned height reports moved without
+			# axis_moved() being consulted at all. On a copy
+			# of the tree outside the repository that failed
+			# this check alone, where before this arm existed
+			# the same build passed the whole file.
+			# Not called a skip: that is this file's and
+			# tui.c's word for main's !pinned(...) &&, which
+			# is the opposite behaviour, suppressing the
+			# notice where this forces it. A reader who
+			# rebuilt the break from the wrong word would be
+			# testing main's bug, not this one. Distinct
+			# again from pinned-always-moved, which is both
+			# axes and fails two, and from the transposed
+			# pair, which fails three.
+			if ! wait_for 'regular, tournament, or frozen'; then
+				fail "pinned height unchanged: the second game never started"
+				dump
+			elif [ "$(scrollback_count 'LINES/COLUMNS make it')" -ne 1 ]; then
+				fail "pinned height unchanged: the terminal did not move and was told about it anyway"
+				dump_scrollback
+			fi
+		fi
+	fi
+fi
+
+# --- and a pinned axis nobody touched is still silence -----------------
+# The mirror of the "pinned axis" arm, and the half that one cannot
+# prove on its own: a comparison that simply answered "moved" for every
+# pinned axis would satisfy it. That is not a hypothetical shape -- it
+# is what comparing curses' number against the terminal's does wherever
+# the two differ, which at COLUMNS=190 in a 100-column pane is always,
+# and it is the failure the skip was put in to stop.
+#
+# Same 100x30 pane and same COLUMNS=190 as that arm, so the refusal and
+# the blame are its; only the resize is missing. Counted rather than
+# searched for, because the startup notice has already put one copy of
+# every line in the scrollback and it is the second that would be the
+# bug.
+#
+# It holds that contract for a pinned width; "pinned height unchanged"
+# above holds it for a pinned height. The "env size" arm earlier in this
+# file looks like it holds it too and cannot: it greps a 100x30 pane for
+# "staying classic", which is the wording of a branch that pane can
+# never take. #176.
+start 100 30 'tournament 7 short novice pw' 'env COLUMNS=190'
+if ! wait_scrollback 'LINES/COLUMNS make it'; then
+	fail "pinned unchanged: 100x30 with COLUMNS=190 was not refused as oversize"
+	dump_scrollback
+elif ! wait_for 'COMMAND'; then
+	fail "pinned unchanged: the classic display never reached a command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'quit' Enter
+	if ! wait_for 'score recorded'; then
+		fail "pinned unchanged: quit did not reach the end-of-game questions"
+		dump
+	else
+		tm send-keys -t "$pane" 'n' Enter
+		if ! wait_for 'play again'; then
+			fail "pinned unchanged: never asked about another game"
+			dump
+		else
+			tm send-keys -t "$pane" 'y' Enter
+			# Waited for by this check, so the game has had
+			# every chance to print a second notice first.
+			#
+			# Proved by pinned-always-moved: replacing
+			# axis_moved()'s pinned branch with a bare
+			# return TRUE, and running this file on a copy
+			# of the tree outside the repository. Two checks
+			# fail under it, this one and "pinned height
+			# unchanged" above; the two resize arms pass,
+			# asking for a notice and getting one, which is
+			# the whole reason the silence arms are here.
+			# Not the same break as pinned-LINES-always-moved,
+			# which that arm names and which is this one
+			# narrowed to the height, nor as the transposed
+			# pair: those catch one arm and three.
+			if ! wait_for 'regular, tournament, or frozen'; then
+				fail "pinned unchanged: the second game never started"
+				dump
+			# Exactly one, not "no more than one": a capture
+			# that came back empty counts 0 and would pass a
+			# -gt test while proving nothing. This way the
+			# startup notice has to still be there.
+			elif [ "$(scrollback_count 'LINES/COLUMNS make it')" -ne 1 ]; then
+				fail "pinned unchanged: the terminal did not move and was told about it anyway"
+				dump_scrollback
+			fi
+		fi
+	fi
+fi
+
 # --- and a terminal grown but not grown enough is told so --------------
 # The notice tells the player to grow the terminal. A player who does
 # that and misses -- 80x22, or "80x24" inside tmux, where the status bar
@@ -3615,7 +3918,13 @@ else
 				# sst.c, so the line printed on every failed
 				# retry, and running this file on a copy of
 				# the tree outside the repository: this check
-				# alone failed.
+				# failed. It was the only one when that was
+				# written; the pinned pair added for #169 --
+				# "pinned unchanged" and "pinned height
+				# unchanged" -- hold the same contract under a
+				# pin, so the break now fails three, measured
+				# again on that branch. This one is the arm
+				# with no pin at all.
 				# Through the scrollback, not the visible
 				# pane: "staying classic" appears nowhere
 				# else in this journey, so the wider search

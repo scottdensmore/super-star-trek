@@ -1084,9 +1084,17 @@ static int refusedtermlines, refusedtermcols;
  * runners and shell profiles all do it -- on a terminal whose height
  * was the only thing ever wrong.
  *
- * Both places that reason about size ask this, and for the same reason:
- * a pinned dimension cannot change, so it must neither be overridden
- * nor counted as having moved. */
+ * Three places ask this, and no longer for one reason. What a pin means
+ * to all of them is that curses' number has stopped tracking the
+ * window: tui_init() must not override it, and blames() must judge it
+ * on its own terms rather than against the window. What it used to mean
+ * as well -- that the axis is never counted as having moved -- is the
+ * part axis_moved() no longer does. A pinned axis moves when the
+ * *window* moves, and that is measurable: the terminal's size at the
+ * refusal against the terminal's size now, neither of them curses'.
+ * Reading the older rule here and axis_moved()'s pinned branch as a bug
+ * is the mistake this paragraph exists to stop, since a reader arriving
+ * at the pin rule tends to arrive here first. #169. */
 static int pinned(const char *name) {
 	const char *v = getenv(name);
 	char *end;
@@ -1095,6 +1103,50 @@ static int pinned(const char *name) {
 	if (v == NULL || *v == '\0') return FALSE;
 	n = strtol(v, &end, 0);
 	return *end == '\0' && n > 0 && (int)n == n;
+}
+
+/* Whether one axis of the terminal has moved since the refusal, given
+ * the terminal's size now and the two sizes recorded at the refusal --
+ * curses' and the terminal's.
+ *
+ * The pin decides which of those two to compare against, and it is a
+ * choice about where the numbers come from rather than about the axis.
+ * Free, curses' number is the terminal's: tui_init() resize_term()s a
+ * free axis to what the ioctl gave, so the two are the same number
+ * wherever that ioctl answered. Where it did not, curses' is the only
+ * number the refusal has -- terminfo's, the environment being what
+ * would have made the axis pinned -- and the comparison is across
+ * sources there, which is the shape the pinned branch below exists to
+ * avoid. Left as it was rather than fixed here: it takes an ioctl that
+ * failed at the refusal and answers at this call, and it is the free
+ * axis's, older than #169. #175.
+ *
+ * Pinned, curses reports what was exported and the ioctl reports the
+ * window, so the two agree only by coincidence. It is the pin that
+ * differs from the window that does the damage -- COLUMNS=190 in a
+ * 100-column pane, where compared across they can never agree, so this
+ * answered "moved" every game and the caller quoted a size that was not
+ * the player's window. That is what #165 skipped a pinned axis to stop.
+ * A pin equal to the window compared perfectly well, which is worth
+ * knowing because blames() calls that the commonest shape there is.
+ * Skipping stopped the noise and cost the player who really did drag
+ * the pinned axis their answer. Compared like for like -- the terminal
+ * at the refusal against the terminal now -- neither can happen: both
+ * sides come from the ioctl whatever the pin says. #169.
+ *
+ * Terminal against terminal needs the refusal to have had a terminal
+ * size to record, and 0 is how refusedterm{lines,cols} say it did not.
+ * Guarded the way blames() guards the same statics: an unknown size has
+ * not been seen to move, where reading the 0 as a size would make every
+ * axis differ from it and print the notice at every game to a player
+ * who changed nothing. Reached only through the floor gate with the
+ * ioctl having given no answer there -- failed, or answered 0x0, which
+ * tui_init() counts the same way; the oversize gate cannot fire without
+ * one -- and having answered by the time this runs. */
+static int axis_moved(const char *name, int now, int refusedcurses,
+		      int refusedterm) {
+	if (!pinned(name)) return now != refusedcurses;
+	return refusedterm != 0 && now != refusedterm;
 }
 
 /* Whether the terminal is a different size than when the panels were
@@ -1112,21 +1164,31 @@ int tui_size_changed_since_refusal(void) {
 	struct winsize ws;
 
 	if (refusedlines == 0) return FALSE;
-	/* A pinned dimension is skipped rather than compared. The two
-	   sides come from different places -- the refusal from curses, the
-	   answer from the terminal -- and pinning holds those apart for
-	   good: curses reports what was exported, the ioctl reports the
-	   window. Compared anyway they could never agree, so this said the
-	   terminal had moved on every game, and the caller quoted a size
-	   that was not the player's window.
-	   Skipping costs more than that, though: a player who resizes
-	   the pinned axis is then treated as having done nothing, and the
-	   retry says nothing back. The refusal's own terminal size is
-	   recorded and would answer it -- terminal against terminal, which
-	   is a comparison the mismatch above does not touch. #169. */
-	if (ioctl(fileno(stdout), TIOCGWINSZ, &ws) != 0) return FALSE;
-	if (!pinned("LINES") && ws.ws_row != refusedlines) return TRUE;
-	if (!pinned("COLUMNS") && ws.ws_col != refusedcols) return TRUE;
+	/* The size test is tui_init()'s, and for the same reason: an ioctl
+	   can succeed and report 0x0 -- a pty whose winsize was never set,
+	   which is what pty.fork() and some container inits hand you -- and
+	   tui_init() treats that as no answer rather than as a terminal
+	   with no rows in it. Read as a size it is one nothing was ever
+	   refused at, so an axis differs from whatever was recorded and the
+	   notice prints at every game to a player who changed nothing.
+	   Which axis, measured on such a pty with LINES=10 exported and
+	   COLUMNS unset: the free one. LINES is pinned and the refusal
+	   recorded no terminal size, so axis_moved() already answers FALSE
+	   there; it is COLUMNS, comparing this call's 0 against the 80
+	   curses took from terminfo, that answered "moved" every game. That
+	   path is #175's and predates this function's pinned branch -- the
+	   branch's own exposure to a 0 needs a winsize set at the refusal
+	   and gone by this call, which is remote. So this stops a real
+	   repeat that main has today, by the shorter route of refusing to
+	   read 0x0 as a size at all; it is not the whole of #175, which is
+	   about comparing across sources whatever the ioctl says. */
+	if (ioctl(fileno(stdout), TIOCGWINSZ, &ws) != 0 ||
+	    ws.ws_row <= 0 || ws.ws_col <= 0)
+		return FALSE;
+	if (axis_moved("LINES", ws.ws_row, refusedlines, refusedtermlines))
+		return TRUE;
+	if (axis_moved("COLUMNS", ws.ws_col, refusedcols, refusedtermcols))
+		return TRUE;
 	return FALSE;
 }
 
