@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "fac47eea7390",
+  "strategy": "manual-commit",
+  "branch": "test/analyze-explosion-factor",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "CMakeLists.txt",
+    "tests/analyze.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/fa/c47eea7390/0/metadata.json",
+      "transcript": "/fa/c47eea7390/0/full.jsonl",
+      "compact_transcript": "/fa/c47eea7390/0/transcript.jsonl",
+      "content_hash": "/fa/c47eea7390/0/content_hash.txt",
+      "prompt": "/fa/c47eea7390/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 162,
+    "cache_creation_tokens": 130547,
+    "cache_read_tokens": 8701335,
+    "output_tokens": 62290,
+    "api_call_count": 86,
+    "subagent_tokens": {
+      "input_tokens": 206,
+      "cache_creation_tokens": 307252,
+      "cache_read_tokens": 4367363,
+      "output_tokens": 82223,
+      "api_call_count": 103
+    }
+  }
+}
