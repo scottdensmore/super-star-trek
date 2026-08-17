@@ -24,24 +24,75 @@
 # -Werror=analyzer-use-of-uninitialized-value -- which is the analyzer
 # leg specifically, since the plain warning set does not see it.
 #
-# What it does not prove is how far the analyzer reaches. gcc's reach
-# is uneven and it says nothing where it gives up. Measured by planting
-# the same uninitialized read in five functions:
-# caught in setup.c's newqad() and battle.c's phasers(), missed in
-# sst.c's cramen(), tui.c's tui_shutdown() and battle.c's cloak(). So
-# it is per function rather than per file -- battle.c catches one of
-# its own and misses another -- and a passing run says which files were
-# compiled, not which were understood.
+# A third, for the depth below: the same read planted at the top of
+# sst.c's cramen(), on a copy outside the repository, which this script
+# passed at gcc's default depth and fails at the one it now asks for.
+# The fallback has its own, driven by a shim on the path that forwards
+# to gcc and rejects that --param the way a gcc too old for it would:
+# the run notes it, reports the default depth on the line it prints,
+# and goes green -- the weaker check it should be, said out loud rather
+# than passed off as this one. With CI=1 the same shim exits 1 instead,
+# which is the gate below.
 #
-# Where it stops is a budget. Measured with gcc 15.2.0 against
-# --param=analyzer-bb-explosion-factor, whose default is 5: cloak()
-# comes back at 7 and not at 6, cramen() not until 30. The dial is not
-# raised here, and the reason is not that the tree would redden -- at 7
-# and at 12 it still reports nothing at all. It is that the cost is
-# time, 16 seconds over the sources at the default against 27 at 12,
-# and that deeper analysis can surface more findings of the newqad()
-# kind, which on a -Werror check cost a rewrite or a suppression each.
-# None have appeared yet. #171 has the rest.
+# How far the analyzer reaches is a budget, and at gcc's default it did
+# not reach far enough. Measured by planting this read at the top of
+# five functions and compiling with the flags below:
+#
+#	{ volatile int c = 0; int u; if (c) u = 1; if (u == 42) c = 2; }
+#
+# Only -fanalyzer sees it: -Wall -Wextra at -O0 say nothing about it,
+# so a catch is the analyzer leg and not the plain warning set. Two
+# shorter candidates were no use, since the analyzer does not flag a
+# read into a volatile at all and an unconditional read is flagged by
+# plain -Wuninitialized as well. At the default the read is caught in
+# setup.c's newqad() and battle.c's phasers() and missed in sst.c's
+# cramen(), tui.c's tui_shutdown() and battle.c's cloak(). Per function
+# rather than per file: battle.c catches one of its own, misses another.
+#
+# --param=analyzer-bb-explosion-factor is the dial, default 5, and it
+# is raised to 30 below. Each of the three comes back at its own value,
+# measured with gcc 15.2.0 by planting the read again at each: cloak()
+# at 7 and not at 6, tui_shutdown() at 8, cramen() at 25 and not at 24.
+# Those cliffs belong to that exact read and not to the function: a
+# shorter one planted in cramen() came back at 10 instead of 25,
+# because what is planted decides how much budget is left to walk the
+# rest. Both ends hold whichever was used -- missed at 5, caught at 30.
+# 30 clears the deepest cliff measured with room over it, and is not a
+# value anything in the tree needs today.
+#
+# What raising it costs is time and nothing else so far. Over the
+# thirteen sources on this machine, each figure more than one run:
+# 15-17s at the default, 31-36s at 30, about 46s at 60, with zero
+# diagnostics at every one of them -- and zero under the Release
+# configuration's flags too, which analyse different code for want of
+# -DDEBUG. So the reason to stop at 30 is not that the tree
+# reddens beyond it; it is that no function measured here needs more,
+# and every ctest run pays the difference. The CMakeLists.txt timeout
+# was raised with it.
+#
+# Those are this machine's numbers on this gcc, and the compiler CI
+# runs is neither. Checked against it rather than hoped for: on the
+# gcc 13.3.0 that ubuntu-24.04 carries, in a container of that image,
+# the --param is accepted, the tree is clean at 30 under both
+# configurations' flags, and the read planted in cramen() is missed at
+# the default and caught at 30 there too. CI's own analyze leg runs
+# faster than this one by a factor the compile times do not explain,
+# so take the timings above as an upper bound for it rather than a
+# prediction.
+#
+# The cost that has not been paid yet is the other kind: deeper analysis
+# can surface more findings of the newqad() kind, which on a -Werror
+# check cost a rewrite or a suppression each. None have appeared, here
+# or at 60.
+#
+# What a passing run still does not say is where the analyzer gave up
+# anyway. -Wanalyzer-too-complex reports that and is off by default;
+# turned on at the default factor it fires 169 times in battle.c, 142
+# in setup.c, 46 in sst.c and 0 in five of the thirteen. It cannot be
+# made fatal for that reason, and it does not fall with the factor
+# raised -- at 30 sst.c gives 298, because the analyzer explores
+# further before it stops. #171 has that half, which this does not
+# close.
 #
 # An analyzer gone inert is the third case and it does not fail here.
 # The canary is the probe below, so a compiler that takes -fanalyzer
@@ -158,6 +209,41 @@ if [ -z "$cc" ]; then
 	exit 77
 fi
 
+# The depth the comment above measured, asked of the compiler rather
+# than assumed of it. A gcc that does not know this --param exits on it
+# before compiling anything, so every source would fail for a reason
+# that has nothing to do with the game -- and the gcc CI runs is not
+# the one this was written against. Compiling the canary with it is the
+# same question the candidate loop just asked, so a compiler that takes
+# the option and stops reporting is caught here too.
+factor=30
+depth="--param=analyzer-bb-explosion-factor=$factor"
+"$cc" -fanalyzer "$depth" -c -o "$work/canary.o" "$work/canary.c" \
+    2>"$work/depth.txt" || true
+if ! grep -q 'Wanalyzer-use-after-free' "$work/depth.txt"; then
+	# Gated on Linux CI for the same reason the missing-compiler case
+	# above is, and more sharply: there it is this check quietly
+	# reverting to the reach #171 exists to fix, with cramen(), cloak()
+	# and tui_shutdown() unanalysed again.
+	#
+	# Elsewhere it falls back and says so, on the line it prints as
+	# well as in the note. Both reach a reader only where the output
+	# does -- running this script directly, or ctest -V -- because
+	# ctest prints nothing at all for a test that passes and
+	# --output-on-failure waits for a failure that will not come. So
+	# the asymmetry is not that the fallback is loud off CI; it is that
+	# off CI the weaker check is the honest answer for a compiler that
+	# cannot do better, and on CI it is a regression in a check the
+	# compiler there can do.
+	if [ -n "${CI:-}" ] && [ "$(uname -s)" = Linux ]; then
+		echo "FAIL: $cc does not analyse with $depth, so Linux CI would have run at gcc's default depth" >&2
+		exit 1
+	fi
+	echo "NOTE: $cc does not analyse with $depth; using its default depth" >&2
+	factor=default
+	depth=""
+fi
+
 # The sst target's own sources, as CMake lists them -- osx.c included,
 # and tests/test_tuifmt.c and tests/test_rules.c not, those being test
 # harnesses rather than the game. Taken from the build rather than
@@ -184,8 +270,14 @@ status=0
 for src in "$@"; do
 	case "$src" in /*) ;; *) src="$srcdir/$src" ;; esac
 	out="$work/$(basename "$src").txt"
-	# shellcheck disable=SC2086  # $flags is a flag list, not one word
-	if ! "$cc" -fanalyzer $flags -Werror -c -o "$work/obj.o" "$src" \
+	# Both expansions are unquoted, for two different reasons: $flags is
+	# a flag list rather than one word, and $depth is empty on the
+	# fallback path, where quoting it would hand gcc one empty argument
+	# instead of none -- which it reads as a linker input it cannot
+	# find, failing all thirteen sources for a reason that has nothing
+	# to do with the game.
+	# shellcheck disable=SC2086
+	if ! "$cc" -fanalyzer $depth $flags -Werror -c -o "$work/obj.o" "$src" \
 	     2>"$out"; then
 		echo "FAIL: $(basename "$src") did not analyse clean" >&2
 		cat "$out" >&2
@@ -197,4 +289,7 @@ if [ "$status" -ne 0 ]; then
 	exit 1
 fi
 
-printf 'analyze OK (%s)\n' "$cc"
+# The depth is on the line a passing run prints because a passing run
+# is where it matters: the same output from a compiler that fell back
+# to the default would be a weaker check reading as this one.
+printf 'analyze OK (%s, bb-explosion-factor %s)\n' "$cc" "$factor"

@@ -198,4 +198,12 @@ add_test(NAME analyze
 # SKIP_RETURN_CODE, or the 77 the script exits with where no compiler
 # offers -fanalyzer is just a failure -- which is what macOS CI and any
 # clang-only machine would have seen.
-set_tests_properties(analyze PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 180)
+#
+# The timeout went from 180 to 300 with the analyzer depth the script
+# now asks for -- factor=30 in tests/analyze.sh, which is where to look
+# if this number ever needs revisiting. The run measured 15-17s here
+# before and 31-36s after, so a margin of roughly eleven times is now
+# roughly nine. That margin is for a runner slower than this machine,
+# which is the only thing a timeout here can catch -- a real hang would
+# sit far past either number.
+set_tests_properties(analyze PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300)
