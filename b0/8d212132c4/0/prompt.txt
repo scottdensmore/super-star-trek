@@ -1,0 +1,783 @@
+Take a look through the code and issues and pick up what is next to work on
+
+---
+
+<task-notification>
+<task-id>adb4a94608bb9c9fe</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/adb4a94608bb9c9fe.output</output-file>
+<status>completed</status>
+<summary>Agent "ui-review round 3" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Cleaned up my tmux socket (`-L uirev3`, `kill-server` on that socket only).
+
+## Verdict
+
+**Acceptable as-is.** The two documentation paragraphs are now accurate for all three shapes a player can be in, and the qualification "where you can" is load-bearing rather than hedging: it is exactly the pin-under-the-floor case, which the *next* paragraph in both files names outright ("A pin under 72x24 is refused however large the window gets, since resizing moves the window and never the pin"). The `ws_row &gt; 0 &amp;&amp; ws_col &gt; 0` guard does change what a reachable player sees, and the change is strictly an improvement — I reproduced it against a 0x0-winsize pty, where `main` repeats the refusal advice at every game to a player who touched nothing and this branch prints it once. The runtime behaviour I re-drove (pinned oversize, pinned under floor, plain too-small, untouched retry, grown-but-not-enough, grown-enough) all reads correctly, so I have nothing to contradict rounds 1 and 2. Everything below is a nit.
+
+## Findings
+
+**1. Nit — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md:104` and `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.doc:1553`: the new sentence is accurate but grammatically tangled.**
+The shape is an imperative joined by "and" to a clause whose subject is the player's *second* action: "put right what refused you where you can — usually by making a small window bigger — and answering yes to 'Do you want to play again?' starts the next game with the panels." "Do A and [doing B] produces C" is readable, but the em-dash gloss lands between the two halves, so the reader carries the imperative across fourteen words before the clause that resolves it. The old conditional ("So if the terminal was too small and you have since made it bigger, answering yes ... starts ...") flowed better and lost only the qualification. If you want both, a conditional carries "where you can" fine: "So if what refused you is something you can put right — usually a small window that needs to be bigger — answering yes to ... starts the next game with the panels." Not worth another rewrap on its own; take it only if the paragraph is touched again.
+
+**2. Nit — same two lines: "a small window" is the wrong noun for the oversize-pin case it is partly there to cover.** `COLUMNS=190` in a 100-column pane is refused, and the fix is a bigger window, but that window is not small — it is smaller than the pin, and 100 columns is well past the 72 the panels need. "usually" concedes the point, and the paragraph below spells the case out, so this does not mislead; "usually by making the window bigger" would cost nothing and cover both.
+
+**3. Informational — the `ws_row/ws_col` guard is player-visible, and correct.** Measured: a pty whose winsize was never set, `TERM=xterm`, `COLUMNS=60` (so curses takes 60 from the environment, fails the floor, and the refusal records no terminal size). On `main` the line `Grow to 72x24, unset COLUMNS, and rerun sst -t.` appears twice — once at startup, once at the play-again retry with nothing having moved. On this branch it appears once. Nothing is lost by the guard: a 0x0 ioctl carries no size, so there is no resize it could have detected. The residual — where the refusal's ioctl gave nothing, a *pinned* axis resize is silent by construction (`refusedterm != 0 &amp;&amp;`) — is the right call (the game has no terminal size at the refusal to compare like for like) and sits next to the already-filed #175 for the free axis. Reproduction script: `&lt;scratchpad&gt;/zeropty.py`.
+
+**4. Informational, pre-existing, effectively unreachable — "the game says what size it read back" has one silent corner.** If the pre-check's ioctl succeeds and `tui_init()`'s ioctl then fails or returns 0x0 microseconds later, `refusal_notice(TRUE)` in `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.c:508` falls through every branch (`!smallwindow` false, `retry &amp;&amp; havesizes` false, `!retry` false) and, with no blame, prints nothing at all — a player who resized gets silence. Not caused by this change and not worth code; mentioning it only so it is not mistaken for a gap this round introduced.
+
+**5. Agreed on item 3 — the `sst.c` / `tui.c` comment rewrites and the `tests/tui.sh` note are not player-facing.** I checked the one way `sst.doc` text can reach a player through the game rather than as a manual: `helpme()` (`/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.c:161-199`) seeks a `  Mnemonic:  &lt;CMD&gt;` line and stops at the next `******`, so the trailing "Modifications I made" narrative that holds the changed paragraph is never printed in-game. It is manual text, still worth reviewing, which is what finding 1-2 do.
+
+## What I exercised
+
+- `cmake --build --preset debug` (clean), plus a from-scratch `main` build in the scratchpad for the before/after comparison in finding 3.
+- Plain mode regression: `printf 'regular\nshort\nnovice\nxyz\nsrscan\nquit\nn\n' | ./build/debug/sst` — short-range scan, status column and farewell unchanged.
+- TUI, private socket `-L uirev3 -f /dev/null` throughout:
+  - 100x30 pane, `COLUMNS=190`: startup notice `Terminal is 100x30 but LINES/COLUMNS make it 190x30.` / `Unset COLUMNS, rerun sst -t -- classic for now.`; tournament 7 / short / novice, `quit`, `n`, widen pane to 150, `y` → `Terminal is 150x30 but LINES/COLUMNS make it 190x30.` plus the advice line, then the next game's first question. This is #169's case and it now answers the player.
+  - 100x30 pane, `COLUMNS=60` (pin under the floor): same journey, widen to 150, `y` → `Terminal is 150x30 but LINES/COLUMNS make it 60x30.` + `Unset COLUMNS, rerun sst -t -- classic for now.` — the shape the docs' "where you can" covers, and the advice is the only one that can work.
+  - 70x20, no pin: `Terminal too small (need 72x24) -- using classic display.` / `Grow the terminal to 72x24 and the next game gets panels.`; retry with the terminal untouched → silence; retry after 78x22 → `Terminal is 78x22 -- need 72x24, staying classic.`; retry after 80x24 → panels came up and rendered correctly at 80x24.
+- 0x0-winsize pty via a Python `pty.fork()` + `TIOCSWINSZ` driver, run against both the branch binary and a `git archive main` build in the scratchpad (finding 3).
+- Read both changed paragraphs in full context; checked line widths — the changed `sst.doc` lines are 64-69 columns inside their two-space indent, the README lines wrap at ~72, both render in 80 columns without wrapping.</result>
+<usage><subagent_tokens>58800</subagent_tokens><tool_uses>31</tool_uses><duration_ms>417221</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>afc35853b9cf7dc9d</task-id>
+<tool-use-id>toolu_01PSLWM1X1Y7My4H9bSHRaMi</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/afc35853b9cf7dc9d.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier on the final state" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result># Verdict: **PASS**
+
+No failures, no flakes. Two open points below (one coverage gap, one observation). Nothing in the repository was modified — the working tree still holds exactly the five modified files it started with.
+
+---
+
+## The three things you asked me to confirm
+
+**1. `ws_row &lt;= 0` / `ws_col &lt;= 0` under `-Werror` — clean, and not vacuously so.**
+
+Clean rebuilds (`--clean-first`, so every TU actually recompiled) of both `ci-debug` and `ci-release`: zero warnings, exit 0. GCC 15.2.0 (Ubuntu 15.2.0-16ubuntu1).
+
+I checked the clean result isn't an artefact of the warning being off. `gcc -Q --help=warning -Wall -Wextra` reports `-Wtype-limits [enabled]` and `-Wsign-compare [enabled]`, and a probe confirmed `-Wtype-limits` really fires on this toolchain:
+
+```
+probe.c:4:28: warning: comparison of unsigned expression in '&lt; 0' is always false [-Wtype-limits]
+    4 | int h(unsigned u){return u &lt; 0;}
+```
+
+while `int f(struct winsize *w){return w-&gt;ws_row &lt;= 0;}` in the same file drew nothing. That is the expected outcome rather than luck: `ws_row`/`ws_col` are `unsigned short`, which the integer promotions widen to `int`, so `&lt;= 0` is a comparison of two `int`s and is not always-false — GCC has no vacuity to report. Semantically it means `== 0`, the exact negation of `tui_init()`'s `winsz.ws_row &gt; 0 &amp;&amp; winsz.ws_col &gt; 0` at `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c:1324`. Note this is a GCC answer only; no `clang` is installed here, so I cannot speak for the macOS CI leg.
+
+**2. `sst.c` is still CRLF throughout.** Byte-level check, not a `file` guess: 1130 LF bytes, 1130 lines ending `\r\n`, **0 lone CR, 0 bare LF**, and the last bytes are `#endif\r\n`. `sst.doc` likewise: 1709/1709, 0 lone CR, 0 bare LF, ending `hobby shops.\r\n`. `README.md` and `tui.c` remain LF, as they were.
+
+**3. The reflowed paragraphs.** `sst.doc:1553-1562` wraps at 64-67 columns, in line with the surrounding text and well under the file's 79-column maximum. The `help` and `instructions` tests, which read `sst.doc` from the tree, both pass.
+
+---
+
+## What ran
+
+| Check | ci-debug | ci-release |
+|---|---|---|
+| `cmake --preset &lt;p&gt; &amp;&amp; cmake --build --preset &lt;p&gt; --clean-first` | 0 warnings, exit 0 | 0 warnings, exit 0 |
+| `ctest --preset &lt;p&gt;` (12/12) | all Passed, 359.7s | all Passed, 346.9s |
+| `analyze` specifically | **Passed** (35.4s) | **Passed** (31.1s) |
+
+`analyze` passed rather than skipped in both configurations, so the analyzer really ran — its canary probe (a planted use-after-free that must come back as `-Wanalyzer-use-after-free`) is what gates that, and an inert compiler would have surfaced as SKIPPED. I am not claiming tree-wide analysis from it; gcc's reach is uneven and it says nothing where it gives up.
+
+`tui` run three times independently — 178.6s, 169.2s, 177.5s, green each time. The two new arms are unconditional top-level code and every branch through them ends in either an assertion or a `fail`, so a green run means they executed and asserted.
+
+Static analysis extras: `cppcheck`, `clang-tidy` and `scan-build` are not installed. Per the brief that is a missed bonus, not a gap, since `analyze` carries this step.
+
+**Journeys driven by hand** (all on private tmux sockets `-L verif169` / `-L verif169b` with `-f /dev/null`, torn down with `kill-server` on those sockets alone; the default socket was never touched):
+
+- Plain mode, both binaries, `regular/short/novice/xyz/srscan/status/quit/n` — full srscan and status output, exit 0.
+- TUI at 80x24 and 72x24 — panels render, borders intact, no garbling, commands accepted.
+- **Pinned-axis resize (the change itself):** `COLUMNS=190` in a 100x30 pane, quit, widen to 150x30, answer yes. Startup prints `Terminal is 100x30 but LINES/COLUMNS make it 190x30.`; the retry prints `Terminal is 150x30 but LINES/COLUMNS make it 190x30.` with a second copy of the advice line. The new number is the player's window.
+- **Pinned axis untouched:** same setup, no resize — exactly one notice in the scrollback. Silence preserved.
+- **The doc's positive claim:** same setup, widened to 190x30 — the panels come up on the next game. `sst.doc:1554` ("Put right what refused you where you can") is accurate, including for the pinned case.
+- **0x0 pty** (`LINES=10`, `COLUMNS` unset, `openpty` winsize left at 0x0) — startup refuses with `Terminal too small (need 72x24)`, and the retry says nothing. Correct.
+
+---
+
+## Missing coverage
+
+**The 0x0-winsize guard in `tui_size_changed_since_refusal()` has no test, and it is load-bearing.**
+
+I proved it matters rather than assuming it. On a copy of the working tree outside the repository (`build/` left behind, configured from inside the copy via `cmake --preset ci-debug`), I removed just the new clause, leaving `if (ioctl(...) != 0) return FALSE;`, and reran the 0x0-pty journey. Guarded, one advice line — startup's. Unguarded:
+
+```
+'Terminal too small (need 72x24) -- using classic display.'    &lt;- startup
+'Grow to 72x24, unset LINES, and rerun sst -t.'                &lt;- startup
+'Grow to 72x24, unset LINES, and rerun sst -t.'                &lt;- retry, to a player who changed nothing
+```
+
+That second advice line is the regression the guard prevents, and no test would have caught its removal. `tests/tui.sh` is the only test that drives a terminal at all and it drives tmux, which always sets a winsize; nothing under `tests/` uses `openpty`/`forkpty`/`TIOCSWINSZ`. Reproducer, for whoever picks this up: fork a pty with the winsize left at 0 (Python's `pty.fork()` does this by default), export `LINES=10`, unset `COLUMNS`, run `sst -t tournament 7 short novice pw`, then `quit` / `n` / `y` and count occurrences of `Grow to 72x24`.
+
+The path is genuinely reachable — a pty whose winsize was never set is what `pty.fork()`, some CI runners and some container init give you — so this is a real gap and not a hypothetical one. Whether it is worth a test harness that `tests/tui.sh` does not currently have is your call; I am reporting it, not deciding it. I did not file an issue (I do not modify state).
+
+Everything else in the diff is covered: the two new `tests/tui.sh` arms cover both halves of the pinned-axis contract, and the arm at `tests/tui.sh:3646` carries its mutation proof in a comment beside the assertion, naming the break (`axis_moved()` forced to answer TRUE for every pinned axis) and recording that the positive arm passes under it — which is why the negative arm exists.
+
+---
+
+## Observations, not findings
+
+- `tui` is registered with `TIMEOUT 300` (`CMakeLists.txt:101`) and now measures 169-179s here across three runs. That is ~59% of budget on this machine; the two new arms each run a full game-start/quit/replay cycle. Not a failure and not close to one locally, but a slower CI runner has less headroom than the number suggests.
+- The issue numbers cited in the new comments all exist and are open: **#169**, **#175** (free axis compared across sources where the refusal's ioctl gave nothing — correctly described as pre-existing and out of slice), **#176** (the env-size arm's guard that cannot fail at 100x30).
+- The branch has no commits; all five changes are unstaged in the working tree. Everything above was verified against that working-tree state.</result>
+<usage><subagent_tokens>69431</subagent_tokens><tool_uses>41</tool_uses><duration_ms>1594706</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a3a90d114719aab96</task-id>
+<tool-use-id>toolu_01Lr5JDWxVW5sU8dnLh88r6U</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a3a90d114719aab96.output</output-file>
+<status>completed</status>
+<summary>Agent "code-review final" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Request changes** — one should-fix, in player-facing documentation. Everything else in this state I verified and would approve.
+
+Reviewed state: branch `fix/tui-pinned-axis-resize-notice` at `3334136` (identical to `main`) with the change entirely **unstaged/uncommitted**: modified `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c` (new `axis_moved()`, 0x0 ioctl guard in `tui_size_changed_since_refusal()`), `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.c` (comment only), `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh` (`scrollback_count()` + two new arms), `/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md` and `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.doc` (prose). Nothing staged, no untracked files, no commits ahead of `main`.
+
+## Findings
+
+### Should-fix
+
+**1. `README.md:103-105` / `sst.doc:1553-1556` — the reworded sentence promises panels for a cause that *can* be fixed, not one that *was* fixed.**
+
+&gt; "So if what refused you is something you can put right — usually a window that needs to be bigger — answering yes to "Do you want to play again?" starts the next game with the panels."
+
+The old wording carried the act ("and you have since made it bigger"); the rewrite dropped it and kept only the fixability. Failure scenario: a player refused at 70x20 reads this, answers `y` without touching the window, and gets a classic game — correctly *and silently*, since `tui_size_changed_since_refusal()` returns FALSE. The manual told them they'd get panels; the last sentence ("Leave the terminal alone and it stays quiet") only explains the silence, not the missing panels. Suggested fix, keeping round 3's conditional shape: "So if what refused you is something you can put right — usually a window that needs to be bigger — put it right and answering yes to "Do you want to play again?" starts the next game with the panels." Change both files in step, and keep `sst.doc`'s CRLF endings (the current diff does).
+
+### Nit
+
+**2. `tui.c:1110-1112` — reflow artifact.** "…and the comparison is across sources there, which is the shape the pinned" is a 47-column line mid-paragraph where every other line in that comment runs 66-72. Cosmetic leftover from the round-3 edit; refill the paragraph.
+
+## What I verified (the five fixes, checked against the code and against running builds)
+
+I treated every comment as suspect and checked it, including by running the two new journeys by hand on my own tmux socket against three builds.
+
+- **Fix 1 (scoped arm comments).** `tests/tui.sh:3529-3536` and `3606-3612` now claim only what holds at 100x30 with `COLUMNS=190`, and point at `axis_moved()` for the general statement, which does carry it (`tui.c:1116-1127`). "A pin *equal* to the window compared perfectly well" is true of the removed code, and `blames()`'s comment (`tui.c:1205-1212`) does call that the commonest shape.
+- **Fix 2 (failing first run).** Confirmed by building `main`'s `tui.c`/`sst.c` in a copy of the tree outside the repository and driving arm 1's journey: the scrollback holds one `Terminal is 100x30 but LINES/COLUMNS make it 190x30.` and no second notice, so the size-report grep fails and the advice count is 1. The `elif` chain does stop there, and the advice check would indeed have failed too. The note says exactly this.
+- **Fix 3.** `tui_init():1337-1348` sets `haveterm` from `ioctl == 0 &amp;&amp; ws_row &gt; 0 &amp;&amp; ws_col &gt; 0` and the oversize gate is under `haveterm`, so `refusedterm{lines,cols} == 0` really is reachable only through the floor gate with the ioctl having failed *or* answered 0x0. The corrected wording matches.
+- **Fix 4.** With the axis free and the refusal's ioctl unanswered, curses' number is terminfo's — the environment would have made `pinned()` true. Correct as now written.
+- **Fix 5 (`-ne 1`) — not vacuous in either direction.** Live: real build, no resize → count 1 (passes); mutated build (`axis_moved()` returning TRUE for every pinned axis, built and run in a copy outside the repo) → count 2, arm 2 fails while arm 1 still passes, which is precisely what its comment claims; an empty capture counts 0 and fails. I also confirmed arm 1's `-lt 2` advice check fails on 0, so it is not vacuous either.
+- **Arm 1 live, real build:** scrollback holds `Terminal is 150x30 but LINES/COLUMNS make it 190x30.` and two copies of the advice line — the exact strings asserted.
+- **`#176` claim in arm 2's comment** is right: at 100x30 `smallwindow` in `refusal_notice()` (`sst.c:512-513`) is false, so the `staying classic` branch is unreachable; under the mutant that arm's two checks both still pass while two notices sit in its scrollback.
+- **Code:** `axis_moved()` has no shadowing, no signed/unsigned trap (`ws_row`/`ws_col` promote to `int`; `&lt;= 0` mirrors `tui_init()`'s `&gt; 0`), `static` before first use so `-Wmissing-prototypes` is satisfied, and `#165` is confirmed as the commit that introduced the skip (`git log -S` on the removed condition). `sst.c`'s added comment lines carry CRLF like the rest of that file; `git diff --check` noise there is the file's pre-existing line endings, not new trailing space.
+- **Issues** `#169`, `#174`, `#175`, `#176` exist and their titles match what the comments say they are.
+
+## On the process disclosure
+
+I accept the skipped fourth `ui-review` round, and here is the check rather than the assertion: the post-round-3 delta is C comments, test comments, one shell operator and doc prose, none of which changes a byte the running game prints. I confirmed the changed `sst.doc` paragraph is unreachable from in-game `help`: `helpme()` (`sst.c:155-199`) seeks a `  Mnemonic:  &lt;CMD&gt;` or ` ABBREV` line and stops at the first `******`; the last Mnemonic topic (SCORE, `sst.doc:1294`) terminates at the `**********MISCELLANEOUS NOTES**********` banner on 1302, and the ABBREV topic at 1406 terminates at `********MODIFICATIONS********` on 1471 — the edited paragraph is at 1551. No test or golden fixture greps that prose either. The same reasoning covers finding 1: fixing it is another doc-prose change and needs no `ui-review` round, but it does change the reviewed state, so it needs a fresh `code-review` before the commit.
+
+## What I could not review
+
+- The full `tests/tui.sh` run and the concurrent `verifier` pass on this state. I ran only the two new arms' journeys (and the `env size` arm) by hand, against the real, mutated and pre-fix builds; I did not run the rest of the battery.
+- Arm 2's comment claim that under its mutation "this check alone failed" *across the whole file*. I confirmed the two arms it is about plus the `env size` arm behave as claimed under that mutation; I did not run the other ~50 arms under it.
+
+No files were modified. The scratch copy used for the mutation and pre-fix builds was created outside the repository and deleted; the worktree is byte-identical to the state I reviewed.</result>
+<usage><subagent_tokens>98230</subagent_tokens><tool_uses>38</tool_uses><duration_ms>635309</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>add57261ab670b54b</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/add57261ab670b54b.output</output-file>
+<status>completed</status>
+<summary>Agent "code-review after doc fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Shell recovered mid-review; I completed every check I intended. Here is the result.
+
+## Verdict: **approve**
+
+Reviewed state: worktree at `HEAD = 3334136` (branch `fix/tui-pinned-axis-resize-notice` has **no commits of its own** — `git diff main...HEAD` is empty, so the entire change is unstaged in the worktree; no staged changes, no untracked files). Covers:
+
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c` — new `axis_moved()`, rewritten body of `tui_size_changed_since_refusal()`, new `ws_row/ws_col &gt; 0` guard.
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.c` — comment addition at the play-again retry only.
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh` — `scrollback_count()` helper plus two new arms.
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md`, `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.doc` — the reworded paragraph.
+
+### The should-fix is closed, not moved
+
+I traced the promise against the code rather than the prose:
+
+- "if you put right what refused you … starts the next game with the panels" — the retry calls `tui_init()` unconditionally (`sst.c:634-637`), and `tui_init()` succeeds for every in-process-fixable cause: window grown past the floor (`tui.c:1342`), and window grown past an oversize pin (`tui.c:1368`, since `resize_term` leaves the pin and the gate compares it to `winsz`). So the consequent holds wherever the antecedent does. The old wording's defect — a promise whose antecedent was a *cause that can be fixed* rather than one that *was* fixed — is gone; a player who answers `y` at 70x20 having touched nothing does not satisfy "put right what refused you", and the paragraph's last sentence covers them explicitly.
+- The over-promise you did not want reintroduced is still excluded, and by more than the hedge: `README.md:113-124` and `sst.doc:1570-1571` still say in as many words that a pin under 72x24 "is refused however large the window gets, since resizing moves the window and never the pin". Read in sequence, "usually a window that needs to be bigger" flags the exception and the later paragraph names it. The conditional cannot be read as claiming every refusal is fixable when the same section says one class is not.
+- The middle sentence's new form is also true of the code: every `refusal_notice(TRUE)` path that is reachable does print a measured size. The one branch that would print no size line at all (`retry &amp;&amp; !havesizes &amp;&amp; blame == NULL`, `sst.c:512-546`) is unreachable, because `resized` can only be TRUE when the `TIOCGWINSZ` in `tui_size_changed_since_refusal()` answered, and `tui_init()` re-asks a moment later and sets `refusedterm*` from it.
+
+### The nit is closed
+
+`tui.c:1104-1114` is a proper fill; no short line, no words changed against the previous state.
+
+### Checks I ran on this state
+
+- `cmake --build --preset ci-debug` — no warnings, no errors (independently, not on your report).
+- `sst.doc` integrity: 1709 lines, 1709 CRLF, 0 bare LF, 0 bare CR; changed lines 1553-1562 are 14-68 columns, in family with the file.
+- Every `sst.doc:&lt;line&gt;` citation in the tree (`rules.c`, `sst.c`, `osx.c`, docs) points at 1470 or below, so the +1 line shift past 1562 stales none of them.
+- `ui-review` skip, verified rather than accepted: `helpme()` (`sst.c:161-201`) prints from the first line matching `"  Mnemonic:  &lt;CMD&gt;"` or `" ABBREV"` to the next `******`. The only topic marker after line 1400 is ` ABBREV` at 1406, and its terminator is the `********MODIFICATIONS********` at 1471 — the last `******` in the file. The edited paragraph is at 1553-1562, past it. In-game `help` output is byte-identical, `README.md` is not read by the game, and the `tui.c` change is a comment. The skip is correct for this delta.
+
+### Comment claims verified against code (per your standing instruction)
+
+- `tui.c:1106-1108` "resize_term()s a free axis to what the ioctl gave" — matches `tui.c:1339-1341` followed by `refusedlines = LINES` at 1345, so free axis is like-for-like. True.
+- `tui.c:1121` "#165 skipped a pinned axis" — `git log -S` on the removed comment text returns `c98a422 … (#165)`. True.
+- `tui.c:1122-1123` "blames() calls that the commonest shape there is" — matches `tui.c:1205-1212`. True.
+- `tui.c:1134-1137` "Reached only through the floor gate with the ioctl having given no answer there … the oversize gate cannot fire without one" — `refusedterm* = 0` only via `haveterm == FALSE` at `tui.c:1347-1348`, and the oversize gate at 1368 is `haveterm &amp;&amp;`. True.
+- `tui.c:1166-1170` "it is COLUMNS … that answered 'moved' every game" — I re-derived it: `LINES=10` pinned, ioctl 0x0 → `refusedlines=10, refusedcols=80(terminfo), refusedterm*=0`; without the guard `axis_moved("LINES", 0, 10, 0)` is FALSE (pin, `refusedterm == 0`) and `axis_moved("COLUMNS", 0, 80, 0)` is TRUE. The named axis is right, and `main` does have this today. True.
+- `tui.c:1171-1173` "the branch's own exposure to a 0 needs a winsize set at the refusal and gone by this call" — TRUE requires `refusedterm != 0 &amp;&amp; 0 != refusedterm`. True.
+- `tests/tui.sh` new arm 1's literals: I computed the retry state (150x30 pane, `COLUMNS=190` → `refusedterm 150x30`, `refused 190x30`, `smallwindow` FALSE) and it produces exactly `Terminal is 150x30 but LINES/COLUMNS make it 190x30.` and `Unset COLUMNS, rerun sst -t -- classic for now.` — both greps match `sst.c:516-517` and `sst.c:542` word for word.
+- `tests/tui.sh` #176 claim ("the env size arm greps for a branch that pane can never take") — at `LINES=20 COLUMNS=70` in 100x30, `smallwindow` is FALSE (`termrows 30`, `termcols 100`), so the notice would take the `Terminal is … but LINES/COLUMNS make it …` branch and never contain `staying classic`. The grep at `tests/tui.sh:2963` is indeed blind. Correctly filed rather than fixed here.
+- Arm 2's uniqueness claim: under "TRUE for every pinned axis", arm 2's count goes to 2 and fails, arm 1 still passes (it asks for a notice and gets one), and the `env size` arm's `staying classic` grep cannot fire. The claim is internally consistent with the code; I did not re-run the break.
+
+### Findings
+
+**Nit (optional, ignore freely)** — `README.md:106`: mid-paragraph line is 63 columns where the paragraph's fill is 70-71 and `refused` (8 more) would fit; the same one-word under-fill is at `sst.doc:1556`. Cosmetic only, and rewrapping would touch two more lines each, which is arguably worse than leaving it.
+
+Nothing else. No blockers, no should-fixes.
+
+### What I could not review
+
+- Whether the code in `sst.c`/`tui.c` is byte-identical to what the last `ui-review` round saw. I can confirm the current diff and that the delta you describe is doc prose plus a comment, but "no statement changed since that pass" rests on your account; there is no artifact in the worktree that records it.
+- The mutation proofs written into the two new arms' comments (the "TRUE for every pinned axis" break, and arm 1's failing first run against the pre-fix build). I checked they are *consistent* with the code, not that they were run.
+- The concurrent `verifier` pass. Its report will describe a state differing by exactly the doc prose and the comment refill; since neither is compiled or read by `help`, nothing it reports about the binary or the journeys can be invalidated by them, but the `instructions`/`help` tests are the ones whose input did move, and you have already run those four here.
+
+Approval is valid only for the exact worktree state described above.</result>
+<usage><subagent_tokens>77422</subagent_tokens><tool_uses>43</tool_uses><duration_ms>419057</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aaf3683a36f643348</task-id>
+<tool-use-id>toolu_01SFcm6vVHLsS5sr3WveSCfC</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/aaf3683a36f643348.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier final" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: PASS
+
+No failures. Everything I ran on this exact working-tree state is green, and both things you flagged check out.
+
+### 1. The `-ne 1` assertion has real teeth
+
+Confirmed satisfiable and load-bearing, by rebuilding the mutation the arm was proved with — `axis_moved()` in `/tmp/.../scratchpad/mut/tui.c` returning `TRUE` for every pinned axis, built and run from inside a copy outside the repo (`cd &lt;copy&gt; &amp;&amp; tests/tui.sh build/debug/sst Debug`; cache verified to point at the copy, not your tree):
+
+```
+FAIL: pinned unchanged: the terminal did not move and was told about it anyway
+1 check(s) failed.
+```
+
+Exactly one check failed — this one — and the dump shows it failed for the right reason: **two** copies of `Terminal is 100x30 but LINES/COLUMNS make it 190x30.` in the scrollback, not an empty capture. So `-ne 1` fired on a genuine second notice, and the sibling resize arm still passes under that break, which is the contract its comment claims.
+
+I also verified the other half of the arm's documented proof, which was not asked for but is the same claim: a tree with **main's `tui.c`** plus the **branch's `tests/tui.sh`** fails exactly one check — `pinned axis: widening the pinned axis got no notice at all` — and its dump contains only one notice line, confirming the comment's "the advice count ... would have failed too, there being no second notice at all".
+
+### 2. Comment audit — no surviving false claims
+
+I checked every factual claim in the changed comments against the files on disk (not from context). All hold:
+
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c:1121` "what #165 skipped a pinned axis to stop" — `git log -S` puts the skip in c98a422 `(#165)`. Correct.
+- `tui.c:1106` "tui_init() resize_term()s a free axis to what the ioctl gave" — matches `tui.c:1339-1341`.
+- `tui.c:1134-1137` "Reached only through the floor gate ... the oversize gate cannot fire without one" — the oversize gate at `tui.c:1368` is guarded by `haveterm`, so `refusedterm{lines,cols}` are non-zero there; only `tui.c:1347` can store 0. Correct.
+- `tui.c:1159` "The size test is tui_init()'s" — `ioctl != 0 || ws_row &lt;= 0 || ws_col &lt;= 0` is the exact negation of `tui.c:1337-1338`. Correct.
+- `tui.c:1166-1170` the 0x0-pty claim, including *which* axis and the "80 curses took from terminfo" — verified empirically with a `pty.fork()` harness (winsize really comes back 0x0): the branch binary prints the notice once and says nothing at the second game; a **main** build repeats `Grow to 72x24, unset LINES, and rerun sst -t.` at the second game. The blame naming LINES alone independently pins COLS at exactly 80.
+- `tests/tui.sh` #176 claim — "greps a 100x30 pane for `staying classic`, the wording of a branch that pane can never take". Traced through `refusal_notice()` at `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.c:508-547`: `smallwindow` is false for a 100x30 terminal, so line 521 is unreachable there. Correct.
+- Cited issue numbers all exist and match: #164, #165 (merged PR), #169, #175, #176.
+
+### 3. What ran
+
+| Check | Result |
+|---|---|
+| `cmake --preset ci-debug` + `cmake --build --preset ci-debug --clean-first` | 0 warnings, 0 errors (`-Werror`) |
+| `cmake --preset ci-release` + same, clean | 0 warnings, 0 errors |
+| `ctest --preset ci-debug` | 12/12 passed, 358 s — `analyze` **Passed** (ran, not skipped) |
+| `ctest --preset ci-release` | 12/12 passed, 348 s — `analyze` **Passed** |
+| Binary identity | `build/ci-release/CMakeFiles/sst.dir/tui.c.o` and `build/ci-release/sst` **byte-identical** to the pre-review artifacts I snapshotted before rebuilding. Your "comment corrections only" claim is mechanically confirmed. No `__DATE__`/`__TIME__` in the tree, so the comparison is meaningful |
+| Plain mode, both configs | `printf 'regular\nshort\nnovice\nxyz\nsrscan\nstatus\nquit\nn\n'` → exit 0, clean, no stray CR. A deterministic tournament journey is **byte-identical** to a main build's output |
+| TUI 80x24 and 72x24 | Full journey: panels up, `srscan`/`status`/`chart` with pager handling, `quit`, score, play-again, farewell, clean exit. No crashes, hangs or garbling |
+| TUI LINES-pinned (uncovered axis) | `LINES=40` in 100x30 → refused; height 30→35 → `Terminal is 100x35 but LINES/COLUMNS make it 100x40.`; no resize → exactly one notice, one advice |
+| `sst.doc` | Still CRLF (1709 CRLF lines) |
+| Repo state | Unmodified by me; `git status` identical to session start |
+
+All tmux work was on private sockets (`sstverify-lines*`, plus `tests/tui.sh`'s own `sst-tui-$$`), each killed on its own socket. No leftovers, and the default socket was never touched.
+
+Two early journey runs of mine reported failures at 80x24/72x24 — those were **my harness typing a word into `[HIT SPACE BAR TO CONTINUE]`**, not the game. Made pager-aware, both sizes complete cleanly. Not a flake in the product.
+
+### 4. Missing coverage
+
+- **The new `ws.ws_row &lt;= 0 || ws.ws_col &lt;= 0` guard (`tui.c:1177-1179`) has no automated test.** `tests/tui.sh` cannot reach it — tmux will not hand you a 0x0 pane — so the whole suite passes identically with the guard removed. I verified it by hand with a `pty.fork()` harness (main repeats the notice, the branch does not), but nothing in the tree holds it. Testing it would need a pty harness the suite does not currently have. #175 is filed, but it covers the *different* defect (free axis compared across sources), not this guard.
+- **The pinned axis is only ever `COLUMNS` in the tests.** Both new arms pin width. The `LINES` path through `axis_moved()` is untested; I exercised it manually (above) and it is correct, but a regression on the height axis alone would go unnoticed.
+
+Neither blocks the change; both are your call whether to file or add.
+
+### 5. Environment issues
+
+- **The Bash tool's stdout capture broke partway through this pass** (commands executed correctly and took the right wall time, but returned no output and a spurious exit 1). I worked around it by redirecting every command to a file and reading the file, so no check was skipped or guessed — but be aware if you re-run anything yourself.
+- **The session scratchpad is shared and was being written/cleaned by something else during the pass**: files appeared at 12:38-12:41 that I did not create, and my `ctest`/build logs were deleted from disk mid-pass. I read those two suite results live from tool output before they vanished, so the reported 12/12 figures are firsthand, but the logs are no longer on disk for inspection. Re-run reproduces them in about 6 minutes per configuration.
+- The branch carries **no commits**; the entire change is unstaged working-tree modification to five files. Expected at this stage of the workflow, noted so the eventual commit is not assumed to exist.</result>
+<usage><subagent_tokens>111204</subagent_tokens><tool_uses>91</tool_uses><duration_ms>2356231</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a84e24b27b0a84f1b</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a84e24b27b0a84f1b.output</output-file>
+<status>completed</status>
+<summary>Agent "code-review the added arm" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: request changes
+
+Reviewed state: branch `fix/tui-pinned-axis-resize-notice` at `3334136` (no commits ahead of `main`; the whole change is unstaged) — `tui.c` (`axis_moved()` plus the 0x0 guard in `tui_size_changed_since_refusal()`), a comment addition in `sst.c`, `README.md`/`sst.doc` rewording, and three new arms in `tests/tui.sh`. No untracked files, no staged changes, nothing out of scope.
+
+The C, CMake and documentation portions I have no new findings on. The one finding is in the new `tests/tui.sh` arm — specifically its comment, and what that comment leads a reader to believe the arm covers.
+
+### What I verified by running, not by reading
+
+I copied the worktree to a scratch directory outside the repository, configured and built there, and drove the new arm by hand on a private tmux socket. The repository is untouched (`git status` unchanged).
+
+1. **Your arithmetic (question 1) is right in every step.** `env LINES=40` in a 100x30 pane: floor passes, oversize gate refuses, and the game prints, verbatim —
+   ```
+   Terminal is 100x30 but LINES/COLUMNS make it 100x40.
+   Unset LINES, rerun sst -t -- classic for now.
+   ```
+   so `refusedlines=40 refusedcols=100 refusedtermlines=30 refusedtermcols=100`, `smallwindow` false, `blames()` names LINES alone. After growing to 100x35 and answering `y`, the retry prints `Terminal is 100x35 but LINES/COLUMNS make it 100x40.` and a second `Unset LINES, rerun sst -t -- classic for now.`, both before `Would you like a regular, tournament, or frozen game?`. Both asserted literals are producible and unique to the retry; the arm is not vacuous, and the prompt sequencing it assumes (`quit` → score question → `n` → play again → `y`) is what the game actually does.
+
+2. **Question 2: no.** I built the transposition the comment names — `axis_moved("LINES", ws.ws_row, refusedcols, refusedtermcols)` — and ran the new arm against it. Both asserted strings printed and the advice count came back 2. The arm passes under the mutation it says it catches. The reason is structural: `axis_moved()` only gates *whether* the notice prints; every string the arm asserts comes from `refusal_notice()`/`blames()`, which read the statics directly. And at this scenario's numbers (now 35/100 against 40/100/30/100) every `!=` in play answers true, so the LINES site reports "moved" whichever pair it is handed.
+
+3. **The arm the comment dismisses is the one that catches it.** Under the same mutation I ran the *pinned unchanged* arm (COLUMNS=190, 100x30, no resize): `LINES/COLUMNS make it` appeared twice, so `-ne 1` fails. Its LINES call runs on the free branch and compares 30 against a `refusedcols` of 190. So the `verifier` finding that prompted this arm — "transposing one pair at the LINES site would leave every COLUMNS arm in the file passing" — was itself wrong; that gap was already closed by an arm approved in an earlier round.
+
+### Findings
+
+**should-fix — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh:3605-3622`: the new arm's comment states three things the code does not do, one of them disproved by running it.**
+
+- Line 3606: *"Both arms around this one pin the width, so they run axis_moved()'s COLUMNS call and never its LINES one."* — false as written. Both call sites execute on every `tui_size_changed_since_refusal()`. In the arm above, `axis_moved("LINES", 30, 30, 30)` runs and returns FALSE. What those arms never reach is the *pinned branch* through the LINES call.
+- Lines 3610-3611: *"Transpose one pair at the LINES site and every COLUMNS arm in this file still passes."* — false; the pinned-unchanged arm below fails, measured.
+- Lines 3620-3622: *"a transposition that read the width's statics here would not produce this line."* — false for the `axis_moved()` call site the paragraph is about; measured, it produces both lines. (It would be true if "here" meant `blames("LINES", ...)`, but that is untouched code and is not what the preceding paragraph set up. The ambiguity is itself worth removing.)
+
+Failure scenario: this is the comment a future maintainer consults before deleting or narrowing the arm, and it is also the record that the `verifier`'s coverage finding was answered. As it stands the record says a gap was closed that was not closed by this arm, and a reader who trusts it will believe a swapped-statics mutation at the LINES site is guarded here when it is guarded three arms further down.
+
+Suggested fix — keep the arm (it earns its place: it is the only coverage of a pinned *height* surviving to the retry, it reaches `axis_moved()`'s pinned branch through the LINES call, and it had a genuine failing first run against `main`), and rewrite the justification to what it actually proves. Something on these lines:
+
+&gt; Both arms around this one pin the width, so `axis_moved()`'s *pinned* branch is only ever reached through its COLUMNS call — the LINES call runs there too, but only on its free branch. This arm is the only one that reaches the pinned branch through the LINES call, which is what a build that skips a pinned axis fails; measured against `main`'s `tui.c` on a copy outside the repository, this arm's size-report check failed there.
+&gt;
+&gt; It does not distinguish *which* statics that call is handed: at these numbers every comparison in play answers "moved", so the notice prints whichever pair it reads — measured with `refusedcols`/`refusedtermcols` substituted at the LINES site, this arm passed unchanged. A swapped pair is caught by the "pinned axis nobody touched" arm below, whose LINES call compares this pane's 30 rows against a `refusedcols` of 190 and would print a second notice.
+
+and drop the last clause of the "Asserted by..." paragraph (lines 3620-3622), keeping the true part: the number is new, and LINES is blamed alone because `blames()` leaves a COLUMNS of 100 in a 100-column window unnamed.
+
+**should-fix (record, not code) — the `verifier` finding this arm answers was mistaken, and the answer should say so.** Per AGENTS.md's "Answering a finding", the resolution has to be accurate in the commit/PR body: the coverage gap named ("every COLUMNS arm still passes") did not exist, the arm added in response does not close it, and what it does add is first coverage of a pinned-height refusal at the retry boundary. Saying only "added an arm for the LINES call site" would put a false claim on the permanent record.
+
+**nit — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh:3657-3660`: the failing-first-run note is less precise than its sibling's.** The COLUMNS arm at 3556-3567 records which check failed and that the advice count never ran (the `elif` chain stops at the first failure). Your own report says exactly two checks failed across the whole file, so the same is true here. One clause — "the size-report check; the advice count after it never ran, the chain stopping there, and it would have failed too, there being no second notice at all" — brings it to parity.
+
+**note — no `ui-review` claim was made for this state.** This round's delta is test-only and cannot reach the player, so no rerun is owed for it. But the diff as a whole plainly reaches the player: `tui.c` makes the game print a notice in a case where it previously printed nothing, and `sst.doc`/`README.md` reword what the player is told. Your invocation says nothing about whether `ui-review` ever ran on that state or what it exercised. Before committing, state it — the pass's verdict and what it says it exercised — or say it was skipped and why. I am not treating this as a blocker because the earlier rounds covered that state and one of them approved it, but the question is unanswered in what I was given rather than answered.
+
+### What I could not review
+
+- Wall-clock: the file now runs a third game cycle against `tui`'s `TIMEOUT 300` (`CMakeLists.txt:101`). I deliberately did not run the full `tests/tui.sh` while the `verifier` was running it concurrently — deferring to that pass, as you planned.
+- I did not re-run the rest of the battery (`ci-debug`/`ci-release`, golden, tournament); that is the `verifier`'s scope and the C files are unchanged since its last pass.</result>
+<usage><subagent_tokens>87467</subagent_tokens><tool_uses>39</tool_uses><duration_ms>550005</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ad850b8b0c534026e</task-id>
+<tool-use-id>toolu_01T9ya8AnfNVubeeEMtTtDnN</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/ad850b8b0c534026e.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier on the added arm" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: pass
+
+No failures, no flakes. Every check I ran on this state was green in both configurations.
+
+---
+
+## 1. `tests/tui.sh` wall clock and the `TIMEOUT 300` headroom
+
+**Local, this machine** (x86 Linux, GCC 15.2, serial ctest):
+
+| what | Debug | Release |
+| --- | --- | --- |
+| branch `tests/tui.sh` (current bytes) | **180.60 / 180.52 / 180.59 / 180.52 s** | **172.22 / 172.76 s** |
+| branch with the pinned-height arm cut out | 177.60 s | — |
+| `main`'s `tests/tui.sh` | 171.28 s | — |
+
+So the new arm costs **~2.9 s**; all three pinned arms together cost ~9.3 s. Run-to-run spread is ±0.6 s — this test is not noisy here.
+
+**CI actuals**, pulled from the ctest output of GitHub run `32049701959` (the `main` merge of #173, i.e. `tests/tui.sh` with *none* of the three pinned arms):
+
+| leg | `tui` |
+| --- | --- |
+| ubuntu-latest ci-debug | 155.50 s |
+| ubuntu-latest ci-release | 146.83 s |
+| **macos-latest ci-debug** | **189.74 s** |
+| macos-latest ci-release | 173.70 s |
+
+Scaling the slowest leg by the local `main`→branch ratio (189.74 / 171.28 = 1.108, applied to 180.5 s) projects the branch at **≈ 200 s on macos-latest ci-debug**, against a 300 s budget: **~100 s slack, 1.50x margin.** On `main` today that leg is 189.74 s — 110 s slack, 1.58x.
+
+**My read, plainly:** this is not tight, and the branch is not what makes it snug. The worst CI leg was already at 63% of the budget before you touched the file; the three arms move it to ~67%, and the height arm alone accounts for ~1.5 points of that. I would not drop the arm over 3 seconds.
+
+The one thing worth weighing is what the budget is *for*. `/home/scottdensmore/Developer/scottdensmore/super-star-trek/CMakeLists.txt:93-96` says the timeout is generous so that "a broadly broken TUI spends its time timing out one poll at a time" and still reaches the end to name each failure. At ~200 s on the slowest leg, the slack buys roughly **twelve** additional 8-second `wait_for` timeouts before ctest kills the run and you get "timeout" instead of a failure list. That is the number I would make the decision on, and if it looks thin the answer is raising `TIMEOUT`, not deleting coverage.
+
+Related, and pre-existing rather than yours: that same comment says "the ~11s it takes to pass". It is 155-190 s on CI. Already filed as **#101** — but #101's own figure ("about a minute") is now stale too, so it is worth a comment carrying these numbers.
+
+---
+
+## 2. Can the new arm go vacuous, and does its comment claim anything untrue?
+
+**Not vacuous — it is the only arm in the file that catches its target.** Measured, on a copy of the tree outside the repository (`cmake --preset debug` configured *inside* the copy; `CMAKE_HOME_DIRECTORY` confirmed to point at the copy):
+
+| mutation at `tui.c:1180` | what failed |
+| --- | --- |
+| LINES site loses its pinned handling (`!pinned("LINES") &amp;&amp; axis_moved(...)`) | **`pinned height` only** |
+| LINES site reads the width's statics (`refusedcols, refusedtermcols`) | `pinned unchanged` and `unchanged` — **`pinned height` passed** |
+| curses/terminal swapped *within* the LINES pair | **nothing failed; whole file green** |
+| pinned LINES always answers moved (`pinned("LINES") \|\|`) | **nothing failed; whole file green** |
+
+**On the comment: the file changed under me mid-run.** I verified `tests/tui.sh` at its 13:12 mtime, and it was rewritten at 13:33 while my mutation runs were going. The 13:12 text made three claims I had already disproved — "Transpose one pair at the LINES site and every COLUMNS arm in this file still passes", "they run axis_moved()'s COLUMNS call and never its LINES one", and "a transposition that read the width's statics here would not produce this line". Row 2 of the table above is exactly that mutation: the line *was* produced, this arm *did* pass, and two COLUMNS arms failed.
+
+**The 13:33 text is correct on every claim I can check**, and it matches my measurements sentence for sentence:
+
+- "axis_moved()'s pinned branch is only ever reached through its COLUMNS call" in the neighbouring arms — true; they export `COLUMNS=190` only, so `pinned("LINES")` is FALSE there.
+- "the one other arm that pins the height — `env size`, LINES=20 COLUMNS=70 — never resizes, so its pinned LINES call only ever answers FALSE" — true; I read that arm at `tests/tui.sh:2902` and the four `fallback` pin cases never reach a second game at all.
+- "This is the only arm where that branch answers TRUE" — true, and row 1 of my table is the independent evidence.
+- "with refusedcols and refusedtermcols substituted at the LINES site, this arm passes unchanged … that same mutation fails `pinned unchanged` below and the older `unchanged` arm at the end of the file, and nothing else in this file" — **exactly** what row 2 produced, no more and no less.
+
+Other claims I checked against the source rather than the comment: `LINES=40` in 100x30 clears the floor and is refused only by the oversize gate (`tui.c:1342` and `tui.c:1368`); `blames("COLUMNS", 100, 100, 72)` returns FALSE, so the advice names LINES alone (`tui.c:1218`). Both confirmed by hand in tmux — see §5.
+
+I have no correction to offer on the current comment.
+
+---
+
+## 3. Missing coverage
+
+**(a) No silence arm for a pinned *height*.** Measured, not inferred: a build where the LINES pinned branch always answers "moved" passes the whole of `tests/tui.sh`. Driven by hand, that build shows a player with `LINES=20 COLUMNS=70` in a 100x30 pane the notice **twice** — once at startup and again at the second game, having changed nothing:
+
+```
+ 1: Terminal is 100x30 but LINES/COLUMNS make it 70x20.
+ 2: Unset LINES and COLUMNS, rerun sst -t -- classic for now.
+43: Terminal is 100x30 but LINES/COLUMNS make it 70x20.
+44: Unset LINES and COLUMNS, rerun sst -t -- classic for now.
+```
+
+That is the #169-precursor defect — the notice printing every game to a player who did nothing — on the height axis. `pinned unchanged` holds that contract for COLUMNS; nothing holds it for LINES. The `env size` arm sits in exactly that scenario and does not notice, which is the substance of **#176**. The mirror arm is cheap: same `env LINES=40` in 100x30, quit / n / y with no resize, and assert `scrollback_count 'LINES/COLUMNS make it'` is `-ne 1`. Cost, by the measurement above, about 3 seconds.
+
+**(b) Swapping curses and terminal *within* the LINES pair survives the whole file.** Weaker than (a), and I will say why rather than overstate it: for a free axis `refusedlines` and `refusedtermlines` hold the same number whenever the refusal's ioctl answered, so the swap is a no-op there, and for a pinned axis it only diverges when the window ends up at exactly the pinned number. A narrow gap, worth knowing about, not worth an arm of its own.
+
+Confirmed correct by hand and *not* a defect: the game is silent today for a pinned height nobody touched (one notice, not two).
+
+---
+
+## 4. Environment issues
+
+- **The tree changed during verification.** `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh` was edited at 13:33, after my two full `ctest` suites had run against the 13:12 bytes. The delta is comment-only — every changed line begins with `#` — so nothing executable moved, but I re-ran `tui` in **both** configurations against the current bytes to close it (180.52 s Debug, 172.76 s Release, both green). The state I am reporting on is `tests/tui.sh` sha256 `aebb7ed9…`, `tui.c` `2a12b46a…`, `sst.c` `7c927bdf…`, `README.md` `62288b4b…`, `sst.doc` `b0f37233…`, all still present and unchanged at the end of the run.
+- `analyze` **Passed** (30.33 s Debug, 33.10 s Release) — it ran, it did not skip, so the canary in `tests/analyze.sh` found a compiler whose `-fanalyzer` reports. Its reach is uneven, though: **#171** records that gcc gives up on `sst.c` and `battle.c`, so this is not a tree-wide clean bill.
+- No `cppcheck`, `clang-tidy` or `scan-build` on this machine. Not a gap — `analyze` is what step 2 rests on — but no bonus pass to report either.
+- I never touched the default tmux socket. All hand-driving used `-L verif-opus -f /dev/null`, killed on that socket alone, and its socket file removed.
+
+---
+
+## 5. What ran
+
+All from `/home/scottdensmore/Developer/scottdensmore/super-star-trek`, scoped as a full pass despite the change being one shell file — the working tree still carries the uncommitted `tui.c`/`sst.c`/`sst.doc`/`README.md` changes, and `tui.sh` is not a file whose effect can be judged without the binary it drives.
+
+**Builds** (clean rebuilds, `--clean-first`, zero diagnostics of any kind in either log):
+```sh
+cmake --preset ci-debug   &amp;&amp; cmake --build --preset ci-debug   --clean-first
+cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release --clean-first
+```
+
+**Tests** — full suite, both configurations, 12/12 passed each:
+```sh
+ctest --preset ci-debug     # 356.57 s total
+ctest --preset ci-release   # 351.23 s total
+ctest --preset ci-debug   -R '^tui$'   # re-run on the 13:33 bytes
+ctest --preset ci-release -R '^tui$'   # re-run on the 13:33 bytes
+```
+
+**Journeys**, against `./build/ci-debug/sst`:
+- plain-mode piped journey `regular / short / novice / xyz / srscan / quit / n` — clean srscan, clean exit 0, no stray output;
+- by hand in tmux at 100x30 with `env LINES=40`: startup refusal `Terminal is 100x30 but LINES/COLUMNS make it 100x40.` + `Unset LINES, …`, then quit / n / grow to 100x35 / y → second notice `Terminal is 100x35 but LINES/COLUMNS make it 100x40.` and a second `Unset LINES, …`, LINES blamed alone;
+- the same without the resize → exactly one notice, correctly silent;
+- 80x24 and 72x24 are covered by `tests/tui.sh`'s opening loop, green in both configurations.
+
+**Mutation work** (all on `…/scratchpad/verif/mut`, a copy outside the repository, configured from inside it; the repository's own tree and `build/debug` were never touched): the four mutations tabulated in §2, plus timing runs of `main`'s `tests/tui.sh` and of a variant with the pinned-height arm excised.</result>
+<usage><subagent_tokens>93771</subagent_tokens><tool_uses>61</tool_uses><duration_ms>2955971</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>aa5d0aaa8c10fc0c7</task-id>
+<tool-use-id>toolu_01VNF3dKS3oyC8hNRYrbSAdb</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/aa5d0aaa8c10fc0c7.output</output-file>
+<status>completed</status>
+<summary>Agent "final code-review" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>All three mutations are measured. Here is the review.
+
+## Verdict: request changes
+
+Reviewed state: worktree at `HEAD = 3334136` on `fix/tui-pinned-axis-resize-notice` (the branch carries no commits; everything is unstaged). Covers `README.md`, `sst.c`, `sst.doc`, `tui.c`, `tests/tui.sh`; no staged or untracked files.
+
+The C change (`axis_moved()`, the `0x0`-winsize guard, the `sst.c` comment) I re-read and re-derived and it is correct; a clean `ci-debug` (`-Werror`) build of the current `tui.c` in a scratch copy produced no warnings. The two new comments are the problem, and in exactly the way you asked me to look: **inserting the fourth arm in the middle of the file falsified five statements in the comments around it, three of them measurably.** I ran three mutations on copies outside the repository (`cmake --preset debug`, `tests/tui.sh build/debug/sst Debug` from inside each copy).
+
+| mutation | failures reported |
+| --- | --- |
+| A: `axis_moved("LINES", ws.ws_row, refusedcols, refusedtermcols)` (transposed pair at the LINES site) | **3** — `pinned height unchanged`, `pinned unchanged`, `unchanged` |
+| B: `pinned("LINES") \|\| axis_moved("LINES", …)` at the call site | **1** — `pinned height unchanged` |
+| C: `axis_moved()`'s pinned branch replaced with `return TRUE;` | **2** — `pinned height unchanged`, `pinned unchanged` |
+
+### Findings
+
+**1. should-fix — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh:3618-3623`.** "with refusedcols and refusedtermcols substituted at the LINES site … that same mutation fails `pinned unchanged` below and the older `unchanged` arm at the end of the file, **and nothing else in this file**." Measured (mutation A): it fails three arms, the third being the new `pinned height unchanged` — its pinned LINES call reads `refusedtermcols` = 100 against `ws_row` = 30 and answers "moved". This is the rewritten comment's load-bearing sentence, and the next reader who reruns the transposition to check it will get a different answer than the file promises. Fix: add the new arm to that list (three arms, and it is now the pinned branch as well as the free one that the transposition trips).
+
+**2. should-fix — `tests/tui.sh:3771-3777`.** "Proved by making `axis_moved()` in tui.c answer TRUE for every pinned axis … **this check alone failed. The arm above passes under that break** — it asks for a notice and gets one." Measured (mutation C, which is literally that edit): two checks fail, and "the arm above" is now `pinned height unchanged`, which fails rather than passes — the sentence's referent moved when the fourth arm was inserted between them. Fix: point the "asks for a notice and gets one" clause at the `pinned height` resize arm by name, and correct the count. While doing so, note that this note and the fourth arm's note at `tests/tui.sh:3716-3718` describe two different mutations in near-identical words ("answer TRUE for every pinned axis" vs "the pinned LINES branch always answers moved") which I measured to catch different sets (2 arms vs 1); naming them distinguishably — call-site prefix vs branch replacement — is what makes either reproducible.
+
+**3. should-fix — `tests/tui.sh:3606-3610`.** "**Both arms around this one pin the width**, so `axis_moved()`'s pinned branch is only ever reached through its COLUMNS call … **the one other arm that pins the height** — `env size`, LINES=20 COLUMNS=70 — never resizes." The arm immediately below is now `env LINES=40`, so both halves are false: the arm after pins the height, and there are now two other height-pinning arms that reach the call (`env size` and `pinned height unchanged`), plus `fallback "oversize LINES"` at `tests/tui.sh:2849` which pins it but never reaches the play-again path. The conclusion the paragraph is building to — "This is the only arm where that branch answers TRUE" — survives and I confirmed it; only the enumeration under it is stale. Fix: say "the two other arms that reach this call with the height pinned … neither resizes, so their pinned LINES call only ever answers FALSE".
+
+**4. should-fix — `tests/tui.sh:3744-3748`.** "It is also, for now, **the only arm that holds that contract for a pinned refusal at all**." The arm inserted directly above holds exactly that contract for the height axis. Fix: "the only arm that holds it for a pinned *width*", or drop the sentence and keep the `#176` observation about `env size`, which I verified is still true.
+
+**5. nit — `tests/tui.sh:3731-3736`.** "The mirror of **the case above**, and the half it cannot prove on its own: a comparison that simply answered 'moved' for every pinned axis would satisfy it." "The case above" is now `pinned height unchanged`, which that comparison does not satisfy — mutation C fails it. The intended referent is the `pinned axis` resize arm two up. Fix: name the arm rather than positioning it.
+
+### On your two direct questions
+
+- **"This arm does not fix that one; it covers the axis"** (`tests/tui.sh:3689-3692`) is accurate. I re-derived #176 independently: at 100x30 with `LINES=20 COLUMNS=70` the refusal records `refusedterm{lines,cols}` = 30/100, so `smallwindow` in `refusal_notice()` (`sst.c:512-513`) is FALSE and the `staying classic` branch at `sst.c:521` is unreachable there — mutation B leaves `env size` green, which is that dead guard demonstrated rather than argued. The new arm covers the pinned-height oversize refusal and leaves `env size`'s own guard broken, which is what the comment says.
+- **The fourth arm's proof note** (`tests/tui.sh:3712-3718`) is precise. Mutation B produced exactly one failure across the whole file and it is that arm's `scrollback_count` check; there is no "others did not run" to explain, since it is the last check in its `elif` chain. The only improvement is the mutation-naming point folded into finding 2. Its opening claim — that a build answering "moved" for a pinned LINES passes the whole file without this arm — follows from the same run, the single failure being inside the new arm.
+
+### Process
+
+Your record is consistent with what I can see: the only player-facing files in the worktree diff are `sst.c` (comment-only — I checked the hunk adds no statements), `sst.doc` and `README.md` prose, all of which `ui-review` round 3 saw and which I reviewed in rounds 4 and 5; the two deltas since are a comment and a test arm, neither of which the game can print. No further `ui-review` is owed on this state. Findings 1-5 are all comment text in `tests/tui.sh`, so fixing them leaves that unchanged.
+
+### Not reviewed
+
+I did not rerun the rest of the battery (`ctest`, golden, tournament) or the `ci-release` configuration — that is the `verifier`'s scope, and it passed on this state minus the shell-only fourth arm. My three runs were Debug-only and, for A and B, run in parallel; the failure sets were stable and mutation-specific, so I do not think load affected them, but they are single runs each.</result>
+<usage><subagent_tokens>86351</subagent_tokens><tool_uses>35</tool_uses><duration_ms>680388</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a9d0716dded28d3b0</task-id>
+<tool-use-id>toolu_0194yt29QZST71JajT5rtKSA</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a9d0716dded28d3b0.output</output-file>
+<status>failed</status>
+<summary>Agent "verifier final arm" failed: Agent terminated early due to an API error: API Error: Server error mid-response. The response above may be incomplete.</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Let me confirm the counter actually discriminates by driving the *moved* case by hand and counting.</result>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a68b034584962ae5a</task-id>
+<tool-use-id>toolu_01Rbm62fYK5y6NYzVPNuSauk</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a68b034584962ae5a.output</output-file>
+<status>completed</status>
+<summary>Agent "code-review after comment fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: request changes
+
+Reviewed the worktree at `HEAD = 3334136` on `fix/tui-pinned-axis-resize-notice` (branch has no commits of its own; all five files are unstaged, no untracked files): `tui.c` (+`axis_moved()`, 0x0-winsize guard in `tui_size_changed_since_refusal()`), a comment-only addition in `sst.c`, reworded paragraphs in `README.md`/`sst.doc`, and four new arms plus `scrollback_count()` in `tests/tui.sh`.
+
+**The C is correct and the four arms' own proof claims all hold — I measured every one of them rather than reading them.** Seven builds, each from its own copy outside the repository (verified `CMAKE_HOME_DIRECTORY` per copy, seven distinct binaries), each run as `cd &lt;copy&gt; &amp;&amp; tests/tui.sh build/debug/sst Debug`:
+
+| build | failures |
+| --- | --- |
+| branch, unmutated | none — `tui OK`, 183.4 s |
+| transposed pair (`refusedcols`/`refusedtermcols` at the LINES site) | `pinned height unchanged`, `pinned unchanged`, `unchanged` — exactly the three named at tui.sh:3624-3626, and `pinned height` passes as claimed at 3620-3622 |
+| pinned branch → `return TRUE` | `pinned height unchanged`, `pinned unchanged`; both resize arms pass — as claimed at 3785-3789 |
+| `pinned("LINES") \|\|` at the LINES site | `pinned height unchanged` alone |
+| main's `tui.c` | `pinned axis` and `pinned height`, one FAIL each, both the size-report check; I checked the dumps and each scrollback holds exactly one copy of the report and one of the advice, so the advice count "would have failed too" (3585-3589, 3665-3669) is right |
+
+Also confirmed by measurement: `env size`'s `staying classic` guard is genuinely vacuous (#176) — under the always-moved build it prints a second notice and that arm still passes; `blames()`' floor half (`curses_v &lt; floor_v &amp;&amp; curses_v != term_v`) still fails `pin equal to the window` alone, so tui.sh:2866-2869 survives the insertion. Wall clock: 183.4 s branch vs 172.1 s on main HEAD, unloaded, against `TIMEOUT 300` — the four arms cost ~11 s.
+
+The findings below are all comment claims; none is a code defect.
+
+### Findings
+
+**should-fix — `tests/tui.sh:2839-2841` and `tests/tui.sh:2846-2848`: the new `pinned height` arm falsifies two claims in the `fallback "oversize LINES"` block, and this branch is what falsified them.**
+"What this reaches and nothing else does is the LINES-only return in `tui_refusal_blame()`: every other single-blame case here is a COLUMNS fault" — `pinned height` and `pinned height unchanged` both run `LINES=40` in a 100x30 pane, so both reach that return, and `pinned height` asserts its output (`Unset LINES, rerun sst -t -- classic for now.`). "Nothing else in the file noticed" is false the same way. Measured both sides: forcing `int l = FALSE;` in `tui_refusal_blame()` on a copy of **main** fails exactly `oversize LINES` and `env size`, as the comment says; the same mutation on **this worktree** fails `oversize LINES`, `env size` *and* `pinned height`. Failure scenario: someone re-runs the documented mutation to check the arm still bites, gets a third failure the comment says cannot happen, and has to redo the work to find out which claim is stale. Fix: amend both sentences to name the new arms (or scope them, e.g. "of the arms that existed when this was written").
+
+**should-fix — `tests/tui.sh:3688-3689`: "a build whose pinned LINES branch always answers 'moved' passes the whole of this file" is false of the file being committed.**
+Measured: that build fails `pinned height unchanged` — the very arm this comment introduces — and nothing else. The arm's own inline note at 3724-3726 gets it right ("where before this arm existed the same build passed the whole file"), and the file's convention elsewhere (3111, "built with the retry gone and the restore kept, the whole file passes") is that such a sentence is about the current file, so the header reads as a present-tense claim. Fix: "passed the whole of this file before this arm". While there, 3686-3688 is wrapped raggedly — `# theoretical:` sits alone on a line with the sentence continuing on the next — which looks like a reflow leftover from this round and does not match the fill of the surrounding comments.
+
+**should-fix — `tests/tui.sh:3691`: "surviving on the axis every other silence arm here leaves free" is contradicted by the next paragraph.**
+`env size` exports `LINES=20`, so it does not leave the height free — which is exactly why 3693 can say it "is already in that scenario". Read literally the two sentences cannot both be true. The underlying point (no other arm catches the bug) is correct and I measured it. Fix: say what is true of the axis, e.g. "surviving where the only other arm that pins the height cannot fail (#176)".
+
+**should-fix — `tests/tui.sh:3720-3721` and `3790`: calling the mutation "the pinned skip" names the opposite behavior from the one that was run.**
+The code fragment is unambiguous (`pinned("LINES") ||`, i.e. a pinned height always reports moved — pinned-always-moved narrowed to one axis), but "skip" is this file's and `tui.c`'s established word for main's `!pinned(...) &amp;&amp;`, which suppresses the notice: tui.sh:3530 "used to be skipped outright", tui.c:1121 "#165 skipped a pinned axis to stop". A reader who reconstructs the break from the name writes `!pinned("LINES") &amp;&amp;` and gets a different result — measured against main's `tui.c`, that build fails `pinned axis` and `pinned height`, not `pinned height unchanged` — so under the natural reading of the name, "that failed this check alone" is false. Since this round's whole purpose was making the three breaks distinguishable by name, this is the one name that misdirects. Fix: rename to something like "pinned-LINES-always-moved", and adjust 3790-3792 to match.
+
+**nits — two pre-existing false claims this branch adds counterexamples to; file, do not fix here (AGENTS.md step 9).**
+- `tests/tui.sh:2955-2958` ("That alternative passes every other check in this file") was already false on main: I reconstructed the narrower fix (pinned guard on `tui_init()`'s first call only) and ran it on main HEAD — it fails `env size` **and** `oversize retry`. On this worktree it fails four arms (`pinned axis` and `pinned height` as well). The branch did not falsify it, so it belongs in an issue, not in this diff.
+- `tests/tui.sh:2382` ("nothing else here runs wider than 82 columns") was already false on main, which has several 100-column arms; the new `pinned axis` arm widens to 150. The conclusion it supports (deleting the `mvwinnstr` guard leaves the rest green) still holds, since 150 is far under 511.
+
+### Process
+
+The `ui-review` claim is consistent with the diff as far as I can check it: no game string changed in this diff at all — `refusal_notice()` is untouched — so the only player-facing delta is the notice now printing for a pinned-axis resize, plus the `README.md`/`sst.doc` rewordings, and both were in the state rounds 4-6 reviewed. I cannot independently verify what the round-3 `ui-review` state was, so that part rests on your account. None of my findings above changes what the game shows, so fixing them owes no new `ui-review` round.
+
+### Not reviewed
+
+- The `verifier` battery (`ci-debug`/`ci-release`, full `ctest`) — running concurrently on your side; I built and ran only the `debug` preset and only `tests/tui.sh`.
+- The round-3 `ui-review` state, as above.
+- I ran the branch's `tests/tui.sh` seven times but no other suite, so golden/tournament/plain-mode journeys are the verifier's.
+
+Files: `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh`, `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c`, `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.c`, `/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md`, `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.doc`.</result>
+<usage><subagent_tokens>113093</subagent_tokens><tool_uses>44</tool_uses><duration_ms>1696870</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a6f11e924b93dfd80</task-id>
+<tool-use-id>toolu_01WV9dNWf5akdWDQXm6DoZWD</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a6f11e924b93dfd80.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier rerun after failure" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Pass** on every mechanical check — both `ci-*` builds clean under `-Werror`, `ctest` 12/12 in both configurations, all journeys clean. **One comment claim is false as written** (item 2), and **one half of the diff has no covering test**. Neither is a test failure; both are actionable before commit.
+
+---
+
+## 1. Wall clock for `tests/tui.sh`
+
+| Run | Wall |
+|---|---|
+| `ctest --preset ci-debug`, test `tui` | **184.27 s** |
+| `tests/tui.sh build/ci-debug/sst Debug` (direct repeat) | **183.13 s** |
+| `ctest --preset ci-release`, test `tui` | **174.47 s** |
+| pure `main` (`git archive main`, own copy, Debug) | **171.46 s** |
+
+So the four pinned arms cost **~12 s total, ~3 s each** (171.46 → 183.13 in Debug). Your 184 s reproduces exactly.
+
+Against `TIMEOUT 300`: a leg would have to run **63 % slower than this machine** to trip it in Debug. On your ~200 s projection for macos-latest ci-debug that is ~100 s of margin, ~1.5x. **Not tight.** It is worth saying plainly what it would take: ~38 more arms at 3 s, or a CI leg 1.6x slower than here. I cannot verify the macOS number — this box is Linux only, so the projection stays yours.
+
+Full suites: ci-debug 364.03 s total, ci-release 350.60 s.
+
+## 2. Comment claims — checked by running, not reading
+
+Every mutation ran on its own copy of the working tree outside the repository (no `build/` copied; `CMAKE_HOME_DIRECTORY` verified to point at each copy), driven from inside the copy as `tests/tui.sh build/debug/sst Debug`.
+
+**Your four claims all reproduce exactly:**
+
+| Break | Arms failed | Claim |
+|---|---|---|
+| transposed pair (`refusedcols`/`refusedtermcols` at the LINES site) | `pinned height unchanged`, `pinned unchanged`, `unchanged` (3) | ✅ |
+| pinned skip (`pinned("LINES") \|\|` prefix) | `pinned height unchanged` (1) | ✅ |
+| pinned-always-moved (`return TRUE` for the pinned branch) | `pinned height unchanged`, `pinned unchanged` (2); both resize arms passed | ✅ |
+| `main`'s `tui.c` | `pinned axis: widening the pinned axis got no notice at all`, `pinned height: growing the pinned height got no notice at all` (2) | ✅ — both new resize arms had a genuine failing first run, and it was the size-report check in each, as both inline comments say |
+
+**"Exactly three arms reach the LINES call with the height pinned"** — confirmed by instrumenting the call site on a sixth copy (log written from inside `tui_size_changed_since_refusal`, unmutated logic, 0 failures). Exactly three pinned-LINES reaches, in this order:
+
+```
+reach pinnedLINES=1 LINES=[20] ws=100x30 refusedlines=20 refusedtermlines=30   &lt;- env size
+reach pinnedLINES=1 LINES=[40] ws=100x35 refusedlines=40 refusedtermlines=30   &lt;- pinned height  (only TRUE)
+reach pinnedLINES=1 LINES=[40] ws=100x30 refusedlines=40 refusedtermlines=30   &lt;- pinned height unchanged
+```
+
+`fallback "oversize LINES"` produced **no entry at all** — it never calls the function. `one pinned` logged `LINES=[] ... pinnedLINES=0`, so the empty pin is not a pin. `pinned axis` and `pinned unchanged` both logged `pinnedLINES=0`, confirming their LINES call runs on the free branch.
+
+One correction to your message, not to the code: `fallback()` stops at the **length** question (`'Short, Medium, or Long'`, `tests/tui.sh:2799`) after sending `regular`, not the difficulty question. The conclusion is unaffected.
+
+### Finding 1 — a claim measurement contradicts (`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh:3686-3690`)
+
+&gt; `# measured, a build whose pinned LINES branch always answers "moved"`
+&gt; `# passes the whole of this file, and shows a player who changed nothing`
+&gt; `# the notice a second time.`
+
+I built exactly that — `axis_moved()`'s pinned branch returning `TRUE` for LINES only — and ran the current file. It **fails**, on this very arm:
+
+```
+FAIL: pinned height unchanged: the terminal did not move and was told about it anyway
+1 check(s) failed.
+```
+
+Deterministic: identical result twice, once 5-way parallel and once alone. It does not pass the whole of this file; the arm the comment introduces is what stops it. The true statement is the one the inline comment 35 lines below already makes for the neighbouring break — `tests/tui.sh:3724-3726`, *"where before this arm existed the same build passed the whole file"*. The header sentence is missing that qualifier, which is the same class of defect as the five positional statements the last round corrected.
+
+### Finding 2 — minor, same paragraph (`tests/tui.sh:3690-3691`)
+
+&gt; `# That is the defect #165 was for, surviving on the axis every other silence arm here leaves free.`
+
+The `env size` arm is a silence arm (`tests/tui.sh:2963-2966`, "a player who changed nothing was told the terminal moved") and it pins `LINES=20` — it does not leave that axis free. The very next sentence concedes this ("The 'env size' arm is already in that scenario"). "Every other silence arm *that can fail*" would be true.
+
+### Finding 3 — fragility, not falsehood (`tests/tui.sh:3529`)
+
+&gt; `# The arm above resizes the free axis.`
+
+True today: the arm above is `oversize retry`, which resizes 100x20 → 100x30 with `COLUMNS` pinned, so the resize is on the free height axis. But it is still positional, in the one file where inserting an arm has already falsified five statements. Naming it ("the `oversize retry` arm") would make it insert-proof.
+
+### Everything else in the four new arms and in `tui.c` checked out
+
+Verified against the code and the runs, not from memory: the blame is `COLUMNS` at 190-in-100 and `LINES` at 40-in-30 (`blames()` leaves a COLUMNS of 100 in a 100-column window unnamed — `tui.c:1218-1221`); the height never moves in `pinned axis` (`refusedlines=30`, `ws_row=30` in the log) and the width never moves in `pinned height`; the asserted size strings are ones the startup notice cannot carry; `env size` and `pinned height unchanged` never resize; `pinned height` is the only arm whose pinned LINES call answers TRUE; the transposed pair does leave `pinned height` passing (run A); `-ne 1` rather than `-gt` in both silence counts; `#176`'s substance is real (`refusal_notice()` at `sst.c:512-524` — `staying classic` needs `smallwindow`, which a 100x30 pane with `refusedterm=30x100` can never be); the `tui.c` guard is textually `tui_init()`'s (`tui.c:1337-1338`); `blames()` guards the statics with the same `!= 0` (`tui.c:1219`); the oversize gate is `if (haveterm &amp;&amp; ...)` so `refusedterm==0` can only come from the floor gate; and issues #164/#165/#169/#175/#176 all exist, #176's title matching the claim word for word.
+
+The `tui.c` 0x0 paragraph (`tui.c:1166-1176`) is also true, measured rather than reasoned — see below.
+
+## 3. Missing coverage
+
+**The `ws.ws_row &lt;= 0 || ws.ws_col &lt;= 0` half of the new ioctl guard (`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c:1177-1179`) has no covering test.** With it removed, the whole `tui` suite passes — `0` failures, `tui OK`. Yet the behaviour is real and I reproduced it under a `pty.fork()` pty (winsize 0x0), `LINES=10`, `COLUMNS` unset, `TERM=xterm`, two games:
+
+- `main`'s build: `Grow to 72x24, unset LINES, and rerun sst -t.` printed **twice** (startup, then again at the second game).
+- guard-removed branch build: **twice**.
+- branch build as it stands: **once**.
+
+That also confirms the comment's two specific claims: with `COLUMNS=80` exported as well, `main` drops back to one copy — so it is the free COLUMNS axis driving it, not LINES — and `infocmp -1 xterm` gives `cols#80`, the "80 curses took from terminfo".
+
+Nothing in the suite can reach this: `tui.sh` is the only test with a pty, and tmux always sets a winsize. A ~20-line pty test would cover it. Everything else in the diff is covered — the four arms are proved to fail (runs above) and the `sst.c`/`sst.doc`/`README.md` changes are comment and prose.
+
+## 4. Environment issues
+
+- **macOS unverified.** Linux only here, so the slowest CI leg's timing is a projection, not a measurement.
+- `cppcheck`, `clang-tidy`, `scan-build`: not installed. Bonus only — the `analyze` test **ran and passed** (34.08 s Debug, 30.09 s Release), not SKIPPED, so the analyzer is live and the gate did not fall back.
+- `shellcheck` is installed: `shellcheck -s sh tests/tui.sh` is clean.
+- The branch carries **no commits** — all five files are unstaged working-tree changes on a branch sitting at `main`. Expected pre-commit, noting it so the state is on the record.
+- Mutation runs A–E were 5-way parallel; F ran both parallel and alone with identical output, and no run produced an unexpected failure, so no parallelism artifact was observed. No flakes anywhere in this pass.
+- My tmux work used private sockets `vgate-journey`/`vgate-journey2` (`-f /dev/null -L`), killed and their socket files removed. A stray `sst-tui-3700836` server existed from an earlier session running `build/debug/sst` — **not mine, not touched**; it exited on its own. Scratch subdirectory removed.
+
+## 5. What ran
+
+```sh
+# builds, from scratch (build/ci-debug and build/ci-release deleted first)
+cmake --preset ci-debug   &amp;&amp; cmake --build --preset ci-debug     # 0 warnings
+cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release   # 0 warnings
+# -Werror confirmed in the actual compile line, not just the cache:
+#   -DSCORE -DCAPTURE -DCLOAKING -Wall -Wextra -Wmissing-prototypes -Werror -DDEBUG -g -std=gnu17
+#   -DSCORE -DCAPTURE -DCLOAKING -Wall -Wextra -Wmissing-prototypes -Werror -O3 -DNDEBUG -std=gnu17
+
+ctest --preset ci-debug     # 12/12, 364.03 s
+ctest --preset ci-release   # 12/12, 350.60 s
+tests/tui.sh build/ci-debug/sst Debug   # repeat timing sample, 183.13 s
+
+shellcheck -s sh tests/tui.sh           # clean
+
+# journeys, plain mode, both configurations — start, commands, clean exit 0
+printf 'regular\nshort\nnovice\nxyz\nsrscan\nstatus\nquit\nn\n' | ./build/ci-debug/sst
+printf 'regular\nshort\nnovice\nxyz\nsrscan\nstatus\nquit\nn\n' | ./build/ci-release/sst
+
+# journeys, TUI, private socket, at the two sizes AGENTS.md names
+#   80x24 COLUMNS=190, widened to 100x24  -&gt; notice, "Terminal is 100x24 but LINES/COLUMNS make it 190x24."
+#   72x24 LINES=30,    grown to 72x28     -&gt; notice, "Terminal is 72x28 but LINES/COLUMNS make it 72x30."
+#   72x24 LINES=30,    untouched          -&gt; silence (1 copy)
+#   80x24 COLUMNS=190, untouched          -&gt; silence (1 copy)
+#   100x30 COLUMNS=190, widened to 200x30 -&gt; panels come up (checks the new sst.doc/README sentence,
+#                                            "if you put right what refused you")
+
+# mutation battery, seven copies of the working tree outside the repository
+#   A transposed pair | B pinned skip | C pinned-always-moved | D main's tui.c
+#   E instrumented (call-site log) | F LINES-only always-moved | G 0x0 guard removed
+#   H pure `git archive main` (timing baseline)
+```
+
+No crashes, hangs or garbled output in any journey; the notice quotes the player's real window in every resize case.</result>
+<usage><subagent_tokens>115970</subagent_tokens><tool_uses>60</tool_uses><duration_ms>2687479</duration_ms></usage>
+</task-notification>
