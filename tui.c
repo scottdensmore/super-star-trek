@@ -1192,6 +1192,20 @@ int tui_size_changed_since_refusal(void) {
 	return FALSE;
 }
 
+/* The two ways to be to blame, one function each, because a second
+ * caller needs them apart: tui_refusal_growable() below tells them from
+ * each other, where blames() only has to know that one of them fired.
+ * Named rather than repeated there, so a change to either half cannot
+ * reach one caller and not the other. What each half means, and why
+ * the two are asked differently, is blames()'s comment below. */
+static int oversize(int curses_v, int term_v) {
+	return term_v != 0 && curses_v > term_v;
+}
+
+static int underfloor(const char *name, int curses_v, int floor_v) {
+	return curses_v < floor_v && pinned(name);
+}
+
 /* Whether a pinned dimension is what refused the player, and which.
  *
  * Two ways to be to blame, and they are asked differently. An axis
@@ -1222,10 +1236,10 @@ int tui_size_changed_since_refusal(void) {
  * NULL where no pin is to blame, which is the ordinary too-small
  * terminal.
  *
- * The floor the caller passes is the gate's own, MINROWS or MINCOLS. */
+ * The floor blames() passes is the gate's own, MINROWS or MINCOLS. */
 static int blames(const char *name, int curses_v, int term_v, int floor_v) {
-	if (term_v != 0 && curses_v > term_v) return TRUE;
-	return curses_v < floor_v && pinned(name);
+	return oversize(curses_v, term_v) ||
+	       underfloor(name, curses_v, floor_v);
 }
 
 const char *tui_refusal_blame(void) {
@@ -1236,6 +1250,63 @@ const char *tui_refusal_blame(void) {
 	if (l) return "LINES";
 	if (c) return "COLUMNS";
 	return NULL;
+}
+
+/* Whether growing the window is on its own enough to be accepted, and
+ * the size that would take.
+ *
+ * Every pin tui_refusal_blame() names is one the player can unset. Only
+ * some of them are ones they could instead leave alone and grow the
+ * window past, and the difference is exactly which half of blames()
+ * fired. An axis bigger than the window is taken as soon as the window
+ * catches up with it, which is what both manuals promise -- sst.doc's
+ * "merely bigger than your window is taken as soon as the window
+ * catches up with it" and the same sentence in README.md. An axis under
+ * the floor is refused however large the window gets, since resizing
+ * moves the window and never the pin.
+ *
+ * So FALSE unless at least one axis is oversize and neither is under
+ * the floor. Mixed, the unset is the only advice that works on both
+ * axes: COLUMNS=60 with LINES=40 in a 100x30 window is named on both
+ * counts, and no window is wide enough for a COLUMNS of 60.
+ *
+ * The size is the larger of the two numbers per axis, not the pinned
+ * pair the notice's size report quotes. The pinned pair can be smaller
+ * than the window on the axis that is not at fault -- COLUMNS=80 with
+ * LINES=40 in a 100x30 window reports "make it 80x40", where telling
+ * the player to reach 80x40 asks them to narrow a window that is
+ * already wide enough. Clamped up to the floor as well, so the answer
+ * stands on its own for a caller that has not checked the window is
+ * over it: 70x20 with COLUMNS=75 is refused for height, and 75x20 is
+ * not a window the panels would start on either.
+ *
+ * Neither clamp can fire from the one caller there is today, and no
+ * test can reach them through the game. sst.c asks this only where its
+ * smallwindow is false, which is both terminal axes already at or over
+ * the floor, and every number below is one of those or a pin above one
+ * of those. Kept rather than dropped because the floor belongs to the
+ * answer and not to the question: a caller that asked before checking
+ * its window -- the smallwindow branch above the one that calls this,
+ * were it ever to want a size -- would otherwise be handed 75x20 as a
+ * size the panels would start on. Reported by the verifier on the #174
+ * branch, and left in deliberately rather than by oversight.
+ *
+ * A TRUE from here always has a blame to go with it, oversize being one
+ * of the two ways blames() answers TRUE. */
+int tui_refusal_growable(int *cols, int *rows) {
+	int l = oversize(refusedlines, refusedtermlines);
+	int c = oversize(refusedcols, refusedtermcols);
+	int needrows, needcols;
+
+	if (!l && !c) return FALSE;
+	if (underfloor("LINES", refusedlines, MINROWS) ||
+	    underfloor("COLUMNS", refusedcols, MINCOLS))
+		return FALSE;
+	needrows = l ? refusedlines : refusedtermlines;
+	needcols = c ? refusedcols : refusedtermcols;
+	*rows = needrows < MINROWS ? MINROWS : needrows;
+	*cols = needcols < MINCOLS ? MINCOLS : needcols;
+	return TRUE;
 }
 
 /* Both sizes from the last refusal, curses' and the terminal's, which

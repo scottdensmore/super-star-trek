@@ -1562,16 +1562,21 @@ Modifications I made:
   has changed.
 
   An exported LINES or COLUMNS can refuse you as well, and the game
-  names the one that did: "Unset COLUMNS, rerun sst -t -- classic for
-  now." Curses believes those over the terminal, so the game is
-  measuring what they say. Bigger than your window and the display
-  would run off the edge of it; smaller than 72x24 and it fails the
-  floor however much room the window has. That is how a 100x30 window
-  comes to be refused. A pin under 72x24 is refused however large the
-  window gets, since resizing moves the window and never the pin; one
-  merely bigger than your window is taken as soon as the window
-  catches up with it; and a window itself under 72x24 has to grow
-  regardless, which is when the game asks for both.
+  names the one that did, with what to do about it. Curses believes
+  those over the terminal, so the game is measuring what they say.
+  Bigger than your window and the display would run off the edge of
+  it; smaller than 72x24 and it fails the floor however much room the
+  window has. That is how a 100x30 window comes to be refused. A pin
+  under 72x24 is refused however large the window gets, since
+  resizing moves the window and never the pin, so unsetting it is the
+  whole of the advice: "Unset COLUMNS, rerun sst -t -- classic for
+  now." One merely bigger than your window is taken as soon as the
+  window catches up with it, so the game also offers the size the
+  window would have to reach, the larger of the pin and the window on
+  each axis: "Grow to 190x30, or unset COLUMNS and rerun sst -t." --
+  where growing needs no rerun, just a yes at the next "play again".
+  And a window itself under 72x24 has to grow regardless, which is
+  when the game asks for both at once.
 
   Only a pin the panels can live with is left alone: no bigger than
   your window and still 72x24 or more, where they are drawn narrow or

@@ -2852,9 +2852,9 @@ fallback "undersized terminal" 70 20 "Terminal too small" ''
 # 40, so the floor gate never fires and the refusal is the oversize one
 # either way. It is the advice that differs. A 20-row window is under
 # the floor, so the notice takes the compound form, "Grow to 72x24,
-# unset LINES, and rerun sst -t." -- whose "unset" is lowercase, where
-# this greps for "Unset LINES". 30 rows clears the floor and gets the
-# capitalised form.
+# unset LINES, and rerun sst -t.", which asks for both actions. 30 rows
+# clears the floor and gets the oversize form below, which offers them
+# as alternatives.
 #
 # Neither is the clipping the manual promises for a small terminal.
 # Falling back is: the classic display fits any window. #164.
@@ -2883,7 +2883,68 @@ fallback "oversize COLUMNS" 100 30 "LINES/COLUMNS make it" 'env COLUMNS=190'
 # which wants both variables named. That was two arms when it was
 # written and is three now, "pinned height" having joined them --
 # measured again on the #169 branch rather than assumed.
-fallback "oversize LINES" 100 30 "Unset LINES" 'env LINES=40'
+#
+# The whole line since #174, which split this branch in two. A pin that
+# is merely bigger than the window is one a big enough window accepts,
+# so "Unset LINES" alone is not the advice any more: the size the window
+# would have to reach is offered beside it. 100 columns because the
+# width is the window's here -- LINES=40 pins the height alone -- and 40
+# because that is the pin. The whole line rather than "Grow to", which
+# the compound form starts with as well.
+fallback "oversize LINES" 100 30 \
+	"Grow to 100x40, or unset LINES and rerun sst -t." 'env LINES=40'
+
+# The size in that line is not the size report's second pair, and this
+# is the arm that says so. COLUMNS=80 in a 100-column window is the
+# tolerated pin the manuals describe -- no bigger than the window and
+# still over 72 -- so blames() leaves it unnamed, while LINES=40 in a
+# 30-row window is refused for being oversize. The report then reads
+# "Terminal is 100x30 but LINES/COLUMNS make it 80x40.", and a notice
+# that reused that 80 would tell the player to grow to 80x40: a window
+# they would have to make 20 columns *narrower*. What the advice needs
+# is the larger of the two per axis, which is 100x40.
+fallback "oversize height under a tolerated width" 100 30 \
+	"Grow to 100x40, or unset LINES and rerun sst -t." \
+	'env LINES=40 COLUMNS=80'
+
+# Both axes at once, which is the only way the two-variable blame
+# reaches this line -- and the only shape that exercises the width
+# bound the comment above refusal_notice() in sst.c computes. That
+# bound is 61 columns, and it is derived from exactly this case: the
+# 17-character "LINES and COLUMNS" can only appear here with both axes
+# oversize, since tui_refusal_growable() refuses an axis under the
+# floor. So the longest line the branch can print is the one nothing
+# else covers. Measured, this arm's line is 60 columns and the 61 comes
+# from a three-digit height (512x512 under LINES=99999 COLUMNS=99999 at
+# 72x24); both fit the 72 the branch is guaranteed.
+#
+# 190x40 rather than the report's own second pair, which happens to be
+# 190x40 here as well: with both axes oversize the larger-per-axis rule
+# and the pinned pair agree. The arm above is where they differ, and it
+# is that one that pins the rule.
+#
+# Proved by replacing needcols with refusedtermcols unconditionally on a
+# copy of the tree outside the repository -- dropping the oversize-width
+# half of the size, so the game offered 100x40. This arm failed there,
+# as did "pinned axis", whose retry quotes a 190 for the same reason.
+fallback "both axes oversize" 100 30 \
+	"Grow to 190x40, or unset LINES and COLUMNS and rerun sst -t." \
+	'env LINES=40 COLUMNS=190'
+
+# And growing is only ever the whole answer when every named axis is
+# oversize. COLUMNS=60 with LINES=40 in a 100x30 window is refused on
+# both counts at once -- the width is under the 72 floor and the height
+# is over the window -- so blames() names both, and no window is big
+# enough to fix a COLUMNS of 60. The advice has to stay the unset-only
+# form there, and offering a size to grow to would be the same wrong
+# advice #174 is about, pointing the other way.
+#
+# Proved by dropping tui_refusal_growable()'s under-the-floor test on a
+# copy of the tree outside the repository: this arm failed there, the
+# game offering "Grow to 100x40" over a width no growing reaches.
+fallback "oversize height with an undersize width" 100 30 \
+	"Unset LINES and COLUMNS, rerun sst -t -- classic for now." \
+	'env LINES=40 COLUMNS=60'
 
 # The other direction of the same fault, and the reason the advice is
 # chosen from the window rather than from curses: a pin *below* the
@@ -3670,9 +3731,121 @@ else
 				elif ! scrollback | grep -qF 'Terminal is 150x30 but LINES/COLUMNS make it 190x30.'; then
 					fail "pinned axis: widening the pinned axis got no notice at all"
 					dump_scrollback
-				elif [ "$(scrollback_count 'Unset COLUMNS, rerun sst -t -- classic for now.')" -lt 2 ]; then
+				elif [ "$(scrollback_count 'Grow to 190x30, or unset COLUMNS and rerun sst -t.')" -lt 2 ]; then
 					fail "pinned axis: the notice reported the size but gave no advice"
 					dump_scrollback
+				fi
+			fi
+		fi
+	fi
+fi
+
+# --- and growing to meet the pin needs no rerun ------------------------
+# The arm above stops 40 columns short of the pin on purpose, to get a
+# second notice. This one goes the whole way, because the advice added
+# for #174 now promises it can be gone the whole way: the line names a
+# size, and both manuals say reaching it needs no rerun -- "just a yes
+# at the next 'play again'" in README.md, the same sentence in sst.doc.
+# Nothing checked that. Every other pin-resize arm grows the window to a
+# size still short of the pin and asserts the notice reappears, which is
+# the opposite claim.
+#
+# So: refused at 100x30 with COLUMNS=190, widened to exactly the 190 the
+# notice asked for, answered yes -- and the panels come up in the same
+# process, with no second refusal. The scrollback count is what says
+# "no second refusal" rather than presence: startup has already put one
+# copy of each line there, so a second would make it 2.
+#
+# 190 columns is wider than the 100 this file's other panes use, and
+# wider than most terminals; tmux makes the pane whatever the detached
+# session asks for, and wait_pane confirms it before anything is
+# concluded from it.
+#
+# Proved on a copy of the tree outside the repository, by adding
+# `|| (pinned("COLUMNS") && COLS == winsz.ws_col)` to tui_init()'s
+# oversize gate -- so a window that exactly meets a pinned width is
+# refused, which is the one thing this arm says does not happen. The
+# refusal-count check below failed there, and so did "one pinned";
+# nothing else in the file did. The checks after the count never ran,
+# the elif chain stopping at the first failure, and want_quadtitle
+# would have failed too, the panels being down on that build.
+#
+# A wider break was tried first and rejected as proving less: `>=` on
+# both axes of that gate takes the panels down in every window, and 61
+# checks failed. A break that fails everything says nothing about which
+# check is watching what.
+start 100 30 'tournament 7 short novice pw' 'env COLUMNS=190'
+if ! wait_scrollback 'Grow to 190x30, or unset COLUMNS and rerun sst -t.'; then
+	fail "meeting the pin: startup did not offer a size to grow to"
+	dump_scrollback
+elif ! wait_for 'COMMAND'; then
+	fail "meeting the pin: the classic display never reached a command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'quit' Enter
+	if ! wait_for 'score recorded'; then
+		fail "meeting the pin: quit did not reach the end-of-game questions"
+		dump
+	else
+		tm send-keys -t "$pane" 'n' Enter
+		if ! wait_for 'play again'; then
+			fail "meeting the pin: never asked about another game"
+			dump
+		else
+			tm resize-window -t "$session" -x 190 -y 30
+			if ! wait_pane '#{pane_width}' 190; then
+				fail "meeting the pin: the terminal never reached 190 columns, so nothing was tested"
+				dump
+			else
+				tm send-keys -t "$pane" 'y' Enter
+				if ! wait_for 'regular, tournament, or frozen'; then
+					fail "meeting the pin: the second game never started"
+					dump
+				# The size report and not the advice line, because
+				# a refusal need not carry advice: blames() names
+				# an oversize axis by comparison, so a pin that
+				# has stopped being oversize is unblamed and the
+				# retry prints the report alone. Measured on the
+				# build named below, which refuses at exactly this
+				# size: "Terminal is 190x30 but LINES/COLUMNS make
+				# it 190x30." with no second line under it. Counting
+				# the advice there passes while the panels are down.
+				#
+				# Counting works here even though the panels are
+				# up by now, and that is load-bearing rather than
+				# incidental: curses runs on tmux's alternate
+				# screen, which keeps no history of its own, but
+				# capture-pane -S - still returns the history of
+				# the screen underneath -- where the refusal was
+				# printed, before curses took over. So the count
+				# reads 1 rather than 0. Measured over six runs
+				# of this file, three Debug and one Release plus
+				# the two inside ctest; never 0.
+				elif [ "$(scrollback_count 'LINES/COLUMNS make it')" -ne 1 ]; then
+					fail "meeting the pin: a window that met the pin was refused again"
+					dump_scrollback
+				else
+					# The second game's setup is answered at
+					# the keyboard: start() gives the first
+					# game's answers on the command line, and
+					# that is consumed. The Enter after it
+					# clears the briefing's "HIT SPACE BAR TO
+					# CONTINUE" -- the quadrant title carries
+					# no coordinates until the game is in
+					# play, so want_quadtitle cannot pass
+					# before that pause is answered. Measured:
+					# without the Enter the title reads
+					# " Quadrant " and this check fails on a
+					# build where the panels came up
+					# perfectly well.
+					tm send-keys -t "$pane" 'tournament 7 short novice pw' Enter
+					if ! wait_for 'HIT SPACE BAR'; then
+						fail "meeting the pin: the second game never reached its briefing"
+						dump
+					else
+						tm send-keys -t "$pane" Enter
+						want_quadtitle "meeting the pin: growing to the offered size did not bring the panels up"
+					fi
 				fi
 			fi
 		fi
@@ -3750,7 +3923,7 @@ else
 				elif ! scrollback | grep -qF 'Terminal is 100x35 but LINES/COLUMNS make it 100x40.'; then
 					fail "pinned height: growing the pinned height got no notice at all"
 					dump_scrollback
-				elif [ "$(scrollback_count 'Unset LINES, rerun sst -t -- classic for now.')" -lt 2 ]; then
+				elif [ "$(scrollback_count 'Grow to 100x40, or unset LINES and rerun sst -t.')" -lt 2 ]; then
 					fail "pinned height: the notice named the wrong variable or none"
 					dump_scrollback
 				fi
