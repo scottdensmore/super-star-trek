@@ -624,7 +624,13 @@ int main(int argc, char **argv) {
 		   rows -- did what the notice asked and has no way to
 		   tell a mis-sized window from a broken promise. Asked
 		   before the retry, which is what updates the size the
-		   answer is measured against. #154. */
+		   answer is measured against. #154.
+		   Too small is not the only way to be refused, so this
+		   is not only the player who grew a small window. An
+		   exported LINES or COLUMNS can refuse a terminal of any
+		   size, so a player who drags a 150-column window under
+		   one arrives here having acted just as plainly, and is
+		   owed the same answer. #169. */
 		if (usetui && !tui_active) {
 			resized = tui_size_changed_since_refusal();
 			if (!tui_init() && resized)

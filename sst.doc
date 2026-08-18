@@ -1551,14 +1551,15 @@ Modifications I made:
   end: the panels do not appear part way through one.
 
   A game that went classic gets the choice made again for the next
-  one, though. If the terminal was too small and you make it bigger,
-  answering yes at "Do you want to play again?" starts the next game
-  with the panels. If you resized it and it is still too small, the
-  game says what size it read back -- 72 columns and 24 rows is the
-  whole of what it takes, and a tmux status bar can cost you the row
-  that matters -- and plays on in the classic display. Leave the
-  terminal alone and it says nothing: you were told at startup and
-  nothing has changed.
+  one, though. If you put right what refused you -- usually a window
+  that needs to be bigger -- answering yes at "Do you want to play
+  again?" starts the next game with the panels. If you resized it
+  and are refused again, the game says what size it read back and
+  plays on in the classic display -- for a window simply too small,
+  72 columns and 24 rows is the whole of what it takes, and a tmux
+  status bar can cost you the row that matters. Leave the terminal
+  alone and it says nothing: you were told at startup and nothing
+  has changed.
 
   An exported LINES or COLUMNS can refuse you as well, and the game
   names the one that did: "Unset COLUMNS, rerun sst -t -- classic for
