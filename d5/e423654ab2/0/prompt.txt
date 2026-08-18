@@ -1,0 +1,236 @@
+Has the CI landed?
+
+---
+
+lets merge and fix that warning
+
+---
+
+<task-notification>
+<task-id>aed949c227277678b</task-id>
+<tool-use-id>toolu_017gBwfbYt1Ja6PhtL9mTfko</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/aed949c227277678b.output</output-file>
+<status>completed</status>
+<summary>Agent "code-review for 177" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Both runs finished, plus a third I ran to answer the "is the class exhausted" question. Here is the review.
+
+## Verdict: request changes (one should-fix; the rest are nits)
+
+Reviewed state: worktree at `main`/`fix/tui-mutation-note-counts` = `5d10d5b`, with one unstaged modification to `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh` (+29/-12). Nothing staged, nothing untracked, branch diff against `main` empty. I confirmed mechanically that the change is comment-only: stripping `^\s*#` lines from `HEAD:tests/tui.sh` and from the working copy yields byte-identical files.
+
+## Independent measurement
+
+I rebuilt all three breaks on separate copies outside the repository (`$SCRATCH/copy2`, `copy3`, `copy4`), configured and built from inside each copy, and ran `tests/tui.sh build/debug/sst Debug` from inside.
+
+**Correction 3 (four).** Confirmed exactly. Break: `static int firstinit = TRUE;` in `tui_init()`, `resize_term(firstinit &amp;&amp; pinned("LINES") ? … , firstinit &amp;&amp; pinned("COLUMNS") ? …)`, `firstinit = FALSE;`. Result — 4 failures, precisely the four named:
+
+```
+FAIL: env size: the retry overrode a pinned size
+FAIL: oversize retry: the pinned size was not named at the play-again prompt
+FAIL: pinned axis: widening the pinned axis got no notice at all
+FAIL: pinned height: growing the pinned height got no notice at all
+```
+
+I predicted six before running: I expected the two silence arms to fail too, since the successful retry puts curses on the alternate screen and the file's own helper comment (`tests/tui.sh:134-137`) says that screen keeps no history, which would zero their `scrollback_count … -ne 1`. They passed. Your four is right and my reasoning was wrong — which is the point of running it.
+
+**Correction 2 (nine).** Confirmed exactly, same nine arms, and `pin equal to the window` and `one pinned` both green. Break: `resize_term(winsz.ws_row, winsz.ws_col)`.
+
+**Correction 1 (wide alone).** Not run; the argument is airtight without a run and stronger than a count. The guard is `if (width &gt;= (int)sizeof onscreen &amp;&amp; …) return;` with `char onscreen[512]` (`tui.c:577`), so deleting it can only change a path that requires `width &gt;= 512`; `width` is `getmaxx(wmsg)`. I checked the widths the file drives: `start` never exceeds 120 outside this arm, and the widest `resize-window -x` in the file is 150, in the `pinned axis` arm — so the supporting fact is right too.
+
+## Is the class exhausted? Yes, as far as I can establish
+
+The one remaining "every other check" claim of this shape that was written *before* `5d10d5b` and never re-measured is `tests/tui.sh:2887-2889`, the `pin equal to the window` note ("this check failed and every other check in the file passed", from `1ff91fe`/#170). That is the same setup that made corrections 2 and 3 stale, so I measured it: break `blames()` to `return curses_v &lt; floor_v &amp;&amp; curses_v != term_v`. Result — **1 failure, that arm alone**. The claim still holds.
+
+The remaining claims of the shape I audited by reachability rather than by running, and all are unaffected by the four arms `5d10d5b` added, because those arms never bring the panels up (the retry refuses again in all four) and never resize during a curses read:
+
+- `tests/tui.sh:2020` (`int start = r;` "passes every other check in this file") and `:2306` (`maxy &gt; 1` → `maxy &gt; 2`, "fails here and nowhere else") — both breaks live in `restore_curline()`, reachable only with panels drawn.
+- `tests/tui.sh:3137` (retry gone, restore kept, "the whole file passes") — the new arms do resize a fallback game at the play-again prompt, but with the restore kept there is no curses SIGWINCH handler to interrupt `fgets`.
+- `tests/tui.sh:3396` ("this check alone failed") — the SIGWINCH re-install only matters where a retry *succeeds* and then resizes; only `regrown` does that, and `one pinned`'s successful retry never resizes after.
+- `tests/tui.sh:2861-2862`, `:3650`, `:3751`, `:3760-3761`, `:3938-3942` are all `5d10d5b`-era and already carry post-#169 counts; I re-derived each against `blames()`/`axis_moved()`/`refusal_notice()` and they agree.
+
+## Findings
+
+**should-fix — `tests/tui.sh:2916-2917`.** The new rule sentence is false for two arms, and names one of them.
+
+&gt; every arm that pins a dimension and expects a refusal depends on that
+&gt; override
+
+`pin equal to the window` is the acknowledged exception, but `one pinned` (`tests/tui.sh:3433`, `env LINES= COLUMNS=80` in an 80x20 pane) also pins a dimension and also expects a refusal — `wait_scrollback 'Terminal too small'` — and it passed under the break I ran, so it does not depend on the override either. Failure scenario: the next person recounts from the rule, predicts eleven, gets nine, and goes looking for a regression that is not there — the exact failure mode #177 was filed about. The property both exceptions share is that the pin equals the window, so one clause makes the rule exact instead of "rule plus exception": *"every arm that pins a dimension to something the window is not, and expects a refusal, depends on that override"* — after which the following sentence can name both arms that sit outside it rather than one.
+
+**nit — `tests/tui.sh:2980-2982`.** "the two pinned resize arms" is unnamed where its sibling note names all nine, and four arm names in this file begin with "pinned"; a reader has to work out that `pinned unchanged` and `pinned height unchanged` are not meant. Name them (`"pinned axis"` and `"pinned height"`), as you did in your message to me.
+
+**nit — same lines.** The trailing reason does not describe all four it is attached to: "which ask for a notice that an overriding retry never prints" is true of `oversize retry`, `pinned axis` and `pinned height`, but `env size`'s failing assertion is `screen | grep -qF 'play again'` — it fails because the panels wiped the classic conversation, not because a notice is missing. Scope the clause to the last three and give this one its own half-sentence.
+
+**nit — same block, optional but the parallel to correction 2 is exact.** Correction 2 earns its keep partly by naming the arm that does *not* go along; correction 3 has two such near misses worth the same clause, and they are the ones a reader will reconstruct and get wrong (I did): `pinned unchanged` and `pinned height unchanged` stay green because their assertion counts the *startup* notice, and a retry that succeeds prints nothing to add to it. Measured — both were green in my run.
+
+**nit — `tests/tui.sh:2383-2384`.** "the guard cannot fire below 512 columns" is stated in terminal columns in a sentence that then compares it to terminal widths, but the guard reads `getmaxx(wmsg)`, the message window's width. The conclusion holds — a window is never wider than its terminal here, because #164 refuses an oversize pin before the panels are made — but that step is unstated, and it is the step a reader wondering "could `COLUMNS=600` in a 100-column pane get there?" needs. One clause: "…cannot fire in a message window narrower than 512, and since #164 no window is wider than its terminal".
+
+## On the shape question
+
+Your instinct on correction 1 is right, and for a stronger reason than "a threshold cannot be falsified by adding an arm": deleting that guard *provably* cannot change behaviour below 512 columns, so the note states a proof and the 150 is only the evidence that no arm is above the line. That is why I did not need to run it.
+
+I would not re-anchor 2 and 3. There is no threshold behind either, and inventing a pseudo-rule to avoid a list is how you get a sentence that is elegant and wrong. The shape both should have — and correction 2 nearly has — is *exact rule, then the measured list as evidence, then the exceptions by name, then the stamp* ("Measured after #169"). The list is what a reader diffs against a fresh run; the rule is what tells them whether a new arm should have joined it. The only defect is that correction 2's rule is stated one clause too broadly, which is the should-fix above; fix that and the shape is right. Correction 3 should get the same treatment: it already has the beginnings of a rule ("ask for a notice that an overriding retry never prints"), so scope it, name the four, and name the two that stay green.
+
+## Process
+
+I accept the `ui-review` skip, and would have argued if I did not. The diff is comment-only in a shell test — verified mechanically, not taken on your word — nothing compiled changes, no feature flag moves, and there is no path by which a `#` line in `tests/tui.sh` reaches a player. `5d10d5b` is the reviewed state for everything the player sees. You told me which passes ran and that `verifier` is concurrent on this same state; that claim is checkable and I saw its `firstcall` copy running under `$SCRATCH/verifier-tui-notes/` while my own runs went. Note that a concurrent second copy of `tui.sh` is timing contention for both — if the verifier reports an odd arm failing, re-run it alone before believing it.
+
+Two process notes, neither blocking: issue #177 names two notes and this branch fixes three, which is the right call (same class, same slice) but should be said in the commit and PR body; and #177's own text says that break "fails **`env size`** and **`oversize retry`** -- two arms", measured on pre-`5d10d5b` `main`, which is now four — worth one comment on the issue so the number a reader arrives with matches the tree.
+
+## What I could not review
+
+I did not re-run the breaks behind the claims at `tests/tui.sh:2020`, `:2306`, `:3137`, `:3396`, `:3650`, `:3751`, `:3760-3761` and `:3938-3942`; I judged them unaffected by reachability (each argument given above) rather than by measurement. Three full `tui.sh` runs was the budget I thought this warranted, spent on the two counts in the diff and on the one un-remeasured claim that could have made this a fourth round.
+
+Evidence kept at `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/68e7526e-171e-4adb-bb54-b72aa3a85f63/scratchpad/`: `break2.out`, `break3.out`, `break4.out` and the three patched copies. Nothing in the repository was modified; `git status` shows only your `tests/tui.sh`.</result>
+<usage><subagent_tokens>98927</subagent_tokens><tool_uses>54</tool_uses><duration_ms>973234</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a32c5d7ca6a81ad15</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a32c5d7ca6a81ad15.output</output-file>
+<status>completed</status>
+<summary>Agent "code-review after rule fix" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: approve
+
+Reviewed state: `HEAD` = `5d10d5b` (identical to `main`, so the branch diff against `main` is empty), one unstaged modification to `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh`, nothing staged, no untracked files. Approval covers exactly that worktree.
+
+I confirmed the change is comment-only rather than taking it on trust: stripping `^[[:space:]]*#` from `main:tests/tui.sh` and from the working copy gives byte-identical files, and `sh -n` plus `shellcheck -s sh` are clean on the working copy. Since the executable content is identical to a `main` that is green on four CI legs, the `verifier` run on the pre-fix state is equivalent to one on this state; still worth reporting whatever it says before the commit, but it cannot gate this diff. I agree `ui-review` does not bind: nothing here is compiled, and nothing reaches a player.
+
+### The rule, re-derived
+
+I re-derived the rewritten rule at `tests/tui.sh:2917-2921` from scratch rather than checking the list. There are twelve `env`-prefixed arms; eleven pin a dimension (`TERM=dumb` does not). Deleting the getenv pair in `tui_init()` makes `resize_term()` take both axes from the ioctl, so no pin has any effect on curses' size:
+
+- Nine fail, and they are exactly the nine named: `oversize COLUMNS`, `oversize LINES`, `undersize pin`, `env size`, `oversize retry`, `pinned axis`, `pinned height`, `pinned unchanged`, `pinned height unchanged`. Each of these clears the floor unpinned (100x30) or, for `oversize retry`, clears it after the resize to 100x30, so the refusal they grep for never happens.
+- Two stay green for the stated reason: `pin equal to the window` (70x24, `COLUMNS=70`) is refused by the floor either way, and `blames()` still names COLUMNS because it asks `pinned()`, which the override does not touch; `one pinned` (80x20, `LINES=` `COLUMNS=80`) is refused on its free height either way.
+
+The rule as written is exact over every arm in the file today. Correction 3's count is also right: under the narrow fix (first call guarded, retry free to override), the seven arms with both a pin and a play-again retry split four/three exactly as the comment says — `env size`, `oversize retry`, `pinned axis`, `pinned height` fail; `one pinned` passes because it wants the panels; the two `unchanged` arms pass because their `scrollback_count ... -ne 1` still sees the startup notice and the successful retry adds none. Correction 1 also checks out: the guard is `width &gt;= (int)sizeof onscreen` with `width = getmaxx(wmsg)` (`tui.c:602,636`), no `start` or `resize-window` outside the wide arm exceeds 150 columns, and `git log -S` confirms the 110- and 120-column arms came in with #79, ahead of the wide arm's #137.
+
+### Findings
+
+**Nit — `tests/tui.sh:2994`**: "The two silence arms stay green" collides with this file's own count of three silence arms — `tests/tui.sh:3653-3660` and `tests/tui.sh:3944-3952` both treat the older un-pinned `unchanged` arm at the end of the file as one of them ("it fails exactly three of them ... and the older `unchanged` arm at the end of the file"). A reader who has already met that vocabulary will stop to work out which two are meant. Suggested fix: "the two *pinned* silence arms", or name them, which is what you did for the resize arms two paragraphs up after the same nit last round.
+
+Same paragraph, secondary: the stated reason — "they count the startup notice, and a retry that succeeds prints nothing to add to it" — leaves out the step it rests on, that `capture-pane -p -S -` still reaches history written before curses entered the alternate screen. `scrollback()`'s own comment at `tests/tui.sh:134-137` says the alternate screen "keeps no history", which reads as the opposite until you notice it is about text written *while* on it. Since the whole point of the paragraph is letting a reader reconstruct the measurement, one clause saying the startup notice has scrolled into history by then would close it.
+
+**Nit — `tests/tui.sh:2917-2919`**: the rule is exact over the current arms but one clause looser than its own mechanism, in a way the file already demonstrates. "expects a refusal" should be "expects a refusal the window on its own would not produce". `oversize retry` is the proof: its *startup* refusal (`Terminal too small` at 100x20) survives the override deletion untouched — only its retry expectation fails. So the arm depends on the override, but not for the reason the rule gives, and a future arm with a single such expectation (say `COLUMNS=60` in a 70x20 pane, both under the floor) would be mispredicted. The refinement is exact over all eleven arms; I checked.
+
+**Nit — `tests/tui.sh:2384-2385`**: "since #164 no window is wider than its terminal" is stated absolutely, but the gate at `tui.c:1376` is `if (haveterm &amp;&amp; (LINES &gt; winsz.ws_row || COLS &gt; winsz.ws_col))` — with the ioctl failing or answering 0x0, `resize_term()` is never called either and curses keeps the exported size, so the claim has a hole. It does not touch the conclusion, because the shorter route holds unconditionally: no pin anywhere in this file reaches 512 either, the largest being 190. Either qualify it ("wherever the ioctl answers, which in a tmux pane it does") or lean on the pin bound instead.
+
+None of the three is a false claim about what the file does today; all three are wording that a later reader would have to re-derive.
+
+### Not reviewed
+
+I did not re-measure the mutation results themselves — that needs building the two broken variants on a copy outside the repository, which is outside a read-only review, and you asked for re-derivation rather than re-measurement. I derived all of them analytically against `tui.c` and `sst.c` and they agree with the comments. I also did not revisit `tests/tui.sh:2887-2889`, per your note.</result>
+<usage><subagent_tokens>73445</subagent_tokens><tool_uses>28</tool_uses><duration_ms>353216</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ad6ad6429e5588890</task-id>
+<tool-use-id>toolu_01Qud9te1tmdCXyZtuMpjGtw</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/ad6ad6429e5588890.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier for 177" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Pass** on the gate — everything builds and every test passes — with one substantive finding for question 2: the class is **not** exhausted. One more `and nothing else` note in `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh` is false on the current file, and it is not one the diff touches.
+
+---
+
+## 1. Re-measurement of the diff's three counts
+
+I rebuilt all three breaks myself, each on its own copy of the working tree (with your uncommitted `tests/tui.sh`) outside the repository, configured and built from inside the copy (`CMAKE_HOME_DIRECTORY` checked to point at the copy), `tests/tui.sh build/debug/sst Debug` run from in there. **No count differs from yours.**
+
+| Break | Reconstruction | Result |
+| --- | --- | --- |
+| 2 (`getenv` override) | `tui.c:1347-1349` → `if (haveterm) resize_term(winsz.ws_row, winsz.ws_col);` | **9**, exactly the nine named: `oversize COLUMNS`, `oversize LINES`, `undersize pin`, `env size`, `oversize retry`, `pinned axis`, `pinned height`, `pinned height unchanged`, `pinned unchanged`. `pin equal to the window` passes. |
+| 3 (narrower fix) | pin honoured on `tui_init()`'s first call only (`static int firstcall` gating both `pinned()` tests) | **4**: `env size: the retry overrode a pinned size`, `oversize retry: the pinned size was not named at the play-again prompt`, `pinned axis: widening the pinned axis got no notice at all`, `pinned height: growing the pinned height got no notice at all`. |
+| 1 (`wide` guard) | deleted `tui.c:636-638` | **1**: `wide: at 600x23 the question is not on screen exactly once` — the first step of the drag, "and nowhere else", as written. |
+
+---
+
+## 2. Audit of the rest of the file — one false claim found
+
+I enumerated every mutation-proof / exclusivity note in the file, blame-dated each, and measured the ones a later arm could have falsified.
+
+**False as written — `tests/tui.sh:2018-2020`** (the `wrap` block, from 72e87a2b, 2026-08-10):
+
+&gt; `# there. Cutting the search back to one row -- `int start = r;` --`
+&gt; `# gives 2 copies, then 3, then 4 over the three steps below, and passes`
+&gt; `# every other check in this file.`
+
+Measured (`tui.c:664` → `int start = r;`), **two runs, identical both times — deterministic, not a flake**:
+
+```
+FAIL: wrap: grown to 72x30 the question is not on screen exactly once
+FAIL: ended: after 80x23 the question and its part-typed answer are not both back, once each
+FAIL: wrapped answer: at 80x23 the question is not on screen exactly once
+FAIL: wrapped answer: at 76x24 the question is not on screen exactly once
+```
+
+Four, not one. Same failure mode as the three you fixed, but not caused by #169: the `ended` block (`tests/tui.sh:2147-2181`) and the `wrapped answer` block arrived in 58f5ea6c on 2026-08-11, the day after the claim was written.
+
+**Doubtful, adjacent to it — `tests/tui.sh:2010-2011`**: "The joined-row search is what makes the grow call safe, and nothing else in this suite exercises it on a grow." The `ended` block shrinks to 80x23 and grows back to 80x24 with an ended prompt and a typed `y`, and it catches exactly this break at the check taken after the grow. As written the sentence claims more exclusivity than the file supports.
+
+**Measured and still true** (so the class is genuinely bounded elsewhere):
+
+- `2028-2030` — `MINCOLS` 72→73: exactly four, and exactly the ones named (`72x24:` ×2, `the briefing did not wait to be read`, `wrap: the panels were refused at exactly 72x24`).
+- `2300-2307` — `maxy &gt; 1` → `maxy &gt; 2` on the newline guard (`tui.c:936`): exactly one, `wrapped answer: at 80x5 the answer did not survive without its question`.
+- `2472-2478` — both breaks it names: unconditional `wscrl` on the found path (`tui.c:748-760`) → 1 failure, `ended: at 78x4`; relaxing `maxy &gt; 1` on the write path (`tui.c:936`) → 1 failure, the same check. "Neither seen by anything else in this file" holds.
+
+**Reasoned safe, not measured** (each either post-dates #178's arms or cannot reach them): `2266-2269`, `2411-2413` (mutates only its own block's input), `2861-2865`, `2887-2889` (the `curses_v != term_v` substitution changes nothing for a 190-in-100 or 40-in-30 pin — those take the oversize branch — nor for `undersize pin`, 60≠100), `2929`, `3393-3397`, `3533-3541`, `3687-3695` ("only that one" is scoped to its own elif chain, not the file), `3746-3760`, `3814-3825`, `3934-3944`.
+
+---
+
+## 3. Are the corrected notes true as written?
+
+Yes on all three counts, and note 1's supporting facts check out independently:
+
+- `onscreen[512]` at `tui.c:577`, guard at `tui.c:636` compares `getmaxx(wmsg) &gt;= 512`, and the message window is never wider than the terminal — so "cannot fire below 512 columns" is exact.
+- "the widest terminal anything else here drives is 150": swept every width in the file — `start`/`fallback` max 120 besides the 600, `resize-window` max 110 besides the single `-x 150` at `tests/tui.sh:3596` in the `pinned axis` arm, and every parametrised loop (`$1`, `$w`) is ≤ 82. `COLUMNS=190` is a pin, never a terminal, and is under 512 anyway.
+
+Two wording points, neither a false count:
+
+- **Note 2's rule over-generalises by one arm.** "every arm that pins a dimension and expects a refusal depends on that override" — `one pinned` (`tests/tui.sh:3433`, `env LINES= COLUMNS=80` at 80x20) pins `COLUMNS` and expects a refusal, and it passed under the break. It is exempt for the same reason `pin equal to the window` is (the pin equals the window's width), but the note names only one exception, so a reader re-running the break and counting eleven pinned arms will find two that do not bite and an explanation for one.
+- **Note 3 describes rather than names two of its four.** "the two pinned resize arms" are `pinned axis` and `pinned height`; four arms in the file carry `pinned` in the name, so naming them would cost a line and settle it.
+
+---
+
+## 4. What else my scope called for
+
+Nothing compiled changed since `main`, so the rest is a regression gate rather than a check of the change:
+
+- `cmake --preset ci-debug &amp;&amp; cmake --build --preset ci-debug` — clean, no warnings (these carry `-Werror`).
+- `cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release` — clean.
+- `ctest --preset ci-debug` — 12/12 passed, 364 s. `analyze` **Passed** (34.8 s), not skipped: GCC 15.2.0 on Linux, so static analysis really ran.
+- `ctest --preset ci-release` — 12/12 passed, 354 s. `analyze` Passed (35.2 s).
+- Plain-mode journeys, both binaries: `regular/short/novice/xyz/srscan/status/chart/quit/n` on `build/ci-debug/sst` and an lrscan variant on `build/ci-release/sst` — exit 0, no stray CRs, clean sign-off line.
+- Configuration difference confirmed rather than assumed: `debug` is a live command in the ci-debug binary (reaches `Reset levels?` / `Reset damage?`) and absent in ci-release.
+- TUI smoke on my own tmux sockets (`-L verif-gate*`, `-f /dev/null`), never the default one: 80x24 panels + `srscan` + pager, and a full 72x24 game to `quit` → score → play-again → process exit status 0.
+- `sh -n tests/tui.sh` and `shellcheck -s sh tests/tui.sh` — both clean (matching your run).
+
+---
+
+## Missing coverage
+
+None in the diff itself — it is comment-only, and the only thing that can verify it is the mutation runs above, which I did. The general gap is the one #177 already describes: nothing in the suite fails when a new arm falsifies one of these notes, which is exactly how `tests/tui.sh:2018-2020` has been wrong since 2026-08-11.
+
+## Environment issues
+
+None that blocked a check. `cppcheck`, `clang-tidy` and `scan-build` are not installed (bonus only). tmux present, `/proc` readable, so no arm of `tui.sh` skipped. Timing note for a rerun: a full `tests/tui.sh` is ≈ 4 min, a full `ctest` ≈ 6 min per configuration; I serialised the mutant runs against the ctest runs to keep tmux timings honest.
+
+## Cleanup
+
+My scratchpad subdirectory (`.../scratchpad/verifier-tui-notes`, 486 MB of copies and build trees) is removed, and my three private tmux sockets are killed and their socket files deleted. The user's default-socket sessions (`agents`, `vlong`) were never touched and are still up. The repository is unmodified: `git status` still shows only your `M tests/tui.sh`.
+
+## Note for the filing decision (yours, not mine)
+
+The false claim at `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh:2018-2020` (and the adjacent sentence at `2010-2011`) is pre-existing and outside this slice, so per AGENTS.md step 9 it belongs on #177 as a comment — it is the same defect that issue describes, in a third place, with a measured count (4: `wrap`, `ended`, `wrapped answer` ×2) and a reproduction (`tui.c:664` → `int start = r;`).</result>
+<usage><subagent_tokens>129464</subagent_tokens><tool_uses>84</tool_uses><duration_ms>3050503</duration_ms></usage>
+</task-notification>
