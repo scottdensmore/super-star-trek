@@ -503,11 +503,28 @@ static void makemoves(void) {
  * anywhere the others do not, which is the whole of what the width
  * mattered for.
  *
+ * A third line carries numbers, the grow-or-unset line added for #174,
+ * and that one does get a count, because unlike the two above it can
+ * be bounded: 61 columns, in a window of at least 72. Its fixed text
+ * is 38, and the rest is a blame of 5, 7 or 17 plus the two numbers.
+ * The 17 needs both axes named, and tui_refusal_growable() answers
+ * FALSE where an axis is under the floor, so both are then oversize --
+ * and an oversize axis is a pinned one, held to three digits by the
+ * same 512 clamp. That is where this differs from the size report:
+ * the conclusion rests on the clamp rather than surviving without it,
+ * since two unclamped pinned numbers would take the line to 75.
+ * Measured at both ends, on a 100x30 pane with COLUMNS=99999 and on a
+ * 72x24 one with LINES and COLUMNS both 99999: curses reports 512
+ * either way, and the second prints the 61-column line with eleven
+ * columns to spare. The window is at least 72 because sst.c reaches
+ * this branch only where smallwindow is false, which is both terminal
+ * axes past the floor.
+ *
  * The skip(1) after each proutf is not decoration: proutf does not
  * end its line, where prout is exactly that pair. #162. */
 static void refusal_notice(int retry) {
 	const char *blame = tui_refusal_blame();
-	int cols, rows, termcols, termrows;
+	int cols, rows, termcols, termrows, needcols, needrows;
 	int havesizes = tui_refused_sizes(&cols, &rows, &termcols, &termrows);
 	int smallwindow = !havesizes || termrows < MINROWS ||
 			  termcols < MINCOLS;
@@ -536,6 +553,44 @@ static void refusal_notice(int retry) {
 		   one action more than they need rather than splitting
 		   into a further two forms. */
 		proutf("Grow to 72x24, unset %s, and rerun sst -t.", blame);
+		skip(1);
+	}
+	else if (blame != NULL &&
+		 tui_refusal_growable(&needcols, &needrows)) {
+		/* The split the branch above declines to make, which here
+		   is worth making: the window is over the floor, so growing
+		   it really is an alternative to unsetting and not an extra
+		   demand. Told to unset and nothing else, a player who had
+		   done a working thing -- widened the window, and fallen
+		   short -- was pointed away from it, with "classic for now"
+		   reading as though no route were left in the session at
+		   all. Measured for #174: COLUMNS=190 in a 100x30 pane
+		   widened to 150x30, where 190 columns brings the panels up
+		   and the line said to unset.
+		   The rerun rides with the unset half alone, because only
+		   that half needs one: the pin is in this process's
+		   environment, where growing is answered at the next
+		   play-again -- measured, COLUMNS=190 at 100x30 widened to
+		   190x30 at that prompt brings the panels up in the same
+		   process. Told "then rerun" a player who grew the window
+		   was sent through a quit for nothing.
+		   Two cuts here are deliberate, not oversights. The grow
+		   half says nothing about when it takes effect, which the
+		   no-pin line below does say ("and the next game gets
+		   panels"). There is no room: "Grow to %dx%d for panels
+		   next game, or unset %s and rerun sst -t." is 59
+		   characters of fixed text, so 82 in the worst case
+		   counted the way the comment above this function counts
+		   the 61, and this line has to fit 72. The retry notice
+		   closes that loop instead, for the player who grows and
+		   misses.
+		   And there is no comma before "and rerun", though the
+		   compound branch above punctuates the same clause. Set
+		   off by a comma the rerun reads as applying to the grow
+		   half too, which is the misdirection this wording exists
+		   to remove. */
+		proutf("Grow to %dx%d, or unset %s and rerun sst -t.",
+		       needcols, needrows, blame);
 		skip(1);
 	}
 	else if (blame != NULL) {

@@ -82,6 +82,17 @@ int tui_size_changed_since_refusal(void);	/* the terminal is a
 						   turned down for size */
 const char *tui_refusal_blame(void);	/* the pinned variable that
 					   refused the player, or NULL */
+int tui_refusal_growable(int *cols, int *rows);
+					/* whether growing the window alone
+					   would be accepted, and the size
+					   that would take; FALSE where it
+					   would not do it -- no oversize
+					   pin to blame, including the plain
+					   too-small terminal where growing
+					   does help, or a pin under the
+					   floor that no window reaches --
+					   and the two outputs are then
+					   unset */
 int tui_refused_sizes(int *cols, int *rows, int *termcols, int *termrows);
 					/* curses' size at the refusal and
 					   the terminal's own; FALSE where
