@@ -2007,8 +2007,11 @@ done
 # question whose answer had wrapped, because the search that looks for
 # the pair already on screen read a single row and a wrapped pair is
 # two. It never matched, so it reprinted, and the copies stacked up the
-# window. The joined-row search is what makes the grow call safe, and
-# nothing else in this suite exercises it on a grow.
+# window. The joined-row search is what makes the grow call safe.
+# This was the only thing exercising it on a grow when that was
+# written, in #116; the squeeze block #119 added later the same day and
+# the wrapped-answer block #137 added the next both shrink and then
+# restore to 80x24, which is a grow, and reach it too. #177.
 #
 # Height only, at a fixed width, which is the shape that duplicates.
 # A width change takes the other branch, which works out how many rows
@@ -2016,8 +2019,22 @@ done
 # match there costs a rewrite, not a copy. Only the height-only branch
 # scrolls by one and writes without erasing, leaving what was already
 # there. Cutting the search back to one row -- `int start = r;` --
-# gives 2 copies, then 3, then 4 over the three steps below, and passes
-# every other check in this file.
+# gives 2 copies, then 3, then 4 over the three steps below. It was the
+# only check in the file that noticed when that was written, in #116.
+# Measured now it fails four, named by what they print rather than by
+# block, since "ended" names three sessions -- the two in the squeeze
+# loop and the one-row one after the "wide" block -- and only the
+# part-typed squeeze session is reached:
+#   wrap: grown to 72x30 the question is not on screen exactly once
+#   ended: after 80x23 the question and its part-typed answer are not
+#     both back, once each
+#   wrapped answer: at 80x23 the question is not on screen exactly once
+#   wrapped answer: at 76x24 the question is not on screen exactly once
+# The other two type nothing at the question while the terminal moves,
+# so wantlen fits one row, arows is 0, and start == r on both builds --
+# they cannot see this at all. Typing is what decides it, not growing:
+# the untyped squeeze session restores to 80x24 like its neighbour and
+# is blind anyway. #177.
 start 72 24
 if ! wait_for 'regular, tournament, or frozen'; then
 	fail "wrap: the game never asked its first question"
@@ -2379,10 +2396,21 @@ fi
 # rows at this width, which is why nothing reached it before.
 #
 # 600 columns, well past the 511 the buffer holds. Deleting the guard
-# leaves every other check in this file green: nothing else here runs
-# wider than 82 columns. Proved that way -- a copy of the tree outside
+# leaves every other check in this file green, and the reason is the
+# buffer rather than any particular arm: the guard cannot fire in a
+# message window narrower than 512, and nothing else here can make one
+# that wide from either direction -- the widest terminal anything else
+# drives is 150, the pinned-axis resize added for #169, and the largest
+# pin anywhere in the file is COLUMNS=190, which is the only other way
+# curses' width is set. Proved that way -- a copy of the tree outside
 # the repository with the guard deleted, built there, fails at the
 # first step here and nowhere else.
+#
+# The count was stated as "nothing else runs wider than 82 columns"
+# when this was written, which was already wrong then -- 110- and
+# 120-column arms predate it -- and would have gone on being wrong as
+# arms were added. It is the 512 that decides, so that is what this
+# now says. #177.
 start 600 24 'tournament 7 short novice pw'
 if ! to_command; then
 	fail "wide: the game never reached its command prompt"
@@ -2903,11 +2931,27 @@ fallback "pin equal to the window" 70 24 "Grow to 72x24, unset COLUMNS" 'env COL
 #
 # Proved by deleting the getenv pair, so the ioctl overrode the
 # environment again, and running this file on a copy of the tree outside
-# the repository: this check failed. It was the only one at the time.
-# Of the pinned cases added since, the oversize and undersize-pin ones
-# depend on the same override and would fail with it; "pin equal to the
-# window" would not, its pin matching the window exactly, which is what
-# that case is for.
+# the repository: this check failed. It was the only one at the time
+# and is one of nine now, which is not drift but the rule working --
+# every arm that pins a dimension to something the window is not
+# depends on that override, since it is what lets curses' size differ
+# from the window at all. That one clause is the whole rule: it selects
+# the nine below and leaves out exactly the two named after them. An
+# earlier draft added "and expects a refusal the window would not
+# produce on its own", which excludes no arm that clause keeps and
+# rested on a wrong reading of "oversize retry" -- under the break that
+# arm fails its *startup* check, its blame line losing "unset COLUMNS"
+# half, not the retry expectation further down the elif chain, which
+# never runs. Measured after #169:
+# "oversize COLUMNS", "oversize LINES", "undersize pin", this one,
+# "oversize retry", "pinned axis", "pinned height", "pinned unchanged"
+# and "pinned height unchanged".
+#
+# Two arms pin a dimension and stay green, and they share the reason
+# the rule turns on: the pin is the window's own number, so overriding
+# it changes nothing. "pin equal to the window" is COLUMNS=70 in a
+# 70-column pane, which is what that case is for; "one pinned" is
+# COLUMNS=80 in an 80-column one, refused on its height instead. #177.
 start 100 30 'tournament 7 short novice pw' 'env LINES=20 COLUMNS=70'
 if ! wait_scrollback 'Unset LINES and COLUMNS'; then
 	# Both pins are under the floor in a window with room for the
@@ -2962,9 +3006,33 @@ else
 				# proposed first -- the guard on tui_init()'s
 				# first call only, leaving a retry free to
 				# override -- built on a copy of the tree
-				# outside the repository. That alternative
-				# passes every other check in this file; this
-				# one is what says no to it.
+				# outside the repository. This check says no
+				# to it, and was the only one that did when
+				# that was written. Measured after #169 it
+				# fails four: "oversize retry", "pinned axis"
+				# and "pinned height", which ask for a notice
+				# that an overriding retry never prints, the
+				# panels having come up instead -- and this
+				# one, which fails for its own reason, the
+				# panels having wiped the classic
+				# conversation the grep below looks for.
+				#
+				# The two pinned silence arms stay green --
+				# "pinned unchanged" and "pinned height
+				# unchanged", not the older un-pinned
+				# "unchanged" this file counts alongside them
+				# elsewhere. Worth saying because they are
+				# what a reader reconstructing this will
+				# expect to fail: they count the *startup*
+				# notice, and a retry that succeeds prints
+				# nothing to add to it. That they stay green
+				# is measured; the reason is reasoned -- the
+				# notice is written before curses takes the
+				# alternate screen and has scrolled into
+				# history by then, which is not what the
+				# comment on scrollback() rules out, that
+				# being history written *while* on it.
+				# #177.
 				if ! screen | grep -qF 'play again'; then
 					fail "env size: the retry overrode a pinned size"
 					dump
