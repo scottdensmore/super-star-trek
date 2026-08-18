@@ -1,0 +1,333 @@
+Lets look through the code and issues and pick up the next work. Use @AGENTS.md
+
+---
+
+My weekly limit is reset so lets continue
+
+---
+
+<task-notification>
+<task-id>aab7f73579d18113b</task-id>
+<tool-use-id>toolu_01KLBWH3DH82Hq6zqmNhhM7t</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/aab7f73579d18113b.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier for #174 branch" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: pass
+
+Everything I ran is green. Two things to note (one process issue, one coverage gap); neither is a failure.
+
+## Failures
+
+None. No flakes either — every check passed first time, and the two long ones (`tui`, `tournament`) each ran twice, once per configuration, with identical results.
+
+## Missing coverage
+
+**The both-axes-oversize form of the new line has no test arm.** `tests/tui.sh` covers three of the four shapes the new branch can print (single-axis LINES, single-axis under a tolerated width, and the not-growable fall-through), plus two retry-arm literals. Nothing covers the case where *both* axes are oversize and neither is under the floor, which is the only way the 17-character blame `LINES and COLUMNS` reaches this line:
+
+```
+100x30 pane, env LINES=40 COLUMNS=190
+  Terminal is 100x30 but LINES/COLUMNS make it 190x40.
+  Grow to 190x40, or unset LINES and COLUMNS and rerun sst -t.
+```
+
+That matters more than an ordinary gap because the comment at `sst.c:506-520` builds its 61-column bound on exactly this case being reachable ("The 17 needs both axes named... so both are then oversize"). It is also the longest line the branch can emit, so it is the one at risk against the 72-column budget. I verified it by hand and it is correct — 61 columns on a 72-column window, unwrapped, eleven to spare — but no test would catch a regression in it. `tests/tui.sh:2993` greps `Unset LINES and COLUMNS`, which is the *non*-growable form and a different branch.
+
+**The floor clamp in `tui_refusal_growable()` is unreachable from its only caller,** so no test can cover it through the game. `sst.c` calls it only where `smallwindow` is false, which forces `termrows &gt;= MINROWS` and `termcols &gt;= MINCOLS`; both `needrows` and `needcols` are then already at or above the floor, so `*rows = needrows &lt; MINROWS ? MINROWS : needrows` and its width twin never fire. The comment at `tui.c:1275-1280` says as much ("so the answer stands on its own for a caller that has not checked the window is over it"), so this is deliberate defensive code, not a gap to fill — reporting it so the resolution is on the record rather than implied.
+
+## Environment issues
+
+**`sst.c` was edited during my run**, at 08:24:51, after both `ci-*` binaries were built (08:22:51 and 08:23:06) and while `ctest --preset ci-debug` was executing. The edit rewrote the "Two cuts here are deliberate" paragraph inside `refusal_notice()`'s comment (the version I first diffed argued from "81 columns"; the tree now argues from "59 characters of fixed text, so 82 in the worst case").
+
+I re-established that my results hold rather than assuming it: rebuilt both presets from the current tree and compared disassembly. `.text` is byte-identical before and after in both Debug and Release, and a comment-stripped diff of `sst.c` against `main` shows only the six code lines of the new branch. So the suite results above are valid for the tree as it stands. Flagging it because a concurrent edit during verification is exactly the thing that silently invalidates a pass — if more edits are pending, the run needs redoing.
+
+While I was there, the current comment's arithmetic checks out: the hypothetical fixed text is 59 characters and 59+17+3+3 = 82; the shipped one is 38 and 38+17+3+3 = 61; "two unclamped pinned numbers would take the line to 75" is 38+17+10+10, a 10-digit `int`. I confirmed the 512 clamp empirically at both ends the comment names.
+
+**Absent optional tools:** `cppcheck`, `clang-tidy`, `scan-build` are all missing, so no bonus analyser ran. Not a gap — the `analyze` test carries this step, and it ran rather than skipping: gcc 15.2.0's `-fanalyzer` over all 13 game sources including `tui.c` and `sst.c`, 33s, `analyze OK (/usr/bin/cc, bb-explosion-factor 30)`. Its depth is uneven by nature, so read that as "no diagnostic where gcc reached", not tree-wide. `tmux 3.6` is present, so `tui` ran rather than skipping.
+
+## Observation for the next `ui-review`, not a finding of mine
+
+In the untested both-axes case the line reads `or unset LINES and COLUMNS and rerun sst -t.` The comment at `sst.c:571-576` explains the missing comma as stopping the rerun from attaching to the grow half; with a two-axis blame that leaves three clauses coordinated by two bare `and`s. Wording is not my call, but it lands in the one shape no test pins down.
+
+## What ran
+
+- `cmake --preset ci-debug &amp;&amp; cmake --build --preset ci-debug --clean-first` — clean, zero warnings with `-Werror` (confirmed present in `build/ci-release/CMakeFiles/sst.dir/flags.make`: `-Wall -Wextra -Wmissing-prototypes -Werror -O3`).
+- `cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release --clean-first` — clean, zero warnings.
+- `ctest --preset ci-debug` — 12/12 passed, 363s.
+- `ctest --preset ci-release` — 12/12 passed, 355s.
+- Rebuild of both presets after the mid-run `sst.c` edit; disassembly comparison confirming identical `.text`.
+- Plain-mode piped journeys on `./build/ci-debug/sst` and `./build/ci-release/sst` (`tournament 7 short novice xyz srscan status chart quit n`) — exit 0, no carriage returns in output, ends at the Great Bird line.
+- Eleven scripted TUI refusal journeys on `./build/ci-debug/sst -t` via tmux on my own socket (`-L sstverify -f /dev/null`, killed on that socket only), plus three repeated on the Release binary with identical output: `LINES=40` at 100x30; `COLUMNS=190` at 100x30 (the README/`sst.doc` literal, exact); `LINES=40 COLUMNS=80`; `LINES=40 COLUMNS=60`; `COLUMNS=60`; `LINES=20`; `LINES=40 COLUMNS=190`; `LINES=40` at 70x20 (compound form); `LINES=40` at 72x24 (floor edge); `LINES=99999 COLUMNS=99999` at 72x24 and `COLUMNS=99999` at 100x30 (clamp and width bound); and 70x20 unpinned, confirming the final `Grow the terminal to 72x24 and the next game gets panels.` branch is still reached.
+- The documented "growing needs no rerun" claim, end to end: 100x30 with `COLUMNS=190`, full game to the play-again prompt, pane resized to 190x30, `y` — panels came up in the same process. This claim is new in `README.md` and `sst.doc:1573-1576` and is not covered by any test arm; `tests/tui.sh` grows the pinned axis only partway (150x30) and asserts the second notice.
+
+No files were modified; `git status` is the same six modified paths it started as, and `build/` is git-ignored.</result>
+<usage><subagent_tokens>60046</subagent_tokens><tool_uses>30</tool_uses><duration_ms>1179222</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a896a3a0f2ee3f207</task-id>
+<tool-use-id>toolu_01R6AMLmerK1ssirWiCppUJC</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a896a3a0f2ee3f207.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier rerun for #174" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: **pass**
+
+No failures, no flakes, no missing coverage found. The tree is unchanged by this run (`git diff main --numstat` is byte-identical to the state I was handed).
+
+### Line endings (your specific request)
+
+Every changed file matches HEAD's convention exactly, and no file is mixed:
+
+| File | Worktree | HEAD |
+|---|---|---|
+| `sst.c` | 1184 lines, **1184 CRLF** | 1130 lines, 1130 CRLF |
+| `sst.doc` | 1714 lines, **1714 CRLF** | 1709 lines, 1709 CRLF |
+| `README.md`, `tests/tui.sh`, `tui.c`, `tui.h` | all-LF, 0 CR anywhere | all-LF |
+
+Zero lines without CR in the two CRLF files, zero lines with CR in the four LF files, and all six end in a single `0a` byte as HEAD does. `git diff main --numstat` shows `sst.c` at 56/2, so the restore took.
+
+One thing that looks alarming but is not: `git diff main --check` reports 56 "trailing whitespace" hits in `sst.c` — exactly the count of added lines. That is `git` flagging the CR itself, which it does for every commit touching this file on `main` (`5d10d5b` = 7 hits, `1ff91fe` = 107). No added line has real whitespace *before* the CR. Not a finding.
+
+### Failures
+None.
+
+### Missing coverage
+None. Every branch of the new `tui_refusal_growable()` has an exact-literal arm in `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh` (`wait_scrollback`/`scrollback_count` both use `grep -F`, so these are fixed-string assertions, not regex):
+
+- TRUE, both axes oversize → "both axes oversize" (the arm you added; closes my prior finding)
+- TRUE, one oversize + one tolerated, i.e. the larger-per-axis rule → "oversize height under a tolerated width"
+- TRUE, single axis → "oversize LINES", plus the two retry arms "pinned axis"/"pinned height"
+- FALSE via the under-floor test → "oversize height with an undersize width"
+- FALSE via `!l &amp;&amp; !c` → "undersize pin"
+
+**The prior finding #2 resolution holds on inspection.** The comment's claim that neither clamp can fire is correct: with `smallwindow` false, both `refusedterm*` are already ≥ their floor, and each `need*` is either that value or a pin strictly above it, so `need* &lt; MIN*` is unreachable from today's caller.
+
+**Comment arithmetic — all load-bearing numbers verified, since AGENTS.md step 4 reads these as specification:**
+
+- Fixed text of `"Grow to %dx%d, or unset %s and rerun sst -t."` measures **38**, as claimed.
+- Worst case 38 + 17 + 6 = **61**. Confirmed live, not just derived: at a 72x24 pane with `LINES=99999 COLUMNS=99999` the game printed `Grow to 512x512, or unset LINES and COLUMNS and rerun sst -t.` — measured at exactly 61 columns, "eleven columns to spare" in 72. Correct.
+- The 512 clamp is real at both ends: `512x512` at 72x24, and `512x30` for `COLUMNS=99999` at 100x30.
+- The tui.sh comment's "this arm's line is 60 columns" — measured 60.
+- The rejected wording `"Grow to %dx%d for panels next game, or unset %s and rerun sst -t."` measures **59** fixed, worst case **82**. Correct, and it would indeed overflow 72.
+
+### Environment issues
+None that prevented a check. `cppcheck`, `clang-tidy`, `scan-build` and `clang` are absent — per the brief that is a bonus, not a gap, because `analyze` is what step 2 rests on and it **ran** (not skipped) in both configurations, invoking real `gcc -fanalyzer` (gcc 15.2.0) over all 13 sources including both changed C files, with its use-after-free canary confirming the analyzer is live: `analyze OK (/usr/bin/cc, bb-explosion-factor 30)`. Note its depth is uneven by design, so this is not a tree-wide clean bill. `tmux` present, so `tui` ran rather than skipping.
+
+### What ran
+
+**Builds** — both `ci-*` presets, configured and built `--clean-first` so no warning could hide in a cached object. Zero warnings, zero errors. `-Werror` confirmed present rather than assumed: `build/ci-debug/CMakeFiles/sst.dir/flags.make` carries `-DSCORE -DCAPTURE -DCLOAKING -Wall -Wextra -Wmissing-prototypes -Werror -DDEBUG -g -std=gnu17`, and ci-release the same with `-O3 -DNDEBUG`.
+
+**Tests** — `ctest --preset ci-debug` → 12/12 passed (364s); `ctest --preset ci-release` → 12/12 passed (350s). No skips in either. `tui` re-run standalone on ci-debug a second time (183s, passed) — no flakiness.
+
+**Journeys** against `./build/ci-debug/sst`:
+- Plain mode piped (`regular/short/novice/xyz/srscan/lrscan/status/chart/quit/n`) on both ci binaries, exit 0, no stray CR; the two differ only in RNG seeding.
+- Ten TUI refusal shapes on a private tmux socket (`-L sstverify -f /dev/null`, killed only my own session). All produced the documented line and all carried on to a working classic prompt: oversize COLUMNS/LINES/both at 100x30, oversize-with-tolerated-width, oversize-with-undersize-width, under-floor pin only, window-under-floor with and without a pin, and the two 99999 clamp cases.
+- The manuals' promise verified end to end: `COLUMNS=190` refused at 100x30, window widened to 190x30 mid-process, and the panels came up **in the same process** without a rerun — which is what `README.md` and `sst.doc:1562+` now both claim.
+
+**Docs** — the `Grow to 190x30, or unset COLUMNS and rerun sst -t.` example quoted in both manuals matches the game's output character for character. New `sst.doc` lines max 69 columns against the file's existing 79; `README.md` unchanged in max width; no new `sst.c`/`tui.c` line exceeds 79.</result>
+<usage><subagent_tokens>60499</subagent_tokens><tool_uses>32</tool_uses><duration_ms>1281999</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a70d4dc9cb5c27f48</task-id>
+<tool-use-id>toolu_011Mk626UUjoH6uq85GEBSct</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a70d4dc9cb5c27f48.output</output-file>
+<status>failed</status>
+<summary>Agent "verifier after code-review fixes" failed: Agent terminated early due to an API error: API Error: 529 Overloaded. This is a server-side issue, usually temporary — try again in a moment. If it persists, check https://status.claude.com.</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Compiled output confirmed unchanged (ci-release objects and binary byte-identical; ci-debug differs only in DWARF and the derived build-id). Now the test suites.</result>
+</task-notification>
+
+---
+
+Ok try again
+
+---
+
+<task-notification>
+<task-id>ac0355e7525afa529</task-id>
+<tool-use-id>toolu_01Fb7DEx5UFdKFqXpnUDY5e8</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/ac0355e7525afa529.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier retry after code-review fixes" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: **pass**
+
+No failures, no flakes. Everything the brief asked me to confirm, I confirmed independently rather than taking it from the summary.
+
+### Line endings (the specific worry)
+
+Verified byte-level against `HEAD`, not by diffstat. Every file is wholly one convention and matches HEAD's:
+
+| File | Worktree | HEAD |
+|---|---|---|
+| `sst.c` | 1185 lines / 1185 CRLF | 1130 / 1130 |
+| `sst.doc` | 1714 / 1714 CRLF | 1709 / 1709 |
+| `README.md` | 179 / 0 CRLF | 175 / 0 |
+| `tests/tui.sh` | 4076 / 0 | 4015 / 0 |
+| `tui.c` | 1764 / 0 | 1693 / 0 |
+| `tui.h` | 107 / 0 | 101 / 0 |
+
+CR-byte totals in the four LF files are **0** (so no lone mid-line CR either), the CR count in `sst.c`/`sst.doc` equals the line count exactly (so no line lost its CR in the reflow), and all six end in a newline.
+
+### Builds
+
+Both `ci-*` presets configured and **fully recompiled** with `--clean-first` — the stale build dirs from the aborted attempt would otherwise have made a no-op build look like a clean one. Zero warnings, zero output beyond the compile lines. `-Werror` confirmed live in both caches (`SST_WERROR:BOOL=ON`; ci-debug echoed `-Wall -Wextra -Wmissing-prototypes -Werror -DDEBUG`). GCC 15.2.0.
+
+### Tests
+
+`ctest --preset ci-debug` — 12/12 passed, 362s. `ctest --preset ci-release` — 12/12 passed, 353s. Nothing skipped in either.
+
+`analyze` **Passed** (not skipped) in both, over all 13 game sources including `tui.c` and `sst.c`: `analyze OK (/usr/bin/cc, bb-explosion-factor 30)`. I checked `tests/analyze.sh` rather than trusting the result — the canary is a real `-c` compile of a planted use-after-free grepped for `Wanalyzer-use-after-free`, not `-fsyntax-only`, so the analyzer was demonstrably live. Its depth is uneven by nature; this is not a tree-wide clean bill.
+
+`tui` re-run a third time standalone in ci-debug (184s, passed) — three consecutive passes, no flakiness.
+
+### Journeys
+
+Plain mode unchanged: `regular/short/novice/xyz/srscan/status/quit/n` exits 0, one CR (the `pause()` shape), clean ending. All TUI work on my own socket `-L vfy -f /dev/null`; never touched the default socket.
+
+Six refusal shapes, all exact:
+
+- `COLUMNS=190` @100x30 → `Grow to 190x30, or unset COLUMNS and rerun sst -t.`
+- `LINES=40` @100x30 → `Grow to 100x40, or unset LINES and rerun sst -t.`
+- `LINES=40 COLUMNS=190` @100x30 → `Grow to 190x40, or unset LINES and COLUMNS and rerun sst -t.`
+- `LINES=40 COLUMNS=80` @100x30 → `Grow to 100x40, ...` (the larger-per-axis rule, not the report's `80x40`)
+- `LINES=40 COLUMNS=60` @100x30 → `Unset LINES and COLUMNS, rerun sst -t -- classic for now.` (under-floor keeps the old form)
+- @70x20 → `Grow to 72x24, unset LINES, and rerun sst -t.`
+
+TUI comes up clean at 80x24 and 72x24 (panels drawn, no garbling, quit reaches the end).
+
+### Comment claims I re-derived (both edits are as described, and correct)
+
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.c` — the contradiction is gone: opener reads "The two that carry numbers get no column count here", and a separate paragraph introduces the third line and bounds it. Its arithmetic checks out: fixed text is 38 (`"Grow to "` 8 + `"x"` 1 + `", or unset "` 11 + `" and rerun sst -t."` 18), worst case 38+17+3+3 = **61**. Measured on a 72x24 pane with `LINES=99999 COLUMNS=99999`: curses clamps to 512 and the line renders at exactly **61 columns**, unwrapped, eleven to spare. The "window is at least 72" claim holds — the branch sits after all three `smallwindow` arms in the else-chain.
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c` — the 38-line doc block now sits directly on `blames()`, and `oversize()`/`underfloor()` carry their own 5-line header. Both describe the code beneath them accurately.
+
+### Missing coverage (one, minor)
+
+The diff adds a promise to both manuals that has no automated test: `README.md` — "where growing needs no rerun, just a yes at the next 'play again'", the same sentence in `sst.doc`, and the `sst.c` comment's "COLUMNS=190 at 100x30 widened to 190x30 at that prompt brings the panels up in the same process".
+
+Every pin-resize arm in `tests/tui.sh` grows the window to a size *still short* of the pin (150 vs `COLUMNS=190` at line 3708; 35 rows vs `LINES=40` at line 3793) and asserts the notice reappears. None grows it to *meet* the pin and asserts the panels come up.
+
+I drove that journey by hand and **the claim holds**: `COLUMNS=190` @100x30 refused → play a tournament game → quit → `n` → at "play again" resized to 190x30 → `y` → second game started with `Grow to 190x30` still at a scrollback count of 1 (no second refusal) and the Quadrant/Status panels drawn. So this is an untested true statement, not a wrong one — worth a test arm, not a blocker.
+
+### Already-disclosed, not a fresh finding
+
+`tui_refusal_growable()`'s two `MINROWS`/`MINCOLS` clamps are unreachable from the only caller, so no test can reach them through the game. The comment above the function says so explicitly and records that a verifier raised it on this branch and it was kept deliberately. Resolved on the record; I am not re-raising it.
+
+### Environment
+
+No problems. `tmux` present, so `tui` ran rather than skipping. `gcc -fanalyzer` capable, so `analyze` ran rather than skipping. `cppcheck`, `clang-tidy` and `scan-build` are not installed — a bonus not taken, not a gap, since step 2 rests on the `analyze` test.
+
+Working tree untouched by me: still the same six modified files, nothing added, my tmux server killed.
+
+### Reproducing this pass
+
+```sh
+cmake --preset ci-debug   &amp;&amp; cmake --build --preset ci-debug   --clean-first
+cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release --clean-first
+ctest --preset ci-debug
+ctest --preset ci-release
+ctest --preset ci-debug -R '^tui$'          # flake check
+printf 'regular\nshort\nnovice\nxyz\nsrscan\nstatus\nquit\nn\n' | ./build/ci-debug/sst
+# TUI journeys: tmux -f /dev/null -L vfy, panes 100x30 / 72x24 / 70x20 / 80x24,
+# env pins COLUMNS=190 | LINES=40 | LINES=40 COLUMNS=190 | LINES=40 COLUMNS=80
+#          | LINES=40 COLUMNS=60 | LINES=99999 COLUMNS=99999
+```</result>
+<usage><subagent_tokens>59463</subagent_tokens><tool_uses>32</tool_uses><duration_ms>1309478</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ac00dfde286776d8c</task-id>
+<tool-use-id>toolu_01AusqDBvUowdE56cLDTLB4S</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/ac00dfde286776d8c.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier after coverage arm" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>All checks are complete. Here is the report.
+
+## 1. Verdict
+
+**Pass.** No failures, no flakes, no environment gaps.
+
+## 2. Failures
+
+None.
+
+## 3. Confirmation of the "only `tests/tui.sh` changed" claim
+
+I did not take this from the task description. Three independent lines of evidence:
+
+- **mtimes** (`/home/scottdensmore/.../super-star-trek`): `README.md` 08-17 21:03, `sst.doc` 08-17 21:04, `tui.h` 08-17 21:00, `sst.c` 08-18 09:33, `tui.c` 08-18 09:34, `tests/tui.sh` 08-18 **12:18**. Nothing but the test script has been written since 09:34; artifacts left by the previous pass in this scratchpad are stamped 09:41, i.e. after every non-test write.
+- **Object code identical.** A `--clean-first` rebuild of `ci-debug` disassembles byte-for-byte identically to the `ci-debug` binary the earlier pass archived (`scratchpad/prev/ci-debug-sst-bin`, 08:55): `diff` over `objdump -d --no-show-raw-insn` output differs only in the `file format` header line. So no C change of any kind (the comment-only round at 09:33/09:34 left codegen untouched, as comments should).
+- **Strings identical.** `strings -a | sort -u` over the same two binaries: no diff at all, so no printed string has changed.
+
+`git status` shows six modified files and **no untracked files**; `git diff main` is the whole change.
+
+## 4. Line endings
+
+Verified by counting CR-terminated lines against total lines:
+
+| File | lines | CRLF lines | verdict |
+| --- | --- | --- | --- |
+| `sst.c` | 1185 | 1185 | wholly CRLF ✓ |
+| `sst.doc` | 1714 | 1714 | wholly CRLF ✓ |
+| `README.md` | 179 | 0 | wholly LF ✓ |
+| `tests/tui.sh` | 4177 | 0 | wholly LF ✓ |
+| `tui.c` | 1764 | 0 | wholly LF ✓ |
+| `tui.h` | 107 | 0 | wholly LF ✓ |
+
+No stray CR anywhere inside lines either (`grep -c $'\r'` equals the CRLF count in each case), and all six end with a newline.
+
+## 5. Scrutiny of the two points you flagged
+
+**Counting the size report, not the advice line — correct, and for the reason you give.** Read from `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.c`: `refusal_notice()` prints the size report whenever `!smallwindow`, independently of `blame`, and every advice branch is guarded by `blame != NULL`. At 190x30 with `COLUMNS=190` the pin is neither oversize (`COLS == ws_col`) nor under the floor, so `tui_refusal_blame()` returns NULL and a refusal there prints the report alone. Counting `'Grow to 190x30, ...'` would indeed have been satisfied by the startup copy alone while the panels stayed down. I reproduced the passing side by hand: with the panels up the count is exactly 1.
+
+One thing worth recording because it is not obvious and the arm depends on it: at the moment of the count the game is in curses on tmux's alternate screen, yet `capture-pane -p -S -` still returns the pre-curses history (tmux's `screen_alternate_on` saves the visible grid and keeps the history on the live one). That is why the count reads 1 rather than 0 there. It held in all six runs and in my hand journey, so it is not a race — but it is load-bearing and undocumented in the arm's comment.
+
+**Mutation proof.** I did not re-run it (read-only), but I checked it is the right break: `|| (pinned("COLUMNS") &amp;&amp; COLS == winsz.ws_col)` inverts exactly the condition this arm asserts, and the two arms it is reported to fail — this one and "one pinned" — are the only two in the file that drive a window to exactly a pinned width. The rejected `&gt;=` break would indeed take the panels down everywhere. The comment records both attempts, which is what step 4 asks for.
+
+## 6. Missing coverage
+
+Nothing blocking. One observation:
+
+- **The promise is now proved on the width axis only.** The new arm meets a pinned `COLUMNS`; there is no arm that meets a pinned `LINES` exactly. `tests/tui.sh:3936` ("pinned height") grows a 40-row pin to 35 and asserts the notice *reappears* — the opposite claim, same as before. The manuals' sentence ("taken as soon as the window catches up with it") is axis-neutral, and `tui_init()`'s gate and the play-again retry are shared between axes, so the risk is low and I would not hold the change for it. Worth a line in the PR body or an issue rather than a fix here.
+
+## 7. Environment issues
+
+None that prevented a check.
+
+- `analyze` **ran, and really ran the analyzer** — `Passed` in both configurations, not SKIPPED: `analyze OK (/usr/bin/cc, bb-explosion-factor 30)`, 34.4 s over all 13 sources with zero diagnostics. gcc 15.2.0, Linux.
+- `clang`, `cppcheck`, `clang-tidy`, `scan-build` are not installed — per the current `verifier.md` this is no longer a gap. `shellcheck` **is** installed and I ran it as a bonus: `shellcheck -s sh tests/tui.sh` is clean, as is `sh -n`.
+- Timing note, not a failure: `tui` takes 186.5 s (Debug) / 177.8 s (Release) against the `TIMEOUT 300` in `CMakeLists.txt:101`. That is 62 % of the budget on this machine, and the new arm plays a game and starts a second. A CI runner materially slower than this box would eat the remaining margin. Nothing to do now; worth knowing before the next arm is added.
+
+## 8. What ran
+
+All from `/home/scottdensmore/Developer/scottdensmore/super-star-trek`, branch `fix/oversize-pin-notice`, working tree as described above.
+
+**Builds** (both from clean, so every warning was actually re-emitted):
+- `cmake --preset ci-debug &amp;&amp; cmake --build --preset ci-debug --clean-first` — zero warnings. Flags echoed by the preset: `-DSCORE -DCAPTURE -DCLOAKING -Wall -Wextra -Wmissing-prototypes -Werror -DDEBUG`.
+- `cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release --clean-first` — zero warnings.
+
+**Tests:**
+- `ctest --preset ci-debug` — 12/12 passed, 369 s.
+- `ctest --preset ci-release` — 12/12 passed, 357 s.
+- `ctest --preset ci-debug -R '^analyze$' -V` — to confirm the analyzer leg was not vacuous.
+
+**Flake hunt on the new arm** — `tests/tui.sh` in full, standalone, four more times beyond the two inside `ctest`: three against `build/ci-debug/sst Debug`, one against `build/ci-release/sst Release`. All exited 0 with `tui OK`. **Six passes of "meeting the pin", zero failures — no flake.**
+
+**Journeys:**
+- Plain mode: `printf 'regular\nshort\nnovice\nxyz\nsrscan\nquit\nn\n' | ./build/ci-debug/sst` — starts, scans, quits cleanly, no CR in the output.
+- `sst -t` with no pty, both configurations — falls back with "Full-screen mode needs a terminal", plays, exits 0.
+- **Hand-driven target journey**, own tmux socket, `-f /dev/null`: 100x30 pane with `COLUMNS=190`, refused with `Terminal is 100x30 but LINES/COLUMNS make it 190x30.` / `Grow to 190x30, or unset COLUMNS and rerun sst -t.`; full game, `quit`, `n`; window resized to exactly 190x30 at the play-again prompt; `y` → refusal-report count 1 (no second refusal), second game set up at the keyboard, briefing cleared, panels up in the same process with a correct ` Quadrant 3 - 2 ` title and every row exactly 190 columns, nothing garbled or wrapped.
+- **Worst-case notice width:** 72x24 pane with `LINES=99999 COLUMNS=99999` — prints `Grow to 512x512, or unset LINES and COLUMNS and rerun sst -t.` at exactly **61 columns**, unwrapped in 72, confirming the bound the new comment in `sst.c` states (fixed text 38, worst case 61); game exits cleanly to the farewell.
+
+**Cleanup:** every tmux server I started was on a private `-L verif-$$` socket and killed on that socket only; no bare `kill-server`. No repository file was modified — `git status` is identical to the state I started from, and the pre-existing ignored `tournamen.trk` (Aug 16) was not touched.</result>
+<usage><subagent_tokens>77354</subagent_tokens><tool_uses>45</tool_uses><duration_ms>1677674</duration_ms></usage>
+</task-notification>

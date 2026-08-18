@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "21b221d2800d",
+  "strategy": "manual-commit",
+  "branch": "fix/oversize-pin-notice",
+  "checkpoints_count": 6,
+  "files_touched": [
+    "README.md",
+    "sst.c",
+    "sst.doc",
+    "tests/tui.sh",
+    "tui.c",
+    "tui.h"
+  ],
+  "sessions": [
+    {
+      "metadata": "/21/b221d2800d/0/metadata.json",
+      "transcript": "/21/b221d2800d/0/full.jsonl",
+      "compact_transcript": "/21/b221d2800d/0/transcript.jsonl",
+      "content_hash": "/21/b221d2800d/0/content_hash.txt",
+      "prompt": "/21/b221d2800d/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 269,
+    "cache_creation_tokens": 673201,
+    "cache_read_tokens": 23271132,
+    "output_tokens": 115437,
+    "api_call_count": 146,
+    "subagent_tokens": {
+      "input_tokens": 520,
+      "cache_creation_tokens": 920388,
+      "cache_read_tokens": 12556407,
+      "output_tokens": 219533,
+      "api_call_count": 261
+    }
+  }
+}
