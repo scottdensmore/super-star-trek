@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "38e8156331f1",
+  "strategy": "manual-commit",
+  "branch": "fix/pin-overflow-on-resize",
+  "checkpoints_count": 9,
+  "files_touched": [
+    "README.md",
+    "sst.doc",
+    "tests/tui.sh",
+    "tui.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/38/e8156331f1/0/metadata.json",
+      "transcript": "/38/e8156331f1/0/full.jsonl",
+      "compact_transcript": "/38/e8156331f1/0/transcript.jsonl",
+      "content_hash": "/38/e8156331f1/0/content_hash.txt",
+      "prompt": "/38/e8156331f1/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 379,
+    "cache_creation_tokens": 336532,
+    "cache_read_tokens": 87986463,
+    "output_tokens": 210809,
+    "api_call_count": 204,
+    "subagent_tokens": {
+      "input_tokens": 11846,
+      "cache_creation_tokens": 3199817,
+      "cache_read_tokens": 62290467,
+      "output_tokens": 816821,
+      "api_call_count": 956
+    }
+  }
+}

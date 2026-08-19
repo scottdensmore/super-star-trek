@@ -1,0 +1,666 @@
+<task-notification>
+<task-id>bpze54l83</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/bpze54l83.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI to complete" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Ok what is next?
+
+---
+
+<task-notification>
+<task-id>a5aa619b3ff40ec7b</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a5aa619b3ff40ec7b.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier for #168" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: **pass**
+
+No failures, no flakes, nothing that prevented a check from running.
+
+---
+
+## 1. Builds
+
+Both `ci-*` presets configured from scratch (I removed `build/ci-debug` and `build/ci-release` first, so nothing was reused from a stale cache) and built clean:
+
+```
+cmake --preset ci-debug   &amp;&amp; cmake --build --preset ci-debug     # 17 objects, exit 0
+cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release    # 17 objects, exit 0
+```
+
+`-Werror` confirmed present in the actual compile lines, not just in the cache:
+
+- `build/ci-debug/CMakeFiles/sst.dir/flags.make`: `-DSCORE -DCAPTURE -DCLOAKING -Wall -Wextra -Wmissing-prototypes -Werror -DDEBUG -g -std=gnu17`
+- `build/ci-release/CMakeFiles/sst.dir/flags.make`: `... -Werror -O3 -DNDEBUG -std=gnu17`
+
+Zero `warning:` lines across both full build logs.
+
+## 2. Static checks
+
+`analyze` **Passed** in both configurations (38.44 s Debug, 38.68 s Release) — not skipped, so the analyzer genuinely ran. I checked `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/analyze.sh` to be sure it is a real run: it compiles with `-fanalyzer ... -c` (not `-fsyntax-only`) and gates on a planted use-after-free canary at `--param=analyzer-bb-explosion-factor=30`. Compiler is gcc 15.2.0. No diagnostics on `tui.c`.
+
+Per the brief's caveat: this is not a tree-wide clean bill — gcc's analyzer reaches some functions and is silent where it gives up.
+
+`cppcheck`, `clang-tidy`, `scan-build` and `clang` are not installed here, so the bonus pass did not run. Not a gap, since `analyze` did.
+
+## 3. Tests
+
+```
+ctest --preset ci-debug      # 12/12 passed, 373.80 s total
+ctest --preset ci-release    # 12/12 passed, 365.20 s total
+```
+
+### `tui` timing (the first thing you asked for)
+
+| Run | Config | Elapsed |
+|---|---|---|
+| ctest | ci-debug | 190.10 s |
+| direct ×4 | ci-debug | 190.1, 190.1, 190.1, 190.2 s |
+| ctest | ci-release | 181.26 s |
+| direct ×2 | ci-release | 181.3, 181.2 s |
+| **baseline: `main`'s `tests/tui.sh`, same machine, same (fixed) binary** | Debug | **186.1 s** |
+
+I measured the baseline properly rather than quoting #101: `git archive main | tar -x` into scratch, then ran that copy's `tui.sh` against `build/ci-debug/sst`.
+
+- **Branch cost: +4.0 s (+2.2 %) in Debug**, against `TIMEOUT 300`.
+- Headroom is now **109.9 s (36.6 %)**. A CI runner would have to be **1.58×** slower than this machine to time out, where before the branch the figure was 1.61×. The branch barely moves it.
+- One data point worth having: a *failing* run costs more, because of the `dump`s. My counter-proof run below took **203 s**. Still inside 300 s here, but that is the number CI sees on a genuine failure, and it leaves a 1.48× margin rather than 1.58×.
+- Of the +4.0 s, 2.1 s is the three `sleep 0.7`s in "pin drag" — a fixed cost that does *not* shrink on a faster runner, so most of the addition is wall-clock-constant rather than CPU-bound.
+
+### Flakiness of the two timing-shaped arms
+
+**None observed.** 8 full `tui.sh` runs (5 Debug, 3 Release) — the new arms are at lines 672-865, well before the `BUILD_TYPE = Debug` block at line 2764, so all four ran in every one of those 8 runs. Zero failures, and the elapsed times are near-identical run to run (190.1 ±0.1 s Debug, 181.3 ±0.1 s Release), which is not what a racy arm usually looks like.
+
+One structural note rather than a finding: "pin fast drag" sends 14 `resize-window` calls with no delay, so on a heavily loaded or much slower runner the steps could arrive as separate events. That makes the arm go *vacuous* (it would still pass, on a fixed build) rather than flaky — the failure mode is a silent loss of coverage, not a red CI. "pin drag" has the opposite exposure and its 0.7 s settle is generous enough that a slower machine only makes it safer.
+
+### Independent check that the new arms bite
+
+I ran the branch's `tests/tui.sh` against a binary built from `main` (built in scratch from `git archive main`, so nothing in the repo was touched):
+
+```
+tests/tui.sh &lt;scratch&gt;/mainbase/build/ci-debug/sst Debug   → rc=1, 203 s
+FAIL: pin shrink: the panels stayed wider than the window they are on
+FAIL: pin drag: a dragged shrink under a pin lost the panel frame
+FAIL: pin fast drag: a drag through the pin left the frame scrolled off
+```
+
+Three of the four new arms fail against unfixed code, and nothing else in the file does. "pin pending" correctly passes against full-`main` — on `main` the relayout never happens at all, so `restore_curline()` is never reached and there is nothing to stack. Its bite only shows against the targeted `builtcols`→`COLS` revert you ran, which is the right mutation for it. So all four arms are accounted for as non-vacuous; I confirmed three of them here myself.
+
+## 4. Journey coverage
+
+All against `./build/ci-debug/sst`, tmux always on a private `-L vfy-$$` socket with `-f /dev/null`, torn down on that socket only.
+
+- **Plain mode, piped, seeded** (`tournament 7 short novice pw` + srscan/status/lrscan/chart/damages/move/quit): output is **byte-identical** to the same journey on the `main` binary. (The unseeded journey differs only in RNG-derived stardate/positions, as expected.)
+- **80x24, no pin**: panels render, exit clean.
+- **Pin `COLUMNS=80`, 100x30 → 72x24**: panels relaid to 72 columns, all 13 rows end at column 72, titles intact.
+- **Pin `COLUMNS=80` and `LINES=24` together, 100x30 → 64x18**: panels relaid to 64x18 with the `&gt;` truncation marker on the Shields row — exactly the measurement the new `tui_init()` comment claims. That comment checks out.
+- **Pin `LINES=30`, fast drag 100x40 → 36/32/28/24 → 30/36/40**: frame, top border and both titles intact at the end; rows 31-40 correctly left blank (tolerated pin drawn short).
+- **Extreme clip under a pin**: `COLUMNS=80` in 100x30 dragged to **30 columns** and back to 100 — no crash, no overflow, panels return to the pin's 80. I diffed this same journey unpinned between the `main` and branch binaries: **byte-identical**, including the pre-existing `" e Left     7.00"` stale fragment in the message window, which is curses not reflowing window content on an extreme resize and is present on `main` too. Not introduced here.
+- **Extreme heights under a pin**: 100x4 and 100x2 degrade gracefully (borders collapse, pager prompt still on the last row), no crash, no garbled output.
+- **Exit**: full journey with several resizes under a pin, then `quit` → `EXITCODE=0`.
+- **Half-typed line, pinned width shrink** (62 chars, `COLUMNS=80`, 100→70): exactly one copy, rewrapped at the new width, accepted intact on Enter.
+- **Half-typed line through a terminal-only move** (62 chars, `LINES=30`, fast drag 40→24→40): line survives, exactly one copy, accepted on Enter. This is the `else` branch of `sync_size()` that deliberately skips `restore_curline()` — it behaves correctly.
+- **Resize under a pin while paused** on `[HIT SPACE BAR TO CONTINUE]`, 100→70 with `COLUMNS=80`: panels relaid to 70 without a keystroke, game still playable after resuming.
+
+## Missing coverage
+
+Two small ones, neither blocking:
+
+1. **Pending line across a terminal-only move.** `sync_size()`'s new `else` branch (terminal moved, layout did not) deliberately skips `restore_curline()`. "pin fast drag" exercises that branch but asserts only on the panel title; "pin pending" exercises the pending line but only on the relayout path. Nothing asserts the two together. I journeyed it by hand and it is correct today, so this is a regression-catching gap rather than a defect.
+2. **`term_size()`'s zero fallback.** The `ioctl` failing, or succeeding with `ws_row`/`ws_col` of 0, drops the layout back to curses' numbers. No test reaches that path; it is genuinely awkward to reach from tmux. Informational.
+
+## Environment issues
+
+None that blocked a check. For the record: `cppcheck`, `clang-tidy`, `scan-build` and `clang` are absent; tmux and gcc 15.2.0 are present, so neither `tui` nor `analyze` skipped in either configuration.
+
+## Line endings
+
+Confirmed as asked, over whole files rather than sampled:
+
+| File | Lines | CRLF lines | Lines with any CR |
+|---|---|---|---|
+| `/home/scottdensmore/Developer/scottdensmore/super-star-trek/sst.doc` | 1714 | **1714** | 1714 |
+| `/home/scottdensmore/Developer/scottdensmore/super-star-trek/README.md` | 179 | 0 | 0 |
+| `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh` | 4404 | 0 | 0 |
+| `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c` | 1911 | 0 | 0 |
+
+`file(1)` agrees (`sst.doc: ASCII text, with CRLF line terminators`), the nine added `sst.doc` lines each end `^M$` under `cat -A`, and `git diff main --stat` versus `--ignore-all-space --stat` differ by only 1 line in `tui.c` — a whitespace-only hunk, not a line-ending conversion.
+
+## What ran
+
+From `/home/scottdensmore/Developer/scottdensmore/super-star-trek` on `fix/pin-overflow-on-resize`, working tree as handed to me (I modified nothing; `git status --porcelain` at the end is the same four `M` entries as at the start):
+
+1. `rm -rf build/ci-debug build/ci-release`; `cmake --preset ci-debug` + `cmake --build --preset ci-debug`; same for `ci-release`.
+2. `ctest --preset ci-debug` (12/12), `ctest --preset ci-release` (12/12).
+3. `tests/tui.sh build/ci-debug/sst Debug` ×4, `tests/tui.sh build/ci-release/sst Release` ×2.
+4. Baseline: `git archive main` extracted to scratch; that copy's `tests/tui.sh` run against `build/ci-debug/sst`.
+5. Counter-proof: scratch copy configured and built with `ci-debug`; the repo's `tests/tui.sh` run against that `main` binary.
+6. Plain-mode piped journeys (seeded and unseeded) diffed against the `main` binary.
+7. Eleven scripted tmux journeys as listed above, each on its own `-L vfy*-$$` socket.
+8. Line-ending audit over the four changed files.
+
+Read from disk during this pass (not from context): `.claude/agents/verifier.md`, `tests/tui.sh`, `tests/analyze.sh`, `CMakeLists.txt`, `tui.c` diff, `README.md` and `sst.doc` diffs.</result>
+<usage><subagent_tokens>83203</subagent_tokens><tool_uses>51</tool_uses><duration_ms>2836882</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a22a6947d8e1db7d3</task-id>
+<tool-use-id>toolu_01WQV8F3ootZiT6thCd8syya</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a22a6947d8e1db7d3.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier rerun for #168" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>Verification complete. Here is the report.
+
+## 1. Verdict
+
+**Pass.** Everything green, deterministically. Two comment-accuracy findings below are non-blocking but in scope (they are about code this branch introduces), so they want a fix or an explicit resolution.
+
+## 2. The delta, confirmed independently
+
+You asked me not to take "no function body changed" on trust. I didn't.
+
+`build/ci-debug/CMakeFiles/sst.dir/tui.c.o` (16:30:35) and `build/ci-release/.../tui.c.o` (16:30:53) both predated the `tui.c` edit (17:28:43), so I copied them off, rebuilt through both presets, and compared **every ELF section**:
+
+| Config | Sections that differ |
+| --- | --- |
+| `ci-debug` | `.debug_info`, `.rela.debug_info`, `.debug_line`, `.rela.debug_line` only |
+| `ci-release` | **none** |
+
+`.text`, `.data`, `.bss`, `.rodata`, `.rela.text`, `.rela.rodata`, `.eh_frame`, `.symtab` and `.strtab` are byte-identical in both. Full disassembly (`objdump -d`) and symbol table with sizes are identical in both, modulo objdump's filename header line. Debug's DWARF line/info shift is exactly what a comment-only edit produces. So: **the `tui.c` edit changed no code.** Confirmed.
+
+One honesty note on the other half: I could **not** diff `tests/tui.sh` against its pre-delta state — nothing in the tree or in `build/` records a shell script, so no snapshot exists. I reviewed it as it now stands and exercised the changed arm heavily (below), but "one arm gains a send-keys and two assertions" is a claim I verified by behaviour, not by diff.
+
+## 3. Builds and static checks
+
+```sh
+cmake --preset ci-debug   &amp;&amp; cmake --build --preset ci-debug   --clean-first
+cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release --clean-first
+```
+
+Clean rebuilds of the whole tree, both exit 0, **zero diagnostic output** — with `-Werror` in the flags line the configure step echoes (` -DSCORE -DCAPTURE -DCLOAKING -Wall -Wextra -Wmissing-prototypes -Werror -DDEBUG`).
+
+`analyze` **Passed** (not skipped) in both configurations, 38.35s / 38.01s against `TIMEOUT 300`. gcc 15.2.0. Its depth is uneven by design, so I am not claiming tree-wide coverage from it — only that it ran and said nothing. No `cppcheck`, `clang-tidy`, `scan-build` or `clang` installed; per the brief that is no longer a gap.
+
+## 4. Tests
+
+`ctest --preset ci-debug` — 12/12 passed, 373.85s total.
+`ctest --preset ci-release` — 12/12 passed, 364.64s total.
+
+### `tui` timing, as asked
+
+| Run | ci-debug | ci-release |
+| --- | --- | --- |
+| in full suite | 190.13s | 181.36s |
+| standalone #1 | 190.22s | 181.27s |
+| standalone #2 | 190.13s | 181.33s |
+
+Against `TIMEOUT 300`: 110s / 119s of headroom, spread across three runs of **0.09s**. Identical to your pre-delta 190.1 / 181.3 — the new `wait_for` costs nothing measurable, because it succeeds on its first poll.
+
+### Flakiness of the changed arm
+
+Three full-file runs per configuration is thin evidence for one arm, so I replicated the "pin fast drag" arm directly (own script, own `-L` socket, `-f /dev/null`, repo binaries) and ran it **118 times**:
+
+| Batch | Binary | Runs | Result |
+| --- | --- | --- | --- |
+| unloaded | `build/ci-debug/sst` | 10 + 50 | `title=OK line=OK copies=1` ×60 |
+| under 96 spinners on 24 CPUs (load avg 53) | `build/ci-release/sst` | 8 + 50 | `title=OK line=OK copies=1` ×58 |
+
+Zero failures. The probe is proven non-vacuous: the same script against a copy with `touchwin(wmsg)` removed reports `copies=0`, which independently reproduces the proof you described.
+
+**Not flaky, and not marginal.** No flakes anywhere else in the suite either.
+
+### The arm really does land on the terminal-only path
+
+The coverage gap I reported was specifically about the branch that skips `restore_curline()`, so I checked the arm reaches it rather than assuming. I instrumented `sync_size()` on a copy outside the repository to log `relayout` / `term_moved()` per call, and ran the drag 40 times (20 unloaded, 20 under load):
+
+```
+40/40:  title=OK copies=1 termonly=2 relayout=0 noop=0
+```
+
+Every run, loaded and unloaded, takes the terminal-only path exactly twice (`relayout=0 term_moved=1`, terminal reading 38 then 40 against `built=30x100`) and never degenerates to the early return. The gap is genuinely filled, not filled by luck on this machine.
+
+One nuance for the record: the arm has no explicit assertion that the game observed an intermediate size. A runner that coalesced all fourteen resizes into the final 40 would leave `sync_size()` returning early, and the arm's assertions would then be measuring nothing they were written for. I could not produce that state in 40 instrumented runs including under load average 53, so this is theoretical rather than observed — and the failure mode would be a red arm, not a silent green. Mentioning it only because AGENTS.md step 4 asks for the case-occurred assertion.
+
+## 5. New comment claims, checked against the tree
+
+- **`sync_size()`'s "a build that calls it on both paths passes the whole of `tests/tui.sh`"** — reproduced. Patched a copy outside the repository to call `restore_curline()` unconditionally, rebuilt, ran `tests/tui.sh build/debug/sst Debug` from inside the copy: `tui OK`, 3m10s. **Claim accurate.**
+- **`tui_init()`'s "COLUMNS=72 LINES=24 in a 100x30 pane taken to 64x18: the panels relaid to 64x18 with the `&gt;` marker on the Shields row"** — reproduced exactly. All thirteen panel rows measure 64, and the Shields row ends `DOWN, 100% 2500.0&gt;` with `&gt;` in column 64. **Claim accurate.**
+- **`README.md` / `sst.doc` rewording** — matches behaviour: the panels come down with the window, go back up to the pin when the room returns (the `pin shrink` arm), and clip rather than falling back to the classic display at 64x18. Every added line in `sst.doc` keeps its CRLF; longest added line 68 chars against a file-wide max of 79.
+
+## 6. Findings
+
+Both are comment claims in code this branch adds. Neither affects behaviour.
+
+**(a) `tui.c:256-259` — the stated justification for `term_size()`'s zero guard names a case that cannot reach it.** The comment says an ioctl reporting 0x0 read "as a size would clip the layout to nothing." It would not: `layout_size()` at `tui.c:279` has its own `if (trows == 0) return;`. Measured — I removed `ws.ws_row &lt;= 0 || ws.ws_col &lt;= 0` on a copy and ran `sst -t` on a pty from `pty.openpty()` (winsize genuinely 0x0): output **byte-identical**, 3224 bytes both, game reaches `COMMAND` and exits 0 both ways. The case the guard actually carries is the half-zero one: with `TIOCSWINSZ` set to rows=24, cols=0, the guarded build reaches `COMMAND` (3224 bytes) and the unguarded one does not (4549 bytes, no `COMMAND`). So the guard belongs there — it normalises half-zero into the zero `layout_size()` understands — but the sentence explaining why points at the wrong case.
+
+**(b) `tui.c:225-255` — the 31-line block documenting `layout_size()` sits above `term_size()`.** It is followed immediately by `term_size()`'s own comment and then `term_size()`'s definition; `layout_size()` arrives 48 lines later at `tui.c:273` with no comment of its own. A reader lands on "The size the panels are laid out at: curses' screen, clipped to the terminal's own" and reads it as `term_size()`'s contract, which is a different function. Pre-existing in the branch rather than in this delta — I did not raise it last pass, and I am raising it now because (a) sent me into the same region.
+
+## 7. Your resolved-not-fixed item — partial dispute
+
+Your premise is right where it counts and I am not asking you to reopen it, but two facts sharpen it:
+
+- **"Not constructible from tmux" is correct; "cannot be written from the harness" is doing more work than the facts support.** A pty from `pty.openpty()` has winsize 0x0 with no ioctl at all, and `sst -t` runs on it and exits 0. It is constructible — just not from POSIX sh plus tmux, and adding a Python-driven pty test to a suite that also runs on macOS CI is a real cost.
+- **More to the point, a test over the 0x0 case could not fail** — see finding (a): removing the guard leaves the 0x0 behaviour byte-identical, because `layout_size()` already catches it. So declining to write it was right for a better reason than the one given: not "cannot be written" but "would assert nothing." The only distinguishable case is a half-zero winsize, which needs `TIOCSWINSZ` and is not a state a terminal emulator produces.
+
+Your other claim — that `tui_init()` makes the identical test — is accurate: `tui.c:1569-1570` and `tui.c:1333-1334` both use exactly `!= 0 || ws_row &lt;= 0 || ws_col &lt;= 0`.
+
+## 8. Journeys
+
+- Plain mode, both configs: `printf 'regular\nshort\nnovice\nxyz\nsrscan\nstatus\nlrscan\nquit\ny\n' | build/&lt;cfg&gt;/sst` → exit 0, 77 lines, **no line ends in CR**, structurally identical between configs (only RNG differs, as expected for an unseeded regular game).
+- TUI at 80x24 and 72x24, both configs: start → panels up → `srscan` → `quit` → `n` → `n` → **exit status 0**, no hang, no garbled output.
+- Pin journeys: COLUMNS=72 LINES=24 in 100x30 → 64x18 (finding-free, see §5); the fast-drag journey 118 times (see §4).
+
+## 9. Environment issues
+
+- No `cppcheck` / `clang-tidy` / `scan-build` / `clang`. Not a gap under the current brief; `analyze` ran and passed.
+- **A stray game process is running that is not mine and not this session's**: PID 1909381, `./build/debug/sst -t`, started Mon Aug 17 20:31, elapsed 21h42m. It is holding a pty. I did not kill it — it predates my session by a day and I do not kill what I did not create. Worth someone clearing it.
+- `/tmp/tmux-1000/` holds ~250 stale socket files from previous verification sessions. All dead servers; I confirmed every socket I created has exited and I left the rest alone. No bare `kill-server` was issued at any point.
+
+## 10. What ran, so this is reproducible
+
+From `/home/scottdensmore/Developer/scottdensmore/super-star-trek`:
+
+```sh
+cmake --preset ci-debug   &amp;&amp; cmake --build --preset ci-debug   --clean-first
+cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release --clean-first
+ctest --preset ci-debug            # 12/12, 373.85s
+ctest --preset ci-release          # 12/12, 364.64s
+ctest --preset ci-debug   -R '^tui$'   # ×2
+ctest --preset ci-release -R '^tui$'   # ×2
+```
+
+Plus, outside the repository (nothing in the tree was modified — `git status` is the same four modified files it started as):
+
+- Section-by-section ELF comparison of saved pre-edit `tui.c.o` against rebuilt, both configs.
+- `.../scratchpad/copy/` — a `tar`-copy of the tree minus `build/` and `.git/`, configured fresh there, used for three mutation/instrumentation builds: `touchwin(wmsg)` removed, `restore_curline()` on both paths, `sync_size()` path logging, and the `term_size()` zero guard removed.
+- `.../scratchpad/drive2.sh` — standalone replication of the "pin fast drag" arm, 118 runs.
+- `.../scratchpad/drive3.sh` — the same against the instrumented build, 40 runs, logging which `sync_size()` path each call takes.
+- `.../scratchpad/zerowin.py`, `.../scratchpad/mixedwin.py` — pty harnesses for the `term_size()` fallback cases in finding (a).</result>
+<usage><subagent_tokens>105454</subagent_tokens><tool_uses>58</tool_uses><duration_ms>2624314</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>ad9dcb4ce5850354d</task-id>
+<tool-use-id>toolu_019Zpw3Fvr9avyjuLmQNnxoy</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/ad9dcb4ce5850354d.output</output-file>
+<status>completed</status>
+<summary>Agent "ui-review round 4 of #168" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Acceptable as-is.** The round-4 `clearok(curscr, TRUE)` costs the player nothing measurable: for every resize that moves the layout, the output byte stream is *identical* with and without it, because `sync_size()` already forces a full repaint on that path (round-3 code) and both `clearok`s are consumed by the same `doupdate()`. On an ordinary unpinned drag, the branch's byte stream is also identical to `main`'s — `main` already emitted one `ESC[H ESC[J` + full redraw per resize step, so this introduces no new class of flash. The only case where the reader's `clearok` fires alone is the coalesced/slept drag, and there the repaint is the repair. I reproduced the defect and the fix on both readers, re-ran the earlier resize journeys with no regressions, and the reworded README/`sst.doc` paragraphs now describe what the game actually does, measured claim by claim.
+
+## Findings
+
+**1. (nit, coverage) The `tui_getch()` half of the fix is not held by any test arm.**
+`tests/tui.sh`'s new "pin slept drag" arm reaches `COMMAND&gt;` via `to_command`, so the game is asleep inside `tui_readline()`. Removing only `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c`'s `tui_getch()` `clearok` would leave the whole file green — the mutation note in the arm ("removing both calls fails that arm and nothing else") is true but only proves the readline call. The `tui_getch()` call is genuinely load-bearing and I reproduced its defect: with the game stopped at `[HIT SPACE BAR TO CONTINUE]` inside `help`/`move` under `LINES=30` in a 100x40 pane, dragged 40 → 24 → 40 and resumed, the branch comes back with the frame intact and the pause prompt in place, while a build with both calls removed comes back with the panels six rows up, no top border and no titles — and pressing space then pages on into the broken frame. Suggestion: extend the "pin slept drag" arm (or add a sibling) that runs `help` / `move`, waits for `HIT SPACE BAR`, then does the same SIGSTOP drag and asserts `want_quadtitle` plus the pause prompt still on screen. Recipe that works: `env LINES=30 sst -t tournament 7 short novice pw` in a 100x40 pane, `help` + `move`, `kill -STOP`, resize to 24, sleep 0.5, resize to 40, sleep 0.5, `kill -CONT`.
+
+**2. (nit, already filed as #182 — verified, not a finding against this change)** Under a pin, in a pane dragged to 3 rows, the prompt lands on the panel's bottom border and reads `mCOMMAND&gt;  qqqqq…`. Unpinned at the same size nothing is drawn below the panels. Both recover cleanly on growing back, and `main` at that size was worse (panels overflowing entirely), so this is not a regression. Noting only that I confirmed the shape the code comment describes.
+
+Nothing else. Specifically, on the cost question you asked about:
+
+- **Unpinned slow drag, 40→24→40 one row at a time with a reader waiting (32 steps):** branch and `main` produced byte-identical output (52,915 bytes, 32 `ESC[J` each). No new flicker, no extra clears.
+- **Pinned `LINES=30`, drag above the pin (8 steps):** branch 14,576 bytes / 8 clear+redraws, `main` 0 bytes. That delta is `sync_size()`'s `clearok` (round 3), not this round's — a build with *both* reader `clearok`s removed emits the identical 14,576 bytes.
+- **Unpinned drag, 8 steps:** branch 15,166 bytes, reader-`clearok`-removed build 15,166 bytes. Identical.
+- So the reader `clearok` adds at most **one** ~1.8 KB repaint per gesture, and only on the coalesced no-net-change event that has no other repair. At 9600 baud that is under two seconds, on a screen that is already wrong; on any modern link it is one frame. No dropped frame mid-pause: I resized during `[HIT SPACE BAR TO CONTINUE]` in the banner and mid-`help`, and the prompt and page position both survived, with the next space advancing exactly one page.
+
+## What I exercised
+
+Builds: `cmake --build --preset debug` on the working tree; a baseline copy of `main` (`git checkout main` in a scratchpad copy — note `main` and the branch tip are the same commit, the change is entirely uncommitted); and a third scratchpad copy of the branch with **both** reader `clearok` calls removed, for isolation. All scratchpad work outside the repository; no files in the repo touched.
+
+Instrumentation: `tmux -f /dev/null -L &lt;own socket&gt;` throughout, with `pipe-pane -O` to capture the exact byte stream the game wrote, and `grep -ao` over the escape sequences to count clears.
+
+Journeys driven:
+- 80x24 TUI: banner → all setup questions → pause → command prompt → `chart`, `damages`, `status`; resize 80x24 → 100x30 → 72x24 *during* the pause; continued past it.
+- 72x24 TUI reports and panel rendering (no misalignment, no truncation).
+- Mid-typing resize at `COMMAND&gt;` (100x30 → 50x24) and at the very first setup question (80x24 → 50x24, wrapped question) — one copy of the pending line in both, completion of the command typed afterwards landed correctly (`srsc` + `an` ran `srscan`); byte-for-byte the same screens as `main`.
+- Slept-drag repro at `COMMAND&gt;` (SIGSTOP, 40 → 24 → 40, CONT) — branch repairs, no-`clearok` build leaves the frame six rows up.
+- Slept-drag repro at a `help`/`move` pause — same result, and the arm gap in finding 1.
+- Pinned `COLUMNS=80` in 100x30: shrink to 70 (panels come down to 70), regrow to 100 (panels return to the pin's 80, not 100) — exactly the README/`sst.doc` sentence.
+- Pinned `COLUMNS=72 LINES=24` in 100x30 taken to 64x18 — relaid to 64x18 with the `&gt;` truncation marker on the Shields row, as the `tui_init()` comment claims.
+- Pinned `LINES=30` with the pane held at 24 rows, then four further width steps — frame stayed stable, no scrolling from repeated repaints while curses believes more rows than exist.
+- Extreme shrink sweep at 90 columns, heights 14/8/5/3, unpinned and pinned (`LINES=24`), plus recovery to 24.
+- Pager: `help` → `move`, resize during the pause, then space — no page skipped, no keystroke eaten.
+- Plain mode: `printf 'tournament\n7\nshort\nnovice\nxyz\nsrscan\nchart\nstatus\ndamages\nmove\n1\n2\nquit\nn\n'` piped to both binaries — 105 lines, identical.
+- Docs: `sst.doc:1581-1591` and `README.md:130-138` read in context; new lines are ≤70 columns and retain CRLF.</result>
+<usage><subagent_tokens>113506</subagent_tokens><tool_uses>51</tool_uses><duration_ms>855272</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a18a9698824878adb</task-id>
+<tool-use-id>toolu_011D6hByq2hn1bZFp6qkpySY</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a18a9698824878adb.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier for #168 final" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: **pass**
+
+No failures, no flakes. Everything below ran against the working tree of `/home/scottdensmore/Developer/scottdensmore/super-star-trek` on `fix/pin-overflow-on-resize` (4 modified files, all uncommitted; repo left untouched — `git status` identical before and after).
+
+---
+
+## Failures
+
+None.
+
+---
+
+## The three things you asked for
+
+### 1. `tui` timing — new figure
+
+| Config | runs | times (s) | spread | vs `TIMEOUT 300` |
+|---|---|---|---|---|
+| Debug (`ci-debug`) | 5 | 194.89, 195.05, 194.95, 195.01, 194.92 | 0.16 s | 105 s headroom (1.54x) |
+| Release (`ci-release`) | 4 | 186.23, 186.03, 186.00, 186.10 | 0.23 s | 114 s headroom (1.61x) |
+
+Baseline for the delta: `main`'s own `tests/tui.sh` on this machine, Debug, same harness — **186.21 s**. So all six new arms together cost **~8.7 s**, and the last two ~4.8 s of that (consistent with your 190.1 → 194.9).
+
+For #101, the useful decomposition: `tests/tui.sh` has **106 unconditional `sleep` calls totalling 78.15 s**, which do not scale with CPU. The remaining ~117 s (Debug) is tmux/game startup and poll-loop latency, which does. That is why five runs varied by 0.16 s. It also sets the ceiling: if the variable part doubled, Debug would land at roughly 312 s and blow `TIMEOUT 300`. **The margin tolerates a runner about 1.9x slower than this one, not more** — and the two new arms moved that ceiling down by ~5 s of pure fixed sleep. Worth adding to #101 as a number rather than a worry.
+
+### 2. `pgrep -P` + `kill -STOP`/`-CONT` — sound, with one blind spot
+
+Probed rather than reasoned (script kept at `/tmp/.../scratchpad/probe.sh`):
+
+- **Target.** `#{pane_pid}` is the pane's shell on the script's private per-PID socket. `pgrep -P` restricts to its direct children; measured, there is exactly one — the `sst` process (`env` execs into it, so no intermediate). It cannot reach a process the suite did not start. The only theoretical escape is PID reuse between the `display-message` and the `kill`, which needs the pane shell to die and its PID to be recycled inside a few milliseconds; the value is read live from the server immediately before use, so there is no stale-PID window of the kind that would matter.
+- **Bad input is guarded.** `pgrep -P ""` and `pgrep -P notanumber` both exit 2 with empty stdout (procps-ng 4.0.4), so `gpid` is empty and the `[ -z "$gpid" ]` branch fails the arm rather than signalling anything. (Cosmetic: pgrep's usage text then lands on the test's stderr, i.e. inside the ctest failure dump.)
+- **No stopped process can be left behind.** Measured: game STOPped, then `tmux kill-server` (what `cleanup()` does, and what every trap routes to) — the pane shell dies, the process group is orphaned with a stopped member, the kernel delivers SIGHUP+SIGCONT per POSIX, and the game exits. Probe printed `OK: stopped game reaped when the pane shell died`. There is no `set -e` and no `exit` between STOP and CONT, so only a signal can cut in, and INT/TERM/HUP/PIPE/EXIT all reach that cleanup. The one uncovered case is SIGKILL of the script itself (ctest timeout escalation), which already leaks the private tmux server for any failure in this file; the stopped game dies with the server whenever it is killed. Not a new class of leak.
+- **The blind spot, and it points at a false pass rather than a safety problem.** Neither arm asserts that the process it stopped is the game. If some platform's pane shell had another child listed first, `head -1` would stop that, the game would stay awake, the SIGWINCH coalescing the arm depends on would not happen, and `want_quadtitle` would pass — the arm testing nothing and saying so nowhere. A one-line guard (`ps -o comm= -p "$gpid"` is `sst`, or the state reaches `T`) would close it. On this machine the child *is* `sst` and the arms do fail on a mutant, so they have teeth here; this is about the day they are run somewhere else. Reporting, not fixing.
+- Incidentally, the arms add a dependency on `pgrep` and job-control signals to a script whose header documents only its fractional-`sleep` requirement. Both CI platforms have `pgrep`; if it were missing the arms would *fail*, not skip.
+
+### 3. Flakiness — none observed
+
+Nine `tui` runs total (5 Debug, 4 Release), all pass, run-to-run duration spread under 0.25 s. The four timing-shaped arms did not misbehave once.
+
+I also checked the arms are not passing vacuously, on copies outside the repository:
+
+- `tui_getch()`'s `clearok` removed → the **whole** `tests/tui.sh` reports exactly one failure: `FAIL: pin slept pause: a drag slept through at a pause left the frame scrolled off`. Nothing else.
+- `tui_readline()`'s `clearok` removed → my own scripted slept-drag journey at the command prompt comes back displaced while the pager-pause case stays intact — the mirror image of the above. Your "isolate cleanly in both directions" claim holds.
+- `main`'s binary vs the branch's on the same slept-drag journey: `main` = frame displaced (six rows up), branch = frame intact. The defect is real and the fix is what repairs it.
+
+---
+
+## What ran
+
+**Builds** — `cmake --preset ci-debug &amp;&amp; cmake --build --preset ci-debug`, same for `ci-release`, then a full `--clean-first` rebuild of both. Zero warnings under `-Werror` (`-Wall -Wextra -Wmissing-prototypes`), gcc 15.2.0.
+
+**Static checks** — `analyze` passed in both configs (36–38 s), and it really ran: `analyze OK (/usr/bin/cc, bb-explosion-factor 30)`, with `tui.c` in the source list passed by the build. Not skipped. Bonus: `shellcheck -s sh` (installed here) is clean on every file in `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/*.sh`, `tests/tui.sh` included; `sh -n` clean under dash and bash (`/bin/sh` here is dash). `cppcheck`, `clang-tidy`, `scan-build` are not installed.
+
+**Tests** — `ctest --preset ci-debug`: 12/12 passed, 377.93 s total. `ctest --preset ci-release`: 12/12 passed, 368.72 s. Plus the repeat `-R '^tui$'` runs above.
+
+**Journeys** (`/home/scottdensmore/Developer/scottdensmore/super-star-trek/build/ci-debug/sst`, and the release binary where noted; all tmux on private `-L` sockets with `-f /dev/null`, all cleaned up — no stray sockets or `sst` processes afterwards):
+
+- Piped plain mode, deterministic tournament seed, diffed byte-for-byte against a build of `main` exported to scratch: **identical**.
+- TUI at 80x24 and 72x24 — starts, panels drawn, all thirteen panel rows exactly the window width, accepts commands, exits cleanly.
+- **Both axes pinned**: `COLUMNS=72 LINES=24` in 100x30 taken to 64x18 — panels relaid to 64 columns with the `&gt;` truncation marker on the Shields row, exactly the measurement `tui_init()`'s new comment claims.
+- **Extreme drag under a pin**: `LINES=24` in 100x40 dragged 20→12→6→4→3→2 and back to 40 — no crash, no hang, panels fully restored, still in curses. Backs the manuals' reworded "they clip rather than give way to it, under a pin as much as without one".
+- **Slept drag** (SIGSTOP across 40→24→40 under `LINES=30`) at the command prompt and at the pager pause, branch vs `main` vs both mutants, as above.
+- Release binary spot-checked on the pinned-shrink and slept-drag journeys — identical behaviour.
+
+**Line endings** — `sst.doc` 1714/1714 lines CRLF; `README.md`, `tests/tui.sh`, `tui.c` zero CR bytes anywhere. No trailing whitespace introduced in the diff. `file(1)` agrees.
+
+**Cited issues exist and are open**: #168, #182, #101.
+
+---
+
+## Missing coverage
+
+1. **`term_size()`'s half-zero guard has no automated test.** `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c:238-247` rejects `ws_row &gt; 0 &amp;&amp; ws_col == 0`, and its comment records a manual measurement on a pty set to rows=24, cols=0. tmux cannot produce that winsize, so no arm reaches it; a small `openpty` + `TIOCSWINSZ` harness could. Defensive code, low risk, but it is the one new branch in the diff nothing exercises.
+2. **The `ioctl` failure path in `term_size()` is effectively unreachable** in a running TUI — `tui_init()` refuses before `make_windows()` is ever called when there is no terminal. Noting it as untested rather than as a gap worth closing.
+3. **The SIGSTOP arms don't assert they stopped the game** (see §2 above) — a coverage gap in the arms themselves, in the false-pass direction.
+4. #182 (pin plus a window of three rows or fewer) is cited in two comments in `tui.c`, filed, and deliberately not fixed here — no test, which is right for a filed-not-fixed defect.
+
+---
+
+## Environment issues
+
+None that prevented a check. `analyze` ran rather than skipping; `tui` ran rather than skipping (tmux 3.6 present). `cppcheck`/`clang-tidy`/`scan-build` absent, which the brief no longer counts as a gap.
+
+One observation unrelated to this change: `/tmp/tmux-1000/` holds roughly 700 stale socket files from previous sessions' hand-driven tmux work (`sst*`, `verif*`, `uirev*`, …). `tests/tui.sh` removes its own; these are leftovers from agents driving tmux by hand. Harmless, but somebody's `/tmp` is accumulating.</result>
+<usage><subagent_tokens>103985</subagent_tokens><tool_uses>62</tool_uses><duration_ms>3252265</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>af85a05a4b7c5e7f3</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/af85a05a4b7c5e7f3.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier after arm restructure" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict
+
+**Pass on Linux** — every check green, four consecutive `tui` runs clean, no flakes. Two findings you should weigh before merge: one I judge a **likely deterministic failure on the macOS leg of CI** (I cannot run macOS here), and one residual false-pass channel in `slept_drag()` — the same class you asked me to look for, in the half the fix did not close.
+
+---
+
+## Findings
+
+### 1. `game_pid()`'s `ps -o comm=` check is Linux-specific and will probably fail the macOS CI leg
+
+`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh:147`
+
+```sh
+[ "$(ps -o comm= -p "$gpid" 2&gt;/dev/null)" = "sst" ] || return 1
+```
+
+POSIX defines the `comm` keyword as *"the name of the command being executed (argv[0] value) as a string"*. Linux `procps` deviates: it takes `comm` from `/proc/pid/stat`, i.e. the executable's basename. BSD/macOS `ps` follows the POSIX wording and prints argv[0] — which here is the absolute path. My probe on this machine shows exactly that argv[0]:
+
+```
+gpid=2033768  ps -o comm= =&gt; [sst]  ps -o args= =&gt; [/home/.../build/ci-debug/sst -t tournament 7 short novice pw]
+```
+
+On macOS the comparison would therefore be `/Users/runner/.../sst` = `sst` → false → `game_pid()` returns 1 → both new arms fail with *"pin slept drag: could not find the game process to stop"* and *"pin slept pause: ..."*. `.github/workflows/ci.yml` runs `macos-latest` for both presets, installs tmux, and `CI` is set, so `tests/tui.sh` runs there for real rather than skipping.
+
+Loud, not silent — so it is a CI failure, not a false pass. I could not verify it on macOS from here; treat the confidence as high-but-unmeasured. The shape that works on both is matching the basename (`${c##*/}`, a `case` glob, or `-o ucomm=`).
+
+Related nit, same helper: `pgrep -P "$shpid" | head -1` takes the lowest-pid child, where the file's own pre-existing `sigwinch_caught()` (`tests/tui.sh:3570`) loops over *all* children precisely because the first one need not be the game. The `comm` check makes a wrong pick fail loudly rather than quietly, so this is robustness only.
+
+### 2. `slept_drag()` still does not assert that the drag happened
+
+`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh:164-177`
+
+The two guards you added close the "was the game really stopped" hole. The other precondition is unguarded: the two `tm resize-window` calls are fire-and-forget, and nothing checks that the pane ever reached 24 rows or came back to 40. Every other drag arm in the file guards this with `wait_pane` (`pin drag`, `pin fast drag`, `pin shrink` all fail loudly if the terminal did not move).
+
+It matters more here than elsewhere because the assertion is a *survival* check: the Quadrant title is on the top row **before** any drag. From my probe, at the prompt with no drag at all, `want_quadtitle` is satisfied on iteration 0. So if both resizes were no-ops — an old tmux without `resize-window`, a typo in a future edit, a tmux error written to stderr that `ctest` hides on a pass — the arm reports a pass having tested nothing. That is the same false-pass direction as the finding you just fixed.
+
+Measured that the precondition *does* hold today, with the game stopped:
+
+```
+stat right after STOP: [T+]
+resize to 24 rc=0  pane_height now=24
+pane_height back=40
+top row after drag: [lq Quadrant 3 - 2 qqqq...klq Status qqq...k]
+```
+
+A `wait_pane '#{pane_height}' "$2"` after the shrink and `"$3"` after the restore would close it without touching the timing: `wait_pane` returns on the first poll here, and the `sleep 0.5` that follows still supplies the settle your comment is about. (Your measurement that `wait_pane` *in place of* the sleeps passes on a broken build is about replacing them, not adding to them.)
+
+### 3. `slept_drag()`'s stop check is sampled once, not polled — no flake seen here
+
+`ps -o stat= -p "$1" | cut -c1` runs immediately after `kill -STOP`, which is in principle a race: the target has to be scheduled to enter `TASK_STOPPED`. I measured it 300 times against a sleeping process while `ctest` was running for load: **0/300 non-`T`**. Plus `T+` in the live probe above. So not flaky on this machine; on a heavily loaded runner it would fail loudly rather than pass, so it is low priority. A short poll would be strictly better.
+
+---
+
+## Your three resolutions
+
+- **`term_size()`'s half-zero guard, verified rather than tested.** Your measurement is correct — I reproduced both halves independently. With a `openpty` + `TIOCSWINSZ` harness at `rows=24, cols=0`: the branch's `build/ci-debug/sst` reaches `COMMAND`; a copy of the tree outside the repository with only `ws.ws_row &lt;= 0 || ws.ws_col &lt;= 0` removed from `term_size()` (line 242, leaving `tui_init()`'s copy at line 1440 intact) does not. So the guard earns its place and the comment's number is right. One correction to the reasoning, not to the decision: the case *is* drivable — it took ~25 lines of `python3` and no tmux. The resolution rests on the cost of a Python dependency in an sh-only suite that also runs on macOS, which is your call to make, not on it being undrivable. Worth saying that way if it goes in the PR body.
+- **`ioctl` failure path unreachable.** Agreed, on reading `tui_init()` and `tui_size_changed_since_refusal()` (`tui.c:1439-1441`): stdout is a tty by the time `make_windows()` runs and cannot stop being one.
+- **#182 filed and unfixed.** Fine; the `make_windows()` comments point at it where the work depends on it.
+
+---
+
+## Missing coverage
+
+Nothing new in the diff is uncovered beyond the above. The one gap is item 2: the two SIGSTOP arms assert their subject only if the resize actually landed, and nothing checks that it did.
+
+---
+
+## `tui` timing — updated, and the old decomposition was wrong
+
+Runtime is unchanged by the restructure (`TIMEOUT 300`):
+
+| run | config | wall |
+| --- | --- | --- |
+| ctest | Debug | 195.01 s |
+| direct (with sleep shim) | Debug | 195.70 s |
+| direct | Debug | 195.10 s |
+| direct | Debug | 195.08 s |
+| ctest | Release | 186.22 s |
+| direct (with sleep shim) | Release | 186.91 s |
+
+**The 78.15 s figure I gave you before was too low and should be replaced.** It was a static sum of `sleep` literals in the source; it does not account for arms that run inside loops (the `80x24`/`72x24` size loop, the three-arm sigwinch loop). Measured properly this time, by putting a logging `sleep` shim first on `PATH` and summing what actually ran:
+
+| | Debug (195.70 s) | Release (186.91 s) |
+| --- | --- | --- |
+| fixed settle sleeps (0.3/0.5/0.7/1.0) | 127.70 s / 140 calls | 121.70 s / 134 calls |
+| poll-loop sleeps (0.1/0.25) | 54.85 s / 445 calls | 52.40 s / 422 calls |
+| everything else (fork/exec, tmux, curses, awk) | 13.15 s | 12.81 s |
+
+So 93% of the run is spent inside `sleep(1)`, and the fixed share — the part that does not shrink on a faster machine or grow on a slower one — is 127.7 s, not 78 s. On the same model as before (fixed sleeps constant, all else scaling with slowness *k*): `127.7 + 68.0k ≤ 300` → **k ≈ 2.5x**, up from the 1.9x I reported. Release: `121.7 + 65.2k ≤ 300` → **k ≈ 2.7x**. That is the pessimistic bound, treating every poll iteration as growing in proportion; if only real work scales, the headroom is far larger. For reference on this branch specifically, `slept_drag()` contributes 2 × 2.0 s and the `pin drag` settle 3 × 0.7 s. Static sum of fixed literals for comparison: 73.80 s here vs 71.10 s on `main`.
+
+Numbers for issue #101 should use the 127.7 s / 2.5x pair, not the earlier ones.
+
+---
+
+## Environment issues
+
+- No `cppcheck`, `clang-tidy` or `scan-build` installed — a bonus, not a gap, per the brief.
+- `analyze` **ran and passed** in both configurations (35.49 s Debug, 37.20 s Release) with GCC 15.2.0 on Linux — not skipped, so real static analysis happened. Its depth is uneven by construction; it is not a tree-wide clean bill.
+- I could not run the macOS leg. Finding 1 is unverified there by necessity.
+
+---
+
+## What ran
+
+All from `/home/scottdensmore/Developer/scottdensmore/super-star-trek`, branch `fix/pin-overflow-on-resize`, four modified files (`README.md`, `sst.doc`, `tests/tui.sh`, `tui.c`), no staged or untracked work. Tree byte-identical afterwards; all mutation work was on a copy in the scratchpad.
+
+1. `cmake --preset ci-debug &amp;&amp; cmake --build --preset ci-debug` — exit 0, zero warnings with `-Werror`.
+2. `cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release` — exit 0, zero warnings with `-Werror`.
+3. `ctest --preset ci-debug` — 12/12 passed, 375.83 s total.
+4. `ctest --preset ci-release` — 12/12 passed, 368.56 s total.
+5. `tests/tui.sh build/ci-debug/sst Debug` — three further standalone runs, all `tui OK` (flake check on the restructured arms; four Debug runs total including ctest's).
+6. `tests/tui.sh build/ci-release/sst Release` — one further standalone run, `tui OK`.
+7. `sh -n tests/tui.sh` clean; `shellcheck -s sh tests/tui.sh` clean (shellcheck 0.11-era binary at `/usr/bin/shellcheck`).
+8. Plain-mode piped journeys against `build/ci-debug/sst` and `build/ci-release/sst` — start, `srscan`/`status`/`lrscan`/`chart`, `quit`, exit 0, no stray CRs.
+9. TUI journey, `build/ci-debug/sst` in tmux 3.6 on a private socket: both axes pinned `COLUMNS=72 LINES=24` in a 100x30 pane taken to 64x18 — confirms `tui_init()`'s comment claim, panels relaid to 64 columns with the `&gt;` truncation marker on the Shields row, frame intact, paging and `quit` still work.
+10. Helper probe of `game_pid()` / `slept_drag()` mechanics (pane child, `comm`, `args`, `stat` after STOP, pane height during and after the drag, title recovery) — output quoted above.
+11. SIGSTOP-to-`T` race measurement, 300 iterations under load — 0 misses.
+12. Half-zero winsize check via a `python3` `openpty`+`TIOCSWINSZ` harness, guarded vs unguarded, the unguarded build made from a copy of the tree in the scratchpad with its own build directory.</result>
+<usage><subagent_tokens>97809</subagent_tokens><tool_uses>41</tool_uses><duration_ms>1921123</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a688164d014c704cb</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a688164d014c704cb.output</output-file>
+<status>completed</status>
+<summary>Agent "final verifier for #168" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: **pass**
+
+No test failures and no flakes. Everything below is judgment and coverage commentary, plus one process disclosure about my own conduct.
+
+---
+
+### Process disclosure (my error, no lasting effect)
+
+To build a plain-mode baseline I ran `git stash push` in your working tree — a modification I should never have made, since I am read-only. I caught it immediately and ran `git stash pop`. The tree is verified identical to its starting state (same four modified files, same `852 insertions(+), 75 deletions(-)` diffstat). I redid the baseline correctly via `git archive main` into scratchpad. Flagging it because you should not have to take "no harm done" on trust.
+
+---
+
+### The `clearok` question — my judgment: **keep the call**
+
+I reproduced your proof independently. Copy of the working tree outside the repo, `sync_size()`'s `clearok(curscr, TRUE)` alone removed (the other two are indented deeper, so the substitution provably hit only line 1241), fresh `ci-debug` configure and build inside the copy, then `tests/tui.sh build/ci-debug/sst Debug` from inside the copy: **`tui OK`, exit 0**. Your claim is accurate.
+
+I then went after the path itself rather than the test. `sync_size()` has exactly one caller, `tui_refresh_panels()`, and that has exactly six call sites — all in `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c`:
+
+| site | context | already repainted? |
+|---|---|---|
+| 1746 | `tui_init()` | startup; no drag can precede it |
+| 1756 | `tui_gameover()` | **no reader — this is the call's sole ground** |
+| 1897 | `tui_readline()` pre-`wgetch` | healed one `wgetch` later by `KEY_RESIZE` |
+| 1938 | `tui_readline()` `KEY_RESIZE` | own `clearok` immediately before |
+| 2010 | `tui_getch()` pre-`wgetch` | healed one `wgetch` later |
+| 2035 | `tui_getch()` `KEY_RESIZE` | own `clearok` immediately before |
+
+So the path is real and narrower than the comment implies: `finish()` at `/home/scottdensmore/Developer/scottdensmore/super-star-trek/finish.c:72` calls `tui_gameover()` and *then* prints the entire epilogue and score before any read. Keep it, for three reasons:
+
+1. **It is the sole repair at `tui_gameover()`**, and that repaint is followed by the longest unread output stretch in the game.
+2. **Cost is nil.** `sync_size()` returns early unless the layout or terminal actually moved, so the `clearok` runs only on a genuine drag.
+3. **Removing it puts the pinned-drag repair entirely on ncurses delivering `KEY_RESIZE` for a resize that does not change the size ncurses computes** — an undocumented implementation detail, and precisely the mechanism this whole change exists to work around. Belt-and-braces at zero measurable cost is the right trade here.
+
+**But the stated reason it cannot be tested is wrong, and it matters.** Three places say the obstacle is the countdown's duration — `tui.c` beside the call ("that countdown runs in under a second end to end here, ... too short to drag a window across from a script"), the `pin drag` arm in `tests/tui.sh`, and #184's "Why it is hard to test".
+
+I landed a resize inside the countdown on the first try, using the SIGSTOP trick `slept_drag()` already uses. Duration is not the obstacle. The obstacle is that `sync_size()` **is never called during the countdown at all** — `tui_puts_slow()` calls `wrefresh(wmsg)`, not `tui_refresh_panels()` — so both builds are displaced throughout it, and the real and mutated builds diverge only in the interval between `tui_gameover()`'s repaint and the first `wgetch`. I measured that interval by polling `capture-pane` as fast as it goes (≈5 ms/poll), three runs each:
+
+```
+REAL   run1: healed after 1.0086s     MUTATED run1: healed after 1.0091s
+REAL   run2: healed after 1.0085s     MUTATED run2: healed after 1.0085s
+REAL   run3: healed after 1.0057s     MUTATED run3: healed after 1.0050s
+```
+
+Indistinguishable. Your conclusion is right; the reason under it is not.
+
+This changes #184's fix options. "Slow the countdown under a test-only hook" and "find another output-without-read stretch long enough to drag across" would both **not work** — lengthening output *before* `tui_gameover()` does not widen the window that has to be sampled. What would work is lengthening the unread output *after* it, and at `LINES=30` the epilogue hits the pager pause, which is a reader that heals the mutated build. That is the sentence worth putting in #184.
+
+This is the class AGENTS.md step 4 singles out: the sentence that says *why*, which a reviewer cannot dispute without redoing the work. I redid it.
+
+---
+
+### `tui` timing, re-measured
+
+`195.03s` Debug / `186.34s` Release against `TIMEOUT 300` — **unchanged** from your last figures (195.0 / 186.2). The `wait_pane` polls and the `slept_drag()` stop-poll return on their first iteration, and the fast-drag exit-status checks are free, so the additions cost under a second in total.
+
+Decomposition re-derived empirically this time, with a logging `sleep` shim on `PATH` (wall 195.78s with the shim):
+
+| | |
+|---|---|
+| Fixed (unconditional) sleeps | **127.7s** — `0.3×2` + `0.5×20` + `0.7×3` + `1×115` |
+| Adaptive poll sleeps consumed | 54.8s — `0.1×376` + `0.25×69` |
+| Total sleeping | 182.5s = **93.2%** of wall |
+| Non-sleep work | 13.3s |
+| Headroom **k** = (300 − 127.7) / (195.78 − 127.7) | **≈ 2.53x** |
+
+So `127.7s` and `k ≈ 2.5x` both stand exactly as posted on #101. No update needed there.
+
+---
+
+### Missing coverage
+
+1. **#184, accepted and documented.** Correctly filed; see the correction above for its framing.
+2. **None of the five new pin arms runs at 80x24 or 72x24** — they are all 100x30 or 100x40. AGENTS.md singles those two sizes out ("not just at a comfortable size"). I exercised them by hand and found no defect: 80x24 with `COLUMNS=76` clipped to 72 on shrink and returned to 76 (not 80) on grow; 80x24 with `LINES=24` dragged 24→22→20→18 kept its frame and titles intact; 72x24 with both axes pinned survived a squeeze to 3 rows and recovered. Worth an arm at the small end eventually, but not a blocker.
+
+### Environment
+
+- `analyze` **PASSED** in both configurations (36.8s / 37.2s) — GCC 15.2.0, so the analyzer is live, not skipped. No environment gap.
+- `cppcheck`, `clang-tidy`, `scan-build` are not installed. Per the brief this is no longer a gap; no bonus run to report.
+- `/tmp/tmux-1000/` holds ~776 dead socket files accumulated across past verifier passes. `tests/tui.sh` removes its own; ad-hoc verifier scripts have not. Harmless, purely untidy. I removed the 15 I created this session and left the rest alone; your live `difftest` and `agents` sessions on the default socket were never touched.
+
+### What ran
+
+- Clean rebuild (`--target clean` first) of `ci-debug` and `ci-release` — **zero warnings** under `-Werror`, every translation unit recompiled, not just `tui.c`.
+- `ctest --preset ci-debug` — 12/12, 377.36s. `ctest --preset ci-release` — 12/12, 368.70s.
+- `tests/tui.sh` run 4 times total (both ctest passes, the shim run, the mutation run) — green every time, no flakes.
+- Mutation proof reproduced in a copy outside the repo: `sync_size()`'s `clearok` removed alone → file green.
+- Destruct/epilogue probe, real vs mutated, 3 runs each, ~5 ms polling resolution.
+- Journeys: seeded plain mode **byte-identical to `main`** (`tournament 7 / short / novice`, srscan, status, damages, lrscan, chart, move, quit — the unseeded run differs only because the galaxy is random, which is not a finding); Release plain mode and EOF-mid-game both exit 0; Release TUI pin-clip and clean quit; TUI pin journeys at 80x24 and 72x24 including the #182 three-row case.
+- `sh -n tests/tui.sh` and `shellcheck -s sh tests/tui.sh` — both clean, confirmed independently.
+- Manual claims spot-checked against behaviour: "panels come down with the window", "go back up to the pin when you give the room back", and the pinned-vs-unpinned contrast at three rows (pinned draws `COMMAND&gt;` over the bottom border; unpinned draws nothing there) — all three verified true as written.</result>
+<usage><subagent_tokens>106668</subagent_tokens><tool_uses>54</tool_uses><duration_ms>2026780</duration_ms></usage>
+</task-notification>
