@@ -3925,14 +3925,31 @@ fi
 # alone.
 #
 # Deliberately no count here. There was one, and going from three arms
-# to seven for #158 falsified it; #193 would add another row again.
-# What a reader adding one needs is the pairing rule above, not an
-# arithmetic they have to keep true.
+# to seven for #158 falsified it, then #193 added another row. What a
+# reader adding one needs is the pairing rule above, not an arithmetic
+# they have to keep true.
+#
+# The pinned pair is the give-up path tui_init() takes when a pin is
+# bigger than the window rather than when the window is under the
+# floor. Both signals are restored there, in lines identical to the
+# floor path's, and neither had a journey -- but for different reasons,
+# which the first version of this comment ran together. SIGWINCH cannot
+# have one: #150's EINTR retries make a leftover handler behaviourally
+# invisible, so there is nothing on screen to assert. SIGTSTP could have
+# one and does not, because a suspend journey costs about 25s where an
+# arm here costs 0.25s.
+#
+# Proved both ways on a copy of the tree outside the repository, with
+# only that path's SIGWINCH restore deleted: before this row the whole
+# file came back green, and with it the arm fails with "SIGWINCH: the
+# pinned game's handler is 'yes' where 'no' was wanted". The first half
+# is why the row exists; the second is what a reader re-running the
+# break needs to recognise a correct red. #193.
 if [ ! -r /proc/self/status ]; then
 	# A developer on macOS gets a note. Linux CI does not: /proc is the
 	# only way to see this, so a leg where it went missing -- hidepid, an
 	# unusual container, a format that moved -- would otherwise report a
-	# plain pass with the three arms silently absent, which under ctest
+	# plain pass with the arms silently absent, which under ctest
 	# shows no output at all. Same reasoning as the tmux guard at the top
 	# of this file.
 	if [ -n "${CI:-}" ] && [ "$(uname -s)" = Linux ]; then
@@ -3959,8 +3976,8 @@ else
 		# Taking the first child would read `sleep 30` under a shell
 		# that keeps it as one -- dash does; bash execs it into the
 		# pane pid and leaves no children at all -- and `sleep`'s mask
-		# is 0, which is the answer two of the three arms want, so
-		# they would pass on a corpse. Either shell now answers nopid
+		# is 0, which is the answer every arm that wants "no" wants,
+		# so they would pass on a corpse. Either shell now answers nopid
 		# instead, which fails.
 		gamepid=
 		for c in $(pgrep -P "$1" 2>/dev/null); do
@@ -3995,7 +4012,8 @@ else
 		'fallback:-t:40:10:no:SIGTSTP:19:' \
 		'plain::40:10:no:SIGTSTP:19:' \
 		'full-screen:-t:80:24:yes:SIGTSTP:19:' \
-		'pinned:-t:100:30:no:SIGTSTP:19:env COLUMNS=190'; do
+		'pinned:-t:100:30:no:SIGTSTP:19:env COLUMNS=190' \
+		'pinned:-t:100:30:no:SIGWINCH:27:env COLUMNS=190'; do
 		mode=$(echo "$arm" | cut -d: -f1)
 		flag=$(echo "$arm" | cut -d: -f2)
 		cols=$(echo "$arm" | cut -d: -f3)
