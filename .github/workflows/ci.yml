@@ -74,9 +74,22 @@ jobs:
       # failed install skips Configure, Build and Test -- so an install
       # that succeeds slowly must still leave room for ctest, which the
       # runners themselves put at 333s and 325s on ubuntu-latest for
-      # the two presets, on the run that merged #185. Worst successful
-      # case is then about 420 + 340 + a short build, comfortably
-      # inside the job's 900.
+      # the two presets, on the run that merged #185. The actionlint
+      # step below adds to that on success: at most 20 + 5 + 3 twice
+      # over and then a 20 that works, so 76s. Worst successful case is
+      # then about 420 + 76 + 340 + a build measured at 3s here, so
+      # 839 of the job's 900 -- the margin was ~140s before that step
+      # and is ~61s with it. Only successes add, a failed step skipping
+      # the rest, which is why the step caps are not in this sum.
+      #
+      # Two terms that sum leaves out, said plainly because ~61s is thin
+      # enough that they matter where ~140s was not: actions/checkout
+      # and Configure both count against the job and neither is
+      # measured here, and the 340s for ctest was read off a run that
+      # predates the workflow test this change adds -- a test that takes
+      # 0.1s locally, but is one more thing in that number. If this gets
+      # tight the job cap is the thing to raise; it is 15 minutes
+      # against a runner that gives 6 hours.
       #
       # The budget, corrected twice and so stated exactly. The install
       # runs only if the update returned inside its bound, so the two
@@ -102,7 +115,19 @@ jobs:
       # recovering on a runner thrown away at the end of the job, and
       # the && means an update that stays broken fails the step even
       # where the cached lists would have let install succeed.
-      - name: Install ncurses and tmux
+      #
+      # shellcheck is here for the workflow lint below, not for the
+      # build. actionlint's shell checks are opt-out by absence: without
+      # that binary it lints the schema, says nothing about any run:
+      # body, and still exits 0. tests/workflow.sh refuses to pass on
+      # that -- a hard failure on Linux CI -- so leaving it to whatever
+      # the runner image ships would make both Linux legs depend on an
+      # image detail nothing here states. GitHub's ubuntu images do ship
+      # it today; naming it means the day they stop is a slow install
+      # rather than a red leg. It is in this list rather than in a step
+      # of its own because it costs one more package on a fetch that is
+      # already happening.
+      - name: Install ncurses, tmux and shellcheck
         if: runner.os == 'Linux'
         timeout-minutes: 7
         run: |
@@ -112,7 +137,8 @@ jobs:
             if [ "$rc" -eq 0 ]; then
               what="apt-get install"
               sudo timeout -k 10 120 apt-get install -y \
-                --no-install-recommends libncurses-dev tmux || rc=$?
+                --no-install-recommends libncurses-dev tmux \
+                shellcheck || rc=$?
               if [ "$rc" -eq 0 ]; then
                 exit 0
               fi
@@ -127,7 +153,8 @@ jobs:
             echo "::warning::attempt $attempt: $what $why" >&2
             sleep 5
           done
-          echo "::error::could not install libncurses-dev and tmux" >&2
+          echo "::error::could not install libncurses-dev, tmux" \
+            "and shellcheck" >&2
           exit 1
 
       # No timeout here, deliberately: it is GNU coreutils and the macOS
@@ -158,6 +185,80 @@ jobs:
           done
           echo "::error::could not install tmux" >&2
           exit 1
+
+      # actionlint lints the workflow itself -- the shell in every run:
+      # body, the schema, and the expressions. Linux only: the workflow
+      # content is the same whatever runner reads it, so linting it on
+      # the two Linux legs covers it. tests/workflow.sh skips where the
+      # tool is absent -- macOS, and a developer's machine -- and fails
+      # where CI is set and the platform is Linux, so a leg that meant
+      # to lint and could not is loud rather than green. That asymmetry
+      # is deliberate and is what stops this repeating #186's macOS
+      # mistake, where a step needed a tool that platform does not have.
+      #
+      # It takes two tools, and both are installed on the Linux legs:
+      # actionlint by this step, shellcheck with the build dependencies
+      # further up. actionlint without shellcheck is the quiet
+      # half-lint -- schema checked, every run: body ignored, exit 0 --
+      # which is the failure the hard-fail above exists to catch, so
+      # leaving the second to whatever the runner image ships would
+      # aim that check at ourselves.
+      #
+      # Pinned, and checked. An unpinned "latest" would make every run
+      # depend on whatever was released this morning, and a lint that
+      # changes under you is worse than no lint. The checksum is the
+      # release's own; a download that does not match it is a failure
+      # rather than something to run.
+      #
+      # Bounded and retried like the installs above, and for the reason
+      # #186 records: an unguarded fetch can take the whole job. 20s on
+      # the curl is about 150x what the fetch wants -- the artifact is
+      # 2.3 MB and came down in ~0.13s when measured on this branch --
+      # so it is a hang guard, not a speed limit. The other half of that
+      # number is load-bearing and invisible: 3 x (20 + 5 + 3) = 84s is
+      # the worst failing case, and it fits inside this step's own
+      # timeout-minutes: 2, which is what lets the ::error:: below
+      # actually print. Raise the 20 without raising the 2 and the step
+      # cap cuts off the message that says what went wrong.
+      - name: Install actionlint
+        if: runner.os == 'Linux'
+        timeout-minutes: 2
+        env:
+          ACTIONLINT_VERSION: '1.7.12'
+          ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        run: |
+          # In RUNNER_TEMP rather than the checkout: the tarball and the
+          # extracted binary would otherwise sit at the repo root for
+          # Configure, Build and Test. Nothing today notices -- there is
+          # no file(GLOB) in CMakeLists.txt and the one test that walks
+          # the tree, tests/instructions.sh, matches CLAUDE*.md -- so
+          # this is keeping the workspace as checked out, not a fix.
+          cd "$RUNNER_TEMP"
+          url=https://github.com/rhysd/actionlint/releases/download
+          tgz=actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz
+          for attempt in 1 2 3; do
+            rc=0
+            timeout -k 5 20 curl -sSLf -o "$tgz" \
+              "$url/v${ACTIONLINT_VERSION}/$tgz" || rc=$?
+            if [ "$rc" -eq 0 ]; then
+              break
+            fi
+            case $rc in
+              124) why="timed out at its bound" ;;
+              137) why="ignored the bound and was killed" ;;
+              *)   why="failed with status $rc" ;;
+            esac
+            echo "::warning::attempt $attempt: actionlint download $why" >&2
+            sleep 3
+          done
+          if [ "$rc" -ne 0 ]; then
+            echo "::error::could not download actionlint" >&2
+            exit 1
+          fi
+          echo "${ACTIONLINT_SHA256}  $tgz" | sha256sum -c -
+          tar xzf "$tgz" actionlint
+          sudo install -m 0755 actionlint /usr/local/bin/actionlint
+          actionlint --version
 
       # Every flag these steps would otherwise spell out lives in
       # CMakePresets.json instead: the build type, -Werror via SST_WERROR,
