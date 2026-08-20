@@ -107,7 +107,13 @@ if [ -z "${work:-}" ] || [ ! -d "$work" ]; then
 	exit 1
 fi
 
-finish() { cleanup; rm -rf "$work"; }
+# Let any process slept_drag() stopped go again before tearing down, so
+# an interrupt inside its STOP/CONT window cannot orphan a stopped game.
+finish() {
+	[ -n "${stopped_pid:-}" ] && kill -CONT "$stopped_pid" 2>/dev/null
+	cleanup
+	rm -rf "$work"
+}
 trap 'finish' EXIT
 trap 'finish; exit 130' INT
 trap 'finish; exit 143' TERM
@@ -130,6 +136,94 @@ fail() {
 }
 
 screen() { tm capture-pane -t "$pane" -p 2>/dev/null; }
+
+# The game process running inside the pane, or nothing.
+#
+# pgrep -P gives the pane shell's direct children, and start() has env
+# exec into the binary, so there is exactly one and it is the game. The
+# name is checked rather than assumed: that is a fact about this
+# platform, not about the game, and an arm that stopped something else
+# would leave the game awake and assert nothing -- a pass with no test
+# behind it. Raised by the verifier on the #168 branch.
+game_pid() {
+	shpid=$(tm display-message -p -t "$pane" '#{pane_pid}' 2>/dev/null)
+	[ -n "$shpid" ] || return 1
+	gpid=$(pgrep -P "$shpid" 2>/dev/null | head -1)
+	[ -n "$gpid" ] || return 1
+	# Compared as a basename, because the two platforms disagree about
+	# what comm is. POSIX defines it as argv[0] and BSD ps obeys, so
+	# macOS prints the whole path start() invoked; Linux procps takes it
+	# from /proc/pid/stat and prints "sst". Matched literally this
+	# returned 1 on macOS and failed both arms outright -- loudly, but
+	# on the one platform this machine cannot run. Raised by the
+	# verifier on the #168 branch.
+	gcomm=$(ps -o comm= -p "$gpid" 2>/dev/null)
+	[ "${gcomm##*/}" = "sst" ] || return 1
+	printf '%s\n' "$gpid"
+}
+
+# Drag the window down to $2 rows and back to $3 with game $1 stopped.
+# The width is held at 100 throughout, which every caller starts at --
+# a caller from a session of another width would have its width changed
+# too, so take it as a parameter before writing one.
+#
+# The game is stopped with SIGSTOP for the length of the drag, so it
+# samples no size in between and the whole drag reaches it as the
+# single KEY_RESIZE ncurses collapses the queued SIGWINCHes into.
+#
+# The sleeps are the point rather than a precaution: asked to go 40 ->
+# 24 -> 40 with no pause, tmux settles on the net change of none and the
+# pane never scrolls, so there is no damage to repair. Measured on a
+# copy of the tree outside the repository with the KEY_RESIZE clearok()
+# calls removed -- with wait_pane in place of these sleeps the arms
+# passed on that build, and with them they fail.
+#
+# Non-zero if the game did not actually stop, which is the other way an
+# arm could pass having tested nothing.
+slept_drag() {
+	# Recorded so finish() can let it go again. tm kill-server hangs
+	# up the pane, and a SIGSTOPped process never acts on SIGHUP, so
+	# an interrupt inside this window would orphan the game still
+	# stopped -- silently, since the directory it played in is gone
+	# by then. Raised by code-review on the #168 branch.
+	stopped_pid=$1
+	kill -STOP "$1" 2>/dev/null || { stopped_pid=; return 1; }
+	# Polled rather than sampled once: the target has to be scheduled
+	# to reach TASK_STOPPED. Measured 300 times under load with no
+	# miss, so one sample would do here -- but a loaded runner would
+	# fail the arm rather than slow it, which is not worth risking for
+	# the two seconds this costs at most.
+	i=0
+	while [ "$i" -lt 20 ]; do
+		[ "$(ps -o stat= -p "$1" 2>/dev/null | cut -c1)" = "T" ] && break
+		i=$((i + 1))
+		sleep 0.1
+	done
+	if [ "$(ps -o stat= -p "$1" 2>/dev/null | cut -c1)" != "T" ]; then
+		kill -CONT "$1" 2>/dev/null
+		stopped_pid=
+		return 1
+	fi
+	# Both resizes are checked as well as slept on. The assertion these
+	# arms end in is a *survival* check -- the quadrant title is on the
+	# top row before any drag -- so a resize that silently did nothing
+	# would leave them passing having tested nothing, which is the same
+	# false-pass direction as an unstopped game. wait_pane returns on
+	# its first poll here, so the settle below is unaffected: it is
+	# added to the sleeps rather than put in place of them, which is
+	# what the measurement above warns against.
+	tm resize-window -t "$session" -x 100 -y "$2"
+	wait_pane '#{pane_height}' "$2" ||
+		{ kill -CONT "$1"; stopped_pid=; return 1; }
+	sleep 0.5
+	tm resize-window -t "$session" -x 100 -y "$3"
+	wait_pane '#{pane_height}' "$3" ||
+		{ kill -CONT "$1"; stopped_pid=; return 1; }
+	sleep 0.5
+	kill -CONT "$1"
+	stopped_pid=
+	sleep 1
+}
 
 # The same, with whatever has scrolled off. Only meaningful once the
 # game has fallen back to the classic display: curses runs on the
@@ -177,6 +271,32 @@ uniform_col() {
 			else if (c != first) bad = 1
 		}
 		END { exit (n > 0 && !bad) ? 0 : 1 }'
+}
+
+# Wait until each of the first $2 rows is exactly $1 characters wide.
+# That is how a panel row reads when its right border is the last thing
+# on it: capture-pane strips trailing blanks, so a row measures the
+# panel's width only if something is drawn in that column, and on these
+# rows that something is the border. A panel left wider than the window
+# comes back ragged instead, each row stopping wherever its own text
+# ran out.
+#
+# Polled rather than asked once, because a resize and the redraw that
+# answers it are two events and the game is between them for a moment.
+# want_quadtitle is not enough to separate them: the title comes back
+# with the first repaint, where the width comes back with the relayout.
+# Asked once, the grow half of the "pin shrink" arm failed against a
+# build that was drawing it correctly a fraction of a second later.
+wait_panel_width() {
+	i=0
+	while [ "$i" -lt 40 ]; do
+		screen | awk -v w="$1" -v n="$2" '
+			NR <= n { if (length($0) != w) bad = 1 }
+			END { exit (bad || NR < n) }' && return 0
+		i=$((i + 1))
+		sleep 0.1
+	done
+	return 1
 }
 
 # Wait for column $1 to be blank on every row from $2 to $3, up to about
@@ -643,6 +763,394 @@ else
 	if [ "$(screen | head -1 | wc -c)" -gt 90 ]; then
 		fail "resize: the panels kept their old width after shrinking"
 		dump
+	fi
+fi
+
+# --- and it follows the terminal under a tolerated pin too -------------
+# The arm above drags a terminal nothing has pinned, where curses' cached
+# size follows the window and resized() sees it. A pin is the case that
+# does not: ncurses re-applies an exported LINES or COLUMNS in
+# _nc_get_screensize() on every SIGWINCH, so a pinned axis keeps its
+# number however the window moves, and the layout asked curses.
+#
+# #164 stops the panels *starting* bigger than the window. Nothing
+# stopped them getting there: a pin no bigger than the window is
+# deliberately tolerated -- drawn narrow with room to spare, which works
+# -- and the window can then shrink under it. Measured before the fix,
+# COLUMNS=80 in a 100x30 pane dragged to 70 columns: the panels stayed
+# 80 wide, so the status panel's right border and the frame's corners
+# were off the edge and the rows came back ragged -- 70, 30, 51, 50
+# characters where all thirteen should end alike. Both manuals promise
+# otherwise, and until this fix both carried an "except under a pin"
+# clause admitting they did not. #168.
+#
+# Checked with wait_panel_width, whose comment carries why a row's
+# length is the question and why it is polled. Thirteen rows because
+# panelh is 13 at 30 rows -- PANELH is the cap and 30 - MSGMIN the room
+# -- and 70 because at 70 columns the status panel spans 30..70
+# (statw = 70 - QUADW = 41, from x=29), so its right border is column 70.
+#
+# Not uniform_col, which was tried first and is the wrong tool here: it
+# asks for the *same* character down a column, and a border column has
+# corners at top and bottom with sides between, so it fails on a
+# perfectly drawn frame. It is for spotting a wrapped line landing on a
+# border, which is a different question.
+#
+# want_quadtitle first, so the lengths are not being read off a screen
+# with no panels on it.
+start 100 30 'tournament 7 short novice pw' 'env COLUMNS=80'
+if ! to_command; then
+	fail "pin shrink: the game never reached its command prompt"
+	dump
+else
+	tm resize-window -t "$session" -x 70 -y 30
+	if ! wait_pane '#{pane_width}' 70; then
+		fail "pin shrink: the terminal never narrowed, so nothing was tested"
+		dump
+	else
+		tm send-keys -t "$pane" 'srscan' Enter
+		want_quadtitle "pin shrink: the panels went missing after the shrink"
+		if ! wait_panel_width 70 13; then
+			fail "pin shrink: the panels stayed wider than the window they are on"
+			dump
+		fi
+		# And the clip is not a latch. Widening past the pin again puts
+		# the panels back to the pin's 80 and not to the window's 100:
+		# layout_size() takes the smaller of the two, so a tolerated pin
+		# is still tolerated once there is room for it. Without this the
+		# fix could be a one-way door -- panels that shrink once and
+		# never recover -- and every check above would still pass.
+		tm resize-window -t "$session" -x 100 -y 30
+		if ! wait_pane '#{pane_width}' 100; then
+			fail "pin shrink: the terminal never widened again"
+			dump
+		else
+			tm send-keys -t "$pane" 'srscan' Enter
+			want_quadtitle "pin shrink: the panels went missing after widening"
+			if ! wait_panel_width 80 13; then
+				fail "pin shrink: widening did not restore the panels to the pin"
+				dump
+			fi
+		fi
+	fi
+fi
+
+# --- and the pending line is not stacked when the pin hides the shrink -
+# sync_size() decides whether to put a half-typed line back from whether
+# the width moved, and it asked COLS. Under a pin COLS never moves, so a
+# shrink past the pin read as height-only: restore_curline() took that
+# branch, scrolled, and left a truncated copy of the line above the
+# rewritten one -- the stacking it exists to prevent (#117, #118),
+# arriving by the door layout_size() opened. Found by ui-review on this
+# branch, against the arm above, which types nothing and so passed
+# straight through it. #168.
+#
+# 63 characters, so the line wraps at 70 and a stump cannot be mistaken
+# for an intact line. Typed and not entered: the defect is in what a
+# resize does to a line still being composed.
+#
+# Copies are counted as occurrences of the marker at its head, not as
+# lines carrying one. A second copy need not land on its own row -- at
+# 100 columns the message window is 98 wide and prompt plus answer is
+# 72 (9 for "COMMAND> ", 63 typed), so it starts inside the first row
+# and `grep -c` would still say 1. The marker appears once per copy
+# wherever the wrap puts it.
+start 100 30 'tournament 7 short novice pw' 'env COLUMNS=80'
+if ! to_command; then
+	fail "pin pending: the game never reached its command prompt"
+	dump
+else
+	tm send-keys -t "$pane" \
+		'zqzqmarker-abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz'
+	# Wait for the echo before resizing. Sent and resized in one
+	# breath, the resize can beat the keystrokes to the game: curlen
+	# is then 0 at the KEY_RESIZE, nothing is restored, the
+	# characters echo once afterwards, and both checks below pass
+	# having reached neither restore_curline()'s width branch nor
+	# the terminal-only path's deliberate skip of it. The "half
+	# stump" arm guards the same shape for the same reason.
+	if ! wait_for 'zqzqmarker-'; then
+		fail "pin pending: the typed line never reached the screen"
+		dump
+	fi
+	tm resize-window -t "$session" -x 70 -y 30
+	if ! wait_pane '#{pane_width}' 70; then
+		fail "pin pending: the terminal never narrowed, so nothing was tested"
+		dump
+	elif ! wait_for 'zqzqmarker-'; then
+		fail "pin pending: the half-typed command did not survive the shrink"
+		dump
+	elif [ "$(screen | grep -o 'zqzqmarker-' | wc -l)" -ne 1 ]; then
+		fail "pin pending: the half-typed command was left stacked"
+		dump
+	fi
+fi
+
+# --- a dragged height shrink under a pin keeps its frame ---------------
+# A mouse drag is many small shrinks, not one big one, and under a pin
+# that is the case that broke. curses believes the pinned height, so its
+# stdscr is taller than the screen the player has; the terminal scrolls
+# under it as text arrives and ncurses' image never learns, so the
+# optimiser leaves alone the cells it thinks are already right --
+# including the ones that scrolled away. The panels' top border and both
+# titles went, and came back neither on the next command nor on growing
+# the window again.
+#
+# 40 -> 34 -> 28 -> 24 with LINES=30, which is the shape that does it: a
+# single 40 -> 24 is clean, so it is a shrink taken while already
+# clipped. 24 rows is a size the game accepts at startup, so nothing
+# here is about being too small. Found by ui-review on this branch,
+# against manual text this change had just reworded to promise parity
+# between the axes. Fixed by clearok(curscr, TRUE) in sync_size(). #168.
+#
+# want_quadtitle is the whole assertion: it reads the top row for a
+# coordinate-bearing title, which is exactly the border row that went.
+start 100 40 'tournament 7 short novice pw' 'env LINES=30'
+if ! to_command; then
+	fail "pin drag: the game never reached its command prompt"
+	dump
+else
+	dragged=1
+	for h in 34 28 24; do
+		tm resize-window -t "$session" -x 100 -y "$h"
+		if ! wait_pane '#{pane_height}' "$h"; then
+			fail "pin drag: the terminal never reached $h rows"
+			dump
+			dragged=0
+			break
+		fi
+		# A settle, and it is the arm's subject rather than a
+		# precaution. The defect needs each shrink to be taken while
+		# the screen is already clipped, so the steps have to reach
+		# the game as separate events; wait_pane returns as soon as
+		# tmux reports the size, which is fast enough that the drag
+		# arrives as one. Measured on a build with sync_size()'s
+		# clearok(curscr) removed: with this sleep the title is gone
+		# in four runs of four, without it in none of four, and the
+		# arm passed the whole file on the broken build. Same shape
+		# as the "resize" arms above, which sleep for their own
+		# reasons.
+		#
+		# That proof is of the settle and no longer of the clearok.
+		# The KEY_RESIZE repaints added later for the slept-drag arms
+		# heal this case too -- the game is at a prompt here, so every
+		# step arrives as a KEY_RESIZE -- so removing sync_size()'s
+		# call alone now leaves the whole file green. Remove all three
+		# and this arm fails along with the three below it. What no
+		# arm reaches is sync_size()'s call on its own ground, which
+		# is tui_gameover() -- the one caller of tui_refresh_panels()
+		# with no reader near it. Covering it is awkward for a reason
+		# that is not the obvious one: real and mutated builds differ
+		# only between that repaint and the first read after it, and
+		# at the sizes here the epilogue reaches the pager, which is
+		# a reader and heals the mutated build. Filed rather than
+		# covered: #184.
+		#
+		# Nothing may be sent between the steps either: an srscan in
+		# between repaints the panels and heals the damage, which is
+		# four more runs of four on that same build.
+		sleep 0.7
+	done
+	if [ "$dragged" -eq 1 ]; then
+		tm send-keys -t "$pane" 'srscan' Enter
+		want_quadtitle "pin drag: a dragged shrink under a pin lost the panel frame"
+	fi
+fi
+
+# --- a fast drag under a pin that dips below it and comes back -------
+# The other half of the pinned drag, and the one a mouse actually makes.
+# Above the pin the layout does not move -- LINES=30 lays out at 30 rows
+# whether the pane is 40 or 38 -- so a drag that returns above the pin
+# leaves resized() with nothing to report. That is fine until the drag
+# passed *below* the pin on its way: the terminal scrolled under a
+# curses that still believes 30 rows, and no later resize can notice,
+# because they all clamp to the same layout. Measured before the fix,
+# 40 down to 24 and back to 40 in one motion: the panels ended six rows
+# up the screen with no top border and no titles, and nothing the player
+# could do from inside the game brought them back -- not srscan, not a
+# further resize. Found by ui-review on this branch. #168.
+#
+# No settle between steps, which is what makes this the fast drag and
+# not the "pin drag" arm above: it is the speed that keeps every step
+# above the pin from being seen. The two arms want opposite timings and
+# neither substitutes for the other.
+#
+# What the arm turns on is worth stating exactly, because it is not
+# what the shape suggests. The game need never read a size below the
+# pin at all -- instrumented on a copy outside the repository, forty
+# runs of forty took the terminal-only path twice and the relayout path
+# not once, the two readings being the 38 and the 40 on the way back.
+# The damage is done by the terminal, which scrolls its own content as
+# the pane shrinks, and the repair is the repaint that a terminal-only
+# move now triggers. That is why this needs no settle and the arm above
+# does.
+#
+# Coalescing cuts two ways, and neither is a silent pass. Too little
+# and every step is seen, the layout moves, and this becomes the slow
+# arm above -- still a real test, just not this one. Too much and the
+# game samples no size that differs from what it built, which used to
+# leave the damage standing on a *correct* build and fail this arm.
+# The pane scrolls whichever way that goes: tmux moves its content up
+# to keep the cursor visible the moment the pane dips below the pin,
+# whatever the game is doing at the time. That is why the arm below
+# exists and why both are safe now -- KEY_RESIZE repaints whatever the
+# sizes compare to, so full coalescing heals rather than failing.
+start 100 40 'tournament 7 short novice pw' 'env LINES=30'
+if ! to_command; then
+	fail "pin fast drag: the game never reached its command prompt"
+	dump
+else
+	# Typed and not entered, so this arm also covers the pending line
+	# on the terminal-only path. sync_size() skips restore_curline()
+	# there on purpose -- the layout did not move, so the line is
+	# already where it should be and rewriting it would stack a second
+	# copy. "pin pending" covers the other path, where the layout does
+	# move; nothing covered the two together until this. Counted as
+	# marker occurrences for the reason "pin pending" gives: a second
+	# copy can start inside the first row rather than on one of its
+	# own.
+	#
+	# Proved on a copy of the tree outside the repository by removing
+	# touchwin(wmsg) from sync_size(): the line vanishes on this path,
+	# and this is the only arm in the file that fails -- the relayout
+	# path redraws through make_windows() and never notices. The
+	# stacking half of the check is a regression guard rather than a
+	# fixed defect: a build that calls restore_curline() on the
+	# terminal-only path too still passes, so nothing today stacks
+	# here. Said plainly because the reverse would be easy to assume.
+	tm send-keys -t "$pane" \
+		'zqzqmarker-abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz'
+	# Before the loop, so it supplies no settle between the steps --
+	# the echo has to be on screen before the drag or the checks
+	# below can pass without reaching the path they are for. See
+	# "pin pending", which has the reasoning.
+	if ! wait_for 'zqzqmarker-'; then
+		fail "pin fast drag: the typed line never reached the screen"
+		dump
+	fi
+	# Exit status rather than wait_pane, because polling between the
+	# steps would supply the settle this arm must not have. Checked at
+	# all because the assertion at the end is a survival check -- the
+	# quadrant title is on the top row before any drag -- so a tmux that
+	# refused every resize would leave this passing having dragged
+	# nothing. That is the same false-pass direction the verifier closed
+	# in slept_drag(), and this loop is where it was left open; raised
+	# by code-review on this branch. tmux exits 1 on a refused
+	# resize-window and 0 on success, measured.
+	resized_ok=1
+	for h in 38 36 34 32 30 28 26 24 26 28 30 34 38 40; do
+		tm resize-window -t "$session" -x 100 -y "$h" || resized_ok=0
+	done
+	if [ "$resized_ok" -eq 0 ]; then
+		fail "pin fast drag: tmux refused a resize, so nothing was dragged"
+		dump
+	elif ! wait_pane '#{pane_height}' 40; then
+		fail "pin fast drag: the terminal never came back to 40 rows"
+		dump
+	else
+		want_quadtitle "pin fast drag: a drag through the pin left the frame scrolled off"
+		if ! wait_for 'zqzqmarker-'; then
+			fail "pin fast drag: the half-typed command did not survive the drag"
+			dump
+		elif [ "$(screen | grep -o 'zqzqmarker-' | wc -l)" -ne 1 ]; then
+			fail "pin fast drag: the half-typed command was left stacked"
+			dump
+		fi
+	fi
+fi
+
+# --- a drag the game slept through is still repaired ----------------
+# The end of the same class, and the one no size comparison can reach.
+# sync_size() notices a resize by comparing sizes; a drag that dips
+# below the pin and returns to the size it started at leaves both the
+# layout and the terminal matching what was built, so it answers no --
+# and the pane scrolled anyway, because tmux moves its content up the
+# moment the pane shrinks, whatever the game was doing. ncurses collapses
+# every SIGWINCH queued inside one wgetch() into a single KEY_RESIZE, so
+# a reader waiting at a prompt sees one event carrying no size change.
+#
+# KEY_RESIZE is the signal that survives that, being ncurses saying the
+# terminal moved rather than a comparison of what it moved to, so both
+# readers repaint the whole screen on it. Found by code-review on this
+# branch, which reproduced it with a reader waiting -- the frame came
+# back six rows up, 30 - 24, and neither the resume nor a following
+# srscan repaired it. #168.
+#
+# SIGSTOP is what makes it deterministic: with the game stopped it
+# samples nothing mid-drag, so the coalescing this depends on is forced
+# rather than hoped for. slept_drag() does it, and its comment carries
+# the timing. Proved on a copy of the tree outside the repository by
+# removing tui_readline()'s KEY_RESIZE clearok() alone -- this arm
+# failed there and nothing else in the file did, including the pause arm
+# below. The game is asleep at a command prompt here, which is
+# tui_readline(); tui_getch() has its own call and its own arm, and the
+# two isolate cleanly in both directions.
+start 100 40 'tournament 7 short novice pw' 'env LINES=30'
+if ! to_command; then
+	fail "pin slept drag: the game never reached its command prompt"
+	dump
+else
+	gpid=$(game_pid)
+	if [ -z "$gpid" ]; then
+		fail "pin slept drag: could not find the game process to stop"
+		dump
+	elif ! slept_drag "$gpid" 24 40; then
+		fail "pin slept drag: the game did not stop, so it saw the drag"
+		dump
+	else
+		tm send-keys -t "$pane" 'srscan' Enter
+		want_quadtitle "pin slept drag: a drag the game slept through left the frame scrolled off"
+	fi
+fi
+
+# --- and the same at a pause, which is the other reader ---------------
+# tui_readline() and tui_getch() each handle KEY_RESIZE themselves, so
+# each needs its own clearok() and each can lose it separately. The arm
+# above sleeps the game at a command prompt, which is tui_readline();
+# this one sleeps it at a paging pause, which is tui_getch(). The third
+# paragraph below says where that pause comes from and why it is not the
+# briefing's. Found by ui-review on this branch, which
+# reproduced the pause case against a build with both calls removed and
+# pointed out that the arm above could not tell the two apart. #168.
+#
+# Timing and SIGSTOP are slept_drag()'s, whose comment carries why the
+# sleeps are the subject rather than a precaution. Proved on a copy of
+# the tree outside the repository by removing tui_getch()'s clearok()
+# alone: this arm failed there and nothing else in the file did, the
+# arm above included -- which is the other half of the pair, that arm's
+# own proof removing tui_readline()'s call and failing only it.
+#
+# The pause comes from the pager, not from the briefing: at 30 rows the
+# message window is deep enough that the briefing prints whole and goes
+# straight to the command prompt, measured. "help" then "move" is long
+# enough to stop, and stops at a known line.
+start 100 40 'tournament 7 short novice pw' 'env LINES=30'
+if ! to_command; then
+	fail "pin slept pause: the game never reached its command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'help' Enter
+	tm send-keys -t "$pane" 'move' Enter
+	if ! wait_for 'HIT SPACE BAR'; then
+		fail "pin slept pause: help did not page, so nothing was tested"
+		dump
+	else
+		gpid=$(game_pid)
+		if [ -z "$gpid" ]; then
+			fail "pin slept pause: could not find the game process to stop"
+			dump
+		elif ! slept_drag "$gpid" 24 40; then
+			fail "pin slept pause: the game did not stop, so it saw the drag"
+			dump
+		else
+			want_quadtitle "pin slept pause: a drag slept through at a pause left the frame scrolled off"
+			# And the pause is still there to be answered, so the repaint
+			# did not cost the player the prompt they were waiting on.
+			if ! wait_for 'HIT SPACE BAR'; then
+				fail "pin slept pause: the pause prompt did not survive the drag"
+				dump
+			fi
+		fi
 	fi
 fi
 

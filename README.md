@@ -38,7 +38,9 @@ the blank that `lrscan`, `chart` and `status` open with, though
 `srscan`, which has none, still shows a line there, and at four the
 pager takes the only row and a paged command shows nothing of itself at
 all. Shorter than four the panels have taken the screen: the game still
-reads what you type, with nothing on it to say so.
+reads what you type, with nothing on it to say so — under a pin the
+prompt lands on the panel's bottom border instead, which is at least
+visible.
 
 Growing the terminal back brings the panels with it, however far the
 squeeze went: they redraw from the game state, so they return full of
@@ -128,14 +130,15 @@ grow regardless, which is when the game asks for both at once.
 
 Only a pin the panels can live with is left alone: no bigger than your
 window and still 72x24 or more, where they are drawn narrow or short
-with room to spare, and stay that way as long as the window stays at
-least that big. Shrink it below the pin and they no longer fit — the
-pin does not follow the window down, and nothing redraws to suit it.
+with room to spare. Shrink the window below such a pin and the panels
+come down with it: the pin does not follow the window down, but the
+display stops believing it past the size you actually have — and they
+go back up to the pin when you give the room back.
 
-It only goes that way. Panels that are up stay up for the rest of the
-session however you resize, as above: they clip rather than give way to
-the classic display — except under a pin, where they overflow the
-window instead of clipping, the pin not following it down.
+The classic display only goes the one way. Panels that are up stay up
+for the rest of the session however you resize, as above: they clip
+rather than give way to it, under a pin as much as without one, at
+every size there is room to play in.
 
 ### Building
 

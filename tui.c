@@ -206,6 +206,95 @@ static void draw_status_line(int row, int line, const char *s) {
  * caller. #163. */
 static int builtlines, builtcols;
 
+/* And the terminal's own size at that build, which under a pin is not
+ * the same number. The layout is clipped to the terminal, so a window
+ * dragged about *above* the pin does not move the layout at all --
+ * COLUMNS=80 in a 100-column pane is laid out at 80 whether the pane is
+ * 100 or 90 or 140. resized() would then answer no, and nothing would
+ * repaint, which is fine until the drag has passed *below* the pin on
+ * the way: the terminal scrolled under a curses that believes the pin,
+ * and the frame is left displaced with no later resize able to notice.
+ * Measured with LINES=30 in a 40-row pane dragged 40 down to 24 and
+ * back to 40 in one motion: the panels ended six rows up the screen
+ * with no top border and no titles, healed by nothing the player could
+ * do from inside the game. So the terminal's size is remembered too,
+ * and a move in it is a reason to repaint even when the layout stands
+ * still. #168. */
+static int builttermlines, builttermcols;
+
+/* The terminal's own size, or zeros where the ioctl had nothing to
+ * give. The size test is tui_init()'s, and an ioctl really can succeed
+ * with nothing useful in it: a pty from openpty() has a winsize of 0x0
+ * until somebody sets one, which is what pty.fork() and some container
+ * inits hand you.
+ *
+ * A whole-zero answer would be caught downstream anyway -- layout_size()
+ * tests trows and gives up -- so what this guard actually earns is the
+ * half-zero one, rows set and columns not. Measured on a pty with
+ * TIOCSWINSZ at rows=24, cols=0: guarded, the game reaches its command
+ * prompt; unguarded, the layout is clipped to no columns and it never
+ * gets there. Normalising half-zero to the zero layout_size() already
+ * understands is the whole of the job. #168. */
+static void term_size(int *rows, int *cols) {
+	struct winsize ws;
+
+	if (ioctl(fileno(stdout), TIOCGWINSZ, &ws) != 0 ||
+	    ws.ws_row <= 0 || ws.ws_col <= 0) {
+		*rows = 0;
+		*cols = 0;
+		return;
+	}
+	*rows = ws.ws_row;
+	*cols = ws.ws_col;
+}
+
+/* The size the panels are laid out at: curses' screen, clipped to the
+ * terminal's own wherever the two differ.
+ *
+ * They differ only under an exported LINES or COLUMNS. ncurses re-applies
+ * that value in _nc_get_screensize() on every SIGWINCH, so a pinned axis
+ * keeps its number however the window moves, and LINES and COLS then
+ * describe a screen the player need not have. Laid out to those, the
+ * panels are drawn off the edge: the status panel's right border and the
+ * frame's corners land past the last column, and what is left wraps back
+ * over the row above. Measured at COLUMNS=80 in a 100x30 pane dragged to
+ * 70 columns.
+ *
+ * tui_init() refuses a pin bigger than the window at startup, so the
+ * panels never start too big (#164). A pin no bigger than it is
+ * tolerated, and the window can shrink under that afterwards, which is
+ * the case this clips. #168.
+ *
+ * Clipped rather than stood down: both manuals say panels that are up
+ * clip rather than give way to the classic display, and #94 has why --
+ * ending curses under the player would be a worse answer to a mouse
+ * drag. make_windows() already draws the panels as big as there is room
+ * for rather than as big as they would like, so handing it the smaller
+ * size is the whole of it.
+ *
+ * curses is left believing what it believes. Calling resize_term() to
+ * the terminal's size would override a pin somebody set on purpose, and
+ * ncurses would re-apply it at the next SIGWINCH regardless; the layout
+ * is this file's to decide, and the pin is not.
+ *
+ * Where the ioctl has nothing to say, curses' numbers are all there is
+ * -- the same fallback tui_init() makes.
+ *
+ * The terminal's own size comes back too, from the one read. It used to
+ * be read again by make_windows() straight afterwards, and two reads can
+ * sample two different terminals if the window moves between them --
+ * self-correcting, since the next resized() sees the discrepancy, but a
+ * question nobody should have to ask. Raised by code-review on the #168
+ * branch. */
+static void layout_size(int *rows, int *cols, int *trows, int *tcols) {
+	*rows = LINES;
+	*cols = COLS;
+	term_size(trows, tcols);
+	if (*trows == 0) return;
+	if (*trows < *rows) *rows = *trows;
+	if (*tcols < *cols) *cols = *tcols;
+}
+
 /* Lay the three windows out for the terminal as it is now. Called
  * again after a resize, and it resizes and moves what is there rather
  * than remaking it -- there is no delwin in this file. The else branch
@@ -218,10 +307,11 @@ static int builtlines, builtcols;
  * were. Ending curses under them to say the window is too small would
  * be a worse answer to a mouse drag. */
 static void make_windows(void) {
-	int msgh, statw, msgw, panelh, quadw;
+	int msgh, statw, msgw, panelh, quadw, rows, cols;
 
-	builtlines = LINES;
-	builtcols = COLS;
+	layout_size(&rows, &cols, &builttermlines, &builttermcols);
+	builtlines = rows;
+	builtcols = cols;
 	/* On a terminal too small for them the panels are as big as there
 	   is room for, not as big as they would like. Asking for the full
 	   size on a smaller screen is not merely optimistic: the window
@@ -239,11 +329,11 @@ static void make_windows(void) {
 	   panels get the full PANELH and the conversation everything
 	   under it, which is what every size the display accepts at
 	   startup has. */
-	panelh = LINES - MSGMIN;
+	panelh = rows - MSGMIN;
 	if (panelh > PANELH) panelh = PANELH;
 	if (panelh < PANELMIN) panelh = PANELMIN;
-	if (panelh > LINES) panelh = LINES;
-	quadw = COLS < QUADW ? COLS : QUADW;
+	if (panelh > rows) panelh = rows;
+	quadw = cols < QUADW ? cols : QUADW;
 	/* What is left, and never nothing: a window of no rows is not a
 	   window curses will make, which is all the clamp is for. It never
 	   changes anything above four rows, and not at four either: the
@@ -253,10 +343,18 @@ static void make_windows(void) {
 	   window's origin is off the bottom of the screen anyway, so
 	   mvwin() refuses it and the ERR path below takes over. Nothing
 	   of the conversation is drawn, which is the floor both documents
-	   give. */
-	msgh = LINES - panelh > 1 ? LINES - panelh : 1;
-	statw = COLS-QUADW > 1 ? COLS-QUADW : 1;
-	msgw = COLS-2 > 1 ? COLS-2 : 1;
+	   give.
+	   The screen mvwin() judges that against is curses', not the
+	   layout, and #168 made the two able to differ: under a pin the
+	   move succeeds at three rows because stdscr is still the pinned
+	   size, and the prompt lands on the physical last row over the
+	   panel's bottom border. Measured with LINES=24 in a pane dragged
+	   to 3 rows. So the floor described here is the unpinned one; the
+	   pinned case is #182, filed rather than fixed because it is
+	   mvwin()'s bound and not this arithmetic. */
+	msgh = rows - panelh > 1 ? rows - panelh : 1;
+	statw = cols-QUADW > 1 ? cols-QUADW : 1;
+	msgw = cols-2 > 1 ? cols-2 : 1;
 	if (wmsg == NULL) {
 		wquad = newwin(panelh, QUADW, 0, 0);
 		wstat = newwin(panelh, statw, 0, QUADW);
@@ -313,7 +411,12 @@ static void make_windows(void) {
 		   where there is nowhere legal to put the window -- LINES
 		   at or under PANELMIN, or fewer than two columns -- and at
 		   those sizes the panels are the whole screen and nothing
-		   is drawn below them anyway. The next resize asks again. */
+		   is drawn below them anyway. The next resize asks again.
+		   LINES rather than the layout size, and since #168 those
+		   can differ: under a pin the move succeeds where the same
+		   window unpinned would take the ERR path, which is what
+		   #182 is about. Every size at four rows and up is
+		   unaffected, the two agreeing there. */
 		mvwin(wmsg, panelh, 1);
 	}
 	/* Set every time, not only on the first: keypad in particular is
@@ -324,29 +427,108 @@ static void make_windows(void) {
 	keypad(wmsg, TRUE);
 }
 
-/* Whether the terminal changed shape since the windows were built.
+/* Whether the layout size changed since the windows were built.
  *
- * Asked of curses, not of the terminal, whatever the name suggests:
- * is_term_resized() compares its arguments against the screen size
- * curses has cached, which is what LINES and COLS report. So this is
- * the same question as builtlines != LINES || builtcols != COLS for
- * the positive sizes make_windows() records -- not in general, since
- * is_term_resized() answers 0 for a non-positive argument whatever the
- * cache holds, measured: is_term_resized(0, 0) is 0 where the direct
- * comparison is 1. Those sizes cannot be non-positive by the time this
- * is asked: they are zero only before the first make_windows(), which
- * tui_init() runs before anything can reach sync_size(). Either way it
- * is answerable only once curses has processed the resize.
+ * The layout size and not curses' screen, which is the whole of what
+ * this asks that is not obvious. It used to be is_term_resized(), which
+ * compares against the size curses has cached -- the same question as
+ * the direct comparison below for the positive sizes make_windows()
+ * records, as long as the layout is curses' screen. Under a pin it is
+ * not: a pinned axis never moves in that cache, however far the window
+ * is dragged, so this answered no for the rest of the session and the
+ * windows were never re-laid-out at all. That is the defect #168 is
+ * about, and it is answered here rather than in make_windows() because
+ * make_windows() is not reached until something says the size moved.
  *
- * Measured against ncurses 6.6.20251231, pane grown from 100x30 to
- * 120x40 with the windows built at the old size: before any curses
- * call LINES and COLS still read 100x30 and this answered 0; the first
- * doupdate() moved them to 120x40 and it answered 1. Asking
- * is_term_resized(LINES, COLS) instead would prove nothing either way
- * -- both sides come from the one cache, so it is 0 whatever the
- * terminal has done. #163. */
+ * Compared directly rather than through is_term_resized(), which can
+ * only ask curses. builtlines and builtcols are positive by the time
+ * this is asked -- they are zero only before the first make_windows(),
+ * which tui_init() runs before anything can reach sync_size() -- and
+ * layout_size() gives positive numbers, so the comparison has no
+ * non-positive case to be careful about. That carefulness was the old
+ * comment's subject: is_term_resized(0, 0) answers 0 where the direct
+ * comparison answers 1, measured.
+ *
+ * Which of the two leads is decided by which is smaller, not by the
+ * direction of the drag -- an earlier version of this paragraph said
+ * direction and was wrong. layout_size() takes the smaller, so this
+ * answers yes exactly when the smaller number moves. The ioctl's is
+ * current; curses' is stale until its next call, and on a pinned axis
+ * never moves at all. Measured against ncurses 6.6.20251231, pane
+ * grown from 100x30 to 120x40 with the windows built at the old size:
+ * LINES and COLS still read 100x30 before any curses call, and the
+ * first doupdate() moved them.
+ *
+ * Four cases, and the pin decides two of them:
+ *
+ *   unpinned shrink   curses stale high, ioctl low  -- ioctl leads
+ *   unpinned grow     curses stale low              -- curses catches up
+ *   pinned, window under the pin   ioctl is the smaller, either way
+ *                                  -- ioctl leads, on a grow as much
+ *                                     as on a shrink
+ *   pinned, window over the pin
+ *   and staying over it            the pin is the smaller and never
+ *                                  moves -- this never answers yes,
+ *                                  which is what term_moved() is for
+ *
+ * The third is not a curiosity: it is the grow half of the "pin shrink"
+ * arm in tests/tui.sh, and the sentence both manuals now carry about
+ * the panels going back up to the pin when the room is given back.
+ * Measured, COLUMNS=80 with the pane taken 100 -> 70 -> 100 and no
+ * keystroke sent: the panels are 80, then 70, then 80 again, while
+ * curses' COLS reads 80 throughout. Nothing but the ioctl can see that
+ * last move.
+ *
+ * Leading is safe rather than merely early. The clipped size is never
+ * larger than LINES or COLS, so windows laid out from it fit the screen
+ * curses is about to move to as well as the one it still believes in;
+ * there is no size at which make_windows() can ask curses for room it
+ * does not have. #163, #168. */
 static int resized(void) {
-	return is_term_resized(builtlines, builtcols);
+	int rows, cols, trows, tcols;
+
+	layout_size(&rows, &cols, &trows, &tcols);
+	return rows != builtlines || cols != builtcols;
+}
+
+/* Whether the terminal moved without the layout moving with it, and the
+ * size it read while deciding -- handed back so the caller need not read
+ * it again.
+ *
+ * The case that matters is the pin's: above the pin the layout is the
+ * pin's size whatever the window is, so a drag that stays above it
+ * changes nothing this file lays out -- and yet the terminal has
+ * scrolled if that drag dipped below the pin on its way. Nothing to
+ * re-lay-out, everything to repaint. See builttermlines.
+ *
+ * Not the only case, though an earlier version of this said so. An
+ * unpinned grow reaches here too, for as long as curses has not caught
+ * up: resized() compares the stale smaller number and answers no, where
+ * the ioctl has the new one already. Harmless -- the repaint is drawn
+ * at a geometry that still fits, and the relayout follows on the next
+ * call, once curses has moved. It is worth not believing otherwise: a
+ * reader who takes this branch for the pin's alone might gate it on
+ * pinned(), and that would put the unpinned grow back to a stale frame
+ * with nothing to repaint it.
+ *
+ * What it cannot do is notice a drag that leaves no trace to compare:
+ * one that dips below the pin and returns to the size it started at.
+ * Both sizes then match what was built, this answers no, and the pane
+ * scrolled all the same -- tmux moves its content up the moment the
+ * pane shrinks, whatever the game is doing. Reachable with a reader
+ * waiting, since ncurses collapses every SIGWINCH queued inside one
+ * wgetch() into a single KEY_RESIZE: measured with the game stopped
+ * outright by SIGSTOP across a 40 -> 24 -> 40 drag under LINES=30,
+ * where the frame came back six rows up.
+ *
+ * That one is answered elsewhere rather than left open. Both readers
+ * clearok(curscr) on KEY_RESIZE, which is ncurses saying the terminal
+ * moved rather than a comparison of what it moved to, so it survives
+ * exactly the case this comparison cannot see. The "pin slept drag"
+ * arm in tests/tui.sh holds it. */
+static int term_moved(int *trows, int *tcols) {
+	term_size(trows, tcols);
+	return *trows != builttermlines || *tcols != builttermcols;
 }
 
 /* The line the game is part way through writing -- everything since the
@@ -439,7 +621,23 @@ static const char *pending_answer;
  * the repaint declined to place the line at all -- see the width guard
  * in restore_curline() -- and where no repaint happened, a KEY_RESIZE
  * carrying no actual size change, which sync_size() returns from
- * before touching anything. */
+ * before touching anything.
+ *
+ * A fourth since #168, and it is the one that reads wrong: the
+ * terminal-only path, where a repaint does happen and the part-written
+ * line is on screen at the end of it, yet this stays false. Nothing
+ * resized wmsg there -- the layout did not move -- so the line was
+ * never lost, touchwin() alone puts it back, and restore_curline() is
+ * skipped precisely because there is nothing to restore. The answer is
+ * therefore already drawn and the cursor already after it. Setting
+ * this TRUE on the strength of that would make tui_readline() below
+ * waddstr() the answer again at a cursor sitting after it, stacking a
+ * second copy -- #117 and #118 with no resize behind it. The "pin fast
+ * drag" arm counts occurrences of a marker for that, which catches the
+ * second copy wherever the wrap puts it; counting whole lines would
+ * not, a single re-echo at 100 columns landing inside the first row.
+ * (readinput() in sst.c is the game's own reader and only delegates
+ * here; the waddstr is this file's.) */
 static int cursor_at_prompt;
 
 /* Whether window row r begins the line being restored -- that is,
@@ -500,7 +698,8 @@ static int cursor_at_prompt;
  *
  * Reaching that needs a line longer than the old width, which does not
  * need a long line: make_windows() caps quadw at QUADW but lets msgw
- * keep tracking COLS down, so a terminal dragged to 50 columns has a
+ * keep tracking the layout width down -- COLS until #168 made the two
+ * differ under a pin -- so a terminal dragged to 50 columns has a
  * 48-column message window and setup.c's 57-character skill question
  * wraps in it. Widening from there is the shape this bound is for --
  * 80x24 to 50x24 to 100x24 with that question pending stacked a second
@@ -940,19 +1139,34 @@ static void restore_curline(int oldmsgw) {
 
 /* Rebuild the windows if the terminal has changed shape. Called before
  * every repaint rather than only where a resize is reported, because a
- * drag can land while no reader is waiting -- setting a quadrant up,
- * printing a destruct countdown -- and the repaint would then be drawn
- * to the old geometry. Measured: dragged 80x24 to 100x30 during that
- * countdown, this ran with the windows still built at 80x24. It takes
- * some curses call since the drag for this to notice at all -- the
- * comment above resized() says why -- and the countdown supplies one:
- * tui_puts_slow() refreshes after every character. Where a repaint is
- * itself the first call after a drag, resized() says no and the frame
- * goes out stale; the doupdate() ending that repaint moves the cache,
- * so the next one or the reader's KEY_RESIZE puts it right. A reader
- * that goes on to wait does still get a KEY_RESIZE for the same drag,
- * so this is not the only way a resize is noticed; what calling it
- * here buys is the frame in between.
+ * drag can land while no reader is waiting -- with the game over and
+ * the epilogue still printing -- and the repaint would then be drawn
+ * to the old geometry. Measured after a drag from 80x24 to 100x30
+ * taken during a destruct countdown: this ran with the windows still
+ * built at 80x24.
+ *
+ * That countdown is where the measurement was taken but not a place
+ * this is reached: tui_puts_slow() calls wrefresh(wmsg) and never
+ * tui_refresh_panels(), so nothing here runs between its characters.
+ * Earlier text here and beside the clearok() below offered it as the
+ * no-reader case, and so was "setting a quadrant up", which prints
+ * through tui_puts and is followed by the reader's own repaint.
+ * tui_gameover() is the one: the only caller inside a running game
+ * with no reader behind it. tui_init()'s call has none either, but it
+ * runs before there is a stale frame to repair.
+ *
+ * Whether that is noticed at once is a question #168 changed the answer
+ * to, and the comment above resized() has the rule: the ioctl leads
+ * wherever its number is the smaller of the two, which covers every
+ * shrink and a grow on an axis still under its pin. Those need no
+ * curses call at all. What is left waiting for curses to catch up is
+ * an unpinned grow, and that is the whole of the stale frame described
+ * here: where a repaint is itself the first call after such a drag, it
+ * goes out at the old geometry, and the doupdate() ending it moves the
+ * cache so the next one or the reader's KEY_RESIZE puts it right. A
+ * reader that goes on to wait does still get a KEY_RESIZE for the same
+ * drag, so this is not the only way a resize is noticed; what calling
+ * it here buys is the frame in between.
  *
  * It does not adopt the size, though it used to say so and used to
  * call resize_term(0, 0) to do it. By the time this runs curses has
@@ -971,20 +1185,94 @@ static void restore_curline(int oldmsgw) {
  * does for the one line that matters. #166. */
 static void sync_size(void) {
 	int oldcols = builtcols;
+	int relayout = resized();
+	int trows = 0, tcols = 0;
 
-	if (!resized()) return;
+	/* Two reasons to do anything here, and they want different work.
+	   The layout moved: re-lay-out and put the pending line back, as
+	   ever. Only the terminal moved: there is nothing to re-lay-out --
+	   the windows are already the size they should be -- but the
+	   screen under them may have scrolled, so the repaint is still
+	   owed. restore_curline() is skipped there because its subject is
+	   a line the layout moved out from under, and the layout has not
+	   moved. A build that calls it on both paths passes the whole of
+	   tests/tui.sh, measured on the #168 branch, because the row scan
+	   finds the pair intact and returns having only moved the cursor
+	   to where it already was -- nothing resized wmsg on this path, so
+	   there is nothing to repair. The guard is against that scan
+	   missing rather than against what it does today: miss -- the
+	   600-column early return, a pair longer than joined, a row_blank
+	   landing on the wrong row -- and it falls through to the write
+	   path and stamps a second copy with no resize having moved
+	   anything, which is the stacking of #117 and #118 arriving with
+	   no cause at all.
+	   What the repaint does have to do on this path is redraw the
+	   conversation, and that is the touchwin(wmsg) below rather than
+	   anything here -- dropping it loses the player's half-typed
+	   command, which the "pin fast drag" arm catches. builttermlines
+	   carries the rest of the measurement. #168. */
+	if (!relayout && !term_moved(&trows, &tcols)) return;
 	cursor_at_prompt = FALSE;
-	make_windows();		/* which is what moves builtlines/builtcols on */
+	if (relayout)
+		make_windows();	/* which is what moves builtlines/builtcols on */
+	else {
+		/* The pair term_moved() just read, rather than a second
+		   read of our own: two reads can sample two different
+		   terminals, which is the thing layout_size()'s comment
+		   argues against for make_windows(). */
+		builttermlines = trows;
+		builttermcols = tcols;
+	}
+	/* Repaint the screen rather than the difference, because under a
+	   pin ncurses' idea of what is on the terminal can be wrong and
+	   it has no way to find out. Its stdscr is the pinned size, so on
+	   a pinned axis it believes in rows or columns the player does not
+	   have; the terminal scrolls under it as text arrives, and the
+	   optimiser then leaves alone every cell it thinks is already
+	   right -- including the ones that scrolled away. Measured with
+	   LINES=30 in a 40-row pane dragged 40 -> 34 -> 28 -> 24, which is
+	   what a mouse drag is: the panels' top border and both titles
+	   went and did not come back, not on the next srscan and not on
+	   growing the window again. A single-step 40 -> 24 is clean, so it
+	   is the shrink taken while already clipped that does it.
+	   Cheap where it is asked: this is reached only when the terminal
+	   or the layout actually moved, which is a human dragging a
+	   window.
+	   Not redundant with the KEY_RESIZE repaints in the two readers,
+	   though every arm in tests/tui.sh that covers a drag is now
+	   satisfied by those: they run when a reader is handed the
+	   event, and this runs whether one is or not. The case that is
+	   this call's alone is tui_gameover(): of the six callers of
+	   tui_refresh_panels() it is the only one inside a running game
+	   with no reader behind it -- tui_init()'s has none either, but
+	   runs before there is a stale frame to repair -- and finish.c
+	   calls it and then prints a dozen lines of epilogue that all go
+	   out through wrefresh(wmsg). So a drag
+	   landing as a game ends is repaired here or not until the
+	   player is asked about another one. Measured: removing this
+	   call alone leaves the whole of tests/tui.sh green, and
+	   removing all three fails four arms.
+	   Kept on the strength of that path rather than of a test, and
+	   no arm covers it. Not for want of a long enough window, which
+	   is what an earlier version of this said: a correct build and
+	   one without this call were both healed 1.008s after the drag,
+	   indistinguishable at 5ms polling. The two differ only between
+	   tui_gameover()'s repaint and the first read after it, and at
+	   the sizes the suite uses the epilogue reaches the pager --
+	   which is a reader, and heals the build that is missing this.
+	   #184. #168. */
+	clearok(curscr, TRUE);
 	/* The screen has columns no window owns. The message window is inset
-	   a column on each side -- newwin(msgh, msgw, panelh, 1), with msgw
-	   asked for as COLS-2 rather than COLS-1 -- to give it a margin
-	   under the panels, so the first and last columns of the screen
-	   belong to no window, and nothing else in the game writes to
-	   stdscr -- which means nothing erased what a wider render left in
-	   either of them. After a shrink the tails of words stayed there: at
-	   41 columns a short-range scan left a character from each of the
-	   status lines still on screen down the right-hand edge, in a column
-	   that by then belonged to nothing.
+	   a column on each side -- newwin(msgh, msgw, panelh, 1), with
+	   msgw asked for as the layout width less two rather than less
+	   one -- to give it a margin under the panels, so the first and
+	   last columns of the screen belong to no window, and nothing
+	   else in the game writes to stdscr -- which means nothing erased
+	   what a wider render left in either of them. After a shrink the
+	   tails of words stayed there: at 41 columns a short-range scan
+	   left a character from each of the status lines still on screen
+	   down the right-hand edge, in a column that by then belonged to
+	   nothing.
 
 	   Erasing stdscr rather than widening the window, because the margin
 	   is deliberate. It is queued before the windows are, so their
@@ -1015,8 +1303,18 @@ static void sync_size(void) {
 	   broken gets rewritten.
 	   The old width is what says how many rows the stump occupies,
 	   so it is passed whenever the width changed at all rather than
-	   only when it shrank. */
-	restore_curline(COLS != oldcols ? oldcols - 2 : 0);
+	   only when it shrank.
+	   Both sides of that test are the layout width. oldcols is the
+	   builtcols this call started with and the comparison used to be
+	   against COLS, which was the same number until layout_size()
+	   made it need not be: under a pin curses' width never moves, so
+	   a shrink past the pin read as "the width did not change", and
+	   restore_curline() took its height-only branch, scrolled, and
+	   stamped a second copy of the player's half-typed command under
+	   the truncated first. Measured at COLUMNS=80 in a 100x30 pane
+	   with 62 characters typed and the pane taken to 70. #168. */
+	if (relayout)
+		restore_curline(builtcols != oldcols ? oldcols - 2 : 0);
 	wnoutrefresh(wmsg);
 }
 
@@ -1386,10 +1684,15 @@ int tui_init(void) {
 	   Per dimension, and never for one the environment has pinned --
 	   see pinned() above, which carries the measurement. A dimension
 	   ncurses took from LINES or COLUMNS stops tracking the terminal
-	   and keeps that value however the window moves. resized() is one
-	   yes/no over both, so with a single dimension pinned sync_size()
-	   still runs and the free one still follows; it is only with both
-	   pinned that it returns early for the rest of the session.
+	   and keeps that value however the window moves. That used to
+	   decide what sync_size() could see, and this comment used to say
+	   so: resized() asked curses, so with both dimensions pinned it
+	   answered no for the rest of the session. It no longer does --
+	   resized() asks layout_size(), which clips curses' screen to the
+	   terminal's, so both axes pinned still follow the window down.
+	   Measured with COLUMNS=72 LINES=24 in a 100x30 pane taken to
+	   64x18: the panels relaid to 64x18 with the ">" marker on the
+	   Shields row. #168.
 	   Overriding the cache is worth doing; overriding a size somebody
 	   set on purpose would buy panels that never follow the terminal
 	   again, which is worse than the classic display they replaced. So
@@ -1639,6 +1942,22 @@ int tui_readline(char *buf, int buflen) {
 			buf[len] = '\0';
 			cursor_at_prompt = FALSE;
 			pending_answer = buf;
+			/* Repaint the whole screen, not the difference.
+			   KEY_RESIZE is ncurses saying the terminal moved,
+			   and it is the one signal that survives a drag
+			   sync_size() cannot see: SIGWINCHes queued inside
+			   one wgetch() collapse into a single KEY_RESIZE,
+			   so a drag that dips below a pin and returns to
+			   the size it started at leaves both sizes matching
+			   what was built and the frame scrolled where the
+			   terminal moved it. Measured with LINES=30 in a
+			   100x40 pane, the game stopped with SIGSTOP so it
+			   sampled nothing mid-drag, taken 40 -> 24 -> 40 and
+			   continued: without this the frame came back six
+			   rows up -- 30 - 24 -- with no top border and no
+			   titles, and neither the resume nor a following
+			   srscan repaired it. #168. */
+			clearok(curscr, TRUE);
 			tui_refresh_panels();
 			pending_answer = NULL;
 			if (cursor_at_prompt && len > 0) {
@@ -1729,7 +2048,13 @@ int tui_getch(void) {
 		   next prompt is what made a drag mid-pause look like a
 		   game that had stopped: the panels stayed the old width
 		   with the new columns empty beside them, for as long as
-		   the player took to press a key. */
+		   the player took to press a key.
+		   The clearok() is tui_readline()'s, for the same reason
+		   and with the same measurement: a drag whose SIGWINCHes
+		   all collapse into this one KEY_RESIZE can leave the
+		   frame displaced with both sizes comparing equal to what
+		   was built, and nothing else here would repaint it. */
+		clearok(curscr, TRUE);
 		tui_refresh_panels();
 	}
 }
