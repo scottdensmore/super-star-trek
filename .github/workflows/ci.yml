@@ -33,17 +33,131 @@ jobs:
       # tmux gives tests/tui.sh the pty that curses needs. Without it
       # that test reports SKIPPED and the job still goes green, so the
       # only coverage of the full-screen display would quietly be none.
+      #
+      # Bounded and retried, because an unguarded install can take the
+      # whole job with it. Measured on #185: apt-get update hung on
+      # ubuntu-latest and the job's 15 minutes ran out inside this step,
+      # across three job re-runs -- Configure, Build and Test all skipped,
+      # nothing compiled, and the check reporting `cancelled`, which is
+      # also what GitHub says when a human presses the button or when
+      # the concurrency group above fires. It took a per-step API query
+      # to find out the runner had simply failed to install tmux. #186.
+      #
+      # timeout(1) is what does the work, not the loop. A hang never
+      # returns, so a retry alone never gets a second attempt: measured,
+      # a three-pass loop around a hanging command makes exactly one.
+      #
+      # The warning names the command and reads its status, because the
+      # complaint that started this was that a red log did not say what
+      # had gone wrong: 124 is the bound firing, 137 the -k after it,
+      # anything else apt's own failure. `cmd || rc=$?` rather than an
+      # if around the command, for two reasons: $? after a closed if is
+      # the *statement's* status, not the command's, so a first draft
+      # reported every install failure as "status 0" -- caught by its
+      # own test -- and a bare failing command would trip the errexit
+      # the runner's default `bash -e {0}` turns on, where a || list
+      # does not.
+      #
+      # timeout goes *inside* sudo so that it runs as root and apt-get
+      # is its direct child. Outside, it is an unprivileged process
+      # signalling a root one: the kill fails, the sudo front end dies
+      # at the bound, and the root apt-get survives orphaned holding
+      # /var/lib/apt/lists/lock -- measured, still running four seconds
+      # later -- so the next attempt fails on the lock rather than
+      # retrying the fetch. That way round also makes -k load-bearing,
+      # since apt mid-transaction can outlive a TERM.
+      #
+      # timeout-minutes on the step as well: it backstops anything that
+      # outlives its own bound, and a step that fails on its own timeout
+      # keeps its log, where a job killed by the job timeout does not.
+      # 7 rather than 8 because the two budgets add only on success -- a
+      # failed install skips Configure, Build and Test -- so an install
+      # that succeeds slowly must still leave room for ctest, which the
+      # runners themselves put at 333s and 325s on ubuntu-latest for
+      # the two presets, on the run that merged #185. Worst successful
+      # case is then about 420 + 340 + a short build, comfortably
+      # inside the job's 900.
+      #
+      # The budget, corrected twice and so stated exactly. The install
+      # runs only if the update returned inside its bound, so the two
+      # bounds are alternatives rather than a sum: an attempt is at most
+      # max(70, 60 + 130) = 190s counting the -k grace. The sleep is
+      # unconditional, so three attempts cost at most 3 x 190 + 3 x 5 =
+      # 585s, which the 420s cap truncates. Attempts 1 and 2 with their
+      # sleeps are at most 390s, so the third always starts -- with as
+      # little as 30s left of the cap against the 190 it may want, so
+      # starting is not the same as finishing. In the mode observed on
+      # #185 (update hangs, install never reached) an attempt plus its
+      # sleep costs 65s if apt dies to the TERM and 75s if it needs the
+      # -k grace -- which of the two that apt would have done was never
+      # observed, nothing having signalled it -- so all three fit in
+      # 225s either way.
+      #
+      # 60s on the update is the one bound that could fail a healthy
+      # run: apt's own per-connection timeout defaults to 120s, so a
+      # stalled mirror that would eventually have answered can exceed
+      # it. Kept, because three attempts cover the transient case and
+      # #185 cost three whole jobs. Two limits not fixed here: a bound
+      # that fires can leave dpkg mid-transaction, which is not worth
+      # recovering on a runner thrown away at the end of the job, and
+      # the && means an update that stays broken fails the step even
+      # where the cached lists would have let install succeed.
       - name: Install ncurses and tmux
         if: runner.os == 'Linux'
+        timeout-minutes: 7
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends libncurses-dev tmux
+          for attempt in 1 2 3; do
+            rc=0
+            sudo timeout -k 10 60 apt-get update || rc=$?
+            if [ "$rc" -eq 0 ]; then
+              what="apt-get install"
+              sudo timeout -k 10 120 apt-get install -y \
+                --no-install-recommends libncurses-dev tmux || rc=$?
+              if [ "$rc" -eq 0 ]; then
+                exit 0
+              fi
+            else
+              what="apt-get update"
+            fi
+            case $rc in
+              124) why="timed out at its bound" ;;
+              137) why="ignored the bound and was killed" ;;
+              *)   why="failed with status $rc" ;;
+            esac
+            echo "::warning::attempt $attempt: $what $why" >&2
+            sleep 5
+          done
+          echo "::error::could not install libncurses-dev and tmux" >&2
+          exit 1
 
+      # No timeout here, deliberately: it is GNU coreutils and the macOS
+      # runners do not have it. This repository already knew that --
+      # CMakeLists.txt says so where it sets a CTest TIMEOUT, and five
+      # scripts under tests/ guard the call with command -v -- and a
+      # first draft of this change called it unguarded on this step,
+      # which would have failed both macOS legs deterministically: the
+      # two the bug never touched. So the step cap is the whole of the
+      # bound here, and the loop covers a brew that fails rather than
+      # one that wedges. The brew list fast path never fires on a hosted
+      # runner -- the last green macOS job installed tmux -- and is kept
+      # for a self-hosted or local one, where reinstalling every run
+      # would be the waste it looks like.
       - name: Install tmux
         if: runner.os == 'macOS'
+        timeout-minutes: 7
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1
-        run: brew list tmux >/dev/null 2>&1 || brew install tmux
+        run: |
+          brew list tmux >/dev/null 2>&1 && exit 0
+          for attempt in 1 2 3; do
+            if brew install tmux; then
+              exit 0
+            fi
+            echo "::warning::brew attempt $attempt failed" >&2
+            sleep 5
+          done
+          echo "::error::could not install tmux" >&2
+          exit 1
 
       # Every flag these steps would otherwise spell out lives in
       # CMakePresets.json instead: the build type, -Werror via SST_WERROR,
