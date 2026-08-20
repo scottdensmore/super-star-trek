@@ -1,0 +1,593 @@
+<task-notification>
+<task-id>bj0yzezfy</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/bj0yzezfy.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI on the workflow change" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Lets do 158
+
+---
+
+<task-notification>
+<task-id>a013ae04e175760b0</task-id>
+<tool-use-id>toolu_017vWs3uW7SPZSqRjbMxqxSM</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a013ae04e175760b0.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier for #158" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: **fail**
+
+Builds and the full suite are green in both configurations — nothing here would fail CI. Two findings in the diff are actionable anyway: a measured claim in the new comments (and posted to #158 as a correction) that is false in the environment the fix is for, and a new test helper that rewrites the developer's `~/.bash_history`.
+
+---
+
+## Failures / findings
+
+### 1. The "the process never stops / this is not a resume" claim is an artifact of the test harness — deterministic
+
+`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c:1692-1695`, repeated in the `suspend` arm's comment in `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh`:
+
+&gt; The handler does that without the process ever stopping, measured over the whole second after the signal, so this is not a resume putting the terminal back into curses' mode
+
+That measurement was taken in a `start()`-style tmux pane. There the game shares the pane shell's process group and that shell is the session leader — measured `pid/ppid/pgid/sid`: shell `472813 472812 472813 472813`, game `472816 472813 472813 472813`. The parent of the group leader is the tmux server, in another session, so the group is **orphaned**, and the kernel discards a stop signal there. ncurses' handler re-raises `SIGTSTP` after leaving program mode; that re-raise is discarded too, so the handler runs straight through and program mode is left set. Hence "never stops, tty flips at signal time".
+
+Under real job control — an interactive shell in the pane, game in its own pgrp (`pgid 473438`, `sid 473435`) — main's fallback game behaves the other way round:
+
+```
+[MAIN] SigCgt=0000000000084002 state=S+ tty=icanon echo
+[MAIN] after TSTP: state=T tty=icanon echo        &lt;- it does stop; tty untouched
+[MAIN] tty forced canonical while stopped: icanon echo
+[MAIN] after CONT:  state=R tty=-icanon -echo     &lt;- the flip happens on resume
+```
+
+I forced the tty back to canonical *while stopped* and it flipped again after `SIGCONT`, so the resume itself is what reinstates curses' mode. 3/3 identical runs. So issue #158's original hypothesis (damage on resume) was right for a player at a shell prompt; the correction holds only where there is no job control. The same wording in the test comment ("measured, the process does not even stop") is wrong for the same reason.
+
+The fix itself is unaffected and correct — restoring SIGTSTP prevents the damage whichever end it happens at. It is the stated mechanism, and the correction posted to the issue, that need retracting. Script: `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/2ec84ddc-abc6-4082-9f37-fb6253a2c951/scratchpad/resume.sh`.
+
+### 2. `start_shell()` truncates the developer's `~/.bash_history` — deterministic
+
+`--norc --noprofile` does not turn history off. The pane's interactive bash loads `$HISTFILE` (default `~/.bash_history`) at startup and writes it back when it exits on the hangup from `cleanup`'s `kill-server`. With no rc file, `histappend` is off and `HISTFILESIZE` defaults to 500, so the file is **rewritten truncated to the last 500 lines**.
+
+Measured through the real script, with a throwaway HOME holding 700 lines:
+
+```
+$ HOME=$F tests/tui.sh build/ci-debug/sst Debug
+history before: 700
+tui OK
+history after: 500
+```
+
+499 of the 700 pre-existing entries survive; the test's own commands (`.../sst -t tournament 7 short novice pw`, `quit`, `n`, `y`, `fg`) are appended. This is the same class of harm `-L` and `-f /dev/null` exist to prevent, and it will already have happened to the real `~/.bash_history` on every run of this suite in this session (I did not read the user's history — that read was blocked, and I used a fake HOME instead). The lever is `HISTFILE`, not `--norc`.
+
+---
+
+## Missing coverage
+
+**The `suspend` arm never actually suspends the fixed game.** By the mechanism in finding 1, `kill -TSTP` in a `start()` pane is discarded on the fixed build — measured `ps -o stat=` is `S+`, never `T`. The arm therefore asserts "the tty was not wrecked", not "the game stops and resumes". It does discriminate against `main` (I reproduced the hang: main answers nothing after TSTP/CONT), so it is not a blind test — but its blind spot is demonstrable. A second mutant that sets `SIGTSTP` to `SIG_IGN` on the give-up paths instead of restoring:
+
+```
+[MUT2-IGN] state after TSTP: S+   RESULT: game answered srscan after suspend/resume   &lt;- arm passes
+[MUT2-IGN] real C-z: state=S+ at +1..+5s, no "Stopped"                                &lt;- player cannot suspend at all
+```
+
+A game a player cannot suspend passes this arm. The player journey #158 is actually about — fallback game, real Ctrl-Z, real `fg` — has no arm; `start_shell()` now makes one cheap. I ran it by hand: branch answers after C-z/fg, main hangs.
+
+**Minor, `osx.c:61-62`:** "this code -- which runs only where the game fell back to the classic display" — the stdio `getch()` path runs whenever `!tui_active`, which includes a plain game started without `-t`. The same comment says "plain mode does the same" nine lines later. The conclusion still holds (a plain game's SigCgt is 0); the parenthetical does not.
+
+---
+
+## Answers to your two questions
+
+**`osx.c` is comment-only, confirmed mechanically.** `gcc -E -P` output is byte-identical to `main`'s, and `gcc -S -O2 -g0` assembly is identical modulo the `.file` directive. Nothing about its behaviour moved.
+
+**`start_shell()` leaves no process behind, and does not need the `stopped_pid` guard.** I reproduced the failure window you were worried about — C-z the game, then run the script's `cleanup` with the game in state `T` — and got `OK: no leftover game process after cleanup`, `OK: pane shell gone`. bash resends SIGHUP *and* SIGCONT to stopped jobs when it takes the hangup from `kill-server`, so a job stranded between C-z and `fg` is reaped by the next `cleanup` or by `finish()`. The `suspend` arm cannot strand anything either, since (above) its SIGTSTP never stops the game in that pane. The one thing `start_shell()` does leave behind is finding 2. Also worth noting: `tests/tui.sh` now hard-requires `bash` in `PATH`, while it only skips on missing `tmux`.
+
+---
+
+## Claims I checked that hold
+
+| claim | result |
+| --- | --- |
+| `initscr()` catches SIGINT/SIGTERM/SIGTSTP/SIGWINCH | SigCgt `0x8084002` ✓ |
+| plain game SigCgt 0 | ✓ |
+| main fallback `0x84002` → branch fallback `0x4002` | ✓ |
+| after retry `0x8084002`; mutant-after-retry `0x8004002` | ✓ both, exactly the numbers in the comment |
+| fallback exits 1 on Ctrl-C, plain exits 130 | ✓ |
+| `retry suspend` arm discriminates | ✓ mutated copy outside the repo (success-path re-apply removed) fails with `FAIL: retry suspend: fg did not repaint the panels` |
+| #190 (pause survives suspend, space swallowed, Enter advances) | ✓ reproduced |
+| panels-up suspend/resume unchanged | ✓ 80x24 and 72x24, branch identical to main |
+| plain mode unchanged | ✓ `tournament 7` scripted journey byte-identical to main, and Debug == Release |
+
+I also checked a residual gap I suspected — panels up, shrink, retry giving curses' SIGTSTP back to a fallback game — and it cannot happen: `sst.c:689` retries only while `!tui_active`, and nothing clears that flag mid-session.
+
+---
+
+## Environment
+
+- Linux, gcc 15.2.0, tmux 3.6, bash 5.3. `cppcheck`, `clang-tidy`, `scan-build` are not installed (not a gap per the brief).
+- `analyze` **Passed**, not skipped, in both configurations — a real `gcc -fanalyzer` run over the CMake source list, tui.c and osx.c included.
+- Repo left untouched: `git status` shows only the three modified files; the temporary `main` worktree was removed and pruned; every tmux server I created was on its own `-L verif-*` socket and killed there. The user's `difftest` session on the default socket was not touched.
+
+## What ran
+
+```sh
+cmake --preset ci-debug   &amp;&amp; cmake --build --preset ci-debug --target clean &amp;&amp; cmake --build --preset ci-debug
+cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release --target clean &amp;&amp; cmake --build --preset ci-release   # clean rebuilds, zero warnings under -Werror
+ctest --preset ci-debug     # 12/12 pass, 385s
+ctest --preset ci-release   # 12/12 pass, 375s
+tests/tui.sh build/ci-debug/sst Debug   # x3 direct, all "tui OK" (5 tui runs total, no flakes)
+```
+
+Journeys (all scripted, scripts in `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/2ec84ddc-abc6-4082-9f37-fb6253a2c951/scratchpad/`): piped plain-mode `tournament 7` against ci-debug, ci-release and a `main` build; fallback suspend/resume by direct signals and by real C-z/`fg` (`suspend.sh`, `shellsusp.sh`); the stop/continue mechanism experiment (`resume.sh`); the retry journey with SigCgt at each stage (`retry_sig.sh`); panels-up C-z/`fg` at 80x24 and 72x24 (`panelsusp.sh`); pause across a suspend (`pausesusp.sh`); SIGINT exit codes (`sigint.sh`); leftover/history experiments (`leftover.sh`, `hist.sh`). Two mutants built in copies outside the repository: `.../scratchpad/mut` (success-path re-apply removed) and `.../scratchpad/mut2` (give-up path sets `SIG_IGN`).</result>
+<usage><subagent_tokens>108548</subagent_tokens><tool_uses>60</tool_uses><duration_ms>2587923</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a5c7f296ad42da890</task-id>
+<tool-use-id>toolu_013Yb6ZugjTAV7Ao9rswK6bR</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a5c7f296ad42da890.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier rerun for #158" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: PASS
+
+All checks green. Nothing blocking. Three non-blocking observations at the end.
+
+---
+
+## 1. The file-damage question — `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh` is clean
+
+`git diff main -- tests/tui.sh` is **143 added / 2 deleted across exactly three hunks**:
+
+```
+@@ -142,2 +142,6 @@    the pgrep comment
+@@ -588,0 +593,30 @@   start_shell()
+@@ -3343,0 +3378,107 @@  the two new arms
+```
+
+Everything else in the file is byte-for-byte `main`. A residual duplicate or a stale arm would have to show as a hunk, and there is none. Cross-checks: `bash -n` clean; `shellcheck -S warning` clean (exit 0, no output); every `fail`/`expect`/`want_quadtitle` message string appears exactly once except two that appear twice on `main` as well (`"sub-minimum: text wrapped over the quadrant panel border"`, `"ended: rest did not ask whether it was wise"` — both 2 on `main`, both 2 now); every `# --- ` section header unique.
+
+## 2. Do the two arms assert what their comments claim? — Yes, all three mutants reproduced independently
+
+Three copies of the working tree outside the repository (`rsync` minus `build/` and `.git/`, fresh `cmake --preset debug` in each, `CMAKE_HOME_DIRECTORY` confirmed pointing at the copy, run as `cd &lt;copy&gt; &amp;&amp; tests/tui.sh build/debug/sst Debug`):
+
+| Mutant | Result | Message |
+|---|---|---|
+| A: `tui.c` reverted to `main` | exit 1, **one** FAIL | `suspend: the game stopped answering after a suspend and resume` |
+| B: give-up paths `signal(SIGTSTP, SIG_IGN)` | exit 1, **one** FAIL | `suspend: C-z did not suspend the fallback game` |
+| C: success-path `sigaction(SIGTSTP, &amp;cursetstp, NULL)` deleted | exit 1, **one** FAIL | `retry suspend: fg did not repaint the panels` |
+
+Exactly the three messages the comments name, exactly one failure each, and "nothing else in the file fails on either" holds for all three.
+
+I also re-measured the `SigCgt` numbers the comments state as measured, on a real retry (70x20 → grow to 100x30 → play again → panels up):
+
+- fixed build: `0x0000000008084002`
+- mutant C: `0x0000000008004002`
+
+The difference is `0x80000` = bit 19 = signal 20 = SIGTSTP. Matches `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c:1352-1360` and the `tests/tui.sh` retry-suspend comment.
+
+Two further comment claims verified rather than taken on trust:
+
+- `tui.c:1707-1709` "a fallback game exits 1 on Ctrl-C where a plain one exits 130" — measured through an interactive shell: fallback `MEASURED_RC=1`, plain `MEASURED_RC=130`. Fallback `SigCgt` after give-up is `0x4002` (SIGINT + SIGTERM only), which is the same fact from the other side.
+- `tui.c:1703-1705` "A plain game is unaffected, installing no handlers at all (SigCgt 0)" — the plain game process reports `SigCgt: 0000000000000000`. (My first measurement said `0x10000`; `pgrep -f` had matched my own wrapper shell. Re-measured against `/proc/&lt;pid&gt;/cmdline`, the claim is right.)
+- The corrected mechanism in `tui.c:1692-1702` — measured both ways. In a `start()`-style pane, `kill -TSTP` leaves the game at `S+` (the stop is discarded). Through `start_shell` with a real C-z it goes to `T`. The artifact is exactly as the comment now describes it, and the rewrite of the arm is justified.
+
+`#190` and `#158` both exist and their titles match what the comments say about them.
+
+## 3. Containment: is `HISTFILE=/dev/null` the whole of it? — For writes, yes. One read is left.
+
+Strace of the exact pane command line (`env HISTFILE=/dev/null bash --norc --noprofile -i`) under a throwaway `HOME` seeded with `.bashrc`, `.bash_profile`, `.profile`, `.bash_logout`, `.inputrc` and a 700-line `.bash_history`:
+
+- **No startup file ran.** No `RAN_*` marker was created by any of the four — including `.bash_logout`, which is login-shell-only and so does not apply here.
+- **The only write-mode opens in the whole trace are `/dev/tty` and `/dev/null`** (`O_WRONLY|O_APPEND` — that is the history write, correctly redirected). Nothing under `$HOME` is opened for writing.
+- History: 700 lines in, **700 lines out**, md5 unchanged.
+- **The one remaining reach is `~/.inputrc`, opened `O_RDONLY`.** `--norc` does not cover it — readline's initialisation is separate from bash's startup files. It cannot damage anything (read-only, and readline writes no files), but it can change how the pane shell behaves: `set editing-mode vi`, `$if Bash` blocks, key rebindings and macros all take effect. `INPUTRC=/dev/null` closes it — verified: with it set, the trace shows zero opens under `$HOME`.
+
+So the containment is complete against damage, and the comment's "the same reasoning as `-f /dev/null` on the socket" is very slightly stronger than what `--norc` alone delivers, since `-f /dev/null` isolates tmux's config completely where `--norc` leaves readline's reachable. There is no `~/.inputrc` on this machine, so nothing was affected here.
+
+**The real `~/.bash_history` was byte-identical before and after everything I ran** (500 lines, md5 `a642e9b7b07ed1857276918289fa8306`, mtime unchanged at 2026-08-19 23:40:22) — including two full `ctest` suites and four `tests/tui.sh` runs. Independently confirms the fix on the actual file that was damaged. I used a throwaway `HOME` for all of my own manual shell panes.
+
+## 4. What ran
+
+**Builds** — both clean, zero warnings with `-Werror`:
+```
+cmake --preset ci-debug   &amp;&amp; cmake --build --preset ci-debug
+cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release
+```
+
+**Tests** — 12/12 in both configurations:
+```
+ctest --preset ci-debug     # 12/12 passed, 384.43s
+ctest --preset ci-release   # 12/12 passed, 374.47s
+```
+`analyze` **Passed** (not SKIPPED) in both — 37.84s / 37.01s. Static analysis genuinely ran.
+
+**Flake check** — `ctest --preset ci-debug -R '^tui$'` twice more: Passed 200.97s, Passed 201.07s. Across the whole session `tests/tui.sh` ran seven times (2 ctest configs + 2 repeats + 3 mutants); the two new arms passed on every non-targeted build and failed only on their own mutant. No flakiness.
+
+**Journeys** (all against `/home/scottdensmore/Developer/scottdensmore/super-star-trek/build/ci-debug/sst`):
+- Plain-mode deterministic journey (`tournament 7 short novice pw`, then `srscan status lrscan chart quit n n`) diffed against a build of `main`'s `tui.c` — **byte-identical**, exit 0, zero carriage returns.
+- TUI at 80x24 and 72x24: panels up, quadrant title correct, status panel populated, clean `GAME_EXIT=0`.
+- Fallback at 70x20 through a real job-control shell: reached `COMMAND&gt;`, C-z → process state `T` (genuinely stopped, `[1]+ Stopped`), `fg` → `srscan` answered with a full scan, `quit` → clean exit to the shell prompt. This is the fix working end-to-end for a player.
+- A suspend across a `readinput` (`help` → "Help on what command?"): stops at `T`, resumes, Space swallowed, Enter gets it moving — the shape #190 describes, pre-existing and out of scope.
+
+**Static extras**: `shellcheck` present and clean on `tests/tui.sh`. `cppcheck`, `clang-tidy`, `scan-build` are not installed — per the brief that is not a gap, since `analyze` ran and passed.
+
+## 5. Observations (non-blocking — for your judgement, not findings against the change)
+
+1. **`INPUTRC` is the one thing `--norc` does not cover.** Detail and evidence above. If you want the comment's `-f /dev/null` analogy to be exact, `INPUTRC=/dev/null` alongside `HISTFILE=/dev/null` is the whole of it. No damage either way.
+
+2. **The second give-up path has no suspend arm.** `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c:1801` restores SIGTSTP on the "size bigger than the terminal" refusal (the pinned-dimension gate at 1794), and both new arms reach only the floor gate at 1767 via 70x20. The two restores are identical lines, so the risk is low, and the existing pinned-refusal arms would catch the fallback itself — just not the suspend through it.
+
+3. **The suspend arm's final assertion is position-dependent rather than intrinsic.** `expect "suspend: the game stopped answering..." 'Stardate'` greps the whole pane, and `expect_status`'s own comment at `tests/tui.sh:490-492` notes that the game writes "Stardate" into the message window too, in the briefing as well as in `srscan`. It discriminates today — mutant A proves the briefing's copy has scrolled off by the time the arm looks — but it is passing because of where the text happens to have scrolled to, not because only `srscan` could have produced it. A token unique to the post-resume scan, or a before/after count, would not depend on that.</result>
+<usage><subagent_tokens>86967</subagent_tokens><tool_uses>53</tool_uses><duration_ms>2587209</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a81b6a792345228ec</task-id>
+<tool-use-id>toolu_016C1bbVPDLjXFzUgHkLLtnT</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a81b6a792345228ec.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier on final #158 state" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: **pass**
+
+Everything ran on Linux (gcc 15.2.0, ncurses, tmux present). No failures, no flakes.
+
+---
+
+## Failures
+
+None.
+
+---
+
+## Your two questions, answered by measurement
+
+### 1. `sst.c`'s CRLF and content are both intact
+
+- `git ls-files --eol sst.c` → `i/crlf  w/crlf` — index and worktree agree, and the whole file is uniform: `grep -nv $'\r$' sst.c` returns nothing (1191/1191 lines end CR-LF).
+- `git diff main --numstat` → `11  5  sst.c`. Only the comment block moved; nothing else in the file was rewritten, which is what an accidental LF conversion would have shown up as.
+- `git diff main --check` flags those 11 lines as "trailing whitespace" — that is the CR itself, the same thing it says about any CRLF file here. `grep -P '[ \t]\r$'` over the changed region (lines 845-880) finds **0** real trailing whitespace. (The 8 lines it does find in `sst.c` — 99, 182, 341, 435, 705, 986, 1180, 1189 — are all pre-existing on `main`.)
+- Content is coherent end to end; `cat -A` on 853-870 shows every new line terminated `^M$` with no lost or doubled text.
+- Behaviourally inert, as a comment change should be: a seeded journey (`tournament 7 short novice pw`, then `srscan lrscan status zzz quit n`) is **byte-identical** between `./build/ci-debug/sst` and a build of the tree with `main`'s `tui.c` restored.
+
+### 2. `wait_scrollback 'Terminal too small'` is a real gate
+
+I reimplemented `start_shell`/`scrollback`/`wait_scrollback` verbatim outside the repo and ran the same launch the arms use at three sizes:
+
+| pane | result |
+| --- | --- |
+| 70x20 | **matched** (fallback; classic display in scrollback) |
+| 72x24 | **not matched** — returns 1 after the full 8s poll, panels up |
+| 100x30 | **not matched** — returns 1, panels up |
+
+It does not pass on any pane: when curses runs, the alternate screen carries no history and the string is simply absent.
+
+And the gate fires as a *failure* on a build where the fallback stops happening. On a copy with `MINROWS`/`MINCOLS` lowered to 14/60 so 70x20 is accepted, the trimmed arms report exactly:
+
+```
+FAIL: retry suspend: the game did not fall back, so the arm would prove nothing
+FAIL: suspend: the game did not fall back, so the arm would prove nothing
+2 check(s) failed.
+```
+
+### Both mutation proofs reproduced independently
+
+On copies outside the repository (`--exclude=./build --exclude=./.git`, fresh `cmake --preset ci-debug` in each):
+
+- **`main`'s `tui.c`** → 1 failure, `suspend: the game stopped answering after a suspend and resume`. Re-run through the **full** `tests/tui.sh` (3m30s) in that copy: still exactly that one failure and nothing else in the file — which also confirms the arms genuinely execute inside the ctest `tui` test, not just in my trimmed harness.
+- **success-path re-apply deleted** (`if (havecursetstp) sigaction(SIGTSTP, &amp;cursetstp, NULL);` removed) → 1 failure, `retry suspend: fg did not repaint the panels`, with the suspend arm passing.
+
+### The comments' measured claims check out on this machine
+
+Read straight from `/proc/&lt;pid&gt;/status`:
+
+| game | SigCgt | decode |
+| --- | --- | --- |
+| fallback, 70x20 `-t` | `0000000000004002` | SIGINT + SIGTERM only |
+| full-screen, 100x30 `-t` | `0000000008084002` | + SIGTSTP (bit 19) + SIGWINCH (bit 27) |
+| plain, no `-t` | `0000000000000000` | nothing |
+
+That is exactly what the new `sst.c` comment ("catches SIGINT and SIGTERM and nothing more, and SIGCONT is not caught at all"), the new `tui.c` comment ("What the fallback game still carries is SIGINT and SIGTERM"; `0x8004002` vs `0x8084002`), and the `plain game … SigCgt 0` claim assert.
+
+`UNRECOGNIZED COMMAND` also holds up as a discriminator: 0 occurrences in a full scripted plain game and 0 in a `-t` fallback startup with no bad command, 1 the moment `zzz` is sent.
+
+`~/.bash_history` mtime is 2026-08-19 23:40 — untouched by any of today's ~20 `start_shell` sessions. `HISTFILE=/dev/null` works.
+
+---
+
+## Missing coverage
+
+- **The pinned-size give-up path has no suspend arm** — the item you resolved rather than fixed. I checked the behaviour directly rather than taking it on the byte-identical argument: a game in a 100x30 pane under `env COLUMNS=190 LINES=30` prints `Terminal is 100x30 but LINES/COLUMNS make it 190x30.`, reaches `COMMAND&gt;`, and reports **SigCgt `0000000000004002`** — SIGTSTP restored, same as the floor path. So the resolution is sound and there is no defect hiding behind the gap; it is an untested-but-correct path, not an untested-and-unknown one. `tui_init()` has no other post-`initscr()` return that skips the restore: the only two `return FALSE` before the save (`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tui.c:1643,1645`) run before `sigaction(SIGTSTP, NULL, &amp;oldtstp)`, and both give-up paths plus the success path handle both signals symmetrically.
+- Nothing else in the diff is testable and untested. `osx.c` and `sst.c` are comment-only; `tui.c`'s two restores and one re-apply each have a discriminating arm, proven above.
+
+---
+
+## Environment issues
+
+- **`cppcheck`, `clang-tidy`, `scan-build` are all absent.** Per the brief this is no longer a gap — the `analyze` test is what step 2 rests on, and it **ran, it did not skip**: `tests/analyze.sh` with `/usr/bin/cc` (gcc 15.2.0) over all 13 sources including `sst.c`, `tui.c` and `osx.c`, canary `bb-explosion-factor 30` reported. Its depth is uneven by nature, so this is not a tree-wide clean bill.
+- **macOS is unverified from here.** This diff adds the first `bash --norc --noprofile -i` pane in the suite, and job control through it, which I can only exercise on Linux. `game_pid()`'s `ps -o comm=` basename handling already covers the known macOS divergence, and the two new arms use `game_pid()` only indirectly, but the interactive-shell launch itself has never run against macOS's bash 3.2. CI will be the first to see it.
+- **Stale tmux sockets** in `/tmp/tmux-1000` (`sst-verify-*`, dated Aug 7-14) are leftovers from earlier ad-hoc verifier probes, not from `tests/tui.sh` — it removed every socket it created today, and no `sst` process or `sst-tui-*` socket survived any run. Not a finding for this diff.
+- Repository state is unchanged by this pass: `git status` is still exactly `M osx.c / M sst.c / M tests/tui.sh / M tui.c`, 280 insertions / 20 deletions.
+
+---
+
+## One observation, for `code-review` rather than for you to act on
+
+The new `bash` guard at `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh:598` says it guards "the way this file guards its other external tools loudly". The mechanisms actually differ: the tmux guard (line 57) *skips* with 77 off-CI and only fails on CI; the `pgrep` and `/proc` guards (lines 3830, 3843) use `fail`/a note and let the rest of the file run. The `bash` guard is an unconditional `exit 1`, so a developer with tmux but no `bash` loses the entire `tui` test rather than the two arms that need it. Defensible — `bash` is on every platform CI runs — and the loudness claim is true in spirit; the "the way this file guards" comparison is the part that is slightly off. Not a failure and not something I'd block on.
+
+---
+
+## What ran
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Configure + clean build, Debug | `cmake --preset ci-debug &amp;&amp; cmake --build --preset ci-debug --clean-first` | all 13 sources + 2 test binaries, **zero warnings** under `-Werror` |
+| Configure + clean build, Release | `cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release --clean-first` | **zero warnings** under `-Werror` |
+| Full suite, Debug | `ctest --preset ci-debug` | **12/12 passed**, 383.13s (`tui` 201.00s, `analyze` 36.87s) |
+| Full suite, Release | `ctest --preset ci-release` | **12/12 passed**, 375.96s (`tui` 192.31s, `analyze` 38.21s) |
+| Static analysis | `ctest --preset ci-debug -R '^analyze$' --verbose` | ran with `/usr/bin/cc`, not skipped |
+| Plain-mode journey | `printf 'regular\nshort\nnovice\nxyz\nsrscan\nquit\nn\n' \| ./build/{ci-debug,ci-release}/sst` | exit 0 both, 54 lines, no stray CR |
+| Plain-mode equivalence | seeded journey vs a `main`-`tui.c` build | byte-identical |
+| `-t` with no tty | seeded journey piped to `./build/ci-debug/sst -t` | falls back, exit 0 |
+| Suspend arms, isolated | trimmed harness (`tui.sh` 1-639 + 3396-3530) × 8 on ci-debug, × 4 on ci-release, × 3 under 24-way CPU load | **15/15 pass, no flakes**, ~6s per run |
+| Gate discrimination | `wait_scrollback 'Terminal too small'` at 70x20 / 72x24 / 100x30 | matched / not / not |
+| Precondition fires | `MINROWS 14`, `MINCOLS 60` mutant, copy outside repo | both arms fail with the precondition message |
+| Mutation: `main`'s `tui.c` | copy outside repo, trimmed arms **and** full `tests/tui.sh` | 1 failure, the `suspend` arm, both times |
+| Mutation: re-apply deleted | copy outside repo, trimmed arms | 1 failure, `retry suspend: fg did not repaint the panels` |
+| Signal dispositions | `/proc/&lt;pid&gt;/status` SigCgt, fallback / full-screen / plain / pinned-refusal | `0x4002` / `0x8084002` / `0` / `0x4002` |
+
+Scratch trees and probe scripts live under `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/2ec84ddc-abc6-4082-9f37-fb6253a2c951/scratchpad` (`arms.sh`, `gate.sh`, `sigcgt.sh`, `pinned.sh`, `mut1/`, `mut2/`, `mut3/`) if you want to re-run any of it.</result>
+<usage><subagent_tokens>85054</subagent_tokens><tool_uses>55</tool_uses><duration_ms>1788984</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>af681422f675cfa7d</task-id>
+<tool-use-id>toolu_01SnsiDqVNsENPzAnMDvbtiU</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/af681422f675cfa7d.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier on final #158 state" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: **pass**, with one comment-accuracy finding
+
+No failures, no flakes. Everything below is on the record for the two questions asked plus one finding worth answering before commit.
+
+---
+
+## Your two questions
+
+### 1. `has_quadtitle()` — no existing `want_quadtitle` caller changed behaviour. Confirmed three ways.
+
+**Mechanical.** I extracted `main`'s implementation and the branch's side by side into a harness under `set -u` with stubbed `screen`/`fail`/`dump` (`dump` returning 7, to expose any status leakage), and drove both over a matching screen, the briefing line, and a blank one:
+
+```
+old_want [ Quadrant 3 - 2 ]                                status=0 fails=0 i=0
+new_want [ Quadrant 3 - 2 ]                                status=0 fails=0 i=0
+old_want [The Enterprise is currently in Quadrant 3 - 2]   status=7 fails=1 i=3
+new_want [The Enterprise is currently in Quadrant 3 - 2]   status=7 fails=1 i=3
+```
+
+Identical in every observable: exit status, stdout, the `fails` increment, and the `i` global the loop leaves behind (still global — `has_quadtitle` sets it in the same scope `want_quadtitle` used to).
+
+**Static.** Every call site is a bare statement; none consumes the exit status, so even a status change would have been invisible. `grep` for `want_quadtitle` under `if`/`elif`/`&amp;&amp;`/`||`/`while` returns nothing — line 4519 is a comment, not a call.
+
+**Empirical.** `tui` green four times (both configs, twice each), and the failure path demonstrably still fires: it is what produced `retry suspend: fg did not repaint the panels` on my re-apply mutant.
+
+And the anchoring the split was for is real — I confirmed `grep -q ' Quadrant '` matches `The Enterprise is currently in Quadrant 3 - 2`, while `has_quadtitle`'s `head -1 | grep -qE ' Quadrant [0-9]+ - [0-9]+ '` rejects it.
+
+### 2. `stopped_pid` and `slept_drag()` cannot tread on each other — but their shared premise does not hold on this host.
+
+**They are safe.** `slept_drag()` clears `stopped_pid` on all five of its exit paths (`/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/tui.sh` lines 195, 209, 222, 226, 229), so it never leaves a value behind for anything to clobber. Its two callers (1167, 1212) both precede the new arms (3492, 3560). There is no `&amp;` backgrounding anywhere in the file, so there is only ever one writer. No interaction.
+
+**Two narrow gaps in the new registrations, neither reachable on a passing run:**
+- The retry arm's `wait_for 'Stopped'` failure path (3494-3496) deliberately leaves `stopped_pid` set, and the second arm overwrites it at 3560. A failure there loses the registration before `finish()` ever runs.
+- Lines 3499 and 3567 clear `stopped_pid` immediately after *sending* `fg`, before confirming the resume took. If `fg` did not take, the registration is dropped while the process is still stopped — and at 3500 that then reports as `fg did not repaint the panels`, the one message meant to mean the re-apply is missing.
+
+**FINDING — the comment at `tests/tui.sh:3556-3559` states a mechanism I could not reproduce.** It says:
+
+&gt; `tm kill-server` cannot reap a stopped process -- the hazard `slept_drag()` already records above.
+
+Measured on this host, deterministically:
+
+| case | after `tm kill-server` |
+| --- | --- |
+| `kill -STOP` on a game in a `start()` pane | `&lt;gone&gt;` |
+| real C-z in a `start_shell()` job-control pane, run 1 | `&lt;gone&gt;` |
+| run 2 | `&lt;gone&gt;` |
+| run 3 | `&lt;gone&gt;` |
+
+The stopped process is reaped every time — POSIX's orphaned-process-group rule sends SIGHUP followed by SIGCONT when the session leader exits leaving a stopped member, and Linux obeys. So the registrations are harmless insurance rather than the fix the comment describes, and your own confirmation ("I interrupted a run mid-flight: no stopped `sst` afterwards") does not discriminate — the same result obtains without them. I can only speak for Linux; macOS is the other CI platform and may genuinely differ, which would be worth saying in the comment rather than asserting the general case.
+
+`slept_drag()`'s original version of the same claim (lines 189-193) is on `main` and untouched by this diff — a step 9 filing candidate rather than something to fix here.
+
+---
+
+## Mutation proofs — both reconfirmed independently after the restructure
+
+Run on copies outside the repository, each configured fresh (I verified `CMAKE_HOME_DIRECTORY` in the copy's cache points at the copy, not the original), `tests/tui.sh` run from inside:
+
+| mutant | failures | message |
+| --- | --- | --- |
+| `main`'s `tui.c` | exactly 1 | `FAIL: suspend: the game stopped answering after a suspend and resume` |
+| success-path re-apply deleted | exactly 1 | `FAIL: retry suspend: fg did not repaint the panels` |
+
+Both match what you reported. Nothing else in the file fails on either.
+
+## The signal disposition, measured directly
+
+Every number the `tui.c` and `sst.c` comments cite checks out (`SIGINT=0x2 SIGTERM=0x4000 SIGTSTP=0x80000 SIGWINCH=0x8000000`):
+
+```
+branch  -t 70x20 (fallback)     SigCgt=0000000000004002   &lt;- SIGINT+SIGTERM only
+main    -t 70x20 (fallback)     SigCgt=0000000000084002   &lt;- SIGTSTP still curses'
+branch  plain 100x30 (no -t)    SigCgt=0000000000000000
+branch  -t 100x30 (panels up)   SigCgt=0000000008084002
+```
+
+And after the fall-back-then-retry path: branch `0x8084002`, re-apply-deleted mutant `0x8004002` — exactly the pair the comment at `tui.c:1352-1360` claims.
+
+## Journey coverage
+
+Piped plain mode on both binaries, clean exit 0, no crashes. Confirmed the configs really differ: `debug` is a recognised command in ci-debug and prints `UNRECOGNIZED COMMAND.` in ci-release — so running both suites is not the same binary twice.
+
+Real-pty journeys on the **Release** binary (own socket, `-f /dev/null`, `HISTFILE`/`INPUTRC` neutralised), each with a genuine C-z and `fg`:
+
+| journey | stopped | after resume | exited clean |
+| --- | --- | --- | --- |
+| fallback 70x20 `-t` | yes | answered `zzz` | yes |
+| panels up 80x24 `-t` | yes | panel title repainted | yes |
+| panels up 72x24 `-t` | yes | panel title repainted | yes |
+| plain 80x24 | yes | answered `zzz` | yes |
+
+No leaked `sst`, no leaked tmux server, and the default socket (your `agents` and `vlong` sessions) untouched throughout.
+
+One aside on the arm's assertion string: `UNRECOGNIZED COMMAND` needs `skill &lt;= SFAIR` to print the long form and needs the password already answered. Both hold in the arm (`tournament 7 short novice pw` on the command line, novice skill), so it is sound — but my first hand-rolled journey fed the unknown word to the password prompt and got nothing, which is worth knowing if anyone copies that pattern.
+
+## Missing coverage
+
+None on this diff. `osx.c` and `sst.c` are comment-only. The `-t` fallback suspend/resume and the retry path both have discriminating arms, proved above. The behaviour the new `osx.c` comment documents (space bar swallowed until Enter at a pause after a resume) is untested but explicitly deferred — issue #190 exists and is open, as does #158.
+
+## Environment issues
+
+None blocking. `tmux`, `bash` and `pgrep` present, so `tui` ran rather than skipping. `analyze` **Passed** (not SKIPPED) in both configs — gcc 15.2.0 is analyzer-capable here, and the test analyses `$&lt;TARGET_PROPERTY:sst,SOURCES&gt;`, which includes all three changed C files. Its depth is uneven by nature, so this is not a tree-wide clean bill. `cppcheck`/`clang-tidy`/`scan-build` absent (not a gap per the brief). `shellcheck` **is** installed and reports zero findings on `tests/tui.sh`, identical to `main`.
+
+## What ran
+
+- `rm -rf build/ci-debug build/ci-release`, then `cmake --preset ci-debug &amp;&amp; cmake --build --preset ci-debug`, same for `ci-release`. Clean from scratch, zero warnings under `-Werror`.
+- `ctest --preset ci-debug` — 12/12 passed, 386.6s.
+- `ctest --preset ci-release` — 12/12 passed, 375.4s.
+- `ctest --preset ci-debug -R '^tui$'` (201.6s) and `ctest --preset ci-release -R '^tui$'` (192.7s) as flake checks — pass. Four green runs of the new arms in total.
+- Two mutation re-proofs on out-of-tree copies, as tabulated.
+- `sh -n`, `bash -n`, `shellcheck -s sh` on `tests/tui.sh`; whitespace, line-length and nesting-indent checks over the whole diff — all clean, and the three `else` bodies you re-indented are now at their `if`'s depth.
+- Working tree unchanged throughout; I modified nothing.</result>
+<usage><subagent_tokens>87490</subagent_tokens><tool_uses>53</tool_uses><duration_ms>2379761</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a6026da2c1e280307</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a6026da2c1e280307.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier on extended #158 suite" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: **pass**
+
+No failures, no flakes. Everything below ran against the working tree of `fix/restore-sigtstp-on-fallback` (the four modified files, unstaged, nothing else; tree unchanged by me — verified at the end).
+
+---
+
+## Answers to your two questions
+
+### 1. `sig_caught()` — the three SIGWINCH arms still test what they tested
+
+- **Single call site**, and no stale `sigwinch_caught` anywhere in the tree.
+- **The reader is byte-equivalent at bit 27.** I ran the old awk body (hard-coded `27`) and the new one (`-v bit=`) over seven masks including every one this suite actually produces; they agree on all of them. (Both give the same wrong answer for `ffffffffffffffff` — the accumulator is a double, so masks above 2^53 are lost. Pre-existing, unchanged, and unreachable: the largest real mask here is `0x8084002`.)
+- **Measured the three scenarios directly on the branch build**, decoding `/proc/&lt;pid&gt;/status` independently in Python:
+
+| arm | SigCgt | SIGWINCH(27) | arm wants |
+|---|---|---|---|
+| fallback 40x10 `-t` | `0000000000004002` | no | no ✓ |
+| plain 40x10 | `0000000000000000` | no | no ✓ |
+| full-screen 80x24 `-t` | `0000000008084002` | yes | yes ✓ |
+
+  Identical to what they wanted before. The full-screen arm also reads `yes` at bit 19, so the one arm that proves the reader works proves it for both bits.
+- **Discrimination intact for #152.** Built a mutant (outside the repo) deleting only the floor-path SIGWINCH restore, `tui.c:1785`: the fallback game then reports `0000000008004002`, bit 27 = `yes` — the fallback SIGWINCH arm fails. #152's coverage still bites.
+- The three SIGWINCH arms take the unchanged branch of every new conditional: `pre` is empty, `fellback` is `'Terminal too small'` as before.
+
+### 2. Runtime against `TIMEOUT 300`
+
+| run | tui |
+|---|---|
+| `ctest --preset ci-debug` | **202.60 s** |
+| `ctest --preset ci-release` | 193.76 s |
+| rerun 1 / rerun 2 (`-R '^tui$'`, ci-debug) | 202.61 s / 202.52 s |
+| instrumented copy | 202.48 s |
+
+Headroom in Debug is ~97 s (32 %). **The 3→7 arm change cost about +1.0 s.** I instrumented a copy of the tree with timestamps around each arm: the whole seven-arm loop runs **1.77 s**, 0.22–0.25 s per arm, so the three it replaced were ~0.75 s. The two suspend arms account for ~6.4 s. The other ~158 s is everything before them — unchanged. So the margin is effectively what you last measured; this change does not move it.
+
+Worth noting for #101: `CMakeLists.txt:94` still says "far above the ~11s it takes to pass", and #101's own title says "about a minute". Both are now off by an order of magnitude at 202 s. Not in this diff (`CMakeLists.txt` is unmodified), and #101 is already open — the measurement is probably worth adding to it.
+
+---
+
+## Independent confirmation of the two mutation claims
+
+I did not take these from your report; I rebuilt them on copies outside the repository.
+
+- **Pinned arm vs deleting `tui.c:1811` only.** In a 100x30 pane with `COLUMNS=190`: mutant `SigCgt=0000000000084002` (SIGTSTP caught), branch `SigCgt=0000000000004002`. The pinned arm asserts exactly that bit, so it fails on the mutant and passes on the branch. The regression protection is real.
+- **Retry arm vs removing the success-path re-apply.** After fall back → grow → play again: mutant `0000000008004002`, branch `0000000008084002` — the numbers the arm's comment cites. After `fg` the mutant's top row is a panel *body* row (frame scrolled away, never repainted); the branch's top row is the frame. Confirmed.
+- **The defect itself, on `main`'s `tui.c`:** fallback game at 70x20, real C-z then `fg`, then `zzz` — no answer, game wedged. Branch build answers `UNRECOGNIZED COMMAND`. Fix does what it claims.
+
+---
+
+## Missing coverage
+
+One, and it is **adjacent to the diff rather than in it** — step 9 material, not a fix for this slice.
+
+**`tui.c:1810`, the oversize give-up path's SIGWINCH restore, has no coverage at all.** It is the immediate sibling of the line your new `pinned` arm now covers. I deleted it and ran the full branch `tui` suite against the mutant:
+
+```
+cd &lt;copy&gt; &amp;&amp; sh tests/tui.sh &lt;copy&gt;/build/ci-debug/sst Debug
+→ "tui OK", exit 0, 3m22s, zero failures
+```
+
+Its floor-path twin (`tui.c:1785`) *is* covered — the `fallback:SIGWINCH` arm fails on that mutant. The asymmetry is that #150's EINTR retries make a leftover SIGWINCH handler behaviourally harmless, so only a mask arm can see it, and there is no pinned SIGWINCH arm. Your new spec makes closing it a one-line change — `'pinned:-t:100:30:no:SIGWINCH:27:env COLUMNS=190'`, ~0.25 s.
+
+---
+
+## Environment issues
+
+None that blocked a check.
+
+- `analyze` **PASSED** in both configurations (38.4 s / 37.9 s, gcc 15.2.0) — the analyzer genuinely ran, not skipped, and the timings match the 31–36 s the `CMakeLists.txt` note records. Its depth is uneven by design, so this is not a tree-wide claim.
+- `cppcheck`, `clang-tidy`, `scan-build` are not installed. Bonus only; not a gap.
+- `tmux 3.6`, `bash 5.3`, `pgrep`, `/proc` all present, so nothing in `tui.sh` skipped. `CI` unset, so the tmux guard would have skipped — it did not need to.
+
+---
+
+## Other things I checked because the diff touches them
+
+- **`want_quadtitle` refactor is behaviour-preserving.** No caller branches on its exit status (grep of all 14 call sites), and `dump()` ends in a pipeline returning 0, so the retry arm's comment "returns 0 either way" is accurate.
+- **`HISTFILE`/`INPUTRC` guard holds.** `~/.bash_history` was byte-identical and mtime-identical before and after a full `tui.sh` run (10053 bytes, mtime 1787208022 both times). No `~/.inputrc` exists here, so that half is untested by observation but is inert either way.
+- **tmux hygiene.** Every session I or the suite created lived on a private `-L` socket; your default-socket sessions (`agents`, `vlong`) are untouched, and no `sst` process lingered after any run.
+- **Issue references all resolve and match:** #101, #150, #152, #154, #158, #164, #190 ("A pause resumed after a suspend swallows the space bar"), #192 ("`kill-server` … on Linux it does").
+- **Comment claims spot-measured:** `initscr()` installs exactly SIGINT/SIGTERM/SIGTSTP/SIGWINCH (`0x8084002`); the fallback game catches SIGINT and SIGTERM and nothing more (`0x4002`); a plain game has `SigCgt 0`. The Ctrl-C claim — fallback exits 1 — reproduces; I could not print the plain game's 130 because bash abandons a `cmd; echo $?` list when the foreground job dies of SIGINT, but the asymmetry (status vs killed-by-signal) is what I observed.
+
+Two cosmetic notes, not findings: every arm failure message still begins `sigwinch:` even for the SIGTSTP and pinned arms (your own quoted proof line shows it), and the `env` spec field cannot contain a colon because of `cut -f8` — which the comment beside it already concedes.
+
+---
+
+## What ran (reproducible)
+
+```sh
+cmake --preset ci-debug   &amp;&amp; cmake --build --preset ci-debug   --clean-first   # 0 warnings, -Werror
+cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release --clean-first   # 0 warnings, -Werror
+ctest --preset ci-debug     # 12/12 passed, 386.34 s
+ctest --preset ci-release   # 12/12 passed, 377.06 s
+ctest --preset ci-debug -R '^tui$'   # x2, 202.61 s / 202.52 s
+```
+
+Clean rebuilds deliberately (`--clean-first`): the configured trees were already up to date, and a no-op build cannot show you a warning.
+
+Journeys, all on `build/ci-debug/sst` unless noted:
+- piped plain (`regular/short/novice/…/srscan/status/quit`) — exit 0, sign-off reached; same in `build/ci-release/sst`.
+- piped `-t` (no pty → fallback) — exit 0 in both configurations.
+- `debug` command present in the Debug binary, absent from Release (confirms the two runs drive different games).
+- interactive TUI at **80x24** and **72x24** on a private socket: panels up, in-game quadrant title present, `srscan`, `quit`, clean exit, no orphan process.
+- interactive **suspend/resume through real job control** (`bash -i`, C-z, `fg`) for all three dispositions: fallback 70x20, plain 80x24, panels-up 80x24 — all answer after resume.
+- the same journey against a `main`-`tui.c` build — wedged, as expected.
+
+Mutant builds used for the proofs live in `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/2ec84ddc-abc6-4082-9f37-fb6253a2c951/scratchpad/copy` (a copy of the tree, outside the repository; `/home/scottdensmore/Developer/scottdensmore/super-star-trek` was never modified — `git status` still shows exactly `osx.c`, `sst.c`, `tests/tui.sh`, `tui.c`).</result>
+<usage><subagent_tokens>107761</subagent_tokens><tool_uses>56</tool_uses><duration_ms>2358752</duration_ms></usage>
+</task-notification>
