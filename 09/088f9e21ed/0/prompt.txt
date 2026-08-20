@@ -1,0 +1,276 @@
+<task-notification>
+<task-id>b5mccpwo2</task-id>
+<tool-use-id>toolu_01QdT151pMSRAXh8rLTyu4Rm</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/b5mccpwo2.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b80mt0hyx</task-id>
+<tool-use-id>toolu_019h7954P19AVhnGvsue3zBt</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/b80mt0hyx.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for the rerun" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bdsfa69n2</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/bdsfa69n2.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for the second rerun" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Ok what should we do next?
+
+---
+
+<task-notification>
+<task-id>b019d0eam</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/b019d0eam.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for the fourth attempt" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a6467e8222aa4d821</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a6467e8222aa4d821.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier for CI guard change" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: FAIL
+
+One deterministic, blocking defect, plus a comment whose arithmetic does not hold. Everything that compiles and runs is green.
+
+---
+
+## Failures
+
+### 1. Blocking — the macOS step depends on `timeout(1)`, which GitHub macOS runners do not have
+
+`/home/scottdensmore/Developer/scottdensmore/super-star-trek/.github/workflows/ci.yml:81` now runs `timeout 300 brew install tmux`. `timeout(1)` is GNU coreutils; macOS ships BSD userland and does not have it. Both macOS legs (`ci-debug`, `ci-release`) fail deterministically at the install step, roughly 30 seconds in, and `Configure`/`Build`/`Test` are skipped.
+
+This repository already says so, twice, in its own words:
+
+- `/home/scottdensmore/Developer/scottdensmore/super-star-trek/CMakeLists.txt:65-66` — "TIMEOUT because the script's own `timeout` guard needs coreutils, which macOS runners do not have."
+- commit `ec60e78` — "a CTest TIMEOUT, since the script's `timeout` guard needs coreutils that macOS runners lack."
+- and five test scripts guard it: `tests/journey.sh:60`, `tests/eof.sh:38`, `tests/help.sh:51`, `tests/golden.sh:82`, `tests/tournament.sh:109` all wrap it in `if command -v timeout &gt;/dev/null 2&gt;&amp;1`. The workflow does not.
+
+Corroborated independently of the repo: `images/macos/toolsets/toolset-15.json` in `actions/runner-images` lists no `coreutils` in `common_packages`, and the macOS 14/15/26 image readmes never mention it (they name `gtar` for GNU tar, which is the same pattern).
+
+The fast path does not save it — tmux is *not* preinstalled on the image. From this repo's own last green macOS job (`96288433362`, 2026-08-19), the old `brew list tmux || brew install tmux` line took the install branch:
+
+```
+2026-08-19T08:16:44.0354400Z ==&gt; Would install 1 formula:
+2026-08-19T08:16:44.0355000Z tmux
+2026-08-19T08:16:45.8141090Z ==&gt; Installing tmux
+```
+
+So `brew list tmux` fails and the new loop is entered every run. Reproduced locally by running the step body extracted from the YAML with a `PATH` that has a working `brew` stand-in but no `timeout`, which is exactly the runner's condition:
+
+```
+$ PATH=&lt;stub&gt; /bin/bash -e mac.sh
+mac.sh: line 3: timeout: command not found
+::warning::brew attempt 1 failed or timed out      (x3)
+::error::could not install tmux
+rc=1 after 30s
+```
+
+With `timeout` on `PATH` the same body is `rc=0` in 0s. Deterministic, three for three.
+
+Worth noting how this reads against issue #186, which records "both macOS legs passed every time, having no apt step": the change breaks the two legs that were never affected by the bug it fixes. The Linux half of the change is sound — I reproduced healthy (rc=0, 1s), permanent hang (rc=1 after three bounded attempts), and transient hang (rc=0 on attempt 2) against stand-in `sudo`/`apt-get` with the bounds shortened, matching what you reported.
+
+### 2. The comment's budget arithmetic is wrong, in a comment AGENTS.md reads as specification
+
+`ci.yml:50-51`: "three tries at two minutes cost at most six of the fifteen rather than all of them."
+
+A try is two bounded commands, not one: `timeout 120` plus `timeout 180` is 300s. The `sleep 10` also runs after the third failed attempt, since it is inside the loop body. Worst case inside the step is `3 x (120 + 180) + 3 x 10 = 930s = 15m30s` — more than the whole job budget, not six minutes of it. Confirmed by the shortened-bounds run: with 3/4/1 substituted, the permanent-hang case took exactly 12s = `3 x (3 + 4 - 3... )`, i.e. `3 x (3 + 1)` with the install short-circuited, and three sleeps.
+
+What actually caps it is the step's own `timeout-minutes: 8` (480s), so the true statement is "at most eight of the fifteen". Two consequences the comment does not mention:
+
+- **The three-attempt design is not reachable in the worst case.** If `apt-get install` is the hanging command rather than `apt-get update`, an attempt costs `t_update + 180 + 10` ≈ 210s, so attempt 3 starts at ~420s and is cut off, or never starts at all if attempts run to their full 300s (attempt 3 would begin at 620s &gt; 480s). For the mode actually observed on #185 — `update` hangs, `install` short-circuited by `&amp;&amp;` — an attempt costs 130s and all three fit in 390s, so the fix does cover the bug it was written for.
+- **The bounds are advisory, not enforced,** because `timeout` is used without `-k`. Measured locally against a child that traps `TERM`: `timeout 3` returned rc=124 but only after 30s of wall clock; `timeout -k 1 3` returned rc=137 after 4s. A wedged apt (or one in uninterruptible D-state on a stuck mirror, which is the shape of the #185 hang) is precisely the case where SIGTERM may not land. The 8-minute step cap is what really bounds this, which is an argument for the backstop, not against it — but it makes "at most six" doubly unsupported.
+
+---
+
+## On the bounds, since you asked
+
+Measured, from this repo's CI and this machine:
+
+| | Install | Test | Job total |
+|---|---|---|---|
+| ubuntu ci-debug (job 96288415812) | 35s | 5m32s | 6m12s |
+| ubuntu ci-release (job 96288415250) | 6s | 5m25s | 5m36s |
+| macOS ci-debug (job 96288433362) | 4s | 5m53s | 6m09s |
+| local `ctest --preset ci-debug` | — | 379.8s | — |
+| local `ctest --preset ci-release` | — | 370.7s | — |
+
+Non-install overhead is ~5m40s, so the slack against the 15-minute job budget is ~9m20s.
+
+- **Three *failed* attempts cannot exceed 15 minutes.** The step cap fires at 8 minutes and the job then fails, with the step's log retained. That is the outcome the change is for, and it works.
+- **The case that can still hit the job wall is a *successful* install that runs near the cap.** 8 minutes of install plus ~6 minutes of suite is ~14 minutes against a 15-minute job — about a minute of slack, and #101 records `tui` growing (it was 195s of the 380s local run). That is the same failure mode the change exists to remove: job killed, logs lost, check reads `cancelled`. Issue #186 asked for "two or three minutes" on the step so "the remaining time still runs the tests"; 8 minutes is nearly the whole slack budget. A cap of ~4 minutes, or per-command bounds of 60/120 (3 attempts, ~6 min ceiling), would keep the three attempts and the arithmetic consistent with each other.
+
+One further limitation, reasoned rather than measured: a `timeout`-killed `apt-get install` can leave dpkg mid-transaction, and the retry will then hit "dpkg was interrupted, you must manually run `dpkg --configure -a`". The retry is effective against an `update` hang (the observed mode) and likely not against an `install` hang.
+
+Not a finding: `::warning::`/`::error::` written to stderr is parsed by the runner. Evidence in the same job log — Homebrew's own `opoo` output, which goes to stderr, was rendered as `##[warning]The following taps are not trusted:`.
+
+---
+
+## Missing coverage
+
+Nothing in the repository lints or executes `.github/workflows/ci.yml`. There is no actionlint, no shellcheck over the `run:` bodies, and no test that runs them; the macOS branch is exercised only by a macOS runner. That is exactly why a `command -v timeout` portability defect passes every local pass and every review, and only shows up as a red macOS leg. Open issue #106 covers the same gap for `tests/*.sh` but not for workflows. (Filing is yours, not mine.)
+
+Nothing else in the diff is testable behaviour — no compiled source changed, and both binaries plus all twelve tests behave identically to `main`.
+
+---
+
+## Environment issues
+
+- `actionlint`, `yamllint`, `cppcheck`, `clang-tidy`, `scan-build` are not installed. YAML was parsed with `python3` + PyYAML instead; `shellcheck` is present and was used.
+- No macOS host here. The macOS finding rests on the runner-image manifests, this repository's own CMakeLists comment and commit `ec60e78`, the real job log showing `brew install tmux` running, and a local reproduction of the shell condition — not on a run against a macOS runner.
+- `analyze` **PASSED** (not skipped) in both configurations, 39.0s and 39.0s, so `gcc -fanalyzer` genuinely ran over the game's sources on this Linux host. Its depth is uneven by design, so that is not a tree-wide clean bill.
+- `tui` ran and passed in both configurations (195.3s Debug, 186.3s Release); tmux is installed here, so it did not skip.
+
+---
+
+## What ran
+
+All from `/home/scottdensmore/Developer/scottdensmore/super-star-trek`, branch `ci/guard-dependency-install`, worktree = `main` + the uncommitted `.github/workflows/ci.yml` (no staged or untracked files).
+
+1. `cmake --preset ci-debug &amp;&amp; cmake --build --preset ci-debug --clean-first` — clean rebuild, zero warnings, zero errors (`-Werror` active; flags line confirmed `-Wall -Wextra -Wmissing-prototypes -Werror -DDEBUG`).
+2. `cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release --clean-first` — clean rebuild, zero warnings, zero errors.
+3. `ctest --preset ci-debug` — 12/12 passed, 379.77s.
+4. `ctest --preset ci-release` — 12/12 passed, 370.66s.
+5. Journeys: scripted plain-mode game against `build/ci-debug/sst` (`regular/short/novice/xyz/srscan/status/lrscan/chart/commands/quit`) — rc=0, 99 lines, no trailing carriage returns, scan grid and status fields intact; and against `build/ci-release/sst` including the `debug` command (absent without `-DDEBUG`, as expected) — rc=0, clean farewell.
+6. Workflow checks: parsed `ci.yml` with PyYAML (job `timeout-minutes: 15`; both install steps `timeout-minutes: 8`; no `shell:` override, so `bash -e {0}`); `bash -n` and `shellcheck -s bash` on both `run:` bodies extracted from the YAML — both clean.
+7. Behavioural simulation of both bodies against stand-in `sudo`/`apt-get`/`brew` on a controlled `PATH`: Linux healthy / permanent-hang / transient-hang with bounds shortened to 3/4/1; macOS with and without `timeout` on `PATH`.
+8. `timeout` semantics measured against a `TERM`-ignoring child, with and without `-k`.
+9. CI evidence: `gh api` per-step timings for jobs `96288415812`, `96288415250`, `96288433362`, and the full macOS job log; `actions/runner-images` `toolset-15.json` and the macOS 14/15/26 readmes; issue #186 read in full.
+
+Files central to the findings: `/home/scottdensmore/Developer/scottdensmore/super-star-trek/.github/workflows/ci.yml` (lines 50-51 and 79-88), `/home/scottdensmore/Developer/scottdensmore/super-star-trek/CMakeLists.txt` (lines 65-66), `/home/scottdensmore/Developer/scottdensmore/super-star-trek/tests/journey.sh` (line 60).</result>
+<usage><subagent_tokens>68048</subagent_tokens><tool_uses>44</tool_uses><duration_ms>981053</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a6b573ad0e7fa10e8</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a6b573ad0e7fa10e8.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier rerun for CI guard" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## 1. Verdict
+
+**PASS** — both previous blockers are genuinely fixed, and the mechanism the change rests on holds up under the test I most doubted. Four comment-accuracy findings below need an answer (fix or explicit resolution); none of them changes what CI does.
+
+## 2. Failures
+
+No check failed. Full battery green in both configurations:
+
+| | ci-debug | ci-release |
+| --- | --- | --- |
+| configure + build (`-Werror`) | 0 warnings | 0 warnings |
+| `ctest` | 12/12 passed, 378.35s | 12/12 passed, 368.33s |
+| `analyze` | **Passed** 37.71s (not skipped) | **Passed** 36.59s |
+| `tui` | Passed 195.16s (tmux present) | Passed 186.32s |
+
+Clean rebuild from scratch: 3s, zero warnings. Plain-mode piped journey rc=0, 49 lines, `srscan`/`status` render, no stray carriage returns.
+
+### The claim I tried hardest to break, and could not
+
+I suspected `bound 60 sudo apt-get update` was the same class of defect as last round's: `timeout` runs as the unprivileged runner user, and if `sudo` raises its *real* uid to root, `kill()` returns EPERM and the bound becomes advisory — the exact failure the comment says timeout prevents. On this host `kill -0 1` is EPERM, and `timeout` demonstrably waits for its child rather than abandoning it, so the mechanism was plausible.
+
+An early measurement appeared to confirm it (45s elapsed), but it was confounded — `sleep 45 | timeout ...` makes bash wait for the whole pipeline, so I was timing the writer, not `timeout`. Redone with a fifo, and then replicated in `ubuntu:24.04` with passwordless sudo (GNU coreutils 9.4, sudo 1.9.15p5 — matching `ubuntu-latest`):
+
+```
+pid 194: Uid:  1001  0  0  0   (sudo sleep 20)   &lt;- real uid stays the invoking user
+timeout -k 2 3 sudo sleep 30                          -&gt; rc=124 elapsed=3s  (x3 runs)
+timeout -k 2 3 sudo bash -c 'trap "" TERM; sleep 30'  -&gt; rc=137 elapsed=5s
+timeout -k 2 3 sleep 30            (control, no sudo) -&gt; rc=124 elapsed=3s
+```
+
+The sudo front end keeps real uid 1001, so the signal is permitted and both the bound and the `-k` grace fire on schedule. **The Linux step's bound is real.** The `-k 10` you added on my evidence is also doing work: without it the TERM-ignoring case ran to completion.
+
+### Both previous blockers verified fixed
+
+Bodies extracted from the YAML and run under GitHub's actual default shell (`bash -e`), with stubs on an `env -i` PATH:
+
+- **macOS** (`brew list ok` → rc=0; `install succeeds` → rc=0; `install always fails` → rc=1 after three warnings; `brew absent` → rc=1 after three warnings). The `brew list … &amp;&amp; exit 0` line is safe under `-e` because a failure in a non-final `&amp;&amp;` member is exempt — confirmed, not assumed.
+- **Linux with `timeout` present**: succeeds → rc=0; fails fast → 3 attempts; **hangs → 3 attempts** (the #185 mode, scaled 60→3s), which is the whole point of the change.
+- **Linux with no `timeout` anywhere on PATH**: succeeds → rc=0; fails → rc=1. Fallback is clean.
+- `shellcheck -s bash` clean on both bodies. `yaml.safe_load` parses; both steps carry `timeout-minutes: 7`.
+- The comment's citations check out: `/home/scottdensmore/Developer/scottdensmore/super-star-trek/CMakeLists.txt:65-66` says *"TIMEOUT because the script's own `timeout` guard needs coreutils, which macOS runners do not have"*, and five `tests/*.sh` guard with `command -v timeout` (eof, help, golden, tournament, journey). #185 (merged), #186, #187, #101, #106 all exist and say what they are cited for.
+
+## 3. Findings needing an answer
+
+**F1 (recommend fixing) — "The third attempt is therefore reached only when earlier ones fail faster than their bounds" is false.** Worst case, attempts 1 and 2 plus their sleeps cost 2×180+2×5 = 370s (410s counting the `-k` grace), both inside the 420s cap, so the third attempt *always* starts. What it cannot always do is finish. This is in the paragraph rewritten this round to fix an arithmetic error, which is why I am not waving it through.
+
+**F2 — "three plus two sleeps".** The `sleep 5` is unconditional in the loop body, so it also runs after the third attempt. Measured with bounds scaled 60→3: elapsed 24s = 3×3s + **3**×5s. So the worst case is 555s, and the observed mode is 3×60+3×5 = 195s.
+
+**F3 — "an attempt is at most 60 + 120 = 180s" is not an upper bound.** With `-k 10` on each `bound`, a TERM-ignoring child adds up to 10s per command: 70+130 = 200s. The comment invokes exactly that child two paragraphs earlier as the reason for `-k`.
+
+**F4 — "an attempt costs 65s and all three fit in 205s".** At 65s per iteration, three is 195s; 205 does not derive from the stated figures.
+
+None of these changes behavior — the conclusion "more than the cap, which truncates it" survives all four.
+
+**F5 (evidence for a resolution you already recorded, slightly understated).** Your dpkg resolution is right and I am not disputing it, but the measurement is sharper than "can leave dpkg mid-transaction": when the root child ignores TERM, `-k` kills the *sudo front end* and the root child survives orphaned and keeps running —
+
+```
+timeout -k 2 3 sudo bash -c 'trap "" TERM; sleep 31'  -&gt; rc=137
+survivors after timeout returned:   197  0  sleep 31
+survivors 4s later:                 197  0  sleep 31
+```
+
+So attempts 2 and 3 do not meet a clean slate; they meet a live root process holding the apt/dpkg lock. Same conclusion (bounded, readable failure, not worth recovering on a throwaway runner) — worth one accurate sentence rather than a change.
+
+**F6 (a claim in your brief I could not reproduce).** "macOS with brew absent is now rc=0 where it was rc=1 before the guard" — measured, brew absent gives **rc=1** (three failed `brew install` attempts, then `::error::`), which is the correct behavior. rc=0 requires `brew list tmux` to succeed. I assume you meant *`timeout` absent*; no defect in the code, but the evidence as stated does not hold.
+
+**F7 (unverified, at most cosmetic).** `::warning::`/`::error::` are written to stderr; workflow commands are documented as read from the step's stdout. I cannot exercise the runner to settle whether it parses stderr too. Worst case the annotation is missing; the `exit 1` carries the failure either way.
+
+## 4. On the bounds, since you asked
+
+**7 minutes is right; I endorse it.** Measured here: ctest 378s / 368s, clean build 3s, configure ~1s. Worst *successful* case is 420 + 380 + build ≈ 805s against the 900s job cap — roughly 95s of headroom, and only in the doubly-unlucky case where the install consumes its whole cap and still succeeds. At 8 minutes that headroom would be ~35s, and a GH runner is slower than this box. Normal install is 10-30s, so this margin is theoretical.
+
+**60s on `apt-get update` is defensible but is the one number with a false-failure risk.** apt's own per-connection timeout default is 120s (apt.conf(5); I could not confirm it on this box — `apt-config dump` does not emit compiled-in defaults), so a single stalled-but-eventually-succeeding mirror connection can legitimately push an update past 60s. Three of those and the step fails at ~195s where the unguarded version would have succeeded. Against #185 costing an entire 15-minute job three times over, and with three attempts covering the transient case, I would keep 60. Related: because `update` and `install` are joined by `&amp;&amp;`, a persistently broken `update` fails the step even when the cached lists would have let `install` succeed — deliberate-looking, but not stated anywhere.
+
+## 5. Missing coverage
+
+Nothing in the repository executes or lints `.github/workflows/ci.yml`; every check above I ran by hand. **#187 is filed and open**, correctly shaped, and cross-references #106. Nothing further to file. Worth noting for that issue: `shellcheck -s bash` passes clean on both extracted bodies today, so this diff would satisfy such a check the day it lands.
+
+## 6. Environment issues
+
+- **The host's `timeout` is uutils coreutils 0.8.0, not GNU** — CI has GNU. Behavior differs at the margins (`timeout 3` on a TERM-ignoring child returned rc=124 only after the child exited at 20s). This is why I ran the decisive sudo experiment inside `ubuntu:24.04` rather than trusting the host.
+- **No macOS available.** The macOS leg was verified only as shell semantics under `bash -e` with stubs — not against real `brew`. Last round's blocker was macOS-only, so this limit is worth stating plainly: I can show the body is portable and `-e`-safe; I cannot show `brew install tmux` behaves on a macOS runner.
+- **No `actionlint` or `yamllint`** — workflow validation was limited to a YAML parse plus shellcheck on the extracted `run:` bodies.
+- No passwordless sudo on this host (hence the container).
+- `cppcheck`, `clang-tidy`, `scan-build` absent — bonus tools only; `analyze` PASSED in both configs, so static analysis genuinely ran. Its depth is uneven per #147/#171, so read it as "gcc reached what it reached", not tree-wide.
+
+## 7. What ran
+
+```sh
+cmake --preset ci-debug   &amp;&amp; cmake --build --preset ci-debug   &amp;&amp; ctest --preset ci-debug
+cmake --preset ci-release &amp;&amp; cmake --build --preset ci-release &amp;&amp; ctest --preset ci-release
+cmake --build --preset ci-debug --clean-first          # cold-build warning check
+printf 'regular\nshort\nnovice\nxyz\nsrscan\nstatus\nquit\nn\n' | ./build/ci-debug/sst
+python3 -c "yaml.safe_load(open('.github/workflows/ci.yml'))"   # + step/timeout inspection
+shellcheck -s bash &lt;linux body&gt; &lt;macos body&gt;                    # extracted from the YAML
+env -i PATH=&lt;stubs&gt; bash -e &lt;body&gt;                              # 4 macOS states, 5 Linux states
+docker run --rm ubuntu:24.04 …                                  # sudo/timeout signal experiments
+gh issue view 101 185 186 187 106
+```
+
+Working tree unchanged (`git status` still shows only ` M .github/workflows/ci.yml`); nothing outside `build/` and the scratchpad was written. Scope decided as: full preset battery (the workflow's subject is these exact commands, so I confirmed them rather than reasoning about them), plus direct execution of the changed shell under the runner's real shell and privilege conditions.</result>
+<usage><subagent_tokens>73456</subagent_tokens><tool_uses>27</tool_uses><duration_ms>998362</duration_ms></usage>
+</task-notification>

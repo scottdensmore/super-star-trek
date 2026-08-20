@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "09088f9e21ed",
+  "strategy": "manual-commit",
+  "branch": "ci/guard-dependency-install",
+  "checkpoints_count": 8,
+  "files_touched": [
+    ".github/workflows/ci.yml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/09/088f9e21ed/0/metadata.json",
+      "transcript": "/09/088f9e21ed/0/full.jsonl",
+      "compact_transcript": "/09/088f9e21ed/0/transcript.jsonl",
+      "content_hash": "/09/088f9e21ed/0/content_hash.txt",
+      "prompt": "/09/088f9e21ed/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 110,
+    "cache_creation_tokens": 692538,
+    "cache_read_tokens": 37446837,
+    "output_tokens": 54568,
+    "api_call_count": 59,
+    "subagent_tokens": {
+      "input_tokens": 4472,
+      "cache_creation_tokens": 560510,
+      "cache_read_tokens": 4934995,
+      "output_tokens": 153565,
+      "api_call_count": 115
+    }
+  }
+}
