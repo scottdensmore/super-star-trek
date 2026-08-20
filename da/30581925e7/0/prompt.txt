@@ -1,0 +1,267 @@
+<task-notification>
+<task-id>bdnkvut1e</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/bdnkvut1e.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for CI" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+Ok lets pick those up... do anything in parallel that you can
+
+---
+
+<task-notification>
+<task-id>b69jupcjm</task-id>
+<tool-use-id>toolu_01JdnESyoz1EKGqovdB5wTiV</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/b69jupcjm.output</output-file>
+<status>completed</status>
+<summary>Background command "Run 193's focused test on the fixed build" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a39517b18d398ad6c</task-id>
+<tool-use-id>toolu_01HVkVwGqX97dRPTuswX27RN</tool-use-id>
+<output-file>/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/8bd691e1-6038-4f0d-82d9-378514dcc470/tasks/a39517b18d398ad6c.output</output-file>
+<status>completed</status>
+<summary>Agent "verifier for 187 workflow lint" finished</summary>
+<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>
+<result>## Verdict: **fail**
+
+The local battery is entirely green — both `ci-*` builds are warning-free under `-Werror`, both full suites are 13/13 with `analyze` passing (not skipped), and the new `workflow` test is stable at ~0.14s. But the change has a deterministic CI failure on the macOS legs and a hole in the very self-check it was built around, both reproduced below.
+
+---
+
+## Failures
+
+### F1. `workflow` fails deterministically on both macOS CI legs (blocking)
+
+`shellcheck` is not installed on GitHub's macOS runner images, and `.github/workflows/ci.yml` installs it nowhere. With `CI` set, `tests/workflow.sh:41-48` takes the hard-fail branch.
+
+```
+$ curl -s .../runner-images/main/images/ubuntu/Ubuntu2404-Readme.md | grep -i shellcheck
+| shellcheck             | 0.9.0-1                      |
+$ for f in macos-14 macos-15 macos-15-arm64 macos-26-arm64; do grep -ic shellcheck $f-Readme.md; done
+0
+0
+0
+0
+```
+
+The READMEs do enumerate installed tooling (CMake is listed in each), so this is an absence rather than an omission in the doc. Result: `FAIL: shellcheck is missing on CI, so the workflow shell went unchecked`, exit 1, on `macos-latest × {ci-debug, ci-release}`.
+
+This is the same shape as the bug that prompted #187 — a step that only a runner nobody can reproduce locally will execute. The repository already has the precedent in `/tmp/claude-1000/.../wt187/tests/analyze.sh:203-209`, which scopes its CI hard-fail to the platform where the tool actually exists:
+
+```sh
+if [ -n "${CI:-}" ] &amp;&amp; [ "$(uname -s)" = Linux ]; then
+```
+
+`tests/workflow.sh:42` uses `[ -n "${CI:-}" ]` alone. Deterministic; not reproducible locally, established from the image manifests.
+
+### F2. The self-check can be bypassed, and the script then reports `workflow OK` over zero scripts (blocking)
+
+This is precisely the failure mode the count comparison at `tests/workflow.sh:95-108` exists to prevent.
+
+Mechanism: `n` is never initialised in the awk program, so `END { print n }` emits the **empty string** — not `0` — when nothing is extracted. Then:
+
+- line 101 `if [ "$extracted" -ne "$declared" ]` → `[: Illegal number:` , exit status 2, which `if` reads as *false*, so the mismatch branch is skipped;
+- line 105 `[ "$declared" -eq 0 ]` is false whenever grep found something;
+- line 111 `while [ "$i" -lt "$extracted" ]` → status 2 → loop body never runs;
+- `fails` is 0 → `echo "workflow OK"`, exit 0.
+
+The `[: Illegal number:` lines go to stderr, which `ctest` hides on a pass.
+
+Trigger (a) — **valid, ordinary YAML**, no broken tooling required. A workflow file whose only `run:` is the standard `defaults` mapping key:
+
+```yaml
+name: A
+defaults:
+  run:
+    shell: bash
+jobs:
+  j:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+```
+```
+./tests/workflow.sh: 101: [: Illegal number: 
+./tests/workflow.sh: 111: [: Illegal number: 
+workflow OK
+rc=0
+```
+
+Trigger (b) — a broken or missing `awk`. The extractor's exit status is never checked and `set -e` is not on:
+
+```
+$ PATH=&lt;awk-that-exits-2&gt;:$PATH ./tests/workflow.sh .
+awk: simulated failure
+./tests/workflow.sh: 101: [: Illegal number: 
+./tests/workflow.sh: 111: [: Illegal number: 
+workflow OK
+rc=0
+```
+
+Both deterministic.
+
+### F3. `defaults: run:` in a file that *also* has real bodies is a false failure
+
+Same construct, but where extraction is non-empty the numeric compare works and reports a miscount instead:
+
+```
+FAIL: t.yml: extracted 1 run: bodies where the file declares 2
+```
+
+`grep -c '^[[:space:]]*run:'` counts a `run:` mapping key; the awk requires a `|`, `&gt;` or a value on the same line. Same for the equally valid
+
+```yaml
+        run:
+          echo hi
+```
+
+Deterministic.
+
+### F4. Block bodies not indented *exactly* two deeper than `run:` are corrupted
+
+`substr($0, ind + 3)` at `tests/workflow.sh:84` hard-codes a 2-space relative indent. YAML only requires the body be *deeper*.
+
+One space deeper — the first character of every line is eaten, producing a false syntax failure on valid YAML:
+
+```yaml
+        run: |
+         if [ "$x" = y ]; then
+           echo yes
+         fi
+```
+```
+FAIL: t.yml: run: body 1 is not valid bash
+  | ...syntax error near unexpected token `then'
+  | `f [ "$x" = y ]; then'
+```
+
+Four deeper — two spaces of residual indent survive, which breaks any heredoc terminator:
+
+```
+FAIL: t.yml: shellcheck faulted run: body 1
+  | SC1039 (error): Remove indentation before end token (or use &lt;&lt;- and indent with tabs).
+  | SC1072 (error): Here document was not correctly terminated.
+```
+
+Both deterministic. The current `ci.yml` happens to use 2 throughout, so neither shows today.
+
+### F5. `format('{0}-{1}', …)` defeats the expression substitution
+
+`sed 's/\${{[^}]*}}/_GHA_EXPR_/g'` (line 124) stops at the first `}`, so any expression containing a brace — and `format()` is among the most common GHA functions — is left half-substituted:
+
+```yaml
+          echo "${{ format('{0}-{1}', github.ref, matrix.os) }}"
+```
+```
+FAIL: t.yml: shellcheck faulted run: body 1
+  | SC2296 (error): Parameter expansions can't start with {. Double check syntax.
+```
+
+Deterministic. Multi-line `${{ … }}` is likewise unreachable, since `sed` is line-based.
+
+### F6. A `uses:`-only workflow file is a false failure
+
+Adding any ordinary action-only workflow (a labeler, a stale-bot) alongside `ci.yml`:
+
+```
+FAIL: labeler.yml: no run: bodies found at all, so nothing was checked
+```
+
+The "something must have been checked" invariant is applied per file, where it is only meaningful repo-wide. Deterministic.
+
+### F7. An empty `.github/workflows/` directory passes
+
+`[ -d "$flows" ]` succeeds, both globs fail `[ -f ]` and `continue`, `fails` stays 0:
+
+```
+workflow OK
+rc=0
+```
+
+Same blind-pass class as F2, one level up.
+
+### F8. `_GHA_EXPR_` both silences the real hazard and invents a false one
+
+The classic GitHub Actions script-injection / word-splitting bug is an **unquoted** `${{ }}`. Substituted into a bare word, shellcheck sees a safe literal and says nothing:
+
+```yaml
+          echo ${{ github.event.head_commit.message }}
+          rm -rf ${{ inputs.path }}/build
+```
+```
+workflow OK
+```
+
+Conversely, substituting a constant where the runner has an arbitrary string makes shellcheck reason wrongly in the other direction:
+
+```yaml
+          for f in ${{ github.event.head_commit.message }}; do echo "$f"; done
+```
+```
+SC2043 (warning): This loop will only ever run once. Bad quoting or missing glob/expansion?
+```
+
+`actionlint` substitutes too, but it also has dedicated expression checks; this has neither. Worth stating in the "what it does not catch" comment at `tests/workflow.sh:12-16`, which currently names only the `timeout(1)` gap.
+
+### F9. Bodies can be silently truncated with the count still agreeing
+
+The `run: |` rule is tested before the `inblock` rule, so a line *inside* a body that matches `^\s*run:\s*[|&gt;]` — a heredoc writing YAML — ends the current body and opens a new one. `grep` counts that line too, so `extracted == declared` and nothing is reported; the tail of the real body is never checked. Likewise a plain-scalar continuation is dropped with no count change, and I confirmed an unterminated quote on such a line passes:
+
+```yaml
+        run: cmake --build
+          --preset "$UNTERMINATED
+```
+```
+workflow OK
+rc=0
+```
+
+Deterministic. Both are contrived against today's `ci.yml`; they are the answer to "a body it silently drops".
+
+---
+
+## Answering the two questions you asked directly
+
+**Is the skip/fail-on-CI logic right?** The idiom matches `tests/tui.sh:61-71` exactly, which is what you designed to. But `tui.sh` can be unconditional because `ci.yml` installs tmux on *both* platforms; `analyze.sh` faced your actual situation and scoped the hard fail with `&amp;&amp; [ "$(uname -s)" = Linux ]`. As written the test reds macOS CI (F1).
+
+**Does `-e SC2148` hide anything?** No — and it is also inert. With `-s bash` supplied, shellcheck never emits SC2148 in the first place:
+
+```
+$ printf 'echo hi\n' &gt; frag.sh
+$ shellcheck -s bash frag.sh          ; # rc=0, silent
+$ shellcheck        frag.sh           ; # rc=1, SC2148
+```
+Removing `-e SC2148` from a copy of the script leaves the real run identical (`workflow OK`). Error codes are unique, so it suppresses nothing else. Harmless, but a reader will take it as load-bearing.
+
+---
+
+## Missing coverage
+
+- Every failure above is a shape the extractor's own correctness depends on and nothing exercises. The two mutation proofs you ran (syntax error; unquoted `$attempt`) both reproduce here independently — I confirmed the SC2086 one and a `bash -n` one against the macOS-only body — but both are the *happy* extraction path. Nothing proves the count check itself can fire, and F2 shows it can be routed around entirely.
+- No negative fixture exists for the extractor. Since the repository's convention is that tests target product code, the practical form is a fixture directory of awkward workflow shapes rather than a test of `workflow.sh`.
+
+## Environment issues
+
+- **shellcheck version skew, undocumented.** Local is 0.11.0; the Ubuntu runner image ships **0.9.0**. A body clean locally can red on CI and vice versa, with no local change to blame — the same cost `CMakeLists.txt:150-173` spells out for the analyzer's gcc. `workflow.sh` says nothing about it.
+- `cppcheck`, `clang-tidy`, `scan-build` are all absent here. Per the brief that is a bonus, not a gap; `analyze` ran and passed in both configurations, so static analysis was not skipped.
+- Minor, no action implied: `shellcheck -s sh tests/workflow.sh` flags SC1007 on line 26 (`here=$(CDPATH= cd -- …)`) — a false positive on a correct prefix-assignment idiom. Nothing in the repository shellchecks `tests/*.sh` today, so it is inert; it would need a `# shellcheck disable=SC1007` if that ever changes.
+- Cosmetic: the skip line is `workflow SKIPPED (no shellcheck)` where `tui.sh` and `analyze.sh` both use `SKIP: …`.
+
+## What ran
+
+All from inside `/tmp/claude-1000/-home-scottdensmore-Developer-scottdensmore-super-star-trek/2ec84ddc-abc6-4082-9f37-fb6253a2c951/scratchpad/wt187` (branch `ci/lint-workflows`, `CMakeLists.txt` modified + untracked `tests/workflow.sh`; nothing else touched, tree unchanged afterwards).
+
+1. **Builds** — `cmake --preset ci-debug &amp;&amp; cmake --build --preset ci-debug`, same for `ci-release`. Both rc=0, zero warnings under `-Werror` (flags confirmed as `-DSCORE -DCAPTURE -DCLOAKING -Wall -Wextra -Wmissing-prototypes -Werror -DDEBUG`).
+2. **Static checks** — the `-Werror` builds above printed nothing. `analyze` ran for real (not SKIPPED): Passed in 32.95s / 33.48s. Bonus analysers unavailable.
+3. **Tests** — `ctest --preset ci-debug` → 13/13 passed, 381.51s. `ctest --preset ci-release` → 13/13 passed, 374.43s. Test count 12 → 13; `workflow` registered in both. `ctest --preset ci-debug -R '^workflow$'` ×3 and `tests/workflow.sh .` ×5: all passed, 0.12–0.15s, no flakes, no leftover `/tmp/sst-workflow.*`.
+4. **Journeys** — `printf 'regular\nshort\nnovice\nxyz\nsrscan\nstatus\nquit\ny\n' | ./build/ci-debug/sst` and the same against `./build/ci-release/sst`: both exit 0, clean "Great Bird" ending, no stray CRs, no hang. Transcript differences between the two are RNG seeding only. The diff touches no game code, so no targeted game journey applied.
+5. **Extractor attack** — 20-odd synthetic workflow files run through a copy of `tests/workflow.sh` in `&lt;scratchpad&gt;/probe`, `probe2`, `probe3` and `mut`, entirely outside the repository. Cases A–X above; the awk program was also extracted and run standalone to inspect the emitted bodies directly. Runner tool inventories checked against `actions/runner-images` READMEs on `main`.</result>
+<usage><subagent_tokens>76181</subagent_tokens><tool_uses>35</tool_uses><duration_ms>978849</duration_ms></usage>
+</task-notification>

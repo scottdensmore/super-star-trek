@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "da30581925e7",
+  "strategy": "manual-commit",
+  "branch": "test/pinned-sigwinch-arm",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "tests/tui.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/da/30581925e7/0/metadata.json",
+      "transcript": "/da/30581925e7/0/full.jsonl",
+      "compact_transcript": "/da/30581925e7/0/transcript.jsonl",
+      "content_hash": "/da/30581925e7/0/content_hash.txt",
+      "prompt": "/da/30581925e7/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 102,
+    "cache_creation_tokens": 964304,
+    "cache_read_tokens": 50511385,
+    "output_tokens": 54429,
+    "api_call_count": 55,
+    "subagent_tokens": {
+      "input_tokens": 204,
+      "cache_creation_tokens": 550766,
+      "cache_read_tokens": 5176726,
+      "output_tokens": 89925,
+      "api_call_count": 102
+    }
+  }
+}
