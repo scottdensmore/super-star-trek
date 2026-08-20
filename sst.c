@@ -853,11 +853,17 @@ void readinput(char *buf, int buflen) {
 		   the give-up path, so no resize reaches here now. Nothing
 		   else does either. Read off SigCgt in /proc/<pid>/status and
 		   off sa_flags after an initscr()/endwin() pair, against
-		   ncurses 6.6: the fallback game then catches SIGINT,
-		   SIGTERM and SIGTSTP and nothing more, SIGCONT is not
-		   caught at all, and curses' SIGTSTP handler carries
-		   SA_RESTART -- so neither a Ctrl-Z nor a stop-and-continue
-		   makes this read return.
+		   ncurses 6.6: the fallback game then catches SIGINT and
+		   SIGTERM and nothing more, and SIGCONT is not caught at
+		   all -- so neither a Ctrl-Z nor a stop-and-continue makes
+		   this read return.
+		   SIGTSTP was on that list, and the reason given here was
+		   that curses' handler carried SA_RESTART. #158 put the
+		   disposition back on the same give-up path, so there is
+		   no curses handler to carry anything and a default stop
+		   and continue restarts the read. The conclusion is the
+		   one it always was; the premise changed. osx.c's getch()
+		   carries the same correction for the keystroke reader.
 		   The retry stays anyway. Treating an interrupted read as
 		   the end of the input is wrong whatever the signals happen
 		   to be, and the next handler installed anywhere in the

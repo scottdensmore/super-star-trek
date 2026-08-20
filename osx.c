@@ -57,11 +57,23 @@ int getch(void) {
 	   sentence -- resizing is safe "while the game waits for an
 	   answer or for a keystroke at a pause". Issue #150.
 	   No resize reaches here since #152 put the SIGWINCH disposition
-	   back, and nothing else does either -- SIGCONT is not caught and
-	   curses' SIGTSTP handler carries SA_RESTART, read off SigCgt in
-	   /proc/<pid>/status and off sa_flags after initscr()/endwin(). The
-	   retry stays anyway: reading an interrupted read as a keypress is
-	   wrong whatever the signals happen to be.
+	   back, and since #158 no suspend does either: that put SIGTSTP
+	   back on the same give-up path, so this code -- which runs
+	   whenever the panels are not up, in a plain game and in one that
+	   fell back alike -- now meets the disposition the game had before
+	   curses, not curses' handler, on the path where curses ran at all.
+	   The reason given here until #158 was that curses' SIGTSTP
+	   handler carried SA_RESTART; there is no curses handler on this
+	   path any more, and a default stop and continue restarts the read
+	   in any case. Measured on the #158 branch: a pause survives a
+	   suspend and is still waiting on resume -- though the space bar
+	   is swallowed until Enter, the terminal being canonical again
+	   while this read is still the non-canonical one set up above.
+	   That is #190, and it is this function's to fix rather than the
+	   signal disposition's: plain mode does the same. SIGCONT is not
+	   caught.
+	   The retry stays anyway: reading an interrupted read as a
+	   keypress is wrong whatever the signals happen to be.
 	   At end of input there is no keypress to report; say so rather
 	   than handing back whatever was on the stack. Play continues
 	   here, unlike readinput(), which ends the session: this is the

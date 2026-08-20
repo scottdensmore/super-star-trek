@@ -1349,6 +1349,18 @@ int tui_terminal_capable(void) {
 static struct sigaction cursewinch;
 static int havecursewinch = FALSE;
 
+/* The same for SIGTSTP, and needed for the same reason once the give-up
+ * path started restoring it. Both are one-shot: a second initscr()
+ * installs neither. Without this the retry #154 exists for -- a game
+ * that fell back, then found a terminal grown big enough at the next
+ * play-again -- came up full-screen with curses' suspend handling gone,
+ * so a Ctrl-Z printed the shell's job message over the live panels and
+ * fg never repainted them. Found by ui-review on the #158 branch, which
+ * measured SigCgt 0x8004002 after such a retry against 0x8084002
+ * before. */
+static struct sigaction cursetstp;
+static int havecursetstp = FALSE;
+
 /* The size curses was working from when the panels were last turned
  * down, or 0 if they have not been turned down for size. Written by
  * both gates -- the floor and the one that refuses a size bigger than
@@ -1621,9 +1633,9 @@ int tui_refused_sizes(int *cols, int *rows, int *termcols, int *termrows) {
 }
 
 int tui_init(void) {
-	struct sigaction oldwinch;
+	struct sigaction oldwinch, oldtstp;
 	struct winsize winsz;
-	int havewinch, haveterm;
+	int havewinch, havetstp, haveterm;
 
 	/* Both checks come before initscr(): with no terminal, or one it
 	   cannot drive, curses either kills the process outright or leaves
@@ -1643,11 +1655,15 @@ int tui_init(void) {
 	   and getch() read it as a keypress and answered a pause. #150
 	   fixed both by retrying on EINTR, which is the right fix for the
 	   readers; this removes what made them need it. Not a blanket
-	   immunity for whatever is added to that path later: the fallback
-	   game still carries curses' SIGTSTP handler, and select() and
+	   immunity for whatever is added to that path later: select() and
 	   poll() are never restarted whatever SA_RESTART says, so a
-	   Ctrl-Z would reach one of those. read() and fgets() are
-	   restarted, which is why nothing reaches them now. #152.
+	   signal that does reach the fallback game would reach one of
+	   those. read() and fgets() are restarted, which is why nothing
+	   reaches them now. #152.
+	   What the fallback game still carries is SIGINT and SIGTERM.
+	   SIGTSTP went back with the rest in #158 -- this comment named it
+	   here until then -- so a Ctrl-Z no longer reaches anything of
+	   curses' at all; see the note beside havetstp below.
 	   Saved and restored rather than set to SIG_DFL, which is what the
 	   game happens to want today: nothing installs a handler before
 	   this runs, so the two are the same, and restoring says what is
@@ -1668,9 +1684,46 @@ int tui_init(void) {
 	   here because what it has to do is set the flag wgetch() reads,
 	   which is private to ncurses. */
 	havewinch = sigaction(SIGWINCH, NULL, &oldwinch) == 0;
+	/* And SIGTSTP, for the same reason and on the same path. initscr()
+	   installs handlers for SIGINT, SIGTERM and SIGTSTP as well as
+	   SIGWINCH, and endwin() takes none of them away; a game that gave
+	   up carried curses' SIGTSTP for the rest of the session and could
+	   not be suspended and resumed. Measured on a 70x20 pane with the
+	   game at COMMAND>: the tty went from `icanon echo` to `-icanon
+	   -echo` the moment SIGTSTP arrived, and the classic reader, which
+	   wants a line, never saw one again -- the game had to be killed
+	   from another terminal.
+	   Where in the suspend that happens took two measurements to get
+	   right. Under real job control the game stops with the terminal
+	   untouched and it is the *resume* that puts curses' mode back --
+	   forced canonical while stopped, it flips again on SIGCONT, three
+	   runs of three. An earlier reading here said the process never
+	   stops and the terminal flips at signal time; that was an
+	   artifact of measuring in a tmux pane where the game shares the
+	   pane shell's process group, which is orphaned, so the kernel
+	   discards the stop and curses' re-raise alike and the handler
+	   runs straight through. The issue's own hypothesis was right and
+	   this comment was wrong to correct it.
+	   A plain game is unaffected: SigCgt 0, and measured on this
+	   branch in a shell pane with real C-z and fg, it stops, resumes
+	   and answers the next command. Worth saying where that came
+	   from, because #158 records a second run where plain mode hung
+	   too and names the asymmetry as the thing to settle first --
+	   that run found the game with a pgrep pattern matching more than
+	   one process, and its author said to discard it. A -t game whose
+	   panels are up is unaffected too, being in program mode already
+	   and curses' to drive. #158.
+	   SIGINT and SIGTERM are left as they are. Measured here rather
+	   than taken from the issue: a fallback game exits 1 on Ctrl-C
+	   where a plain one exits 130. That difference reaches a shell
+	   script and nothing a player sees, where the SIGTSTP one costs
+	   them the game. #158 argues the same way. */
+	havetstp = sigaction(SIGTSTP, NULL, &oldtstp) == 0;
 	initscr();
 	if (!havecursewinch)
 		havecursewinch = sigaction(SIGWINCH, NULL, &cursewinch) == 0;
+	if (!havecursetstp)
+		havecursetstp = sigaction(SIGTSTP, NULL, &cursetstp) == 0;
 	/* Ask the terminal its size rather than believing curses' cache.
 	   A second initscr() does not re-ask: the size is cached from the
 	   first, and the resize that matters here arrived while SIGWINCH
@@ -1730,6 +1783,7 @@ int tui_init(void) {
 		refusedtermcols = haveterm ? winsz.ws_col : 0;
 		endwin();
 		if (havewinch) sigaction(SIGWINCH, &oldwinch, NULL);
+		if (havetstp) sigaction(SIGTSTP, &oldtstp, NULL);
 		return FALSE;
 	}
 	/* Clearing the floor is not enough: the panels are drawn to the
@@ -1754,12 +1808,19 @@ int tui_init(void) {
 		refusedtermcols = winsz.ws_col;
 		endwin();
 		if (havewinch) sigaction(SIGWINCH, &oldwinch, NULL);
+		if (havetstp) sigaction(SIGTSTP, &oldtstp, NULL);
 		return FALSE;
 	}
 	/* A no-op on the first call, where this is what curses just
-	   installed; on a retry it is the whole of the resize handling. */
+	   installed; on a retry it is the whole of the resize handling,
+	   and of the suspend handling. Both are put back only here, on the
+	   path where a screen exists for them to wrap up -- the give-up
+	   paths above hand them to what the game had before, which is what
+	   lets a fallback game be suspended at all. */
 	if (havecursewinch)
 		sigaction(SIGWINCH, &cursewinch, NULL);
+	if (havecursetstp)
+		sigaction(SIGTSTP, &cursetstp, NULL);
 	cbreak();
 	noecho();
 	start_colour();

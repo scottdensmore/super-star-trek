@@ -28,6 +28,10 @@
 #
 # Needs a sleep that takes a fraction, which GNU and BSD both have but
 # POSIX does not promise; busybox would need whole seconds.
+#
+# Needs bash too, and harder: the suspend arms launch the game from an
+# interactive shell for job control, and without one this exits 1 with
+# nothing run rather than skipping. See the guard above start_shell().
 
 set -u
 
@@ -107,8 +111,10 @@ if [ -z "${work:-}" ] || [ ! -d "$work" ]; then
 	exit 1
 fi
 
-# Let any process slept_drag() stopped go again before tearing down, so
-# an interrupt inside its STOP/CONT window cannot orphan a stopped game.
+# Let any process a suspend helper or arm stopped go again before
+# tearing down, so an interrupt inside a STOP/CONT window cannot orphan
+# a stopped game. slept_drag() sets stopped_pid, and so do the two
+# suspend arms.
 finish() {
 	[ -n "${stopped_pid:-}" ] && kill -CONT "$stopped_pid" 2>/dev/null
 	cleanup
@@ -139,9 +145,14 @@ screen() { tm capture-pane -t "$pane" -p 2>/dev/null; }
 
 # The game process running inside the pane, or nothing.
 #
-# pgrep -P gives the pane shell's direct children, and start() has env
-# exec into the binary, so there is exactly one and it is the game. The
-# name is checked rather than assumed: that is a fact about this
+# pgrep -P gives the pane shell's direct children, and both ways of
+# making a pane leave exactly one: start() runs the game and a sleep
+# from a shell, and start_shell() launches it from an interactive one.
+# (An earlier version of this said start() execs into the binary. It
+# does not -- it runs `sst ...; sleep 30` -- and the child count is the
+# point either way.)
+#
+# The name is checked rather than assumed: that is a fact about this
 # platform, not about the game, and an arm that stopped something else
 # would leave the game awake and assert nothing -- a pass with no test
 # behind it. Raised by the verifier on the #168 branch.
@@ -510,7 +521,13 @@ expect_status() {
 # Polled for the same reason wait_gone is: the prompt is written before
 # the panels beside it are redrawn, so a single look the moment
 # COMMAND> appears can catch them still blank.
-want_quadtitle() {
+# The same check, reporting by exit status instead of by failing. A
+# caller that wants to branch on it needs that, and an unanchored
+# `wait_for ' Quadrant '` is not a substitute: the classic briefing line
+# "The Enterprise is currently in Quadrant 3 - 2" carries that string
+# with no panels on screen at all. That is the trap the comment above
+# describes, walked into on the #158 branch and caught by code-review.
+has_quadtitle() {
 	i=0
 	while [ "$i" -lt 40 ]; do
 		screen | head -1 | grep -qE ' Quadrant [0-9]+ - [0-9]+ ' &&
@@ -518,8 +535,11 @@ want_quadtitle() {
 		i=$((i + 1))
 		sleep 0.1
 	done
-	fail "$1"
-	dump
+	return 1
+}
+
+want_quadtitle() {
+	has_quadtitle || { fail "$1"; dump; }
 }
 
 # wait_gone confined to the status panel's columns, for the same reason
@@ -584,6 +604,62 @@ start() {
 		echo "FAIL: could not start a ${1}x${2} tmux session" >&2
 		exit 1
 	}
+}
+
+# bash, because start_shell() below needs job control, and without it
+# the pane dies at once and both suspend arms report that the game never
+# reached its prompt -- blaming the game for a missing tool.
+#
+# Harder than the file's other guards, and deliberately: the tmux one
+# skips with 77 off CI and only fails on it, and the pgrep and /proc
+# ones report and let the rest of the file run. This exits, so a
+# developer with tmux but no bash loses the whole test rather than the
+# two arms that need it. That is the wrong trade in general and the
+# right one here: bash is present on both platforms CI runs, so the
+# case is a developer's machine, where an early loud exit beats two
+# arms failing for a reason neither of their messages names. Revisit it
+# if a third arm ever needs a shell.
+if ! command -v bash >/dev/null 2>&1; then
+	echo "FAIL: bash is needed for the suspend arms" >&2
+	exit 1
+fi
+
+# Like start(), but with an interactive shell in the pane and the game
+# launched from it, so the pane has job control and C-z/fg are what a
+# player's are. Both suspend arms need it -- an earlier version of this
+# said only the retry one did, from before the other was rewritten to
+# stop using direct signals that a start() pane discards. Everywhere
+# else a shell in the pane is one more thing that can write to the
+# screen, which is why this is not the default.
+#
+# --norc --noprofile so nothing in the developer's own bash configuration
+# reaches the pane -- the same reasoning as -f /dev/null on the socket.
+#
+# HISTFILE=/dev/null is not tidiness, it is the same class of damage
+# that -L exists to prevent. --norc does not turn history off: an
+# interactive bash still reads $HISTFILE at startup and writes it back
+# when it exits, and with no rc file histappend is off and HISTFILESIZE
+# defaults to 500 -- so every run of this suite rewrote the developer's
+# ~/.bash_history truncated to its last 500 lines. Measured through this
+# script with a throwaway HOME of 700 lines: 700 in, 500 out. It had
+# already happened to a real one before the verifier caught it on the
+# #158 branch. The lever is HISTFILE, not --norc.
+#
+# INPUTRC for the rest of it: readline's initialisation is separate from
+# bash's startup files, so --norc leaves ~/.inputrc readable and a
+# developer's `set editing-mode vi` or key rebindings would reach the
+# pane. Read-only, so it damages nothing -- but it can change what the
+# keys this arm sends do. Traced with both set: zero opens under $HOME.
+start_shell() {
+	cleanup
+	tm new-session -d -x "$1" -y "$2" -s "$session" -c "$startdir" \
+		'HISTFILE=/dev/null INPUTRC=/dev/null bash --norc --noprofile -i' \
+		2>/dev/null || {
+		echo "FAIL: could not start a ${1}x${2} shell session" >&2
+		exit 1
+	}
+	sleep 1
+	tm send-keys -t "$pane" "'$sstq' -t ${3:-}" Enter
 }
 
 # --- the game asks before it pauses, at every size it accepts -------
@@ -3341,6 +3417,212 @@ fallback "TERM=dumb" 80 24 "cannot do full-screen mode" 'env TERM=dumb'
 # Smaller than the panels need. 72x24 is the floor; 70x20 is under it.
 fallback "undersized terminal" 70 20 "Terminal too small" ''
 
+# --- and a retried game keeps curses' suspend handling ----------------
+# The other side of the same restore, and the one that is easy to lose.
+# Handing SIGTSTP back on the give-up path is what lets a fallback game
+# be suspended at all -- the arm below -- but curses installs its
+# handler once and a second initscr() does not reinstall it, the same
+# one-shot property tui_init()'s comment records for SIGWINCH. So the
+# retry #154 exists for -- fall back, grow the terminal, answer yes at
+# play-again, panels come up -- would arrive with curses' suspend
+# handling gone, and a Ctrl-Z there prints the shell's job message over
+# the live panels while fg never repaints them.
+#
+# Found by ui-review on this branch, against a build that restored on
+# the give-up path without putting curses' handler back on the success
+# path. Measured: SigCgt 0x8004002 after the retry against 0x8084002
+# with the fix, and after fg the panels came back on one and not the
+# other. Proved again after this file was restructured: with the
+# success-path re-apply removed this arm fails with "fg did not repaint
+# the panels", and nothing else does.
+#
+# That last is the assertion, and it is the only one of the three that
+# discriminates. During the stop both builds have the panel title off
+# screen, the shell's own output having scrolled it away; and direct
+# SIGTSTP/SIGCONT cannot see this at all, since without a shell nothing
+# writes over the panels and they are still there either way. Hence the
+# interactive shell and real C-z/fg keys. #158.
+start_shell 70 20 'tournament 7 short novice pw'
+# The fallback is the precondition, not scenery: at a size the game
+# accepts the panels come up instead, and both these arms pass against a
+# broken build -- main's tui.c suspends and resumes perfectly well with
+# the panels up. So assert 70x20 really was refused, the way fallback()
+# does. Raised by code-review on this branch; AGENTS.md step 4 asks for
+# it in as many words.
+if ! wait_scrollback 'Terminal too small'; then
+	fail "retry suspend: the game did not fall back, so the arm would prove nothing"
+	dump_scrollback
+elif ! to_command; then
+	fail "retry suspend: the fallback game never reached its prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'quit' Enter
+	if ! wait_for 'score recorded'; then
+		fail "retry suspend: quit did not reach the end-of-game questions"
+		dump
+	elif ! { tm send-keys -t "$pane" 'n' Enter; wait_for 'play again'; }; then
+		fail "retry suspend: declining the score did not reach play-again"
+		dump
+	else
+		tm resize-window -t "$session" -x 100 -y 30
+		if ! wait_pane '#{pane_width}' 100; then
+			fail "retry suspend: the terminal never grew, so no retry happened"
+			dump
+		else
+			# Two waits rather than three blind send-keys -- not
+			# prompt by prompt like the sibling retry arms below,
+			# which wait for each setup question in turn; the five
+			# answers -- game type, tournament number, length, skill,
+			# password -- still go on one line. What the waits buy: to_command
+			# clears the briefing pause only while one is showing, so
+			# it cannot paper over a pause that should not be there,
+			# which the bare Enter this replaced could.
+			#
+			# Guarded, too. want_quadtitle reports and returns 0
+			# either way, so a retry that produced no panels for some
+			# unrelated reason used to sail on and fail at "fg did not
+			# repaint the panels" -- the one message in this arm that
+			# means the success-path re-apply is missing. A CI log
+			# would have sent the reader to the wrong line.
+			tm send-keys -t "$pane" 'y' Enter
+			if ! wait_for 'regular, tournament, or frozen'; then
+				fail "retry suspend: the second game never started"
+				dump
+			else
+				tm send-keys -t "$pane" \
+					'tournament 7 short novice pw' Enter
+				if ! to_command; then
+					fail "retry suspend: the second game never reached a prompt"
+					dump
+				elif ! has_quadtitle; then
+					fail "retry suspend: the panels never came up on the retry"
+					dump
+				else
+					# see the suspend arm below
+					stopped_pid=$(game_pid)
+					tm send-keys -t "$pane" C-z
+					if ! wait_for 'Stopped'; then
+						fail "retry suspend: C-z did not suspend the game"
+						dump
+						kill -CONT "$stopped_pid" 2>/dev/null
+						stopped_pid=
+					else
+						tm send-keys -t "$pane" 'fg' Enter
+						# One poll. On success the registration is
+						# simply cleared; on failure the game may
+						# still be stopped, so it is resumed first
+						# -- see the sibling arm below, which has
+						# the reasoning.
+						if has_quadtitle; then
+							stopped_pid=
+						else
+							fail "retry suspend: fg did not repaint the panels"
+							dump
+							kill -CONT "$stopped_pid" 2>/dev/null
+							stopped_pid=
+						fi
+					fi
+				fi
+			fi
+		fi
+	fi
+fi
+
+# --- and a fallback game survives being suspended and resumed --------
+# initscr() installs handlers for SIGINT, SIGTERM and SIGTSTP, and
+# endwin() does not take them away. #152 restored SIGWINCH on the
+# give-up path for that reason; SIGTSTP is the one left that costs a
+# player something. A game that fell back to the classic display reads
+# with the stdio reader, which needs the terminal in canonical mode --
+# and curses' handler puts it into curses' program mode instead, on the
+# resume. Before the fix the game never answered again and had to be
+# killed from another terminal.
+#
+# A plain game (no -t) is unaffected: it installs no handlers at all,
+# SigCgt 0, and measured the same way this arm drives -- shell pane,
+# real C-z and fg -- it stops, resumes and answers. #158 records a
+# contradicting run, which its own author said to discard: the pgrep
+# pattern it used matched more than one process. A -t game whose panels
+# are up is unaffected too, being in program mode already and curses' to
+# drive.
+# #158.
+#
+# Real C-z and fg through an interactive shell, not kill -TSTP in a
+# start() pane, and that distinction is the arm rather than a detail.
+# In a start() pane the game shares the pane shell's process group, the
+# group is orphaned -- its leader's parent is the tmux server, in
+# another session -- and the kernel discards a stop signal there. So the
+# game never stops, and an arm written that way asserts only "the tty
+# was not wrecked". Measured on a mutant that sets SIGTSTP to SIG_IGN on
+# the give-up path instead of restoring it: the game cannot be suspended
+# at all, which is worse than the defect, and the direct-signal arm
+# passed it. Found by the verifier on this branch.
+#
+# Proved against both, on copies of the tree outside the repository:
+# main's tui.c fails this arm with "stopped answering after a suspend
+# and resume", and the SIG_IGN mutant fails it with "C-z did not suspend
+# the fallback game". Nothing else in the file fails on either.
+start_shell 70 20 'tournament 7 short novice pw'
+# The fallback is the precondition, not scenery: at a size the game
+# accepts the panels come up instead, and both these arms pass against a
+# broken build -- main's tui.c suspends and resumes perfectly well with
+# the panels up. So assert 70x20 really was refused, the way fallback()
+# does. Raised by code-review on this branch; AGENTS.md step 4 asks for
+# it in as many words.
+if ! wait_scrollback 'Terminal too small'; then
+	fail "suspend: the game did not fall back, so the arm would prove nothing"
+	dump_scrollback
+elif ! to_command; then
+	fail "suspend: the fallback game never reached its command prompt"
+	dump
+else
+	# Registered before the C-z so finish() can let it go again, if the
+	# job message never arrives and this arm fails without ever sending
+	# fg. Insurance rather than a fix for something observed: measured
+	# on Linux, tm kill-server reaps a stopped game anyway -- the
+	# session leader exiting leaves an orphaned process group with a
+	# stopped member, and POSIX has the kernel send SIGHUP then SIGCONT.
+	# Four runs of four, stopped by a real C-z and by kill -STOP alike.
+	# Kept because that is one platform's answer and macOS is the other
+	# CI runs, and because it costs a line. slept_drag() above states
+	# the stronger claim; that is #192, not this arm's to fix.
+	stopped_pid=$(game_pid)
+	tm send-keys -t "$pane" C-z
+	if ! wait_for 'Stopped'; then
+		fail "suspend: C-z did not suspend the fallback game"
+		dump
+		kill -CONT "$stopped_pid" 2>/dev/null
+		stopped_pid=
+	else
+		tm send-keys -t "$pane" 'fg' Enter
+		sleep 1
+		# An unrecognised command rather than srscan, and the reply
+		# rather than a scan field. "Stardate" is what this asked for
+		# first, and the briefing prints it too -- so that arm passed
+		# because the briefing's copy happened to have scrolled off by
+		# the time it looked, which is a property of the pane and not of
+		# the game answering. "UNRECOGNIZED COMMAND" is printed only in
+		# reply to input, nowhere in startup: grepped a whole scripted
+		# game, zero occurrences. So it says what this arm means -- the
+		# game read what was typed after the resume. Raised by the
+		# verifier on this branch.
+		tm send-keys -t "$pane" 'zzz' Enter
+		expect "suspend: the game stopped answering after a suspend and resume" \
+			'UNRECOGNIZED COMMAND'
+		# Cleared only now: an fg that did not take would otherwise drop
+		# the registration with the game still stopped.
+		# Resumed and then cleared, which is what slept_drag() does on
+		# every one of its exits. Clearing alone -- the first attempt at
+		# this -- swaps a stale registration for a dropped rescue: on a
+		# failure path the game is stopped, and finish() then has nothing
+		# to CONT. Only kill-server's SIGHUP+SIGCONT would free it, and
+		# that is the Linux answer this arm's own comment declines to
+		# assume for macOS.
+		kill -CONT "$stopped_pid" 2>/dev/null
+		stopped_pid=
+	fi
+fi
+
 # --- and a size bigger than the terminal is refused -------------------
 # The gate is LINES < 24 || COLS < 72, asked of curses -- and where the
 # environment has pinned a dimension, curses' number need not be the
@@ -3628,18 +3910,24 @@ fi
 # The retries mean there is nothing left to see in what the game prints:
 # both builds behave identically. So this asks the kernel instead.
 # /proc/<pid>/status gives SigCgt, the mask of signals the process has
-# handlers for, and SIGWINCH is 28 -- so bit 27. Linux only; skipped
-# elsewhere, since the fix is worth having either way and the rest of
-# this file already runs on macOS.
+# handlers for, at bit (signum - 1): SIGWINCH is 28, so bit 27; SIGTSTP
+# is 20, so bit 19. Linux only; skipped elsewhere, since the fix is
+# worth having either way and the rest of this file already runs on
+# macOS.
 #
-# Three arms, because two of them cannot tell each other apart. The
-# fallback game and the plain game both expect "no", so a
-# sigwinch_caught() that answered "no" for any reason -- an awk slip, a
-# /proc format that moved -- would satisfy both and the case would pass
-# having measured nothing. The full-screen game at 80x24 is the arm that
-# expects "yes": it is the one that fails if the reading stops working,
-# and it pins the other half of the fix besides, that the restore runs
-# only on the give-up path and leaves real curses alone.
+# Each signal gets a fallback arm and a plain arm that cannot tell each
+# other apart -- both expect "no", so a sig_caught() answering "no" for
+# any reason, an awk slip or a /proc format that moved, would satisfy
+# both and they would pass having measured nothing. The full-screen arm
+# is what discriminates: it expects "yes", so it fails if the reading
+# stops working, and it pins the other half of each fix besides, that
+# the restore runs only on the give-up path and leaves real curses
+# alone.
+#
+# Deliberately no count here. There was one, and going from three arms
+# to seven for #158 falsified it; #193 would add another row again.
+# What a reader adding one needs is the pairing rule above, not an
+# arithmetic they have to keep true.
 if [ ! -r /proc/self/status ]; then
 	# A developer on macOS gets a note. Linux CI does not: /proc is the
 	# only way to see this, so a leg where it went missing -- hidepid, an
@@ -3648,15 +3936,24 @@ if [ ! -r /proc/self/status ]; then
 	# shows no output at all. Same reasoning as the tmux guard at the top
 	# of this file.
 	if [ -n "${CI:-}" ] && [ "$(uname -s)" = Linux ]; then
-		fail "sigwinch: no readable /proc on Linux CI, so the disposition went unchecked"
+		fail "signals: no readable /proc on Linux CI, so the SIGWINCH and SIGTSTP dispositions went unchecked"
 	else
-		printf 'note: no /proc, so the SIGWINCH disposition went unchecked\n' >&2
+		printf 'note: no /proc, so the SIGWINCH and SIGTSTP dispositions went unchecked\n' >&2
 	fi
 else
 	if ! command -v pgrep >/dev/null 2>&1; then
-		fail "sigwinch: pgrep is missing, so the game's process could not be found"
+		fail "signals: pgrep is missing, so the game's process could not be found"
 	fi
-	sigwinch_caught() {
+	# $2 is the signal's bit, so the same reader serves SIGWINCH (27)
+	# and SIGTSTP (19). #158 restores SIGTSTP on both give-up paths and
+	# the two restores are the same line twice; delete the second and a
+	# player with COLUMNS=190 in a 100-column terminal falls back and
+	# cannot suspend, which is the defect #158 exists to fix. A suspend
+	# journey for it would cost another twenty-five seconds; reading the
+	# mask costs nothing and is deterministic, so the pinned arm below
+	# is a mask arm rather than a journey. Suggested by code-review on
+	# that branch.
+	sig_caught() {
 		# $1 is the pane's shell; sst is its child.
 		# The game, not whatever else the pane's shell has going.
 		# Taking the first child would read `sleep 30` under a shell
@@ -3674,30 +3971,45 @@ else
 		[ -n "$gamepid" ] || { echo "nopid"; return; }
 		mask=$(awk '/^SigCgt:/ { print $2 }' "/proc/$gamepid/status" 2>/dev/null)
 		[ -n "$mask" ] || { echo "nomask"; return; }
-		awk -v m="$mask" 'BEGIN {
+		awk -v m="$mask" -v bit="$2" 'BEGIN {
 			n = 0
 			for (i = 1; i <= length(m); i++) {
 				c = index("0123456789abcdef", substr(m, i, 1)) - 1
 				n = (n * 16) + c
 			}
-			# bit 27, reached by halving rather than shifting:
-			# POSIX awk has no >> operator.
-			for (i = 0; i < 27; i++) n = int(n / 2)
+			# Reached by halving rather than shifting: POSIX awk
+			# has no >> operator.
+			for (i = 0; i < bit; i++) n = int(n / 2)
 			print (n % 2) ? "yes" : "no"
 		}'
 	}
-	for arm in 'fallback:-t:40:10:no' 'plain::40:10:no' 'full-screen:-t:80:24:yes'; do
+	# mode:flag:cols:rows:want:signal:bit:env. The last three are #158's:
+	# SIGTSTP is restored on both give-up paths, and the pinned-size one
+	# has no suspend journey, so it is pinned here against the mask
+	# instead. An env prefix has no colon in it, so it drops into the
+	# spec cleanly.
+	for arm in \
+		'fallback:-t:40:10:no:SIGWINCH:27:' \
+		'plain::40:10:no:SIGWINCH:27:' \
+		'full-screen:-t:80:24:yes:SIGWINCH:27:' \
+		'fallback:-t:40:10:no:SIGTSTP:19:' \
+		'plain::40:10:no:SIGTSTP:19:' \
+		'full-screen:-t:80:24:yes:SIGTSTP:19:' \
+		'pinned:-t:100:30:no:SIGTSTP:19:env COLUMNS=190'; do
 		mode=$(echo "$arm" | cut -d: -f1)
 		flag=$(echo "$arm" | cut -d: -f2)
 		cols=$(echo "$arm" | cut -d: -f3)
 		rows=$(echo "$arm" | cut -d: -f4)
 		want=$(echo "$arm" | cut -d: -f5)
+		sig=$(echo "$arm" | cut -d: -f6)
+		bit=$(echo "$arm" | cut -d: -f7)
+		pre=$(echo "$arm" | cut -d: -f8)
 		cleanup
 		if ! tm new-session -d -x "$cols" -y "$rows" -s "$session" \
 				-c "$startdir" \
-				"'$sstq' $flag tournament 7 short novice pw; sleep 30" \
+				"$pre '$sstq' $flag tournament 7 short novice pw; sleep 30" \
 				2>/dev/null; then
-			fail "sigwinch: could not start a ${cols}x${rows} tmux session for the $mode game"
+			fail "$sig: could not start a ${cols}x${rows} tmux session for the $mode game"
 			continue
 		fi
 		# The fallback arms have to have actually fallen back. "no" is
@@ -3706,22 +4018,31 @@ else
 		# the arm would then pass having exercised none of this. The
 		# full-screen arm does not cover that: it takes another branch
 		# and still says "yes".
+		# The pinned arm's terminal is over the floor, so its refusal
+		# names the pin instead. Either way the arm has to have fallen
+		# back, or it proves nothing.
+		if [ "$mode" = pinned ]; then
+			fellback='LINES/COLUMNS make it'
+		else
+			fellback='Terminal too small'
+		fi
 		if [ "$want" = no ] && [ "$flag" = -t ] &&
-		   ! wait_scrollback 'Terminal too small'; then
-			fail "sigwinch: the $mode game did not fall back, so the arm would prove nothing"
+		   ! wait_scrollback "$fellback"; then
+			fail "$sig: the $mode game did not fall back, so the arm would prove nothing"
 			dump_scrollback
 			continue
 		fi
 		if ! wait_for 'COMMAND'; then
-			fail "sigwinch: the $mode game never reached its command prompt"
+			fail "$sig: the $mode game never reached its command prompt"
 			dump
 			continue
 		fi
-		got=$(sigwinch_caught "$(tm display-message -p -t "$pane" '#{pane_pid}')")
+		got=$(sig_caught "$(tm display-message -p -t "$pane" '#{pane_pid}')" \
+			"$bit")
 		if [ "$got" = nopid ] || [ "$got" = nomask ]; then
-			fail "sigwinch: could not read the $mode game's signal mask ($got)"
+			fail "$sig: could not read the $mode game's signal mask ($got)"
 		elif [ "$got" != "$want" ]; then
-			fail "sigwinch: the $mode game's SIGWINCH handler is '$got' where '$want' was wanted"
+			fail "$sig: the $mode game's handler is '$got' where '$want' was wanted"
 			dump
 		fi
 	done
