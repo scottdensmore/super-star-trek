@@ -1,0 +1,1 @@
+Look through the code and the github issues and code and pick up the next thing to work on. Use AGENTS.md
