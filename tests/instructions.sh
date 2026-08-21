@@ -63,164 +63,53 @@ claudebytes=$(wc -c < "$CLAUDE" | tr -d ' ')
 if [ "$agentsbytes" -lt "$MINAGENTS" ]; then
 	fail "AGENTS.md is only $agentsbytes bytes; expected at least $MINAGENTS -- has its content been moved or lost?"
 fi
-if ! grep -q '^## Development workflow' "$AGENTS"; then
-	fail "AGENTS.md has no '## Development workflow' section -- the workflow every agent follows should live there"
+# The workflow installer owns the universal policy. Project-authored content
+# profiles this repository for that policy; it must not carry a second workflow
+# beside the managed one.
+for heading in \
+	'Project overview' \
+	'Repo Map' \
+	'Development Commands' \
+	'Local Setup' \
+	'Architecture & Conventions' \
+	'Gotchas & Troubleshooting' \
+	'Verification Map' \
+	'Development Workflow'; do
+	count=$(grep -c "^## $heading$" "$AGENTS")
+	if [ "$count" -ne 1 ]; then
+		fail "AGENTS.md has $count exact '## $heading' headings, expected 1"
+	fi
+done
+
+for legacy in \
+	'Development workflow' \
+	'Who runs which tests' \
+	'The review sub-agents' \
+	'Answering a finding'; do
+	if grep -qE "^##+ $legacy$" "$AGENTS"; then
+		fail "AGENTS.md still contains the legacy '$legacy' workflow section"
+	fi
+done
+
+begins=$(grep -c '^<!-- agent-skills:begin workflow ' "$AGENTS")
+ends=$(grep -c '^<!-- agent-skills:end workflow -->$' "$AGENTS")
+if [ "$begins" -ne 1 ] || [ "$ends" -ne 1 ]; then
+	fail "AGENTS.md must contain exactly one managed workflow block; found $begins starts and $ends ends"
 fi
 
-# Steps 6, 7 and 8 hold their review passes to one standard, and say it
-# in one form of words so a reader can see that they agree. They did not
-# always: two said "address every actionable finding" and the middle one
-# said "fix or explicitly resolve", while the first claimed to be
-# stating the same rule "as with the two steps below". Nobody noticed
-# until a reviewer read all three together.
-#
-# Counted, not located: hard-coding line numbers would break on every
-# edit above them, and nothing here can tell which step a match fell in.
-# So this catches the one-place regression -- a step reworded on its own
-# -- and not a coordinated edit that reworded a step and added the
-# phrase somewhere else to keep the total at four. Issue #65 is where
-# that check would live -- as filed it checks numbering, not which step
-# a match fell in; the comment thread there asks for the attribution it
-# would need.
-#
-# Counted over the file with its line breaks flattened, because the
-# phrase wraps mid-sentence in two of the four places it appears: a
-# check a rewrap can break is a check that gets deleted the first time
-# someone rewraps. The phrase holds no regex metacharacter, so passing
-# it to awk as a pattern matches it literally; one added later would
-# quietly turn this into something else.
-STANDARD='actionable finding, or resolve it explicitly'
-# Three steps state it and one section defines it. Stating it a fifth
-# time on purpose means changing this number on purpose.
-STANDARDS=4
-# Awk's status and its output are both checked, because either can lie
-# on its own. A non-number means it did not run -- unsupported construct,
-# missing binary, anything -- and compared directly against STANDARDS
-# that is a silent pass rather than a failure: the test errors "Illegal
-# number", `if` reads the non-zero status as false, and the script goes
-# on to print "instructions OK". A number from a command that then
-# failed is the same hole from the other side: a shadowed awk printing
-# "4" and exiting 17 satisfied the number check, and did it on a file
-# whose step 8 had been reworded back to the old standard -- green,
-# with the defect present and the counter never having run.
-if ! standards=$(awk -v want="$STANDARD" '
-	{ s = s " " $0 }
-	END { gsub(/[ \t]+/, " ", s); print gsub(want, "&", s) }' "$AGENTS"); then
-	fail "could not count the finding standard in AGENTS.md -- awk exited non-zero, so this check did not run whatever it printed"
-else
-	case "$standards" in
-	'' | *[!0-9]*)
-		fail "could not count the finding standard in AGENTS.md -- awk printed '$standards' instead of a number, so this check did not run"
-		;;
-	*)
-		if [ "$standards" -ne "$STANDARDS" ]; then
-			fail "AGENTS.md states the finding standard $standards times, expected $STANDARDS -- steps 6, 7 and 8 each state it and 'Answering a finding' defines it. A step reworded on its own no longer visibly agrees with the others; if you added a statement of it on purpose, update STANDARDS in this script"
-		fi
-		;;
-	esac
-fi
-# AGENTS.md keeps some of its rules in named sections below the numbered
-# steps, with the steps pointing forward at them by name. Both halves have
-# to hold: a heading nothing points at is unreachable, and a pointer with
-# no heading sends a reader nowhere. Checked for each such section by
-# name, so adding one means adding a call rather than a second copy of
-# this.
-#
-# $1 heading text, $2 what is lost if the heading goes, $3 what is lost if
-# the pointer goes.
-#
-# Prefix-matched, so a heading renamed to "### Answering a finding here"
-# satisfies this while every pointer names a heading that is gone. That
-# is issue #105, and the pointer check matches the same way: awk's
-# index() is literal rather than a BRE, which is a different property,
-# but it is still a substring search and a longer heading satisfies it
-# too. Fixing one without the other fixes nothing.
-check_section() {
-	if ! grep -q "^### $1" "$AGENTS"; then
-		# Returning here rather than going on to the pointer: with no
-		# heading that check reports that nothing points forward, which
-		# is true but reads as a second, separate defect when the
-		# pointer is sitting there untouched.
-		fail "AGENTS.md has no '### $1' section -- $2"
-		return
+# The installer renamed the two reviewers so the agent name describes the
+# actor and the skill name describes the job. Keeping both generations makes
+# discovery ambiguous, so pin the replacement set and reject the old names.
+for agent in code-reviewer ui-reviewer verifier; do
+	if [ ! -f "$ROOT/.claude/agents/$agent.md" ]; then
+		fail "the generated Claude agent '$agent' is missing"
 	fi
-	# The pointer is the one thing tying the numbered steps to the
-	# section. Delete just that clause and the heading is still there:
-	# the section goes on existing with nothing sending a reader to it.
-	# For "Answering a finding" that loses the half of #97 that asked
-	# where a disagreement is recorded, and the standard count above
-	# still reads 4 while it happens. Matched in quotes because the
-	# heading itself is unquoted, so this finds the reference and not
-	# the thing referred to.
-	#
-	# Before the heading, specifically. A mention below it is a
-	# back-reference and cannot send anyone anywhere: the reader is
-	# already there. Counting mentions instead would pass on a file
-	# where the step's pointer was deleted and the section itself quoted
-	# its own name -- one mention either way -- which is the state this
-	# exists to catch. It has happened once already: a later section
-	# quoting the name is what defeated the count that used to stand
-	# here.
-	#
-	# Flattened first, because the pointer is a quoted phrase in wrapped
-	# prose and a rewrap that split it across two lines would fail here
-	# while the pointer sat there intact. What it cannot see is which
-	# step the pointer is in, or a layout that put the section above the
-	# steps.
-	if ! points=$(awk -v s="$1" '
-		{ all = all " " $0 }
-		END {
-			gsub(/[ \t]+/, " ", all)
-			h = index(all, "### " s)
-			q = index(all, "\"" s "\"")
-			print (q > 0 && h > 0 && q < h) ? "yes" : "no"
-		}' "$AGENTS"); then
-		fail "could not look for the pointer to \"$1\" in AGENTS.md -- awk exited non-zero, so this check did not run"
-		return
+done
+for legacy_agent in code-review ui-review; do
+	if [ -e "$ROOT/.claude/agents/$legacy_agent.md" ]; then
+		fail "the superseded Claude agent '$legacy_agent' still exists"
 	fi
-	# Answered, not merely exited: an awk that prints nothing and
-	# succeeds would otherwise pass this the way one printing a
-	# plausible number passed the count above before it was guarded.
-	case "$points" in
-	yes) ;;
-	no)
-		fail "nothing in AGENTS.md points forward at \"$1\" -- $3"
-		;;
-	*)
-		fail "could not look for the pointer to \"$1\" in AGENTS.md -- awk printed '$points' instead of yes or no, so this check did not run"
-		;;
-	esac
-}
-
-check_section 'Answering a finding' \
-	"step 6 points at it by name, and it is where the standard the three steps state is defined" \
-	"the section defines the standard steps 6, 7 and 8 state, and nothing above it now sends a reader to it"
-# Steps 4 and 7 both run tests and run different ones, and the section is
-# the only place that says which. Without it the division is a habit
-# rather than a rule: the next session either delegates the failing first
-# run that step 4 asks it to watch, or re-runs the whole battery the
-# verifier is about to run again.
-#
-# Written against a section that already existed, so it never had a
-# failing first run. Proved against a copy of AGENTS.md instead:
-# renaming the heading to "### Who runs the tests" fails the first
-# check, and removing all three quoted pointers fails the second. Removing
-# any proper subset of them still passes, which is right -- one pointer
-# sends a reader there just as well.
-#
-# The first attempt at that second mutation was blind, in two ways worth
-# knowing before editing this. There are three pointers, not one: two in
-# step 4 -- beside its loop and beside its mutation-proof bullets -- and
-# one in step 7. Any single one satisfies this, so a mutation has to take
-# all three, and a green run after removing some of them is the check
-# working as designed rather than a mutation that failed to apply. The
-# second way is that step 4's first pointer wraps mid-phrase where the
-# others do not, so a line-at-a-time `sed 's/"Who runs which tests"/.../'`
-# silently leaves it standing. Mutate with something that spans newlines,
-# and count what you removed against what `grep -n 'Who runs which'` finds.
-check_section 'Who runs which tests' \
-	"steps 4 and 7 point at it, and it is where the split between the main agent's focused test and the verifier's battery is defined" \
-	"the section divides the testing between step 4's loop and step 7's battery, and nothing above it now sends a reader to it"
+done
 
 # CLAUDE.md points at it and holds nothing else.
 if ! grep -q '^@AGENTS\.md[[:space:]]*$' "$CLAUDE"; then

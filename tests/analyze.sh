@@ -1,11 +1,10 @@
 #!/bin/sh
 # Static analysis over the game's C sources.
 #
-# This is the check .claude/agents/verifier.md's step 2 asks for. It used
-# to ask for cppcheck, clang-tidy or scan-build "if installed", and none
-# of the three was installed on the development machine or in CI -- so
-# the leg never ran anywhere, the verifier reported the gap honestly on
-# every pass, and the gap stayed open. #147.
+# This is the `analyze` test registered in CMakeLists.txt. Its predecessor
+# depended on cppcheck, clang-tidy or scan-build being installed, and none
+# was available on the development machine or in CI, so the leg never ran.
+# Issue #147 replaced that optional check with an enforced one.
 #
 # GCC's own analyzer is what the project actually has: no install, and
 # already the compiler CI builds with on Linux. It is a different check

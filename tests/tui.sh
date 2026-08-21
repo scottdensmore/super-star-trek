@@ -3447,8 +3447,8 @@ start_shell 70 20 'tournament 7 short novice pw'
 # accepts the panels come up instead, and both these arms pass against a
 # broken build -- main's tui.c suspends and resumes perfectly well with
 # the panels up. So assert 70x20 really was refused, the way fallback()
-# does. Raised by code-review on this branch; AGENTS.md step 4 asks for
-# it in as many words.
+# does. Raised by code-review on this branch; the explicit precondition
+# keeps this arm from passing without ever reaching the fallback.
 if ! wait_scrollback 'Terminal too small'; then
 	fail "retry suspend: the game did not fall back, so the arm would prove nothing"
 	dump_scrollback
@@ -3567,8 +3567,8 @@ start_shell 70 20 'tournament 7 short novice pw'
 # accepts the panels come up instead, and both these arms pass against a
 # broken build -- main's tui.c suspends and resumes perfectly well with
 # the panels up. So assert 70x20 really was refused, the way fallback()
-# does. Raised by code-review on this branch; AGENTS.md step 4 asks for
-# it in as many words.
+# does. Raised by code-review on this branch; the explicit precondition
+# keeps this arm from passing without ever reaching the fallback.
 if ! wait_scrollback 'Terminal too small'; then
 	fail "suspend: the game did not fall back, so the arm would prove nothing"
 	dump_scrollback
