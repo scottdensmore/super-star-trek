@@ -1,13 +1,1 @@
-I just updated my AGENTS.md and skills to adopt a new workflow. The new one is in the xml block. Go through the agents.md file and remove all old cruft and the current workflow to adopt the new one. Also remove any old skills / agents
-
----
-
-$project-profile
-
----
-
-Ok so this should get us to the same workflow we had before the new one.
-
----
-
 Ok well lets add it to the project profil that self merging is allowed once clean and passing
