@@ -1,0 +1,14 @@
+Look through the code and the github issues and code and pick up the next thing to work on. Use AGENTS.md
+
+---
+
+<environment_context>
+  <current_date>2026-08-21</current_date>
+  <timezone>America/Los_Angeles</timezone>
+  <filesystem><workspace_roots><root>/home/scottdensmore/Developer/scottdensmore/super-star-trek</root></workspace_roots><permission_profile type="managed"><file_system type="restricted"><entry access="read"><special>:root</special></entry><entry access="write"><path>/home/scottdensmore/Developer/scottdensmore/super-star-trek</path></entry><entry access="write"><special>:slash_tmp</special></entry><entry access="write"><special>:tmpdir</special></entry><entry access="read"><path>/home/scottdensmore/Developer/scottdensmore/super-star-trek/.git</path></entry><entry access="read"><path>/home/scottdensmore/Developer/scottdensmore/super-star-trek/.agents</path></entry><entry access="read"><path>/home/scottdensmore/Developer/scottdensmore/super-star-trek/.codex</path></entry></file_system></permission_profile></filesystem>
+  <subagents>
+    - baseline_verification: Dirac
+    - code_review: Russell
+    - ui_review: Turing
+  </subagents>
+</environment_context>
