@@ -207,3 +207,26 @@ add_test(NAME analyze
 # which is the only thing a timeout here can catch -- a real hang would
 # sit far past either number.
 set_tests_properties(analyze PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300)
+
+# The shell inside .github/workflows/ is the one kind of shell here that
+# nothing else checks -- and the least likely to be exercised before it
+# matters, since a step guarded by `runner.os == 'macOS'` runs only on a
+# runner nobody can reproduce locally. #187.
+#
+# The tree to check goes in as an argument, because the script reads
+# .github/workflows rather than anything the build produces. Not because
+# it would otherwise be lost: with no argument the script falls back to
+# its own directory's parent, so it finds the right tree either way.
+# This is the house pattern the instructions and score tests already
+# use, and it makes the target visible in the ctest command rather than
+# inferred. Note it does not rescue a copied build/ -- the path is baked
+# in at configure time, so a copy's build/ still names the original.
+add_test(NAME workflow
+         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/workflow.sh
+                 ${CMAKE_CURRENT_SOURCE_DIR})
+# 77 where the linting cannot be done -- no actionlint, or an
+# actionlint whose shellcheck integration is inert -- the way analyze
+# skips without an analyzer. The script fails rather than skipping when
+# CI is set and the platform is Linux, which is where CI installs the
+# tool; a leg that quietly checked nothing is what #187 is about.
+set_tests_properties(workflow PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
