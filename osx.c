@@ -8,6 +8,7 @@
 #include <stdio.h>
 #ifndef WINDOWS
 #include <errno.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
@@ -39,16 +40,26 @@ int stdio_is_terminal(void) {
 	return isatty(STDIN_FILENO) && isatty(STDOUT_FILENO);
 }
 
-/* Wake pselect() after job control resumes the game, so getch() can
-   restore the terminal mode the shell replaced while it was stopped. */
+/* Wake pselect() through a nonblocking pipe after job control resumes the
+   game, so getch() can restore the mode the shell replaced while stopped. */
+static volatile sig_atomic_t getch_wake_fd = -1;
 static void interrupt_getch(int signum) {
+	int saved_errno = errno;
+	unsigned char wake = 0;
+
 	(void)signum;
+	if (getch_wake_fd >= 0) {
+		ssize_t written = write((int)getch_wake_fd, &wake, sizeof(wake));
+		(void)written;
+	}
+	errno = saved_errno;
 }
 
 int getch(void) {
 	char chbuf[1];
 	ssize_t n = -1;
-	int havecont = 0, havemask = 0, haveterm;
+	int havecont = 0, havemask = 0, havepipe = 0, haveterm, pipeflags;
+	int wakepipe[2] = {-1, -1};
 	fd_set readfds;
 	sigset_t blockjob, oldmask, waitmask;
 	struct sigaction oldcont, wakecont = {0};
@@ -78,7 +89,24 @@ int getch(void) {
 		waitmask = oldmask;
 		sigdelset(&waitmask, SIGCONT);
 		sigdelset(&waitmask, SIGTSTP);
-		havecont = sigaction(SIGCONT, &wakecont, &oldcont) == 0;
+		if (pipe(wakepipe) == 0) {
+			havepipe = 1;
+			if (wakepipe[0] >= FD_SETSIZE) {
+				close(wakepipe[0]);
+				close(wakepipe[1]);
+				wakepipe[0] = wakepipe[1] = -1;
+				havepipe = 0;
+			} else {
+				pipeflags = fcntl(wakepipe[1], F_GETFL);
+				if (pipeflags >= 0 &&
+				    fcntl(wakepipe[1], F_SETFL,
+				          pipeflags | O_NONBLOCK) == 0) {
+					getch_wake_fd = wakepipe[1];
+					havecont = sigaction(SIGCONT, &wakecont,
+					                     &oldcont) == 0;
+				}
+			}
+		}
 	}
 	/* A read the terminal changing shape interrupted is not a
 	   keypress, and reporting one lets a resize answer the pause: the
@@ -96,14 +124,17 @@ int getch(void) {
 	   handler carried SA_RESTART; there is no curses handler on this
 	   path any more. Without the scoped handler below, a default stop
 	   and continue restarts the read in place. Measured on the #158
-	   branch: a pause survives a
-	   suspend and is still waiting on resume, but the shell has restored
+	   branch: a pause survives a suspend and is still waiting on resume,
+	   but the shell has restored
 	   canonical mode while the read is being restarted in the kernel.
 	   Space then sits in the line discipline until Enter releases it.
 	   SIGTSTP and SIGCONT are blocked from before the mode change until
 	   pselect() atomically replaces the mask while it waits. A stop and
-	   resume before or during that wait therefore interrupts pselect()
-	   and comes back through tcsetattr(); after input is ready, both
+	   resume before or during that wait either interrupts pselect() or
+	   makes its wake pipe readable, and comes back through tcsetattr().
+	   The pipe is the macOS half: both PR #200 macOS configurations left
+	   the handler-only pselect() waiting after resume, while the same code
+	   passed on Linux. After input is ready, both
 	   signals are blocked again until read() takes that byte. This closes
 	   both gaps around the wait. The old disposition and mask are
 	   restored below, so only a classic getch() has this behavior. #190.
@@ -123,12 +154,20 @@ int getch(void) {
 		}
 		FD_ZERO(&readfds);
 		FD_SET(STDIN_FILENO, &readfds);
-		n = pselect(STDIN_FILENO + 1, &readfds, NULL, NULL, NULL,
+		FD_SET(wakepipe[0], &readfds);
+		n = pselect(wakepipe[0] + 1, &readfds, NULL, NULL, NULL,
 		            &waitmask);
 		if (n <= 0) {
 			if (n < 0 && errno == EINTR)
 				continue;
 			break;
+		}
+		if (FD_ISSET(wakepipe[0], &readfds)) {
+			unsigned char wake;
+			do {
+				n = read(wakepipe[0], &wake, sizeof(wake));
+			} while (n < 0 && errno == EINTR);
+			continue;
 		}
 		n = read(STDIN_FILENO, &chbuf, 1);
 		if (n < 0 && errno == EINTR)
@@ -140,6 +179,11 @@ int getch(void) {
 	tcsetattr(STDIN_FILENO, TCSANOW, &oldstate);
 	if (havecont)
 		sigaction(SIGCONT, &oldcont, NULL);
+	getch_wake_fd = -1;
+	if (havepipe) {
+		close(wakepipe[0]);
+		close(wakepipe[1]);
+	}
 	if (havemask)
 		sigprocmask(SIG_SETMASK, &oldmask, NULL);
 	return chbuf[0];
