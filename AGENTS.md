@@ -163,6 +163,23 @@ review.
 | `CMakeLists.txt` or `CMakePresets.json` | Both complete CI gates |
 | Any path not listed | Both complete CI gates |
 
+## Git
+
+Self-merges are allowed in this repository. An agent may squash-merge its own
+pull request without requesting separate approval once all of these are true:
+
+- the pull request head is the exact locally reviewed and verified commit;
+- GitHub reports the pull request clean and mergeable;
+- every required check has completed successfully;
+- no unresolved review threads or required changes remain; and
+- a final readback confirms the base branch, head SHA, and clean local
+  worktree.
+
+Use squash merge and delete the merged branch. This standing project policy
+overrides the managed workflow's general requirement to ask for merge approval.
+Never bypass a pending or failing check, merge a different head than the one
+reviewed, or treat approval for one pull request as approval for another.
+
 <!-- agent-skills:begin workflow 185672e4 — managed block, edits here are overwritten -->
 ## Development Workflow
 
