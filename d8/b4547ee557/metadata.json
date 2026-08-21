@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "d8b4547ee557",
+  "strategy": "manual-commit",
+  "branch": "scottdensmore/fix/resume-pause-keystroke",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "osx.c"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d8/b4547ee557/0/metadata.json",
+      "transcript": "/d8/b4547ee557/0/full.jsonl",
+      "compact_transcript": "/d8/b4547ee557/0/transcript.jsonl",
+      "content_hash": "/d8/b4547ee557/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 101830,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 15403776,
+    "output_tokens": 16102,
+    "api_call_count": 97
+  }
+}
