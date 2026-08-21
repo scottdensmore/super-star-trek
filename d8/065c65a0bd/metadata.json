@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.10.0",
+  "checkpoint_id": "d8065c65a0bd",
+  "strategy": "manual-commit",
+  "branch": "scottdensmore/chore/adopt-agent-workflow",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "AGENTS.md",
+    "CMakeLists.txt",
+    "tests/analyze.sh",
+    "tests/instructions.sh",
+    "tests/tui.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d8/065c65a0bd/0/metadata.json",
+      "transcript": "/d8/065c65a0bd/0/full.jsonl",
+      "compact_transcript": "/d8/065c65a0bd/0/transcript.jsonl",
+      "content_hash": "/d8/065c65a0bd/0/content_hash.txt",
+      "prompt": "/d8/065c65a0bd/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 207839,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 11776256,
+    "output_tokens": 44083,
+    "api_call_count": 108
+  }
+}

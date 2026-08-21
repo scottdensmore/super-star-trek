@@ -1,0 +1,1 @@
+I just updated my AGENTS.md and skills to adopt a new workflow. The new one is in the xml block. Go through the agents.md file and remove all old cruft and the current workflow to adopt the new one. Also remove any old skills / agents
