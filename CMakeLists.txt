@@ -136,9 +136,9 @@ set_tests_properties(score PROPERTIES TIMEOUT 30)
 # Static analysis, which is a different question from the warnings the
 # ci-* presets make fatal: those are what the compiler notices while
 # generating code, where this walks paths and tracks what has been
-# written to. verifier.md's step 2 used to ask for cppcheck, clang-tidy
-# or scan-build "if installed" and none of the three was, anywhere, so
-# the leg never ran. gcc -fanalyzer is what the project actually has.
+# written to. An optional cppcheck, clang-tidy, or scan-build check left
+# this leg absent everywhere, so this target uses the `gcc -fanalyzer`
+# capability the project and Linux CI actually have.
 # The script skips where no compiler offers it and fails rather than
 # skipping on Linux CI, where GCC is the compiler the build already
 # uses. Darwin skips by default even where a Homebrew gcc-N is on the
