@@ -135,8 +135,9 @@ tmux socket.
   `build/`, configure inside that copy, and run its script from that copy.
   Copied CMake caches and scripts invoked from the original tree can test the
   wrong source while appearing green.
-- The `tui`, `analyze`, and `workflow` tests may skip locally when their tools
-  are absent. A skip is an environment gap, not a passing check.
+- The `tui`, `analyze`, `workflow`, and `lineendings` tests may skip locally
+  when their tools are absent -- `lineendings` needs `git` and a work tree.
+  A skip is an environment gap, not a passing check.
 - The managed triage table decides which workflow stages apply. The
   `slice-and-pr` instruction to commit only after UI review, verification, and
   code review have passed means every gate selected for the current track; it
@@ -151,16 +152,34 @@ review.
 
 | A fix touches | Focused check before the complete gate |
 |---|---|
-| `tuifmt.c`, `tui.h`, or panel formatting | `ctest --preset debug -R '^tuifmt$'`; also run the plain journey and `tests/tui.sh build/debug/sst Debug` when player-visible |
-| Other TUI behavior in `tui.c` | `ctest --preset debug -R '^tui$'` plus the plain journey |
-| Rules in `rules.c` or `rules.h` | `ctest --preset debug -R '^rules$'` |
-| Other game C or header files | The narrowest registered journey or compiled test that reaches the behavior; then both complete gates |
-| `sst.doc` or help behavior | `ctest --preset debug -R '^help$'` |
+| `tuifmt.c`, `tui.h`, or panel formatting | `ctest --preset debug -R '^tuifmt$'` and `ctest --preset debug -R '^lineendings$'`; also run the plain journey and `tests/tui.sh build/debug/sst Debug` when player-visible |
+| Other TUI behavior in `tui.c` | `ctest --preset debug -R '^tui$'` and `ctest --preset debug -R '^lineendings$'`, plus the plain journey |
+| Rules in `rules.c` or `rules.h` | `ctest --preset debug -R '^rules$'` and `ctest --preset debug -R '^lineendings$'` |
+| Other game C or header files | The narrowest registered journey or compiled test that reaches the behavior, and `ctest --preset debug -R '^lineendings$'`; then both complete gates |
+| `sst.doc` or help behavior | `ctest --preset debug -R '^help$'` and `ctest --preset debug -R '^lineendings$'` |
 | Golden fixtures or output arithmetic | `ctest --preset debug -R '^golden$'` and inspect every fixture diff |
 | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, or installed agent/skill files | When `../agent-skills/` exists, `python3 ../agent-skills/scripts/adopt.py --dry-run --keep-existing .`; otherwise nothing local reads these files, so report NOT RUN rather than treating the row as satisfied |
 | `.github/workflows/**` or `tests/workflow.sh` | `ctest --preset debug -R '^workflow$'`; absence of `actionlint`/`shellcheck` is NOT RUN locally |
 | `CMakeLists.txt` or `CMakePresets.json` | Both complete CI gates |
+| `.gitattributes` or `tests/lineendings.sh` | `ctest --preset debug -R '^lineendings$'`; without `git` it exits 77 and that is NOT RUN, not a pass |
 | Any path not listed | Both complete CI gates |
+
+**`lineendings` is named in every source row, not only its own.** Rows match
+first to last, so a row selecting the guard when the *guard* changes says
+nothing about the case it exists for: a line-ending flip in `sst.doc` matches
+the help row, in `tui.c` the TUI row, and neither would have run it. The five
+source rows above name it because a flip is invisible to every other check --
+the compiler, the journeys, the golden recordings and `analyze` all pass -- so
+the one test that can see it has to be selected by the files it guards, not by
+itself. Adding it to a row costs about half a second: a 30-file shell loop,
+observed between 0.48s and 0.56s across both presets. The rows are
+alternatives, so following one runs it once, not five times.
+
+Each names it as a second `-R` rather than one alternation, because a `|` in a
+table cell has to be escaped and `-R '^(tui\|lineendings)$'` is what a reader
+copies out: measured, that exits 8 with `No tests were found!!!`, since the
+backslash is literal to ctest. A command in this table has to survive being
+pasted.
 
 ## Git
 

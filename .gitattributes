@@ -1,3 +1,49 @@
 # The golden fixtures are compared byte for byte, so a clone that
 # rewrote their line endings would fail every journey.
 tests/golden/*.txt -text
+
+# The same reasoning, one directory further out. With no `text`
+# attribute git falls back to core.autocrlf, which is true by default in
+# Git for Windows -- so eleven wholly-CRLF files (ai.c battle.c events.c
+# finish.c moving.c planets.c reports.c setup.c sst.c sst.doc sst.h)
+# would flip on checkout and flip back on commit. Measured on a clone of
+# 13a7fb8 with core.autocrlf=true: `git add --renormalize .` rewrites
+# exactly those eleven, 9,751 insertions and 9,751 deletions -- every
+# line of all eleven, which is what `wc -l` over them gives, and 19,502
+# lines to read in a diff. `-text` means git converts nothing in either
+# direction, so a clone on any platform gets the bytes that were
+# committed.
+#
+# These globs also freeze the newer LF files -- tui.c, tui.h, tuifmt.c,
+# rules.c, rules.h, osx.c, osx.h and the two under tests/. That is
+# deliberate rather than inherited: it is the same guarantee in the
+# other direction, it covers any file added later without anyone
+# remembering to, and a per-file list would go stale the first time
+# someone adds a source file. The tree stays mixed by vintage; what
+# changes is that neither vintage can move by accident.
+#
+# `-text`, never `eol=crlf`. `eol=crlf` implies `text`, which normalizes
+# to LF in the object database -- measured: it rewrites a CRLF blob to
+# LF on the next commit, so applying it to the eleven produces the same
+# 9,751-line rewrite, deliberately. That is what #180 proposes as "the
+# narrower option"; it is the damage, not the fix.
+#
+# This governs git's own conversion. It cannot stop an editor or a
+# text-mode script from rewriting a file in place; tests/lineendings.sh
+# is what catches that.
+*.c -text
+*.h -text
+# The test scripts, including the one that checks all of this. A shell
+# script converted to CRLF does not run: measured, it dies at
+# `set: Illegal option -` with exit 2, and ctest reads 2 as a failure
+# rather than the 77 the script uses to say it could not run. So on the
+# Git for Windows default the guard would be destroyed by the exact
+# conversion it exists to catch, and report as a broken test rather than
+# an unprotected tree. All ten are unprotected without this line -- the
+# nine that existed, and this change's own.
+*.sh -text
+# sst.doc by name rather than `*.doc`. The reasoning above is about text
+# files whose endings must not move; the next `.doc` added here is more
+# likely a Word file, which wants `binary`, and inheriting `-text` for it
+# would be an accident rather than a decision.
+sst.doc -text

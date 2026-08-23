@@ -225,3 +225,17 @@ add_test(NAME workflow
 # CI is set and the platform is Linux, which is where CI installs the
 # tool; a leg that quietly checked nothing is what #187 is about.
 set_tests_properties(workflow PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+
+# The source directory again, for the same reason: this one reads the
+# tracked files themselves and asks git what attributes apply to them,
+# so it needs the tree rather than the build. It is the only check that
+# can see a wholesale line-ending flip -- the compiler cannot (#180
+# measured .text byte-identical after converting every line of sst.c),
+# and neither can the journeys, the golden recordings or analyze.
+add_test(NAME lineendings
+         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/lineendings.sh
+                 ${CMAKE_CURRENT_SOURCE_DIR})
+# 77 without git, or where the tree is not a work tree -- an unpacked
+# tarball has no attributes to ask about, and a guard that cannot run
+# should say so rather than pass.
+set_tests_properties(lineendings PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
