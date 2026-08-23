@@ -59,7 +59,19 @@ flowchart TD
 
 ### D. Conventional Commits
 
-Commit only after UI review, verification, and code review have all passed:
+Commit only after every stage your track includes has **passed**, returned `N/A`, or
+been recorded `NOT RUN` per § E. A verdict alone is not enough:
+`CHANGES_REQUESTED` is a verdict, and it is the one outcome that must be acted on
+before you commit rather than recorded.
+
+`VERIFIED (partial)` is a fourth thing and counts as passed on one condition: every
+`NOT RUN` row it names is carried into the PR description per § E. The word
+`VERIFIED` inside it is not the verdict — a partial result you do not pass on is a
+full one you invented.
+
+A stage the triage table excluded is not a missing precondition: the Trivial track
+runs neither review, and a docs-only change skips UI review by the workflow's own
+instruction.
 
 ```text
 <type>(<scope>): <imperative summary>
@@ -74,25 +86,51 @@ Commit only after UI review, verification, and code review have all passed:
 
 Use Git for branch transport and the GitHub CLI (`gh`) for GitHub operations:
 
-- **Match the stopping point to the request.** A request that only asks to commit
-  stops after the local commit. A request that asks to use, follow, or complete
-  the workflow—including "commit based on the workflow"—includes the reversible
-  remote steps: push the branch, open the PR, and watch its checks. It does not
-  authorize a merge or any action in § F.
+- **Finish at a pull request by default.** After verification and review pass,
+  finish the reversible lifecycle by committing, pushing the branch, opening a
+  ready-for-review PR, and watching its checks. Stop after the local commit only
+  when the user explicitly asks for a local-only or commit-only result. Creating
+  a PR does not authorize a merge or any action in § F.
+- **Recording a stage that did not pass.** `N/A` is one line naming why the stage
+  does not apply — which track excluded it, or what about the change means it
+  judges nothing. It goes in the PR description and needs nothing else.
+- **A command that did not run travels with the verdict.** A verifier returning
+  `VERIFIED (partial)` names the commands it could not run and what stopped each.
+  Copy that list into the description under its own heading. The stage passed and
+  the PR is ready for review — but a command nobody ran, inside a stage that
+  otherwise passed, is the quiet version of a stage nobody ran, and the reader
+  decides what it is worth rather than never learning of it.
+- **What the description has to carry.** Why the change exists; what it changes,
+  grouped by concern rather than by file; and how it was tested — the command you
+  actually ran and its actual result. "Should work" is not a test result. If a
+  test was added, say what it would have caught. This matters more under a squash
+  (§ G): the intermediate commits do not survive, so the description is the only
+  record of how the change was reasoned about.
+- **A gate that did not run makes it a draft.** Every applicable stage having
+  passed is what "ready for review" means. A stage marked `NOT RUN` — a subagent
+  you invoked and could not reach, or one the user waived — means
+  `gh pr create --draft` instead, recording the subagent, the host, the exact
+  invocation and the exact error where a reviewer cannot miss them. A gate you
+  could not run never blocks the work, and is never described as passed.
+  Publish the PR once the stage has actually run.
 
 ```bash
 # 1. Push Branch
 git push -u origin <branch>
 
-# 2. Create Pull Request
-gh pr create --title "<type>(<scope>): <summary>" --body "<why this change was made and what was verified>"
+# 2. Create Pull Request — every applicable gate passed
+gh pr create --title "<type>(<scope>): <summary>" --body "<why this change was made, what was verified, and any command the verifier could not run>"
+
+# 2b. Or, with a stage that could not run
+gh pr create --draft --title "<type>(<scope>): <summary>" --body "<the above, plus a NOT RUN section naming the subagent, host, invocation and error>"
 
 # 3. Monitor CI status
 gh pr checks --watch
 ```
 
 - Never bypass failing or pending CI checks.
-- Open ready-for-review PRs by default unless explicitly asked for a draft.
+- Open ready-for-review PRs whenever the gates allow it: a draft is what an
+  unrun gate forces, or what the user asked for, never a way to lower the bar.
 
 ### F. Actions That Require Explicit Approval
 
@@ -129,15 +167,62 @@ can tell it from the real thing without diffing it against the base.
 
 Two things to know before deleting:
 
-- **Check first.** `git diff <base> <branch>` — empty output means every line is in
-  the base and nothing is lost. If it is not empty, stop and find out why.
+- **Check the paths the branch touched, not the whole tree.** `git diff <base>
+  <branch>` is symmetric: it reports everything the *base* has that the branch
+  lacks as well, so it is non-empty the moment anything else merges ahead of
+  you. Measured after merging two pull requests in sequence: both branches were
+  fully merged and byte-identical on `main`, and the plain diff read **3060** and
+  **499** lines. A rule that says "stop if it is not empty" stops on the second
+  merge of every pair. Restrict the comparison to the files the branch changed,
+  and it answers the question you actually have — is my work in the base?
 - **Squash merges look unmerged.** A squash writes a new commit instead of joining
   histories, so git sees no ancestry and `git branch -d` refuses a branch that is
-  fully merged. After the diff above comes back empty, `-D` is the correct tool
+  fully merged. Once the scoped check above is clean, `-D` is the correct tool
   there, not a force.
 
 ```bash
-git diff main scottdensmore/feat/thing   # expect no output
-git branch -D scottdensmore/feat/thing   # -d refuses after a squash merge
+# Ask, per path the branch changed: does the base already have this content?
+# Never assume `main`. If the remote was added but never fetched this exits 128
+# and leaves `base` empty — the checks below then fail closed, but § A's fallback
+# is better: use what AGENTS.md records under **Base Branch**.
+base=$(git symbolic-ref --short refs/remotes/origin/HEAD)
+git diff --name-only "$base...scottdensmore/feat/thing"     # the paths to check
+git diff --quiet "$base" scottdensmore/feat/thing -- "<one path>"   # silence = base has it
+```
+
+**Do not expand those paths through an unquoted `$(...)`.** A path containing a
+space splits into several pathspecs that match nothing, `git diff --quiet` exits
+**0** on a pathspec that matches nothing, and a `&&` chain then deletes a branch
+whose work was never merged. Measured on a fixture: an unmerged branch touching
+`sub/my notes.md` reported clean. A glob character or a leading `-` in a filename
+does the same. The old whole-tree rule failed *closed* — it stopped too often.
+This one fails *open*, on the single action this skill lists as unrecoverable, so
+check the paths one at a time and quote each.
+
+Two more ways to get it wrong, both silent:
+
+- **No paths at all — check the exit status, not the output.** An empty list
+  and a *failed* enumeration are indistinguishable on stdout: a mistyped base
+  exits 128 and prints nothing, exactly like a branch that changed nothing. One
+  means there is nothing to lose; the other means you have not looked, and the
+  branch may hold unmerged work. Only treat empty as empty when the command also
+  **succeeded**. Anything else is "cannot enumerate safely" — leave the branch.
+  (An empty pathspec list would also degrade to comparing the whole tree, which
+  is the false alarm this check exists to remove.)
+- **Renames.** `--name-only` lists the new path; the base has the old one. Check
+  `git diff --name-status` and treat an `R` as work the base may not hold under
+  that name.
+
+**If any check is not clean, or you cannot enumerate the paths safely, stop and
+leave the branch.** A decoy branch costs someone a minute; a deleted branch with
+unmerged work costs whatever was in it.
+
+```bash
+# Only after every path above came back clean, from a command that succeeded.
+git branch -D scottdensmore/feat/thing        # -d refuses after a squash merge
 git push origin --delete scottdensmore/feat/thing
 ```
+
+**Gate the deletion on the check, do not merely print it.** Running the check and
+then deleting unconditionally is how the guard becomes decoration — which is
+exactly what happened the day this was written.
