@@ -22,13 +22,13 @@ This skill replaces that draft with facts.
 
 | Section | This skill |
 |---|---|
-| `## Project overview` | owns if `profiled`; fills if placeholder or missing |
+| `## Project overview` | owns if `profiled`; fills if placeholder, `unverified`, or missing |
 | `## Repo Map` | owns if `profiled`; fills if placeholder, `unverified`, or missing |
 | `## Development Commands` | owns if `profiled`; fills if placeholder, `unverified`, or missing |
 | `## Local Setup` | owns if `profiled`; fills if placeholder, `unverified`, or missing |
-| `## Architecture & Conventions` | owns if `profiled`; fills if placeholder or missing |
-| `## Gotchas & Troubleshooting` | owns if `profiled`; fills if placeholder or missing |
-| `## Verification Map` | owns if `profiled`; fills if placeholder or missing |
+| `## Architecture & Conventions` | owns if `profiled`; fills if placeholder, `unverified`, or missing |
+| `## Gotchas & Troubleshooting` | owns if `profiled`; fills if placeholder, `unverified`, or missing |
+| `## Verification Map` | owns if `profiled`; fills if placeholder, `unverified`, or missing |
 | `## Notes & Learned Patterns` | never — belongs to the humans |
 | anything between `agent-skills:begin/end workflow` | **never** — overwritten on next adopt |
 | any other section the project wrote | never edits; may propose |
@@ -238,7 +238,22 @@ carrying an `agent-skills:profiled` marker, recompute
   Treat it under case 3 above: read it, report, do not edit.
 
 The cost of a re-run then scales with what actually changed rather than with the
-size of the project, which is what makes running it often practical.
+size of the project, which is what makes running it often practical. It scales
+with how *widely a source is cited*, though, not with how small the edit was:
+the manifest tends to be both the most-edited file and the most-cited source, so
+adding a dependency can legitimately flag every section at once.
+
+**A standing `unverified` marker is checked on every run, whatever the
+fingerprints say.** Two rules point opposite ways here and this is the
+precedence between them: a section can carry a `profiled` marker whose sources
+all match *and* an `unverified` marker inside it, which case 2 calls a section
+to write. Fingerprints decide whether to **re-derive** the section; they say
+nothing about the open question. Most `unverified` markers are about the
+**environment** rather than a file — "eslint is not installed here", "the
+credential does not exist yet" — and the environment is not a source, so no
+fingerprint will ever move and a marker gated on one would stand forever while
+the section reported as current. Retry the marker; leave the rest of the section
+alone unless a fingerprint moved.
 
 For each section the check flagged, sweep for the four kinds of decay, in this
 order:
@@ -249,10 +264,15 @@ order:
 2. **Paths that no longer exist.** Every path in the Repo Map and the
    Verification Map. A moved directory silently makes a map worse than no map,
    because it is confidently wrong.
-3. **`unverified` markers still standing.** Each one is a question someone could
-   not answer then. Try again — the browser may now install, the credential may
-   now exist — and either confirm it or narrow the marker to what is still
-   genuinely unconfirmed.
+3. **`unverified` markers still standing** — in every section, not only the ones
+   the check flagged, for the reason given above. Each one is a question someone
+   could not answer then. Re-run the *evidence*, under the same limits as the
+   first time: the declaration may now exist, the config file may have been
+   added, the `grep` may now find a caller. Then either confirm it or narrow the
+   marker to what is still genuinely unconfirmed. **Never lift the §2 limits to
+   close one** — if confirming still needs an install, a network call, or
+   anything that mutates, the marker stays, and the note says which command a
+   human should run once to settle it.
 4. **Gotchas whose cause is gone.** A workaround for a bug that has since been
    fixed sends the next agent around an obstacle that is no longer there. Where
    history shows the fix landed, say so rather than deleting the entry outright:
