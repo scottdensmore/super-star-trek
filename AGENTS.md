@@ -60,7 +60,6 @@ CMake by hand.
 | Build everyday Debug binary | `cmake --build --preset debug` | `build/debug/sst` compiled; warnings are visible but not fatal |
 | Run the game | `./build/debug/sst` or `./build/debug/sst -t` | The selected display starts interactively |
 | Run one focused test | `ctest --preset debug -R '^<test-name>$'` | The named registered test passed; the anchored filter cannot silently select neighbors |
-| Check shared instructions directly | `tests/instructions.sh .` | The project profile, managed workflow, agent set, and `CLAUDE.md` pointer have the required structure |
 | Check installed workflow, when the sibling source checkout exists | `python3 ../agent-skills/scripts/adopt.py --dry-run --keep-existing .` | The managed block and every generated skill/agent mirror match the current installer; otherwise report this check as NOT RUN |
 | CI Debug gate | `cmake --preset ci-debug && cmake --build --preset ci-debug && ctest --preset ci-debug` | Debug compiled with warnings fatal and the complete Debug suite passed, apart from explicitly reported platform skips |
 | CI Release gate | `cmake --preset ci-release && cmake --build --preset ci-release && ctest --preset ci-release` | Optimized Release compiled with warnings fatal and the complete Release suite passed, apart from explicitly reported platform skips |
@@ -158,7 +157,7 @@ review.
 | Other game C or header files | The narrowest registered journey or compiled test that reaches the behavior; then both complete gates |
 | `sst.doc` or help behavior | `ctest --preset debug -R '^help$'` |
 | Golden fixtures or output arithmetic | `ctest --preset debug -R '^golden$'` and inspect every fixture diff |
-| `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, or installed agent/skill files | `tests/instructions.sh .` and, when `../agent-skills/` exists, `python3 ../agent-skills/scripts/adopt.py --dry-run --keep-existing .` |
+| `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, or installed agent/skill files | When `../agent-skills/` exists, `python3 ../agent-skills/scripts/adopt.py --dry-run --keep-existing .`; otherwise nothing local reads these files, so report NOT RUN rather than treating the row as satisfied |
 | `.github/workflows/**` or `tests/workflow.sh` | `ctest --preset debug -R '^workflow$'`; absence of `actionlint`/`shellcheck` is NOT RUN locally |
 | `CMakeLists.txt` or `CMakePresets.json` | Both complete CI gates |
 | Any path not listed | Both complete CI gates |

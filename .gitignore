@@ -225,7 +225,6 @@ build-*/
 *.trk
 
 # Personal, unshared agent instructions -- shared rules go in AGENTS.md.
-# Anchored to the root, matching the only path tests/instructions.sh
-# exempts; a CLAUDE.local.md in a subdirectory is shared drift, not
-# personal, and should stay visible.
+# Anchored to the root: a CLAUDE.local.md in a subdirectory is shared
+# drift, not personal, and should stay visible.
 /CLAUDE.local.md

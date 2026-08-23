@@ -230,9 +230,8 @@ jobs:
           # In RUNNER_TEMP rather than the checkout: the tarball and the
           # extracted binary would otherwise sit at the repo root for
           # Configure, Build and Test. Nothing today notices -- there is
-          # no file(GLOB) in CMakeLists.txt and the one test that walks
-          # the tree, tests/instructions.sh, matches CLAUDE*.md -- so
-          # this is keeping the workspace as checked out, not a fix.
+          # no file(GLOB) in CMakeLists.txt and no test walks the tree --
+          # so this is keeping the workspace as checked out, not a fix.
           cd "$RUNNER_TEMP"
           url=https://github.com/rhysd/actionlint/releases/download
           tgz=actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz

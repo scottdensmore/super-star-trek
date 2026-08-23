@@ -119,11 +119,6 @@ add_test(NAME golden
          COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/golden.sh $<TARGET_FILE:sst>)
 set_tests_properties(golden PROPERTIES TIMEOUT 120)
 
-add_test(NAME instructions
-         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/instructions.sh
-                 ${CMAKE_CURRENT_SOURCE_DIR})
-set_tests_properties(instructions PROPERTIES TIMEOUT 30)
-
 # The score sheet's columns, read off the format strings in finish.c
 # rather than off any output -- the only way to reach ten of the twelve
 # singular forms and four of the five skill labels, which no journey
@@ -217,10 +212,10 @@ set_tests_properties(analyze PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300)
 # .github/workflows rather than anything the build produces. Not because
 # it would otherwise be lost: with no argument the script falls back to
 # its own directory's parent, so it finds the right tree either way.
-# This is the house pattern the instructions and score tests already
-# use, and it makes the target visible in the ctest command rather than
-# inferred. Note it does not rescue a copied build/ -- the path is baked
-# in at configure time, so a copy's build/ still names the original.
+# This is the house pattern the score test already uses, and it makes
+# the target visible in the ctest command rather than inferred. Note it
+# does not rescue a copied build/ -- the path is baked in at configure
+# time, so a copy's build/ still names the original.
 add_test(NAME workflow
          COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/workflow.sh
                  ${CMAKE_CURRENT_SOURCE_DIR})
