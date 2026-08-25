@@ -198,7 +198,7 @@ overrides the managed workflow's general requirement to ask for merge approval.
 Never bypass a pending or failing check, merge a different head than the one
 reviewed, or treat approval for one pull request as approval for another.
 
-<!-- agent-skills:begin workflow 3a15b8f6 — managed block, edits here are overwritten -->
+<!-- agent-skills:begin workflow 2d838e7f — managed block, edits here are overwritten -->
 ## Development Workflow
 
 Follow these stages in order (governed by the global `agent-workflow-skills`). Scale the pipeline to the
@@ -429,7 +429,9 @@ skipping it is how the file starts describing a project that no longer exists.
       approval from the user in the current conversation: merging (`gh pr merge`),
       force-pushing, rewriting shared history, deleting a branch or tag, dropping
       or migrating data, removing files wholesale, and publishing or deploying.
-      Approval for one of them is not approval for the next.
+      Approval for one of them is not approval for the next — except deleting the
+      branch an approved merge just took, which that merge does as part of itself,
+      not as a second act.
     - **Squash, unless this project says otherwise.** One reviewed slice lands as
       one commit on the base branch; the PR description is what survives, which is
       why it carries the reasoning. A project that requires merge commits or a
