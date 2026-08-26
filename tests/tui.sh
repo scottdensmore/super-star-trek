@@ -3620,6 +3620,40 @@ else
 		# assume for macOS.
 		kill -CONT "$stopped_pid" 2>/dev/null
 		stopped_pid=
+
+		# A command prompt uses readinput(), whose canonical mode the
+		# shell restores on fg. A paging pause uses getch() instead and
+		# needs non-canonical mode put back after that same resume. Before
+		# #190, the read restarted in the shell's canonical mode: Space
+		# sat in the line discipline and the player had to press Enter to
+		# release it. Reach the shared classic reader through the fallback
+		# game -- plain mode calls the same getch() without the preceding
+		# curses refusal -- and send no newline after fg, so only a working
+		# one-byte reader can get back to COMMAND.
+		tm send-keys -t "$pane" 'help move' Enter
+		if ! wait_for 'HIT SPACE BAR'; then
+			fail "suspend pause: help did not stop to page"
+			dump
+		else
+			stopped_pid=$(game_pid)
+			tm send-keys -t "$pane" C-z
+			if ! wait_for 'Stopped'; then
+				fail "suspend pause: C-z did not suspend the fallback game"
+				dump
+				kill -CONT "$stopped_pid" 2>/dev/null
+				stopped_pid=
+			else
+				tm send-keys -t "$pane" 'fg' Enter
+				sleep 1
+				tm send-keys -t "$pane" Space
+				if ! to_command; then
+					fail "suspend pause: Space did not answer the resumed pause without Enter"
+					dump
+				fi
+				kill -CONT "$stopped_pid" 2>/dev/null
+				stopped_pid=
+			fi
+		fi
 	fi
 fi
 
