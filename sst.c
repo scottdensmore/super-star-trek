@@ -141,19 +141,16 @@ static void helpme(void) {
 		/* Check if input matches a command */
 		const command_def_t *cmd = cmdtab_lookup(citem);
 		if (cmd != NULL) {
-			/* Print built-in syntax and example */
-			skip(1);
-			prout("Spock- \"Captain, command specifications:\"");
-			proutf("  Syntax:   %s\n", cmd->syntax);
-			proutf("  Summary:  %s\n", cmd->summary);
-			proutf("  Example:  %s\n", cmd->example);
-			skip(1);
-
 			fp = fopen("sst.doc", "r");
 			if (fp == NULL) {
-				prout("Spock-  \"Captain, that information is missing from the");
-				prout("   computer. You need to find SST.DOC and put it in the");
-				prout("   current directory.\"");
+				skip(1);
+				prout("Spock- \"Captain, command specifications:\"");
+				proutf("  Syntax:   %s\n", cmd->syntax);
+				proutf("  Summary:  %s\n", cmd->summary);
+				proutf("  Example:  %s\n", cmd->example);
+				skip(1);
+				prout("Spock-  \"Captain, detailed documentation in SST.DOC is missing,");
+				prout("   but standard specifications are shown above.\"");
 				return;
 			}
 			char cmdbuf[32];
@@ -173,7 +170,14 @@ static void helpme(void) {
 				}
 			}
 			if (!found) {
-				prout("Spock- \"Captain, there is no information on that command.\"");
+				skip(1);
+				prout("Spock- \"Captain, command specifications:\"");
+				proutf("  Syntax:   %s\n", cmd->syntax);
+				proutf("  Summary:  %s\n", cmd->summary);
+				proutf("  Example:  %s\n", cmd->example);
+				skip(1);
+				prout("Spock- \"Captain, detailed narrative documentation for that command");
+				prout("   is missing from SST.DOC, but specifications are shown above.\"");
 				fclose(fp);
 				return;
 			}
