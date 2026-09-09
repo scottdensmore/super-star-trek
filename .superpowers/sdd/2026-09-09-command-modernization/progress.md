@@ -12,3 +12,14 @@
 | Task 8 & All | Complete local CI verification | Final gate. |
 
 Ruling: Tasks 1-3 form the core `cmdtab` library. Task 6 modernizes interactive prompts in `moving.c` and `battle.c`. Since their file footprints are completely disjoint, they can proceed in parallel.
+
+## Execution Status
+- [x] Task 1-3: Core `cmdtab` library, fuzzy suggestions, topic registry & unit tests (`test_cmdtab`)
+- [x] Task 4-5: `sst.c` command dispatch, error guidance, topic reachability (#120) & `help.sh`
+- [x] Task 6: Modernized interactive prompts with examples (`moving.c`, `battle.c`)
+- [x] Task 7: Golden fixtures verification (0 regression diffs)
+- [x] Task 8: All local CI gates passed:
+  - `cmake --preset ci-debug && cmake --build --preset ci-debug && ctest --preset ci-debug` (100% passed)
+  - `cmake --preset ci-release && cmake --build --preset ci-release && ctest --preset ci-release` (100% passed)
+  - `ctest --preset debug -R '^lineendings$'` (100% passed)
+
