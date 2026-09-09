@@ -32,7 +32,7 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     cmake_print_variables(CMAKE_C_FLAGS)
 endif()
 
-add_executable(sst sst.c ai.c battle.c events.c finish.c moving.c osx.c planets.c reports.c rules.c setup.c tui.c tuifmt.c)
+add_executable(sst sst.c ai.c battle.c cmdtab.c events.c finish.c moving.c osx.c planets.c reports.c rules.c setup.c tui.c tuifmt.c)
 
 set(CURSES_NEED_NCURSES TRUE)
 find_package(Curses REQUIRED)
@@ -48,6 +48,11 @@ if(TINFO_LIBRARY)
 endif()
 
 enable_testing()
+add_executable(test_cmdtab tests/test_cmdtab.c cmdtab.c)
+target_include_directories(test_cmdtab PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(test_cmdtab PRIVATE m)
+add_test(NAME cmdtab COMMAND test_cmdtab)
+
 add_executable(test_tuifmt tests/test_tuifmt.c tuifmt.c)
 target_link_libraries(test_tuifmt PRIVATE m)
 add_test(NAME tuifmt COMMAND test_tuifmt)
