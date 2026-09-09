@@ -310,7 +310,7 @@ static void getcd(int isprobe, int akey) {
 			key = scan();
 
 		if (key == IHEOL) {
-			proutn("Manual or automatic- ");
+			proutn("Manual or automatic navigation (e.g. 'manual 1 3')- ");
 			iprompt = 1;
 			chew();
 		}
@@ -344,9 +344,9 @@ static void getcd(int isprobe, int akey) {
 	if (automatic) {
 		while (key == IHEOL) {
 			if (isprobe)
-				proutn("Target quadrant or quadrant&sector- ");
+				proutn("Target quadrant or quadrant&sector (e.g. 4 5 1 2)- ");
 			else
-				proutn("Destination sector or quadrant&sector- ");
+				proutn("Destination sector or quadrant&sector (e.g. 4 5 1 2)- ");
 			chew();
 			iprompt = 1;
 			key = scan();
@@ -413,7 +413,7 @@ static void getcd(int isprobe, int akey) {
 	}
 	else { /* manual */
 		while (key == IHEOL) {
-			proutn("X and Y displacements- ");
+			proutn("X and Y displacements (e.g. 1 3)- ");
 			chew();
 			iprompt = 1;
 			key = scan();
@@ -672,7 +672,7 @@ void setwrp(void) {
 	
 	while ((key=scan()) == IHEOL) {
 		chew();
-		proutn("Warp factor-");
+		proutn("Warp factor (1.0 to 10.0, e.g. 6.0)- ");
 	}
 	chew();
 	if (key != IHREAL) {
@@ -919,7 +919,7 @@ void probe(void) {
 		key = scan();
 	}
 	else if (key == IHEOL) {
-		proutn("Arm NOVAMAX warhead?");
+		proutn("Arm NOVAMAX warhead (detonates at target)? (Y/N): ");
 		isarmed = ja();
 	}
 	getcd(TRUE, key);

@@ -120,7 +120,7 @@ void sheild(int i) {
 		if (action==NONE) {
 			proutn("Do you wish to change shield energy? ");
 			if (ja()) {
-				proutn("Energy to transfer to shields- ");
+				proutn("Energy to transfer to shields (+ to raise, - to drop, e.g. +300)- ");
 				action = NRG;
 			}
 			else if (damage[DSHIELD]) {
@@ -176,7 +176,7 @@ void sheild(int i) {
 		case NRG:
 			while (scan() != IHREAL) {
 				chew();
-				proutn("Energy to transfer to shields- ");
+				proutn("Energy to transfer to shields (+ to raise, - to drop, e.g. +300)- ");
 			}
 			chew();
 			if (aaitem==0) return;
@@ -835,7 +835,7 @@ void photon(void) {
 		else if (key == IHEOL) {
 			crami(torps,1);
 			prout(" torpedoes left.");
-			proutn("Number of torpedoes to fire- ");
+			proutn("Number of torpedoes to fire (1-3, e.g. 1)- ");
 			key = scan();
 		}
 		else /* key == IHREAL */ {
@@ -885,7 +885,7 @@ void photon(void) {
 		for (i = 1; i <= n; i++) {
 			proutn("Target sector for torpedo number");
 			crami(i, 2);
-			proutn("- ");
+			proutn(" (r c, e.g. 1 3)- ");
 			key = scan();
 			if (key != IHREAL) {
 				huh();
@@ -1096,7 +1096,7 @@ void phasers(void) {
 			else if (!ipoop)
 				automode = FORCEMAN;
 			else 
-			proutn("Manual or automatic? ");
+			proutn("Manual or automatic phaser fire (e.g. 'auto 500')? ");
 		}
 	}
 				
@@ -1114,7 +1114,7 @@ void phasers(void) {
 			do {
 				while (key != IHREAL) {
 					chew();
-					proutn("Units to fire=");
+					proutn("Units to fire (e.g. 500, or 0 to cancel)= ");
 					key = scan();
 				}
 				rpow = aaitem;
