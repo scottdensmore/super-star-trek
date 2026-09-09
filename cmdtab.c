@@ -158,11 +158,11 @@ static command_def_t commands[] = {
 #define NUM_CMDS ((int)(sizeof(commands)/sizeof(commands[0])))
 
 static topic_def_t topics[] = {
-    {"scoring", "Game Scoring System", "       SCORING", "******"},
-    {"tui", "Full-Screen TUI Mode & Resizing", "A full-screen interface", "******"},
-    {"notes", "Miscellaneous Game Notes", "       MISCELLANEOUS NOTES", "******"},
-    {"abbrev", "Command Abbreviations", "COMMAND ABBREVIATIONS", "******"},
-    {"modifications", "Game Modifications", "       MODIFICATIONS", "******"}
+    {"scoring", "Game Scoring System", "SCORING", "COMMAND ABBREVIATIONS"},
+    {"tui", "Full-Screen TUI Mode & Resizing", "optional full-screen interface", "ACKNOWLEDGMENTS"},
+    {"notes", "Miscellaneous Game Notes", "MISCELLANEOUS NOTES", "SCORING"},
+    {"abbrev", "Command Abbreviations", "COMMAND ABBREVIATIONS", "MODIFICATIONS"},
+    {"modifications", "Game Modifications", "MODIFICATIONS", "ACKNOWLEDGMENTS"}
 };
 
 #define NUM_TOPICS ((int)(sizeof(topics)/sizeof(topics[0])))
@@ -304,24 +304,43 @@ const topic_def_t *cmdtab_topic_lookup(const char *input) {
     return NULL;
 }
 
+static void (*printer_fn)(const char *) = NULL;
+
+void cmdtab_set_printer(void (*fn)(const char *)) {
+    printer_fn = fn;
+}
+
+static void print_line(const char *s) {
+    if (printer_fn) {
+        printer_fn(s);
+    } else {
+        printf("%s\n", s);
+    }
+}
+
 void cmdtab_print_categories(void) {
+    char buf[128];
     static const char *cat_names[] = {
         "Navigation", "Combat & Defense", "Sensors & Intelligence",
         "Ship Operations", "System & Game"
     };
 
     for (int c = 0; c < 5; c++) {
-        printf("--- %s ---\n", cat_names[c]);
+        snprintf(buf, sizeof(buf), "--- %s ---", cat_names[c]);
+        print_line(buf);
         for (int i = 0; i < NUM_CMDS; i++) {
             if (!commands[i].enabled || commands[i].category != (cmd_category_t)c) continue;
-            printf("  %-10s : %s\n", commands[i].name, commands[i].summary);
+            snprintf(buf, sizeof(buf), "  %-10s : %s", commands[i].name, commands[i].summary);
+            print_line(buf);
         }
     }
 }
 
 void cmdtab_print_topics(void) {
-    printf("--- Manual Topics (Use HELP <topic>) ---\n");
+    char buf[128];
+    print_line("--- Manual Topics (Use HELP <topic>) ---");
     for (int i = 0; i < NUM_TOPICS; i++) {
-        printf("  %-14s : %s\n", topics[i].name, topics[i].title);
+        snprintf(buf, sizeof(buf), "  %-14s : %s", topics[i].name, topics[i].title);
+        print_line(buf);
     }
 }

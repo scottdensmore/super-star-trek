@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include "tui.h"
+#include "cmdtab.h"
 #include <ctype.h>
 #include <stdarg.h>
 #ifdef MSDOS
@@ -58,50 +59,6 @@ static void clearscreen(void);
 // I don't like the way this is done, relying on an index. But I don't
 // want to invest the time to make this nice and table driven.
 
-static char *commands[] = {
-	"srscan",
-	"lrscan",
-	"phasers",
-	"photons",
-	"move",
-	"shields",
-	"dock",
-	"damages",
-	"chart",
-	"impulse",
-	"rest",
-	"warp",
-	"status",
-	"sensors",
-	"orbit",
-	"transport",
-	"mine",
-	"crystals",
-	"shuttle",
-	"planets",
-	"request",
-	"report",
-	"computer",
-	"commands",
-    "emexit",
-    "probe",
-    "cloak",
-    "capture",
-    "score",
-	"abandon",
-	"destruct",
-	"freeze",
-	"deathray",
-	"debug",
-	"call",
-	"quit",
-    "help"
- 
-};
-
-/* Signed, because every loop below counts through it with an int. */
-#define NUMCOMMANDS ((int)(sizeof(commands)/sizeof(char *)))
-
 static void listCommands(int x) {
 	prout("   SRSCAN    MOVE      PHASERS   CALL\n"
 		  "   STATUS    IMPULSE   PHOTONS   ABANDON\n"
@@ -126,11 +83,8 @@ static void listCommands(int x) {
 }
 
 static void helpme(void) {
-	int i, j;
-	char cmdbuf[32];
 	char linebuf[132];
 	FILE *fp;
-	/* Give help on commands */
 	int key;
 	key = scan();
 	while (TRUE) {
@@ -139,66 +93,124 @@ static void helpme(void) {
 			key = scan();
 		}
 		if (key == IHEOL) return;
-		for (i = 0; i < NUMCOMMANDS; i++) {
-			if (strcmp(commands[i], citem)==0) break;
+
+		if (strcmp(citem, "topics") == 0) {
+			cmdtab_print_topics();
+			return;
 		}
-		if (i != NUMCOMMANDS) break;
-		skip(1);
-		prout("Valid commands:");
-		listCommands(FALSE);
+
+		/* Check if input matches a documentation topic */
+		const topic_def_t *topic = cmdtab_topic_lookup(citem);
+		if (topic != NULL) {
+			fp = fopen("sst.doc", "r");
+			if (fp == NULL) {
+				prout("Spock-  \"Captain, that information is missing from the");
+				prout("   computer. You need to find SST.DOC and put it in the");
+				prout("   current directory.\"");
+				return;
+			}
+			int found = 0;
+			while (fgets(linebuf, sizeof(linebuf), fp) != NULL) {
+				if (strstr(linebuf, topic->doc_header) != NULL) {
+					found = 1;
+					break;
+				}
+			}
+			if (!found) {
+				prout("Spock- \"Captain, there is no information on that topic.\"");
+				fclose(fp);
+				return;
+			}
+			skip(1);
+			prout("Spock- \"Captain, I've found the following information:\"");
+			skip(1);
+			do {
+				if (linebuf[0] != 12) {
+					char *end = linebuf + strlen(linebuf);
+					while (end > linebuf && (end[-1] == '\n' || end[-1] == '\r'))
+						*--end = '\0';
+					prout(linebuf);
+				}
+				if (fgets(linebuf, sizeof(linebuf), fp) == NULL)
+					break;
+			} while (strstr(linebuf, topic->doc_end) == NULL);
+			fclose(fp);
+			return;
+		}
+
+		/* Check if input matches a command */
+		const command_def_t *cmd = cmdtab_lookup(citem);
+		if (cmd != NULL) {
+			/* Print built-in syntax and example */
+			skip(1);
+			prout("Spock- \"Captain, command specifications:\"");
+			proutf("  Syntax:   %s\n", cmd->syntax);
+			proutf("  Summary:  %s\n", cmd->summary);
+			proutf("  Example:  %s\n", cmd->example);
+			skip(1);
+
+			fp = fopen("sst.doc", "r");
+			if (fp == NULL) {
+				prout("Spock-  \"Captain, that information is missing from the");
+				prout("   computer. You need to find SST.DOC and put it in the");
+				prout("   current directory.\"");
+				return;
+			}
+			char cmdbuf[32];
+			if (cmd->id == 23) {
+				strcpy(cmdbuf, " ABBREV");
+			} else {
+				strcpy(cmdbuf, "  Mnemonic:  ");
+				int j = 0;
+				while ((cmdbuf[j + 13] = toupper(cmd->name[j])) != 0) j++;
+			}
+			int cmdbuflen = strlen(cmdbuf);
+			int found = 0;
+			while (fgets(linebuf, sizeof(linebuf), fp) != NULL) {
+				if (strncmp(linebuf, cmdbuf, cmdbuflen) == 0) {
+					found = 1;
+					break;
+				}
+			}
+			if (!found) {
+				prout("Spock- \"Captain, there is no information on that command.\"");
+				fclose(fp);
+				return;
+			}
+			skip(1);
+			prout("Spock- \"Captain, I've found the following information:\"");
+			skip(1);
+			do {
+				if (linebuf[0] != 12) {
+					char *end = linebuf + strlen(linebuf);
+					while (end > linebuf && (end[-1] == '\n' || end[-1] == '\r'))
+						*--end = '\0';
+					prout(linebuf);
+				}
+				if (fgets(linebuf, sizeof(linebuf), fp) == NULL) {
+					prout("Spock- \"Captain, the rest of that entry is missing from the computer.\"");
+					break;
+				}
+			} while (strstr(linebuf, "******") == NULL);
+			fclose(fp);
+			return;
+		}
+
+		/* If neither topic nor command matched, suggest */
+		const command_def_t *sug = cmdtab_suggest(citem);
+		if (sug != NULL) {
+			proutf("Spock- \"Captain, there is no command or topic '%s'. Did you mean '%s'?\"\n", citem, sug->name);
+			proutf("Example: %s\n", sug->example);
+			proutf("Type 'HELP %s' for details or 'COMMANDS' for a list.\n", sug->name);
+		} else {
+			skip(1);
+			prout("Valid commands:");
+			listCommands(FALSE);
+		}
 		key = IHEOL;
 		chew();
 		skip(1);
 	}
-	if (i == 23) {
-		strcpy(cmdbuf, " ABBREV");
-	}
-	else {
-		strcpy(cmdbuf, "  Mnemonic:  ");
-		j = 0;
-		while ((cmdbuf[j+13] = toupper(commands[i][j])) != 0) j++;
-	}
-	fp = fopen("sst.doc", "r");
-	if (fp == NULL) {
-		prout("Spock-  \"Captain, that information is missing from the");
-		prout("   computer. You need to find SST.DOC and put it in the");
-		prout("   current directory.\"");
-		return;
-	}
-	i = strlen(cmdbuf);
-	do {
-		if (fgets(linebuf, 132, fp) == NULL) {
-			prout("Spock- \"Captain, there is no information on that command.\"");
-			fclose(fp);
-			return;
-		}
-	} while (strncmp(linebuf, cmdbuf, i) != 0);
-
-	skip(1);
-	prout("Spock- \"Captain, I've found the following information:\"");
-	skip(1);
-
-	do {
-		if (linebuf[0]!=12) { // ignore page break lines 
-			/* sst.doc has CRLF endings. Dropping only the \n
-			   leaves a \r, and in the full-screen display that
-			   returns the cursor to column 0 so the following
-			   newline wipes the line that was just drawn --
-			   which is why help used to come out blank there. */
-			char *end = linebuf + strlen(linebuf);
-			while (end > linebuf && (end[-1] == '\n' || end[-1] == '\r'))
-				*--end = '\0';
-			prout(linebuf);
-		}
-		/* A topic with no ****** terminator would otherwise
-		   reprint its last line for ever. Say so, the way the
-		   other two ways this can fail already do. */
-		if (fgets(linebuf,132,fp) == NULL) {
-			prout("Spock- \"Captain, the rest of that entry is missing from the computer.\"");
-			break;
-		}
-	} while (strstr(linebuf, "******")==NULL);
-	fclose(fp);
 }
 
 static void makemoves(void) {
@@ -209,39 +221,22 @@ static void makemoves(void) {
         Time = 0.0;
         i = -1;
         while (TRUE) { /* get a command */
-            int matched = 0;
             chew();
             skip(1);
             proutn("COMMAND> ");
             if (scan() == IHEOL) continue;
-            for (i = 0; i < 29; i++) // Abbreviations allowed for the first 29 commands, only.
-                if (isit(commands[i]))
-                    break;
-            if (i < 29) {
-                matched = 1;
-            } else {
-                for (; i < NUMCOMMANDS; i++)
-                    if (strcmp(commands[i], citem) == 0) {
-                        matched = 1;
-                        break;
-                    }
+            const command_def_t *cmd = cmdtab_lookup(citem);
+            if (cmd != NULL) {
+                i = cmd->id;
+                break;
             }
-            if (matched
-#ifndef CLOAKING
-                    && i != 26 // ignore the CLOAK command
-#endif
-#ifndef CAPTURE
-                    && i != 27 // ignore the CAPTURE command
-#endif
-#ifndef SCORE
-                    && i != 28 // ignore the SCORE command
-#endif
-#ifndef DEBUG
-                    && i != 33 // ignore the DEBUG command
-#endif
-                    ) break;
 
-            if (skill <= SFAIR) {
+            const command_def_t *sug = cmdtab_suggest(citem);
+            if (sug != NULL) {
+                proutf("UNRECOGNIZED COMMAND '%s'. Did you mean '%s'?\n", citem, sug->name);
+                proutf("Example: %s\n", sug->example);
+                proutf("Type 'HELP %s' for details or 'COMMANDS' for a list.\n", sug->name);
+            } else if (skill <= SFAIR) {
                 prout("UNRECOGNIZED COMMAND. LEGAL COMMANDS ARE:");
                 listCommands(TRUE);
             } else prout("UNRECOGNIZED COMMAND.");
@@ -602,9 +597,16 @@ static void refusal_notice(int retry) {
 }
 
 
+static void sst_print(const char *s) {
+	prout((char *)s);
+}
+
 int main(int argc, char **argv) {
 	int usetui = 0;
 	int resized;
+
+	cmdtab_init();
+	cmdtab_set_printer(sst_print);
 
 	while (argc > 1) { // look for -f and -t options
 		if (strcmp(argv[1], "-f") == 0)

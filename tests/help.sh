@@ -58,10 +58,11 @@ run() {
 out="$work/out.txt"
 rc="$work/rc.txt"
 
-# The real manual, and one cut off before its end-of-topic marker.
+# The real manual, one truncated, and one empty directory (no manual).
 real="$work/real"
 trunc="$work/trunc"
-mkdir -p "$real" "$trunc"
+nodoc="$work/nodoc"
+mkdir -p "$real" "$trunc" "$nodoc"
 if [ ! -f "$srcdir/sst.doc" ]; then
 	echo "FAIL: cannot find sst.doc next to $srcdir" >&2
 	exit 1
@@ -141,6 +142,48 @@ help move
 ' "$trunc"
 want "truncated manual: printed nothing" "some help text"
 want "truncated manual: said nothing about the missing rest" "rest of that entry is missing"
+# --- documentation topics are reachable (issue #120) ----------------
+before=$fails
+play "help scoring topic" 'regular
+short
+novice
+xyz
+help scoring
+' "$real"
+want "help scoring: failed to print SCORING section" "SCORING"
+dump_if_failed "$before"
+
+before=$fails
+play "help tui topic" 'regular
+short
+novice
+xyz
+help tui
+' "$real"
+want "help tui: failed to print full-screen section" "interface"
+dump_if_failed "$before"
+
+# --- built-in quick reference works even without sst.doc --------------
+before=$fails
+play "help without sst.doc" 'regular
+short
+novice
+xyz
+help move
+' "$nodoc"
+want "help without doc: missing built-in syntax" "Syntax:"
+want "help without doc: missing built-in example" "Example:"
+dump_if_failed "$before"
+
+# --- typo suggestions in help -----------------------------------------
+before=$fails
+play "help typo suggestion" 'regular
+short
+novice
+xyz
+help mvoe
+' "$real"
+want "help typo: failed to suggest move" "Did you mean 'move'?"
 dump_if_failed "$before"
 
 if [ "$fails" -ne 0 ]; then

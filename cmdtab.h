@@ -38,6 +38,7 @@ int cmdtab_topic_count(void);
 const topic_def_t *cmdtab_topic_get(int index);
 const topic_def_t *cmdtab_topic_lookup(const char *input);
 
+void cmdtab_set_printer(void (*fn)(const char *));
 void cmdtab_print_categories(void);
 void cmdtab_print_topics(void);
 
