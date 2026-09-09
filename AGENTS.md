@@ -10,19 +10,8 @@ Super Star Trek is a classic terminal space-strategy game written in C17 and
 built with CMake. The shipped executable is `sst`; player documentation is in
 `sst.doc`.
 
-### UI Domain
-
-The UI domain is Terminal/CLI. Plain line-oriented mode and the optional
-ncurses full-screen mode (`sst -t`) are both player-facing.
-
-UI-review applicability is based on the effect of a change, not only its file
-type. A build- or configuration-only diff still requires UI review when it
-changes compiled sources, `DEBUG`, `SCORE`, `CAPTURE`, `CLOAKING`, or another
-choice that can alter player commands, prompts, or messages. It is N/A only
-when the build/configuration change cannot alter player-visible behavior (for
-example, comments, warning policy, or CI plumbing). This repository-specific
-contract overrides the generated `ui-reviewer` file-type shortcut.
-
+- **UI domain:** Terminal/CLI. Plain line-oriented mode and the optional
+  ncurses full-screen mode (`sst -t`) are both player-facing.
 - **Supported hosts:** Linux and macOS. There is currently no working Windows
   build because the game depends on ncurses.
 - **Base branch:** `main`.
@@ -41,12 +30,8 @@ contract overrides the generated `ui-reviewer` file-type shortcut.
 | Build and test definition | `CMakeLists.txt` and `CMakePresets.json` |
 | CI gate | `.github/workflows/ci.yml` |
 | Generated output — never edit | `build/<preset>/`; regenerate with the matching CMake preset |
-| Installed agent workflow | `.agents/` is the canonical installed bundle; tool-specific mirrors live under `.claude/`, `.codex/`, `.cursor/`, `.gemini/`, and `.github/agents/` |
 
-The build declares no generated or vendored source directory. The generated
-agent and skill mirrors are installer-owned; update them by rerunning the
-installer that wrote `.agents/agent-skills.json`, not by editing one mirror
-independently.
+The build declares no generated or vendored source directory.
 
 ## Development Commands
 
@@ -59,12 +44,12 @@ CMake by hand.
 | Configure everyday Debug build | `cmake --preset debug` | CMake generated `build/debug/` with the declared dependencies |
 | Build everyday Debug binary | `cmake --build --preset debug` | `build/debug/sst` compiled; warnings are visible but not fatal |
 | Run the game | `./build/debug/sst` or `./build/debug/sst -t` | The selected display starts interactively |
+| Run all debug tests | `ctest --preset debug` | The complete debug test suite passed |
 | Run one focused test | `ctest --preset debug -R '^<test-name>$'` | The named registered test passed; the anchored filter cannot silently select neighbors |
-| Check installed workflow, when the sibling source checkout exists | `python3 ../agent-skills/scripts/adopt.py --dry-run --keep-existing .` | The managed block and every generated skill/agent mirror match the current installer; otherwise report this check as NOT RUN |
 | CI Debug gate | `cmake --preset ci-debug && cmake --build --preset ci-debug && ctest --preset ci-debug` | Debug compiled with warnings fatal and the complete Debug suite passed, apart from explicitly reported platform skips |
 | CI Release gate | `cmake --preset ci-release && cmake --build --preset ci-release && ctest --preset ci-release` | Optimized Release compiled with warnings fatal and the complete Release suite passed, apart from explicitly reported platform skips |
 
-The verifier runs both CI gates. CI itself runs that pair on Linux and macOS.
+Both CI gates must pass. CI itself runs that pair on Linux and macOS.
 A passing local gate does not cover a test reported as skipped; name skips
 rather than folding them into a pass.
 
@@ -138,17 +123,11 @@ tmux socket.
 - The `tui`, `analyze`, `workflow`, and `lineendings` tests may skip locally
   when their tools are absent -- `lineendings` needs `git` and a work tree.
   A skip is an environment gap, not a passing check.
-- The managed triage table decides which workflow stages apply. The
-  `slice-and-pr` instruction to commit only after UI review, verification, and
-  code review have passed means every gate selected for the current track; it
-  does not re-enable a stage the table skips. Record each skipped or
-  not-applicable stage and its reason.
 
 ## Verification Map
 
-Use this map after a fix to select the affected checks. The complete Debug and
-Release CI gates must still both run at least once on the state entering code
-review.
+Use this map after a fix to select the affected checks. Both complete Debug and
+Release CI gates must still run before completing changes.
 
 | A fix touches | Focused check before the complete gate |
 |---|---|
@@ -158,10 +137,10 @@ review.
 | Other game C or header files | The narrowest registered journey or compiled test that reaches the behavior, and `ctest --preset debug -R '^lineendings$'`; then both complete gates |
 | `sst.doc` or help behavior | `ctest --preset debug -R '^help$'` and `ctest --preset debug -R '^lineendings$'` |
 | Golden fixtures or output arithmetic | `ctest --preset debug -R '^golden$'` and inspect every fixture diff |
-| `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, or installed agent/skill files | When `../agent-skills/` exists, `python3 ../agent-skills/scripts/adopt.py --dry-run --keep-existing .`; otherwise nothing local reads these files, so report NOT RUN rather than treating the row as satisfied |
-| `.github/workflows/**` or `tests/workflow.sh` | `ctest --preset debug -R '^workflow$'`; absence of `actionlint`/`shellcheck` is NOT RUN locally |
+| Documentation or agent instructions (`README.md`, `AGENTS.md`, etc.) | `ctest --preset debug -R '^lineendings$'` |
+| `.github/workflows/**` or `tests/workflow.sh` | `ctest --preset debug -R '^workflow$'`; absence of `actionlint`/`shellcheck` is a skip (77) locally |
 | `CMakeLists.txt` or `CMakePresets.json` | Both complete CI gates |
-| `.gitattributes` or `tests/lineendings.sh` | `ctest --preset debug -R '^lineendings$'`; without `git` it exits 77 and that is NOT RUN, not a pass |
+| `.gitattributes` or `tests/lineendings.sh` | `ctest --preset debug -R '^lineendings$'`; without `git` it exits 77 (skipped), not a pass |
 | Any path not listed | Both complete CI gates |
 
 **`lineendings` is named in every source row, not only its own.** Rows match
@@ -183,271 +162,18 @@ pasted.
 
 ## Git
 
-Self-merges are allowed in this repository. An agent may squash-merge its own
-pull request without requesting separate approval once all of these are true:
-
-- the pull request head is the exact locally reviewed and verified commit;
-- GitHub reports the pull request clean and mergeable;
-- every required check has completed successfully;
-- no unresolved review threads or required changes remain; and
-- a final readback confirms the base branch, head SHA, and clean local
-  worktree.
-
-Use squash merge and delete the merged branch. This standing project policy
-overrides the managed workflow's general requirement to ask for merge approval.
-Never bypass a pending or failing check, merge a different head than the one
-reviewed, or treat approval for one pull request as approval for another.
-
-<!-- agent-skills:begin workflow 2d838e7f — managed block, edits here are overwritten -->
-## Development Workflow
-
-Follow these stages in order (governed by the global `agent-workflow-skills`). Scale the pipeline to the
-size of the change using the triage table — skipping a stage is a decision to
-state out loud, never a shortcut taken silently. A stage in parentheses applies
-only when its own entry says it does.
-
-| Track | When | Stages |
-|---|---|---|
-| **Trivial** | Docs, comments, typos, config with no logic change | 1 → 6 → 10 |
-| **Single fix** | One bug or small change with a clear, contained cause | 1 → 2 → 5 → 6 → (7) → (8) → 9 → 10 |
-| **Feature** | New behavior, several files, or an architectural choice | All stages; repeat 5–9 per slice |
-
-**Division of labor.** The main agent runs only focused checks — the single test
-it just wrote, a formatter over the files it just touched. Whole suites, builds,
-dependency audits, and repository-wide lint go to the **`verifier`** subagent;
-reviews go to **`code-reviewer`**, **`ui-reviewer`** and **`localization-reviewer`**.
-Each follows the skill of the same job (`verifier`, `code-review`, `ui-review`,
-`localization-review`), reads this file for
-what the project's commands and criteria are, and is declared without
-file-editing tools. The reviewers get a read-only sandbox where the host
-supports one; the verifier cannot, because running a build writes. This is
-not ceremony: it keeps routine command output out of the implementation context,
-and it means each gate is read by something that has not already convinced
-itself the change is correct.
-
-**A gate stage is requested, not performed.** Verification, UI review,
-localization review and code review are not work the main agent does; they are work it asks a subagent for.
-Whether a stage *applies* is your judgment, and each stage below says what it
-covers. Where an applicable stage *runs* is not: it runs in its subagent,
-invoked by name. Normal adoption installs those definitions for every supported
-host; `--skip-skills` is valid only where equivalent named skills and subagents
-already exist in the repository.
-
-Every **gate** stage — verification, UI review, localization review, code
-review — ends in exactly one of three states, and each is reported differently:
-
-- **Ran** — its subagent returned a verdict. Report the verdict.
-- **Not applicable** — your track excludes it, or the change cannot alter what it
-  judges. Report `N/A` in one line naming which. This is a decision, not a skip.
-- **`NOT RUN`** — it applies, you invoked it, and the invocation failed; or the
-  user waived it. Report the subagent, the host, the invocation and the error.
-
-"Applicable" means the second state does not hold. A stage your track never
-included is not missing — it was never owed.
-
-None of these is a reason to run a gate in your own context: the change is
-small, you already ran the tests, you are confident it is right, delegating
-looks slower, the user is in a hurry, no subagent appears to be configured, or
-you plan to run it inline and say that you did. That last one is the failure
-this rule exists to prevent — a gate read by the context that wrote the code is
-not a second opinion, whatever it is labelled.
-
-**Unavailable is observed, never assumed.** A subagent is unavailable only after
-you invoked it and the invocation failed. Then the stage is `NOT RUN`: record
-the subagent, the host, the exact invocation and the exact error, both in your
-report and in the pull request description, and open that pull request as a
-draft. Nothing is blocked by a gate you could not run, and nothing you could not
-run is ever described as passed. A user may waive a stage outright; quote the
-waiver and mark the stage the same way.
-
-**Stages end.** Every delegated stage returns a verdict, and a verdict is acted
-on once. Fix what came back, then rerun only the stage whose inputs your fix
-touched. If the same finding survives two attempts, stop and report it with what
-you tried — do not loop. Never rerun a stage against a state it has already
-seen; an unchanged tree yields an unchanged verdict.
-
-**Preserve what you did not change.** A worktree may hold work that is not yours.
-Never stage, revert, or "clean up" a change you did not make; when something
-unrelated is in the way, name it and leave it alone.
-
-**Claim only what you observed.** A gate licenses a statement about exactly
-what it measured and nothing more: a green build says the code compiles, not
-that the feature works; a passing test says that test passed, not that the bug
-is gone. If you did not run it, say you did not. "I believe this fixes it" is a
-usable sentence; "fixed and verified" without a command and its output is not.
-
-**Say what you assumed.** When a choice would change what gets delivered and the
-request does not settle it, ask before building rather than after. When it is
-too small to be worth asking, decide, and write the assumption where a reviewer
-will see it. An assumption nobody can see is indistinguishable from a mistake.
-
-**Instructions are part of the change.** When a command, a behavior, or a
-constraint changes, the file that documents it changes in the same commit —
-`AGENTS.md`, the Verification Map, the README, whichever is now wrong. Stale
-instructions are worse than missing ones, because the next agent follows them
-confidently. When the change moves something this file was *derived* from — a gate
-command, the test layout, a generated path — run the `project-profile` skill in the
-same slice. It re-checks only the sections whose sources moved, so it is cheap, and
-skipping it is how the file starts describing a project that no longer exists.
-
-1. **Inspect & Branch**: Inspect `git status`, the current branch, and every
-   applicable instruction file before touching anything. Note unrelated staged,
-   unstaged, and untracked work so you can preserve it. Fetch the base branch
-   (`git fetch origin main`) and create a dedicated branch:
-   `git checkout -b <owner>/<type>/<short-description> origin/main`.
-   `<owner>` is your GitHub login (`gh api user --jq .login`); `<type>` is one of
-   `feat`, `fix`, `refactor`, `chore`, `test`, `docs`. Never commit to `main`.
-2. **Plan & Slice (`plan-and-prototype`)**:
-   - **Read before you plan.** Open the code the change will touch, its tests, and
-     its call sites. A plan written without reading them is a guess about a
-     codebase rather than a plan for this one.
-   - Formulate a clear step-by-step plan before writing code. Define the smallest
-     end-to-end slice that can be reviewed, tested, and shipped independently; if
-     the work is too large for one pull request, order the slices and complete only
-     the current one.
-   - **A slice is vertical, not horizontal.** It goes through every layer of one
-     narrow thing and ends in something you can actually verify: "add the new field
-     end to end, with tests" is a slice; "rename the field everywhere" is a sweep.
-     One concern per branch — if a change spans unrelated concerns, that is two
-     branches.
-   - **A new dependency is an architectural decision, not an implementation
-     detail.** Say what it replaces, why writing that yourself is the worse option,
-     and what its license and maintenance status are. Adding one silently is how a
-     project acquires a liability nobody chose.
-3. **Prototype Options (if needed)**: When facing architectural choices, unfamiliar
-   APIs, or UX alternatives, spike lightweight prototypes and compare trade-offs
-   before committing to an approach.
-4. **Track Bugs & Follow-ups**: When bugs, edge cases, technical debt, or follow-up
-   tasks surface mid-change, file them immediately (`gh issue create`, the project's
-   tracker, or `ISSUES.md` when none is configured) instead of expanding the current
-   slice.
-5. **Test-Driven Development (`tdd-workflow`)**:
-   - Write/update a focused test first → confirm it fails for the expected reason →
-     minimal implementation → iterate until passing → refactor. A test that passes
-     before the code exists is testing the wrong thing.
-   - **When the change replaces an existing contract, find the tests pinning the old
-     one first.** A new failing test proves the new behavior is missing; it says
-     nothing about tests still asserting the behavior being removed. Search for
-     assertions on the symbol, attribute, label, or role being changed and update
-     them inside the same red/green loop. Skipping this is silently safe — the new
-     test goes green, the loop looks complete, and the contradiction only surfaces a
-     full gate cycle later.
-   - **A test that has never failed is not evidence of anything.** When you add a
-     regression detector, break the thing it guards and confirm it catches it, then
-     put it back. A detector that cannot be shown to fire is decoration.
-   - Run only the test you authored or changed, filtered by file and name. Whole
-     suites are stage 6's job.
-   - Pure logic (calculations, state machines, business rules) must be unit-tested.
-     Non-testable areas (rendering, audio) must be visually/interactively verified.
-6. **Verification (`verifier` subagent → `verifier` skill)**:
-   - Run the project's full gate: lint, type-check, test suites, build. Focused runs
-     from stage 5 do not substitute for it.
-   - **Know what green looked like before you started.** If you do not know the
-     gate passed on the state you began from, establish that first. Without it a
-     failure is ambiguous — you cannot tell what you broke from what you inherited,
-     and every later decision rests on that distinction.
-   - **Measure the thing you ship, not a proxy for it.** A gate that checks part of
-     the output, or a stand-in for it, reads exactly like one that checks all of it
-     — and certifies the rest by silence. If a command covers less than it appears
-     to, say what it left out.
-   - The subagent runs and reports; fixing is yours. Resolve every actionable
-     finding before code review. When a fix changes code, rerun the affected focused
-     tests, then ask for only the gate commands whose inputs the fix touched — see
-     **Verification Map** below if this project defines one. If it defines none,
-     ask for the complete gate: without a map you cannot tell which commands the
-     fix invalidated, and guessing is how a command gets certified by silence.
-   - **The invariant is per command, not per state.** Every gate command must
-     have run green on a state whose inputs *it reads* have not changed since, or
-     be recorded `NOT RUN` with the reason it could not. "The whole gate ran on the
-     state entering review" is unsatisfiable once a finding is fixed.
-   - **A command is `NOT RUN` only after it ran and failed for a reason no code
-     change resolves** — not before it was tried, and not because it looked slow or
-     unlikely to matter. Name every one in the pull request description.
-   - Some findings are environmental and no code change resolves them. Resolving
-     those means naming them precisely — what ran, what did not, and why.
-7. **UI Review (`ui-reviewer` → `ui-review`)**:
-   - Runs after verification, so the tree builds before anyone looks at it.
-   - **Check whether this stage applies before delegating.** It applies only when
-     the change can alter something a person sees or interacts with. A change
-     confined to documentation, comments, configuration, build scripts, CI, tests,
-     or code with no rendered output does not qualify — skip the stage, record one
-     line saying which of those it was, and move on. A docs-only or test-only diff
-     never needs a UI review.
-   - When it does apply, audit layout, visual hierarchy, contrast (WCAG AA),
-     interaction states, and accessibility according to the project's UI domain.
-   - A project whose UI domain is headless or backend skips this stage every time.
-   - Never invent findings to justify the stage.
-8. **Localization Review (`localization-reviewer` → `localization-review`)**:
-   - Runs after UI review, over the same surface, asking the question UI review
-     does not: not "does this look right" but "could this ship in another
-     language without a rewrite". One rendered English frame answers the first
-     and hides the second.
-   - **Check whether this stage applies before delegating.** It applies when the
-     change adds or alters user-visible text, or the formatting of a date, number,
-     currency, name, or list. `N/A` only for documentation, comments, config,
-     build scripts, CI or tests — or where the project has *written down* that it
-     will not localize. **A missing catalog is not an `N/A`** — it is the case
-     this stage exists for: keeping an application localizable is cheapest before
-     a second locale exists, which is exactly when nothing else is watching.
-   - The rubric is the reviewer's, and it is bounded by the diff rather than the
-     codebase: what this change introduces, never an audit of what was already
-     there. Never invent findings to justify the stage.
-9. **Code Review (`code-reviewer` → `code-review`)**:
-   - The reviewer reads the complete change: `git diff origin/main...HEAD`,
-     plus staged and unstaged edits (`git diff HEAD`) and untracked files (`git
-     status --porcelain`). It reports; it does not edit. **You** remove the
-     accidental or unrelated edits it names, and preserve anything that is the
-     user's.
-   - Enforce architectural boundaries, language idioms, defensive error handling,
-     and zero committed secrets.
-   - Do not repeat this review on an unchanged state. Rerun it only when the
-     reviewed content actually changed.
-   - **A fix made for review re-enters stage 6 before stage 10.** Fixing a review
-     finding changes code the gate already read, so the commands whose inputs it
-     touched have to run again. Otherwise the state you commit is the one state
-     nothing verified — every gate ran on what came *before* the last fix.
-10. **Commit & PR Lifecycle (`slice-and-pr`)**:
-    - **Close the loop against the request.** Re-read what was actually asked for,
-      and state how this change satisfies it — and what it deliberately does not.
-      Every gate above proves the code works; none of them prove it is the thing
-      that was wanted.
-    - Conventional Commits (`<type>(<scope>): <summary>`). Stage files explicitly;
-      never `git add -A` when unrelated work is present.
-    - **Finish at a pull request by default.** After verification and review pass,
-      finish the reversible lifecycle by committing, pushing the branch, opening a
-      ready-for-review PR, and watching its checks. Stop after the local commit only
-      when the user explicitly asks for a local-only or commit-only result. Creating
-      a PR does not authorize a merge or any action named under **Stop there and
-      report**.
-    - **A gate that did not run makes it a draft.** A stage marked `NOT RUN` means
-      `gh pr create --draft` instead, with the subagent, the host, the exact
-      invocation and the exact error in the description. Publish it once the stage
-      has actually run.
-    - **The description carries the evidence** — why the change exists, what it
-      changes, and the command you actually ran with its actual result.
-    - **Stop there and report.** Anything you cannot take back needs explicit
-      approval from the user in the current conversation: merging (`gh pr merge`),
-      force-pushing, rewriting shared history, deleting a branch or tag, dropping
-      or migrating data, removing files wholesale, and publishing or deploying.
-      Approval for one of them is not approval for the next — except deleting the
-      branch an approved merge just took, which that merge does as part of itself,
-      not as a second act.
-    - **Squash, unless this project says otherwise.** One reviewed slice lands as
-      one commit on the base branch; the PR description is what survives, which is
-      why it carries the reasoning. A project that requires merge commits or a
-      rebase says so in its own section, and that wins.
-    - **A merge takes its branch with it.** Once approved and done, delete that
-      branch — remote and local, in the same step, and no other branch. Check the
-      paths it touched, not the whole tree: `git diff <base> <branch>` is
-      symmetric and reads non-empty the moment anything merges ahead of you.
-      List them with `git diff --name-only <base>...<branch>`, then check each
-      changed path separately and quoted — expanding them through
-      an unquoted `$(...)` makes a path with a space match nothing, and
-      `--quiet` exits 0 on a pathspec matching nothing, so the delete runs on
-      unmerged work. Judge an empty result by the command's **exit status**, not
-      its output: a mistyped base prints nothing and exits 128, exactly like a
-      branch that changed nothing. A squash leaves no ancestry, so
-      `git branch -d` refuses and `-D` is right once every path is clean.
-      **Gate the deletion on that, and if you cannot check safely, leave the
-      branch.**
-<!-- agent-skills:end workflow -->
+- **Branching:** Never commit directly to `main`. Create a dedicated branch
+  from `origin/main` (e.g. `<owner>/<type>/<short-description>`).
+- **Self-merges:** Self-merges are allowed in this repository. An agent may
+  squash-merge its own pull request without requesting separate approval once
+  all of these are true:
+  - the pull request head is the exact locally reviewed and verified commit;
+  - GitHub reports the pull request clean and mergeable;
+  - every required check has completed successfully;
+  - no unresolved review threads or required changes remain; and
+  - a final readback confirms the base branch, head SHA, and clean local
+    worktree.
+- **Merge policy:** Squash merge is required to maintain a linear commit graph;
+  merge commits and rebase merges are disabled. Delete the merged branch after
+  merging. Never bypass a pending or failing check, merge a different head than
+  the one reviewed, or treat approval for one pull request as approval for another.
