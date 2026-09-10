@@ -3977,7 +3977,7 @@ else
 					fail "env size: the retry overrode a pinned size"
 					dump
 				fi
-				if scrollback | grep -qF 'staying classic'; then
+				if [ "$(scrollback_count 'LINES/COLUMNS make it')" -ne 1 ]; then
 					fail "env size: a player who changed nothing was told the terminal moved"
 					dump_scrollback
 				fi

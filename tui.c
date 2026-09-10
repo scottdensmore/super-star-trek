@@ -1467,7 +1467,8 @@ static int pinned(const char *name) {
  * one -- and having answered by the time this runs. */
 static int axis_moved(const char *name, int now, int refusedcurses,
 		      int refusedterm) {
-	if (!pinned(name)) return now != refusedcurses;
+	(void)name;
+	(void)refusedcurses;
 	return refusedterm != 0 && now != refusedterm;
 }
 
@@ -1483,7 +1484,7 @@ static int axis_moved(const char *name, int now, int refusedcurses,
  * one curses cannot drive): those do not change with a resize, and
  * refusedlines stays 0 to say so. */
 int tui_size_changed_since_refusal(void) {
-	struct winsize ws;
+	int r, c;
 
 	if (refusedlines == 0) return FALSE;
 	/* The size test is tui_init()'s, and for the same reason: an ioctl
@@ -1504,12 +1505,11 @@ int tui_size_changed_since_refusal(void) {
 	   repeat that main has today, by the shorter route of refusing to
 	   read 0x0 as a size at all; it is not the whole of #175, which is
 	   about comparing across sources whatever the ioctl says. */
-	if (ioctl(fileno(stdout), TIOCGWINSZ, &ws) != 0 ||
-	    ws.ws_row <= 0 || ws.ws_col <= 0)
-		return FALSE;
-	if (axis_moved("LINES", ws.ws_row, refusedlines, refusedtermlines))
+	term_size(&r, &c);
+	if (r == 0) return FALSE;
+	if (axis_moved("LINES", r, refusedlines, refusedtermlines))
 		return TRUE;
-	if (axis_moved("COLUMNS", ws.ws_col, refusedcols, refusedtermcols))
+	if (axis_moved("COLUMNS", c, refusedcols, refusedtermcols))
 		return TRUE;
 	return FALSE;
 }
@@ -1790,11 +1790,15 @@ int tui_init(void) {
 	   than returning it as input, and sync_size() returns early from
 	   one carrying no size change, which the note above cursor_at_prompt
 	   already names. */
-	haveterm = ioctl(fileno(stdout), TIOCGWINSZ, &winsz) == 0 &&
-		   winsz.ws_row > 0 && winsz.ws_col > 0;
-	if (haveterm)
-		resize_term(pinned("LINES") ? LINES : winsz.ws_row,
-			    pinned("COLUMNS") ? COLS : winsz.ws_col);
+	int r, c;
+	term_size(&r, &c);
+	haveterm = (r > 0);
+	if (haveterm) {
+		winsz.ws_row = r;
+		winsz.ws_col = c;
+		resize_term(pinned("LINES") ? LINES : r,
+			    pinned("COLUMNS") ? COLS : c);
+	}
 	if (LINES < MINROWS || COLS < MINCOLS) {
 		/* Kept so the caller can tell a player who resized and
 		   missed from one who did nothing. */
