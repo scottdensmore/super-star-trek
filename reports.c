@@ -48,7 +48,7 @@ void report(int f) {
 	if (skill>SGOOD && thawed && !alldone) prout("No plaque is allowed.");
 	if (tourn) proutf("This is tournament game %d.\n", tourn);
 	if (f) proutf("Your secret password is \"%s\"\n",passwd);
-	proutf("%d of %d Klingon ships have been destroyed",
+	proutfn("%d of %d Klingon ships have been destroyed",
 		   d.killk+d.killc+d.nsckill, inkling);
 	if (d.killc) proutf(", including %d Commander%s.\n", d.killc, d.killc==1?"":"s");
 	else if (d.killk+d.nsckill > 0) prout(", but no Commanders.");
@@ -139,9 +139,9 @@ void lrscan(void) {
 	for (y = quady+1; y >= quady-1; y--) {
 		for (x = quadx-1; x <= quadx+1; x++) {
 			if (x == 0 || x > 8 || y == 0 || y > 8)
-				proutf("   -1");
+				proutfn("   -1");
 			else {
-				proutf("%5d", d.galaxy[x][y]);
+				proutfn("%5d", d.galaxy[x][y]);
 				// If radio works, mark star chart so
 				// it will show current information.
 				// Otherwise mark with current
@@ -155,9 +155,9 @@ void lrscan(void) {
 	for (x = quadx-1; x <= quadx+1; x++) {
 		for (y = quady-1; y <= quady+1; y++) {
 			if (x == 0 || x > 8 || y == 0 || y > 8)
-				proutf("   -1");
+				proutfn("   -1");
 			else {
-				proutf("%5d", d.galaxy[x][y]);
+				proutfn("%5d", d.galaxy[x][y]);
 				// If radio works, mark star chart so
 				// it will show current information.
 				// Otherwise mark with current
@@ -182,7 +182,7 @@ void dreprt(void) {
 				prout("                IN FLIGHT   DOCKED");
 				jdam = TRUE;
 			}
-			proutf("  %16s ", device[i]);
+			proutfn("  %16s ", device[i]);
 			if (i == DDRAY) { // Deathray is special case
 				proutn("           ");
 				cramf(damage[i]+0.005, 8, 2);
@@ -229,31 +229,31 @@ void chart(int nn) {
 	if (nn==0) prout("  -");
 	if (coordfixed)
 	for (j = 8; j >= 1; j--) {
-		proutf("%d -", j);
+		proutfn("%d -", j);
 		for (i = 1; i <= 8; i++) {
 			if (starch[i][j] < 0) // We know only about the bases
-				proutf("  .1.");
+				proutfn("  .1.");
 			else if (starch[i][j] == 0) // Unknown
-				proutf("  ...");
+				proutfn("  ...");
 			else if (starch[i][j] > 999) // Memorized value
-				proutf("%5d", starch[i][j]-1000);
+				proutfn("%5d", starch[i][j]-1000);
 			else
-				proutf("%5d", d.galaxy[i][j]); // What is actually there (happens when value is 1)
+				proutfn("%5d", d.galaxy[i][j]); // What is actually there (happens when value is 1)
 		}
 		prout("  -");
 	}
 	else
 	for (i = 1; i <= 8; i++) {
-		proutf("%d -", i);
+		proutfn("%d -", i);
 		for (j = 1; j <= 8; j++) {
 			if (starch[i][j] < 0) // We know only about the bases
-				proutf("  .1.");
+				proutfn("  .1.");
 			else if (starch[i][j] == 0) // Unknown
-				proutf("  ...");
+				proutfn("  ...");
 			else if (starch[i][j] > 999) // Memorized value
-				proutf("%5d", starch[i][j]-1000);
+				proutfn("%5d", starch[i][j]-1000);
 			else
-				proutf("%5d", d.galaxy[i][j]); // What is actually there (happens when value is 1)
+				proutfn("%5d", d.galaxy[i][j]); // What is actually there (happens when value is 1)
 		}
 		prout("  -");
 	}
@@ -295,7 +295,7 @@ void srscan(int l) {
 			break;
 		case 2: // REQUEST
 			while (scan() == IHEOL)
-				proutf("Information desired? ");
+				proutfn("Information desired? ");
 			chew();
 			for (k = 1; k <= 10; k++)
 				if (strncmp(citem,requests[k],min(2,strlen(citem)))==0)
@@ -316,27 +316,27 @@ void srscan(int l) {
 		int jj = (k!=0 ? k : i);
 		if (leftside) {
 			if (coordfixed) {
-				proutf("%2d  ", 11-i);
+				proutfn("%2d  ", 11-i);
 				for (j = 1; j <= 10; j++) {
 					if (goodScan || (abs((11-i)-secty)<= 1 && abs(j-sectx) <= 1))
-						proutf("%c ",quad[j][11-i]);
+						proutfn("%c ",quad[j][11-i]);
 					else
-						proutf("- ");
+						proutfn("- ");
 				}
 			} else {
-				proutf("%2d  ", i);
+				proutfn("%2d  ", i);
 				for (j = 1; j <= 10; j++) {
 					if (goodScan || (abs(i-sectx)<= 1 && abs(j-secty) <= 1))
-						proutf("%c ",quad[i][j]);
+						proutfn("%c ",quad[i][j]);
 					else
-						proutf("- ");
+						proutfn("- ");
 				}
 			}
 		}
 		if (rightside) {
 			switch (jj) {
 				case 1:
-					proutf(" Stardate      %.1f", d.date);
+					proutfn(" Stardate      %.1f", d.date);
 					break;
 				case 2:
 					if (condit != IHDOCKED) newcnd();
@@ -351,53 +351,53 @@ void srscan(int l) {
 						   in tuifmt.c says the same. */
 						default: cp = "----"; break;
 					}
-					proutf(" Condition     %s", cp);
+					proutfn(" Condition     %s", cp);
 #ifdef CLOAKING
-				    if (iscloaked) proutf(", CLOAKED");
+				    if (iscloaked) proutfn(", CLOAKED");
 #endif
 					break;
 				case 3:
-					proutf(" Position     ");
+					proutfn(" Position     ");
 					cramlc(0, quadx, quady);
-					proutf(",");
+					proutfn(",");
 					cramlc(0, sectx, secty);
 					break;
 				case 4:
-					proutf(" Life Support  ");
+					proutfn(" Life Support  ");
 					if (damage[DLIFSUP] != 0.0) {
 						if (condit == IHDOCKED)
-							proutf("DAMAGED, supported by starbase");
+							proutfn("DAMAGED, supported by starbase");
 						else
-							proutf("DAMAGED, reserves=%4.2f", lsupres);
+							proutfn("DAMAGED, reserves=%4.2f", lsupres);
 					}
 					else
-						proutf("ACTIVE");
+						proutfn("ACTIVE");
 					break;
 				case 5:
-					proutf(" Warp Factor   %.1f", warpfac);
+					proutfn(" Warp Factor   %.1f", warpfac);
 					break;
 				case 6:
-					proutf(" Energy        %.2f", energy);
+					proutfn(" Energy        %.2f", energy);
 					break;
 				case 7:
-					proutf(" Torpedoes     %d", torps);
+					proutfn(" Torpedoes     %d", torps);
 					break;
 				case 8:
-					proutf(" Shields       ");
+					proutfn(" Shields       ");
 					if (damage[DSHIELD] != 0)
-						proutf("DAMAGED,");
+						proutfn("DAMAGED,");
 					else if (shldup)
-						proutf("UP,");
+						proutfn("UP,");
 					else
-						proutf("DOWN,");
-					proutf(" %d%% %.1f units",
+						proutfn("DOWN,");
+					proutfn(" %d%% %.1f units",
 						   (int)((100.0*shield)/inshld + 0.5), shield);
 					break;
 				case 9:
-					proutf(" Klingons Left %d", d.remkl);
+					proutfn(" Klingons Left %d", d.remkl);
 					break;
 				case 10:
-					proutf(" Time Left     %.2f", d.remtime);
+					proutfn(" Time Left     %.2f", d.remtime);
 					break;
 			}
 					

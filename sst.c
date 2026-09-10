@@ -520,8 +520,7 @@ static void makemoves(void) {
  * this branch only where smallwindow is false, which is both terminal
  * axes past the floor.
  *
- * The skip(1) after each proutf is not decoration: proutf does not
- * end its line, where prout is exactly that pair. #162. */
+ * proutf guarantees line completion just like prout. #162. */
 static void refusal_notice(int retry) {
 	const char *blame = tui_refusal_blame();
 	int cols, rows, termcols, termrows, needcols, needrows;
@@ -532,12 +531,10 @@ static void refusal_notice(int retry) {
 	if (!smallwindow) {
 		proutf("Terminal is %dx%d but LINES/COLUMNS make it %dx%d.",
 		       termcols, termrows, cols, rows);
-		skip(1);
 	}
 	else if (retry && havesizes) {
 		proutf("Terminal is %dx%d -- need 72x24, staying classic.",
 		       termcols, termrows);
-		skip(1);
 	}
 	else if (!retry)
 		prout("Terminal too small (need 72x24) -- using classic display.");
@@ -553,7 +550,6 @@ static void refusal_notice(int retry) {
 		   one action more than they need rather than splitting
 		   into a further two forms. */
 		proutf("Grow to 72x24, unset %s, and rerun sst -t.", blame);
-		skip(1);
 	}
 	else if (blame != NULL &&
 		 tui_refusal_growable(&needcols, &needrows)) {
@@ -591,11 +587,9 @@ static void refusal_notice(int retry) {
 		   to remove. */
 		proutf("Grow to %dx%d, or unset %s and rerun sst -t.",
 		       needcols, needrows, blame);
-		skip(1);
 	}
 	else if (blame != NULL) {
 		proutf("Unset %s, rerun sst -t -- classic for now.", blame);
-		skip(1);
 	}
 	else if (!retry)
 		prout("Grow the terminal to 72x24 and the next game gets panels.");

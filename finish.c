@@ -420,7 +420,7 @@ void plaque(void) {
 	skip(2);
 	
 	while (fp == NULL) {
-		proutf("File or device name for your plaque:");
+		proutfn("File or device name for your plaque:");
 		readinput(winner, 128);
 		fp = fopen(winner, "w");
 		if (fp==NULL) {
@@ -428,7 +428,7 @@ void plaque(void) {
 		}
 	}
 
-	proutf("Enter name to go on plaque (up to 30 characters):");
+	proutfn("Enter name to go on plaque (up to 30 characters):");
 	readinput(winner, 128);
 	winner[30] = '\0';
 	nskip = 64 - strlen(winner)/2;

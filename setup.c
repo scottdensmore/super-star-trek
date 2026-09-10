@@ -423,7 +423,7 @@ void setup(void) {
 			   "Starship U.S.S. Enterprise, it is your mission to seek out\n"
 			   "and destroy this invasion force of %d battle cruisers.\n",
 			   inkling);
-		proutf("You have an initial allotment of %d stardates to complete\n"
+		proutfn("You have an initial allotment of %d stardates to complete\n"
 			   "your mission.  As you proceed you may be given more time.\n\n"
 			   "You will have %d supporting starbases.\n"
 			   "Starbase locations-  ",
@@ -434,7 +434,7 @@ void setup(void) {
 			   "%d Klingons,\nan unknown number of Romulans\n",
 			   (int)d.date, inkling);
 		if (d.nscrem) proutf("and one (GULP) Super-Commander.\n");
-		proutf("%d stardates\n%d starbases in  ",(int)intime, inbase);
+		proutfn("%d stardates\n%d starbases in  ",(int)intime, inbase);
 	}
 	for (i = 1; i <= inbase; i++) {
 		cramlc(0, d.baseqx[i], d.baseqy[i]);
