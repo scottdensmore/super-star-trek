@@ -105,9 +105,9 @@
 
        MODIFICATIONS. . . . . . . . . . . . . . . . . . . .  26
 
-       ACKNOWLEDGMENTS. . . . . . . . . . . . . . . . . . .  27
+       ACKNOWLEDGMENTS. . . . . . . . . . . . . . . . . . .  29
 
-       REFERENCES . . . . . . . . . . . . . . . . . . . . .  27
+       REFERENCES . . . . . . . . . . . . . . . . . . . . .  29
 
 
 
@@ -1100,9 +1100,12 @@ only way to obtain this information is with the "SENSORS" command.
 
 The purpose of the FREEZE command is to allow a player to save the
 current state of the game, so that it can be finished later.  A
-plaque may not be generated from a frozen game. A file with the
-specified <file name> and type '.TRK' is created (if necessary) in
-the current directory, and all pertinent information about the game
+plaque may not be generated from a frozen game. The file name must
+begin with an alphabetic letter (A-Z) and is limited to 9 characters.
+If no dot ('.') is included in the file name, the extension '.TRK'
+is automatically appended; otherwise, the file name is used as typed.
+A file with the specified name is created (if necessary) in the
+current directory, and all pertinent information about the game
 is written to that file. The game may be continued as usual or be
 terminated at the user's option.
 
@@ -1417,7 +1420,7 @@ The emeritus game is strictly for masochists.
  DESTRUCT  DESTRUCT                               computer
  D         DOCK                                   (none)
  E         EMEXIT                                 (none)
- FREEZE    FREEZE <FILE NAME>                     (none)
+ FREEZE    FREEZE <FILE> (A-Z, <=9; .TRK if no .)  (none)
  I         IMPULSE <MANUAL> <DISPLACEMENT>        impulse engines
            IMPULSE AUTOMATIC <DESTINATION>        impulse engines and computer
  L         LRSCAN                                 long-range sensors
@@ -1494,14 +1497,12 @@ took a peek at the DECUS version (a port, less sources, to the
 PDP-10), and some other variations.
 
 Modifications I made:
-
   Compared to original version, I've changed the "help" command to
   "call" and the "terminate" command to "quit" to better match user
   expectations. The DECUS version apparently made those changes as well
   as changing "freeze" to "save". However I like "freeze".
 
   I added EMEXIT from the 1979 version.
-
   That later version also mentions srscan and lrscan working when
   docked (using the starbase's scanners), so I made some changes here
   to do this (and indicating that fact to the player), and then
@@ -1521,7 +1522,6 @@ Modifications I made:
   deathray, but kept the original set of failure modes (great humor!).
 
   I put in the Tholian Web code from the 1979 version.
-
   I added code so that Romulans and regular Klingons could move in 
   advanced games. I re-enabled the code which allows enemy ships to
   ram the Enterprise; it had never worked right. The 1979 version
@@ -1537,6 +1537,7 @@ Modifications I made:
   became destroying Klingon ships reflecting that a Klingon ship does
   have more than one Klingon aboard! The CLOAK command and some other
   bug fixes and correction of typos are thanks to Erik Olofsen.
+                  ********MODIFICATIONS********                       27
 
   In 2026 I added an optional full-screen interface, enabled with the
   -t command line option. It keeps the short-range scan and the status
@@ -1599,6 +1600,8 @@ Modifications I made:
   display too: it neither answers a question nor turns a page for you,
   and what you had already typed is still there.
 
+                  ********MODIFICATIONS********                       28
+
   Narrower than 72 columns, the panel lines clip rather than wrap,
   and a line with more to show than there is room for ends in ">",
   so a shortened number is never mistaken for a small one. Shorter, it
@@ -1659,7 +1662,7 @@ Modifications I made:
   repeating what it wanted; answer N to decline whatever it was.
 
 
-               ----------ACKNOWLEDGMENTS----------                    27
+               ----------ACKNOWLEDGMENTS----------                    29
 
 The authors would like to thank Professor Michael Duggan for his
 encouragement and administrative assistance with the development of

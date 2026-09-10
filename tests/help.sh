@@ -186,6 +186,23 @@ help mvoe
 want "help typo: failed to suggest move" "Did you mean 'move'?"
 dump_if_failed "$before"
 
+# --- freeze invalid filename guidance (issue #160) -------------------
+before=$fails
+play "freeze invalid filename" 'regular
+short
+novice
+xyz
+freeze 123
+' "$real"
+want "freeze invalid filename: missing Spock guidance" 'Spock- "Captain, file names must begin with an alphabetic letter (A-Z)."'
+dump_if_failed "$before"
+
+before=$fails
+play "thaw invalid filename" 'frozen 123
+' "$real"
+want "thaw invalid filename: missing Spock guidance" 'Spock- "Captain, file names must begin with an alphabetic letter (A-Z)."'
+dump_if_failed "$before"
+
 if [ "$fails" -ne 0 ]; then
 	printf '\n%d check(s) failed.\n' "$fails" >&2
 	exit 1

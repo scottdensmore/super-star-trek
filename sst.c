@@ -1,3 +1,4 @@
+#ifndef TEST_TUIFMT
 #define INCLUDED	// Define externs here
 #include "sst.h"
 #include <errno.h>
@@ -519,8 +520,7 @@ static void makemoves(void) {
  * this branch only where smallwindow is false, which is both terminal
  * axes past the floor.
  *
- * The skip(1) after each proutf is not decoration: proutf does not
- * end its line, where prout is exactly that pair. #162. */
+ * proutf guarantees line completion just like prout. #162. */
 static void refusal_notice(int retry) {
 	const char *blame = tui_refusal_blame();
 	int cols, rows, termcols, termrows, needcols, needrows;
@@ -531,12 +531,10 @@ static void refusal_notice(int retry) {
 	if (!smallwindow) {
 		proutf("Terminal is %dx%d but LINES/COLUMNS make it %dx%d.",
 		       termcols, termrows, cols, rows);
-		skip(1);
 	}
 	else if (retry && havesizes) {
 		proutf("Terminal is %dx%d -- need 72x24, staying classic.",
 		       termcols, termrows);
-		skip(1);
 	}
 	else if (!retry)
 		prout("Terminal too small (need 72x24) -- using classic display.");
@@ -552,7 +550,6 @@ static void refusal_notice(int retry) {
 		   one action more than they need rather than splitting
 		   into a further two forms. */
 		proutf("Grow to 72x24, unset %s, and rerun sst -t.", blame);
-		skip(1);
 	}
 	else if (blame != NULL &&
 		 tui_refusal_growable(&needcols, &needrows)) {
@@ -590,11 +587,9 @@ static void refusal_notice(int retry) {
 		   to remove. */
 		proutf("Grow to %dx%d, or unset %s and rerun sst -t.",
 		       needcols, needrows, blame);
-		skip(1);
 	}
 	else if (blame != NULL) {
 		proutf("Unset %s, rerun sst -t -- classic for now.", blame);
-		skip(1);
 	}
 	else if (!retry)
 		prout("Grow the terminal to 72x24 and the next game gets panels.");
@@ -662,13 +657,15 @@ int main(int argc, char **argv) {
 		skip(1);
 
 		if (tourn && alldone) {
-			proutf("Do you want your score recorded?");
+			skip(1);
+			proutn("Do you want your score recorded? ");
 			if (ja()) {
 				chew2();
 				freeze(FALSE);
 			}
 		}
-		proutf("Do you want to play again?");
+		skip(1);
+		proutn("Do you want to play again? ");
 		if (!ja()) break;
 		/* The terminal may have grown since the choice was made
 		   at startup, and a player told it was too small has
@@ -1066,14 +1063,14 @@ void prout(char *s) {
 	proutn(s);
 	skip(1);
 }
+#endif /* !TEST_TUIFMT */
 
-void proutf(const char *fmt, ...) {
+static void vproutf_impl(int complete_line, const char *fmt, va_list ap) {
 	char buf[512];
 	char *p, *nl;
-	va_list ap;
-	va_start(ap, fmt);
+	int empty;
 	vsnprintf(buf, sizeof(buf), fmt, ap);
-	va_end(ap);
+	empty = (buf[0] == '\0');
 	/* A line at a time, so the newlines written inside the string
 	   count towards paging like any others. Handing the whole
 	   thing to proutn() moves the screen on without moving the
@@ -1087,9 +1084,29 @@ void proutf(const char *fmt, ...) {
 		skip(1);
 		p = nl + 1;
 	}
-	if (*p != '\0') proutn(p);
+	if (*p != '\0') {
+		proutn(p);
+		if (complete_line) skip(1);
+	} else if (complete_line && empty) {
+		skip(1);
+	}
 }
 
+void proutf(const char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	vproutf_impl(1, fmt, ap);
+	va_end(ap);
+}
+
+void proutfn(const char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	vproutf_impl(0, fmt, ap);
+	va_end(ap);
+}
+
+#ifndef TEST_TUIFMT
 void prouts(char *s) {
 	clock_t endTime;
 	if (tui_active) {
@@ -1195,3 +1212,4 @@ void debugme(void) {
 			
 
 #endif
+#endif /* !TEST_TUIFMT */

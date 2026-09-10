@@ -87,5 +87,7 @@ TOTAL SCORE                                -300
 
 ******************************************************
 
-Do you want your score recorded?Do you want to play again?
+
+Do you want your score recorded? 
+Do you want to play again? 
 May the Great Bird of the Galaxy roost upon your home planet.
