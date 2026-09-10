@@ -1,6 +1,7 @@
 #include "sst.h"
 #include "tui.h"
 #include <curses.h>
+#include <errno.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <term.h>
@@ -1361,6 +1362,17 @@ static int havecursewinch = FALSE;
 static struct sigaction cursetstp;
 static int havecursetstp = FALSE;
 
+/* What was installed for SIGCONT before tui_init(), kept so giving up
+ * or shutting down can restore it. */
+static struct sigaction oldcont;
+static int haveoldcont = FALSE;
+static volatile sig_atomic_t sigcont_pending = 0;
+
+static void on_sigcont(int sig) {
+	(void)sig;
+	sigcont_pending = 1;
+}
+
 /* The size curses was working from when the panels were last turned
  * down, or 0 if they have not been turned down for size. Written by
  * both gates -- the floor and the one that refuses a size bigger than
@@ -1724,6 +1736,15 @@ int tui_init(void) {
 		havecursewinch = sigaction(SIGWINCH, NULL, &cursewinch) == 0;
 	if (!havecursetstp)
 		havecursetstp = sigaction(SIGTSTP, NULL, &cursetstp) == 0;
+	if (!haveoldcont)
+		haveoldcont = sigaction(SIGCONT, NULL, &oldcont) == 0;
+	{
+		struct sigaction sa;
+		memset(&sa, 0, sizeof(sa));
+		sa.sa_handler = on_sigcont;
+		sigaction(SIGCONT, &sa, NULL);
+	}
+	sigcont_pending = 0;
 	/* Ask the terminal its size rather than believing curses' cache.
 	   A second initscr() does not re-ask: the size is cached from the
 	   first, and the resize that matters here arrived while SIGWINCH
@@ -1784,6 +1805,10 @@ int tui_init(void) {
 		endwin();
 		if (havewinch) sigaction(SIGWINCH, &oldwinch, NULL);
 		if (havetstp) sigaction(SIGTSTP, &oldtstp, NULL);
+		if (haveoldcont) {
+			sigaction(SIGCONT, &oldcont, NULL);
+			haveoldcont = FALSE;
+		}
 		return FALSE;
 	}
 	/* Clearing the floor is not enough: the panels are drawn to the
@@ -1809,6 +1834,10 @@ int tui_init(void) {
 		endwin();
 		if (havewinch) sigaction(SIGWINCH, &oldwinch, NULL);
 		if (havetstp) sigaction(SIGTSTP, &oldtstp, NULL);
+		if (haveoldcont) {
+			sigaction(SIGCONT, &oldcont, NULL);
+			haveoldcont = FALSE;
+		}
 		return FALSE;
 	}
 	/* A no-op on the first call, where this is what curses just
@@ -1819,8 +1848,15 @@ int tui_init(void) {
 	   lets a fallback game be suspended at all. */
 	if (havecursewinch)
 		sigaction(SIGWINCH, &cursewinch, NULL);
-	if (havecursetstp)
+	/* Put curses' SIGTSTP handler back, but without SA_RESTART: with
+	   SA_RESTART, resuming from suspend immediately restarts the
+	   interrupted read() inside wgetch(), so SIGCONT cannot interrupt
+	   the read and curses leaves the stale layout on screen until
+	   the user types a keystroke (#191). */
+	if (havecursetstp) {
+		cursetstp.sa_flags &= ~SA_RESTART;
 		sigaction(SIGTSTP, &cursetstp, NULL);
+	}
 	cbreak();
 	noecho();
 	start_colour();
@@ -1845,6 +1881,11 @@ void tui_shutdown(void) {
 	if (!tui_active) return;
 	tui_active = FALSE;
 	endwin();
+	if (haveoldcont) {
+		sigaction(SIGCONT, &oldcont, NULL);
+		haveoldcont = FALSE;
+	}
+	sigcont_pending = 0;
 }
 
 void tui_refresh_panels(void) {
@@ -1977,10 +2018,29 @@ int tui_readline(char *buf, int buflen) {
 	int len = 0, room = buflen-2, c;
 
 	if (room < 0) room = 0;	/* keep room for the "\n" and the NUL */
+	if (sigcont_pending) {
+		sigcont_pending = 0;
+		sync_size();
+	}
 	reader_waiting = TRUE;
 	tui_refresh_panels();
 	for (;;) {
 		c = wgetch(wmsg);
+		if (sigcont_pending || (c == ERR && errno == EINTR)) {
+			sigcont_pending = 0;
+			buf[len] = '\0';
+			cursor_at_prompt = FALSE;
+			pending_answer = buf;
+			sync_size();
+			clearok(curscr, TRUE);
+			tui_refresh_panels();
+			pending_answer = NULL;
+			if (cursor_at_prompt && len > 0) {
+				waddstr(wmsg, buf);
+			}
+			wrefresh(wmsg);
+			continue;
+		}
 		if (c == KEY_RESIZE) {
 			/* Written whenever the repaint moved the cursor,
 			   rather than only when it decided the line had
@@ -2087,6 +2147,13 @@ int tui_readline(char *buf, int buflen) {
 int tui_getch(void) {
 	int c;
 
+	if (sigcont_pending) {
+		sigcont_pending = 0;
+		sync_size();
+		clearok(curscr, TRUE);
+		tui_refresh_panels();
+		wrefresh(wmsg);
+	}
 	/* Same as before a typed answer: a paging prompt is a moment the
 	   player is looking at the screen, so the panels beside the text
 	   should not be older than it. */
@@ -2094,6 +2161,14 @@ int tui_getch(void) {
 	tui_refresh_panels();
 	for (;;) {
 		c = wgetch(wmsg);
+		if (sigcont_pending || (c == ERR && errno == EINTR)) {
+			sigcont_pending = 0;
+			sync_size();
+			clearok(curscr, TRUE);
+			tui_refresh_panels();
+			wrefresh(wmsg);
+			continue;
+		}
 		/* Not a keystroke, whatever curses calls it. Handing it back
 		   would let a window drag answer "hit space bar to continue"
 		   and page away text the player never read. */

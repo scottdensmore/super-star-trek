@@ -3668,6 +3668,50 @@ else
 	fi
 fi
 
+# --- and a full-screen game repaints immediately on suspend resize (#191) ----
+# When a full-screen game is suspended (SIGTSTP) and the terminal window
+# is resized while suspended, resuming (SIGCONT) invokes curses' resume
+# hook which doupdate()s using the stale pre-suspend geometry. The frame
+# remains misaligned until the next user keypress reaches wgetch() and
+# returns KEY_RESIZE. Installing an un-restarted SIGCONT handler interrupts
+# wgetch() on resume so the game immediately syncs geometry, rebuilds the
+# windows, and repaints to the new dimensions without waiting for a keypress.
+start_shell 100 30 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "suspend resize: the game never reached its command prompt"
+	dump
+elif ! has_quadtitle; then
+	fail "suspend resize: the panels never came up"
+	dump
+else
+	stopped_pid=$(game_pid)
+	kill -TSTP "$stopped_pid"
+	if ! wait_for 'Stopped'; then
+		fail "suspend resize: kill -TSTP did not suspend the game"
+		dump
+		kill -CONT "$stopped_pid" 2>/dev/null
+		stopped_pid=
+	else
+		tm resize-window -t "$session" -x 90 -y 26
+		tm send-keys -t "$pane" 'fg' Enter
+		# Capture pane immediately before sending any keypress to
+		# verify frame width matches 90 columns without stale 100-column text.
+		if ! wait_panel_width 90 13; then
+			fail "suspend resize: panels did not repaint to 90 columns on resume"
+			dump
+			kill -CONT "$stopped_pid" 2>/dev/null
+			stopped_pid=
+		elif screen | awk 'NR == 1 { exit (substr($0, 89, 1) == substr($0, 90, 1)) ? 0 : 1 }'; then
+			fail "suspend resize: top border kept stale 100-column horizontal line without corner"
+			dump
+			kill -CONT "$stopped_pid" 2>/dev/null
+			stopped_pid=
+		else
+			stopped_pid=
+		fi
+	fi
+fi
+
 # --- and a size bigger than the terminal is refused -------------------
 # The gate is LINES < 24 || COLS < 72, asked of curses -- and where the
 # environment has pinned a dimension, curses' number need not be the
