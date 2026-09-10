@@ -347,12 +347,11 @@ static void make_windows(void) {
 	   give.
 	   The screen mvwin() judges that against is curses', not the
 	   layout, and #168 made the two able to differ: under a pin the
-	   move succeeds at three rows because stdscr is still the pinned
-	   size, and the prompt lands on the physical last row over the
+	   move would succeed at three rows because stdscr is still the pinned
+	   size, and the prompt would land on the physical last row over the
 	   panel's bottom border. Measured with LINES=24 in a pane dragged
-	   to 3 rows. So the floor described here is the unpinned one; the
-	   pinned case is #182, filed rather than fixed because it is
-	   mvwin()'s bound and not this arithmetic. */
+	   to 3 rows. So the floor described here is guarded by panelh < rows
+	   below, fixing #182. */
 	msgh = rows - panelh > 1 ? rows - panelh : 1;
 	statw = cols-QUADW > 1 ? cols-QUADW : 1;
 	msgw = cols-2 > 1 ? cols-2 : 1;
@@ -379,46 +378,48 @@ static void make_windows(void) {
 		   screen explained it. */
 		wresize(wquad, panelh, quadw);
 		wresize(wstat, panelh, statw);
-		wresize(wmsg, msgh, msgw);
-		/* And the message window is moved back, not only resized. A
-		   squeeze leaving no room under the panels puts its origin
-		   at or past the bottom of the screen, and resize_term()
-		   then treats it as living below the screen and shifts it
-		   down again by however much the terminal later grew: the
-		   panels came back whole while the conversation stayed gone,
-		   prompt and all, on a screen with eleven empty rows waiting
-		   for it.
+		if (panelh < rows) {
+			wresize(wmsg, msgh, msgw);
+			/* And the message window is moved back, not only resized. A
+			   squeeze leaving no room under the panels puts its origin
+			   at or past the bottom of the screen, and resize_term()
+			   then treats it as living below the screen and shifts it
+			   down again by however much the terminal later grew: the
+			   panels came back whole while the conversation stayed gone,
+			   prompt and all, on a screen with eleven empty rows waiting
+			   for it.
 
-		   That is curses' own resize_term(), the one it runs when it
-		   takes a resize in. Not the resize_term(0, 0) sync_size()
-		   used to make, which is gone, and not the one tui_init()
-		   calls either: every path that returns FALSE from
-		   tui_init() returns before make_windows(), sst.c retries
-		   only while !tui_active, and tui_shutdown() -- the one
-		   thing that clears that flag once the windows do exist --
-		   ends the process in both its callers. So a retry finds no
-		   windows to shift. #163.
+			   That is curses' own resize_term(), the one it runs when it
+			   takes a resize in. Not the resize_term(0, 0) sync_size()
+			   used to make, which is gone, and not the one tui_init()
+			   calls either: every path that returns FALSE from
+			   tui_init() returns before make_windows(), sst.c retries
+			   only while !tui_active, and tui_shutdown() -- the one
+			   thing that clears that flag once the windows do exist --
+			   ends the process in both its callers. So a retry finds no
+			   windows to shift. #163.
 
-		   After the resizes, not before. mvwin() refuses a move that
-		   would not fit at the destination *at the window's current
-		   size*, so moving first asks to put a window still as wide
-		   as the squeeze was into a narrower terminal. Squeeze to 82
-		   columns and come back to 80 and the move is refused, the
-		   window stays off-screen, and nothing tries again -- the
-		   display that came back looked right and swallowed
-		   everything typed into it.
+			   After the resizes, not before. mvwin() refuses a move that
+			   would not fit at the destination *at the window's current
+			   size*, so moving first asks to put a window still as wide
+			   as the squeeze was into a narrower terminal. Squeeze to 82
+			   columns and come back to 80 and the move is refused, the
+			   window stays off-screen, and nothing tries again -- the
+			   display that came back looked right and swallowed
+			   everything typed into it.
 
-		   The return is dropped on purpose: ERR comes back only
-		   where there is nowhere legal to put the window -- LINES
-		   at or under PANELMIN, or fewer than two columns -- and at
-		   those sizes the panels are the whole screen and nothing
-		   is drawn below them anyway. The next resize asks again.
-		   LINES rather than the layout size, and since #168 those
-		   can differ: under a pin the move succeeds where the same
-		   window unpinned would take the ERR path, which is what
-		   #182 is about. Every size at four rows and up is
-		   unaffected, the two agreeing there. */
-		mvwin(wmsg, panelh, 1);
+			   The return is dropped on purpose: ERR comes back only
+			   where there is nowhere legal to put the window -- LINES
+			   at or under PANELMIN, or fewer than two columns -- and at
+			   those sizes the panels are the whole screen and nothing
+			   is drawn below them anyway. The next resize asks again.
+			   LINES rather than the layout size, and since #168 those
+			   can differ: under a pin the move succeeds where the same
+			   window unpinned would take the ERR path, which is what
+			   #182 was about. Guarding against panelh < rows keeps the
+			   pinned path matching the unpinned one. */
+			mvwin(wmsg, panelh, 1);
+		}
 	}
 	/* Set every time, not only on the first: keypad in particular is
 	   what turns a resize into KEY_RESIZE rather than into whatever
@@ -1287,36 +1288,38 @@ static void sync_size(void) {
 	   dirty, and this function has already returned if there was none. */
 	werase(stdscr);
 	wnoutrefresh(stdscr);
-	touchwin(wmsg);		/* the panels redraw themselves; this does not */
-	/* On a grow as well as a shrink. A shrink writes the line into
-	   whatever room is left, which can be one row and narrower than
-	   the line: it wraps, scrolls, and leaves the tail. Growing back
-	   used to do nothing, so a corner drag returned to a stump --
-	   ` , or frozen game?` of a question still waiting to be
-	   answered, with the first keystroke of the answer eaten by the
-	   reader still sitting behind it.
-	   This was left out once because asking on a grow stood a second
-	   copy of a question up the window whenever the answer being
-	   typed was long enough to wrap. That was the one-row search:
-	   restore_curline() joins as many rows as the pair takes before
-	   looking, so an intact line is found and left alone whichever
-	   way the terminal moved, and only a line that really is gone or
-	   broken gets rewritten.
-	   The old width is what says how many rows the stump occupies,
-	   so it is passed whenever the width changed at all rather than
-	   only when it shrank.
-	   Both sides of that test are the layout width. oldcols is the
-	   builtcols this call started with and the comparison used to be
-	   against COLS, which was the same number until layout_size()
-	   made it need not be: under a pin curses' width never moves, so
-	   a shrink past the pin read as "the width did not change", and
-	   restore_curline() took its height-only branch, scrolled, and
-	   stamped a second copy of the player's half-typed command under
-	   the truncated first. Measured at COLUMNS=80 in a 100x30 pane
-	   with 62 characters typed and the pane taken to 70. #168. */
-	if (relayout)
-		restore_curline(builtcols != oldcols ? oldcols - 2 : 0);
-	wnoutrefresh(wmsg);
+	if (getmaxy(wquad) < builtlines) {
+		touchwin(wmsg);		/* the panels redraw themselves; this does not */
+		/* On a grow as well as a shrink. A shrink writes the line into
+		   whatever room is left, which can be one row and narrower than
+		   the line: it wraps, scrolls, and leaves the tail. Growing back
+		   used to do nothing, so a corner drag returned to a stump --
+		   ` , or frozen game?` of a question still waiting to be
+		   answered, with the first keystroke of the answer eaten by the
+		   reader still sitting behind it.
+		   This was left out once because asking on a grow stood a second
+		   copy of a question up the window whenever the answer being
+		   typed was long enough to wrap. That was the one-row search:
+		   restore_curline() joins as many rows as the pair takes before
+		   looking, so an intact line is found and left alone whichever
+		   way the terminal moved, and only a line that really is gone or
+		   broken gets rewritten.
+		   The old width is what says how many rows the stump occupies,
+		   so it is passed whenever the width changed at all rather than
+		   only when it shrank.
+		   Both sides of that test are the layout width. oldcols is the
+		   builtcols this call started with and the comparison used to be
+		   against COLS, which was the same number until layout_size()
+		   made it need not be: under a pin curses' width never moves, so
+		   a shrink past the pin read as "the width did not change", and
+		   restore_curline() took its height-only branch, scrolled, and
+		   stamped a second copy of the player's half-typed command under
+		   the truncated first. Measured at COLUMNS=80 in a 100x30 pane
+		   with 62 characters typed and the pane taken to 70. #168. */
+		if (relayout)
+			restore_curline(builtcols != oldcols ? oldcols - 2 : 0);
+		wnoutrefresh(wmsg);
+	}
 }
 
 
@@ -1919,9 +1922,11 @@ void tui_refresh_panels(void) {
 	if (panel_room(wquad) >= (int)strlen(" Quadrant "))
 		mvwaddstr(wquad, 0, 2, " Quadrant ");
 	werase(wstat);
-	box(wstat, 0, 0);
-	if (panel_room(wstat) >= (int)strlen(" Status "))
-		mvwaddstr(wstat, 0, 2, " Status ");
+	if (getmaxx(wstat) > 1) {
+		box(wstat, 0, 0);
+		if (panel_room(wstat) >= (int)strlen(" Status "))
+			mvwaddstr(wstat, 0, 2, " Status ");
+	}
 	/* Nothing to show before a game is set up or after one ends; the
 	   formatters work the condition out for themselves, so nothing
 	   here writes to the game state. */
@@ -1956,14 +1961,17 @@ void tui_refresh_panels(void) {
 			fmt_quad_line(i, buf);
 			draw_quad_line(i+1, buf);
 		}
-		for (i = 1; i <= 10; i++) {
-			fmt_status_line(i, buf);
-			draw_status_line(i+1, i, buf);
+		if (getmaxx(wstat) > 1) {
+			for (i = 1; i <= 10; i++) {
+				fmt_status_line(i, buf);
+				draw_status_line(i+1, i, buf);
+			}
 		}
 	}
 	wnoutrefresh(wquad);
 	wnoutrefresh(wstat);
-	wnoutrefresh(wmsg);
+	if (getmaxy(wquad) < builtlines)
+		wnoutrefresh(wmsg);
 	doupdate();
 }
 

@@ -2209,6 +2209,59 @@ else
 	fi
 fi
 
+# --- status panel sliver is suppressed at <= 30 columns ----------------
+# In make_windows(), statw was clamped to 1. At cols <= 30, statw is 1.
+# Calling box(wstat, 0, 0) drew a degenerate box where left and right
+# borders occupied the same column, rendering single-column border glyphs
+# (k x j) with 0 interior down the rightmost edge. Suppressing box(wstat)
+# and status lines when statw <= 1 leaves column 30 clean. #141.
+start 80 24 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "status sliver: the game never reached its command prompt"
+	dump
+else
+	tm resize-window -t "$session" -x 30 -y 8
+	sleep 1
+	# The rightmost column (column 30, 1-based) must not contain
+	# border glyphs from a degenerate 1-column status box.
+	if screen | head -5 | grep -qE '.{29}[kxj]'; then
+		fail "status sliver: single-column status border glyphs appeared at 30 columns"
+		dump
+	fi
+fi
+
+# --- pinned height at <= 3 rows does not overlap prompt on border ------
+# When terminal rows <= 3, panelh is clamped to PANELMIN (3). Unpinned,
+# stdscr has 3 rows, so mvwin(wmsg, 3, 1) fails with ERR and leaves the
+# bottom border intact with no prompt drawn. Under an exported LINES=30
+# pin, stdscr has 30 rows, so mvwin() succeeded and rendered COMMAND>
+# across the bottom border of the panel. Guarding mvwin() and wmsg
+# redraw with panelh < rows preserves the unpinned behavior. #182.
+start 100 40 'tournament 7 short novice pw' 'env LINES=30'
+if ! to_command; then
+	fail "pinned short: the game never reached its command prompt"
+	dump
+else
+	tm resize-window -t "$session" -x 100 -y 3
+	sleep 1
+	# Bottom border must be clean and COMMAND> must not overlap it.
+	if screen | grep -qF 'COMMAND'; then
+		fail "pinned short: COMMAND prompt rendered over border at 3 rows under pin"
+		dump
+	elif ! screen | sed -n '3p' | grep -qE '^mqq'; then
+		fail "pinned short: bottom border is not intact at 3 rows under pin"
+		dump
+	fi
+	# Growing back restores the conversation and command prompt.
+	tm resize-window -t "$session" -x 100 -y 30
+	sleep 1
+	if ! to_command; then
+		fail "pinned short: conversation did not return after growing back from 3 rows"
+		dump
+	fi
+fi
+
+
 # --- and paged output has something to page ----------------------------
 # The other half of the same geometry. With a page height of zero every
 # line of a paged command triggered a pause, and the message window was
