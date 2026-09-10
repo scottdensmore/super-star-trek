@@ -131,7 +131,7 @@ static command_def_t commands[] = {
      "  Mnemonic:  DESTRUCT", CMD_CAT_SYSTEM, 0, 1, 30},
     /* 31 */
     {"freeze", "FREEZE [filename]", "Save current game state to file",
-     "FREEZE mygame.trk",
+     "FREEZE mygame (or FREEZE mygame.trk; 1-9 chars, starts A-Z; thaw with FROZEN)",
      "  Mnemonic:  FREEZE", CMD_CAT_SYSTEM, 0, 1, 31},
     /* 32 */
     {"deathray", "DEATHRAY", "Fire experimental secret weapon (last resort)",

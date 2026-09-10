@@ -44,7 +44,7 @@ void freeze(int boss) {
 			key = scan();
 		}
 		if (key != IHALPHA) {
-			huh();
+			prout("Spock- \"Captain, file names must begin with an alphabetic letter (A-Z).\"");
 			return;
 		}
 		chew();
@@ -88,7 +88,7 @@ void thaw(void) {
 		key = scan();
 	}
 	if (key != IHALPHA) {
-		huh();
+		prout("Spock- \"Captain, file names must begin with an alphabetic letter (A-Z).\"");
 		return;
 	}
 	chew();

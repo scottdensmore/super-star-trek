@@ -1100,9 +1100,12 @@ only way to obtain this information is with the "SENSORS" command.
 
 The purpose of the FREEZE command is to allow a player to save the
 current state of the game, so that it can be finished later.  A
-plaque may not be generated from a frozen game. A file with the
-specified <file name> and type '.TRK' is created (if necessary) in
-the current directory, and all pertinent information about the game
+plaque may not be generated from a frozen game. The file name must
+begin with an alphabetic letter (A-Z) and is limited to 9 characters.
+If no dot ('.') is included in the file name, the extension '.TRK'
+is automatically appended; otherwise, the file name is used as typed.
+A file with the specified name is created (if necessary) in the
+current directory, and all pertinent information about the game
 is written to that file. The game may be continued as usual or be
 terminated at the user's option.
 
@@ -1417,7 +1420,7 @@ The emeritus game is strictly for masochists.
  DESTRUCT  DESTRUCT                               computer
  D         DOCK                                   (none)
  E         EMEXIT                                 (none)
- FREEZE    FREEZE <FILE NAME>                     (none)
+ FREEZE    FREEZE <FILE> (A-Z, <=9; .TRK if no .)  (none)
  I         IMPULSE <MANUAL> <DISPLACEMENT>        impulse engines
            IMPULSE AUTOMATIC <DESTINATION>        impulse engines and computer
  L         LRSCAN                                 long-range sensors
