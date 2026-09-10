@@ -96,7 +96,7 @@ set_tests_properties(help PROPERTIES TIMEOUT 120)
 # The only test that drives curses itself, through a pty that tmux
 # provides. It reports SKIPPED rather than passing where tmux is
 # missing, so a machine without it cannot look like coverage.
-# The timeout is far above the ~11s it takes to pass: every check
+# The timeout is far above the ~30s it takes to pass: every check
 # inside polls before giving up, so a broadly broken TUI spends its
 # time timing out one poll at a time. Better that it reaches the end
 # and names each failure than that ctest kills it and reports only

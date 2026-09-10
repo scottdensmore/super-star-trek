@@ -38,9 +38,7 @@ the blank that `lrscan`, `chart` and `status` open with, though
 `srscan`, which has none, still shows a line there, and at four the
 pager takes the only row and a paged command shows nothing of itself at
 all. Shorter than four the panels have taken the screen: the game still
-reads what you type, with nothing on it to say so — under a pin the
-prompt lands on the panel's bottom border instead, which is at least
-visible.
+reads what you type, with nothing on it to say so.
 
 Growing the terminal back brings the panels with it, however far the
 squeeze went: they redraw from the game state, so they return full of
@@ -50,32 +48,26 @@ small is gone for good, and an older line that was cut short stays cut
 short. Every reading is a command away, though, and none of them costs
 anything: `srscan`, `status`, `chart`, `damages`.
 
-The line you are on usually comes back, and it is the one that matters:
-a question or a pause the game was part way through writing is written
-out again whole once there is room for it, so you are not left typing
-into the tail of a prompt. A few prompts finish their line before they
-stop to wait; those come back too, with the answer going on the row
-below the question — or after it, where the window is down to its last
-row.
-Only their final line comes back, so a question asked over several
-lines returns as the last of them. An answer you had already started
-typing usually comes back with its question, on the row below it. You
-may get back only one of them. Where the question ended its own line the
-two sit on separate rows, so a wrapped answer needs three rows and a
-window of one or two — five rows or fewer — cannot hold the pair; a
-question that has itself wrapped needs a row more again. The question is
-what goes, leaving your own typing with nothing above it to say what it
-answers, and on a very wide terminal it is the answer that goes instead,
-however tall the window is. Shorter still and only part of whichever
-survived is left, and sometimes neither comes back, leaving older
-conversation on screen with the game waiting behind it.
+The line you were on usually comes back with the panels, and so does
+whatever you had typed of an answer to it — but look at both before
+you touch the keyboard, because you may get back only one of them.
+Where the question ended its own line, your answer starts the row
+below it, so a wrapped answer needs three rows and a window of one
+or two — five rows or fewer — cannot hold the pair; a question
+that has itself wrapped needs a row more again. The question is what
+goes, leaving you looking at what you typed with nothing on screen
+to say what it answers; on a very wide terminal it is the answer
+that goes instead, however tall the window is, leaving a question
+that looks as though nothing had been typed at all. Shorter still
+and only a piece of whichever survived is left, and sometimes
+neither comes back, leaving older conversation on screen with the
+game waiting behind it.
 
-When the question and everything you typed are both on screen, carry on
-and answer — that is the ordinary case now. When they are not, give the
-terminal another row or two first: that usually brings it back with
-your typing untouched, which beats retyping it. A very wide terminal is
-the exception — more rows will not bring the answer back there, though
-making it narrow enough will.
+If the question and all you had typed are both on screen, carry on. If
+either is missing, give the terminal another row or two before anything
+else: that usually brings it back with your typing untouched, which
+beats retyping it. A very wide terminal is the exception: more rows will
+not bring the answer back there, though making it narrow enough will.
 
 If it does not come back, or the terminal cannot grow, do not just
 answer it, and do not press Enter either: whatever you typed is still

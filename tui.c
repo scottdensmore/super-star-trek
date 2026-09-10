@@ -762,7 +762,7 @@ static int row_blank(int r) {
  * reflowing it, so a pair that no longer fits stops being the string
  * this searches for -- and that same absence of reflow is what makes
  * the stump's height, computed below, exact. */
-static void restore_curline(int oldmsgw) {
+static void restore_curline(int oldmsgw, int oldmsgh) {
 	/* want holds curline and the answer: 160 covers readinput()'s
 	   callers, which pass 128-byte buffers (line[] in sst.c,
 	   winner[] in finish.c) of which the reader fills at most 126.
@@ -862,7 +862,7 @@ static void restore_curline(int oldmsgw) {
 		int alen = ended && pending_answer != NULL
 			   ? (int)strlen(pending_answer) : 0;
 		int arows = alen > 0 ? (alen - 1) / width + 1 : 0;
-		int start = r - wantlen / width - arows;
+		int start = r - (wantlen > 0 ? (wantlen - 1) / width : 0) - arows;
 		int rr;
 
 		if (start < 0) start = 0;
@@ -1090,35 +1090,39 @@ static void restore_curline(int oldmsgw) {
 			wscrl(wmsg, 1);
 			wmove(wmsg, maxy - 1, 0);
 		}
+	} else if (maxy > oldmsgh) {
+		/* A height grow without width change: the old stump is on
+		   screen, and last names its last row (or 0 if empty). Erasing
+		   back from last clears the stump, and positioning the cursor
+		   at start restores the prompt in place without leaving a gap
+		   of blank rows above it. #114. */
+		int total = linelen;
+		int rows, rr, k, bottom, start;
+
+		if (pending_answer != NULL)
+			total += (int)strlen(pending_answer);
+		if (ended && pending_answer != NULL && width > 0 && linelen % width != 0)
+			total += width - linelen % width;
+		rows = (width <= 0 || total == 0) ? 1 : (total - 1) / width + 1;
+		bottom = last >= 0 ? last : 0;
+		start = -1;
+		for (k = 0; k < rows && bottom - k >= 0; k++) {
+			if (row_starts_line(bottom - k, line, linelen, width, width)) {
+				start = bottom - k;
+				break;
+			}
+		}
+		if (start < 0 && bottom - rows + 1 < 0) start = 0;
+		if (start < 0) start = bottom;
+		for (rr = start; rr < maxy; rr++) {
+			wmove(wmsg, rr, 0);
+			wclrtoeol(wmsg);
+		}
+		wmove(wmsg, start, 0);
 	} else {
-		/* A width that did not change is the other case, and it
-		   comes both ways. Lost rows: the line is gone altogether
-		   and the bottom rows hold older conversation worth
-		   keeping, so this scrolls by one and writes below it.
-		   Gained rows: the line is on screen as a stump, and the
-		   scroll is what carries it off the top.
-		   Bottom-anchored, unlike the branch above, and on a grow
-		   that shows: a height-only squeeze and return leaves the
-		   pair on the last two rows with blank ones above it. That
-		   is reproducible -- 72x24, a wrapping answer, 72x14, back
-		   to 72x24 -- and it is this change that made it visible,
-		   by restoring on a grow at all. Left alone deliberately.
-		   The scroll is not only making room: it is what carries
-		   the stump off the top of the window. Anchoring under the
-		   conversation without it leaves the stump on screen above
-		   the line, which is worse than a gap.
-		   Erasing instead, the way the branch above does, is not
-		   the arithmetic problem it looks like -- the width did not
-		   change, so getmaxx(wmsg) already is the old width and the
-		   row count is one line away. What stops it is that this
-		   branch serves two opposite states. On a height grow the
-		   stump is on screen and last names its last row, so
-		   erasing back from there is right. On a height shrink
-		   wresize() truncated the line away and last names live
-		   conversation, so the same erase would wipe the line above
-		   the prompt where the scroll preserves it. A fix has to
-		   tell the two apart first, which is more than this is
-		   worth. Issue #114. */
+		/* On a height shrink wresize() truncated the line away and
+		   last names live conversation, so the scroll preserves it
+		   and writes below. */
 		wscrl(wmsg, 1);
 		wmove(wmsg, maxy - 1, 0);
 	}
@@ -1187,6 +1191,8 @@ static void restore_curline(int oldmsgw) {
  * does for the one line that matters. #166. */
 static void sync_size(void) {
 	int oldcols = builtcols;
+	int oldlines = builtlines;
+	int oldmsgh = wmsg != NULL ? getmaxy(wmsg) : (oldlines - PANELH > 1 ? oldlines - PANELH : 1);
 	int relayout = resized();
 	int trows = 0, tcols = 0;
 
@@ -1307,6 +1313,8 @@ static void sync_size(void) {
 		   The old width is what says how many rows the stump occupies,
 		   so it is passed whenever the width changed at all rather than
 		   only when it shrank.
+		   The old height is passed alongside it so a height grow can
+		   clear the stump and restore without leaving a gap. #114.
 		   Both sides of that test are the layout width. oldcols is the
 		   builtcols this call started with and the comparison used to be
 		   against COLS, which was the same number until layout_size()
@@ -1317,7 +1325,7 @@ static void sync_size(void) {
 		   the truncated first. Measured at COLUMNS=80 in a 100x30 pane
 		   with 62 characters typed and the pane taken to 70. #168. */
 		if (relayout)
-			restore_curline(builtcols != oldcols ? oldcols - 2 : 0);
+			restore_curline(builtcols != oldcols ? oldcols - 2 : 0, oldmsgh);
 		wnoutrefresh(wmsg);
 	}
 }

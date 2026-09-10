@@ -3162,6 +3162,37 @@ else
 	fi
 fi
 
+# --- height grow restores prompt without gaps or duplicates (#114) ----
+start 80 24 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "height grow: the game never reached its command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'rest 5000' Enter
+	if ! wait_for 'Are you sure'; then
+		fail "height grow: rest did not ask whether it was wise"
+		dump
+	else
+		tm send-keys -t "$pane" 'y'
+		sleep 1
+		tm resize-window -t "$session" -y 16
+		sleep 1
+		tm resize-window -t "$session" -y 4
+		sleep 1
+		tm resize-window -t "$session" -y 24
+		sleep 1
+		if ! screen | awk '/Are you sure\?/ { n++ }
+		                   END { exit n == 1 ? 0 : 1 }'; then
+			fail "height grow: the question is not on screen exactly once"
+			dump
+		elif ! screen | awk 'NR == 14 && /Are you sure\?/ { seen = 1 }
+		                     END { exit seen ? 0 : 1 }'; then
+			fail "height grow: prompt has blank line gap above it"
+			dump
+		fi
+	fi
+fi
+
 # --- Ctrl-D ends the session on its own keystroke ---------------------
 # Under cbreak() the tty does no end-of-file handling of its own, so
 # Ctrl-D arrives as a character. wgetnstr returned only on Enter, so it
