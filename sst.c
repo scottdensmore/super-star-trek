@@ -1065,13 +1065,10 @@ void prout(char *s) {
 }
 #endif /* !TEST_TUIFMT */
 
-void proutf(const char *fmt, ...) {
+static void vproutf_impl(int complete_line, const char *fmt, va_list ap) {
 	char buf[512];
 	char *p, *nl;
-	va_list ap;
-	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
-	va_end(ap);
 	/* A line at a time, so the newlines written inside the string
 	   count towards paging like any others. Handing the whole
 	   thing to proutn() moves the screen on without moving the
@@ -1087,25 +1084,24 @@ void proutf(const char *fmt, ...) {
 	}
 	if (*p != '\0') {
 		proutn(p);
+		if (complete_line) skip(1);
+	} else if (complete_line && buf[0] == '\0') {
 		skip(1);
 	}
 }
 
-void proutfn(const char *fmt, ...) {
-	char buf[512];
-	char *p, *nl;
+void proutf(const char *fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
+	vproutf_impl(1, fmt, ap);
 	va_end(ap);
-	p = buf;
-	while ((nl = strchr(p, '\n')) != NULL) {
-		*nl = '\0';
-		proutn(p);
-		skip(1);
-		p = nl + 1;
-	}
-	if (*p != '\0') proutn(p);
+}
+
+void proutfn(const char *fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	vproutf_impl(0, fmt, ap);
+	va_end(ap);
 }
 
 #ifndef TEST_TUIFMT
