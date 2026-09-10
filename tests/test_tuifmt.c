@@ -2,6 +2,7 @@
  * Defines INCLUDED so sst.h instantiates the game-state globals here.
  */
 #define INCLUDED
+#include <stdarg.h>
 #include "../sst.h"
 #include "../tui.h"
 
@@ -341,6 +342,42 @@ static void test_status_variants(void) {
 	check("life support docked", buf, "Life Support  DAMAGED, by starbase");
 }
 
+static char outbuf[1024];
+
+void proutn(char *s) {
+	strcat(outbuf, s);
+}
+
+void skip(int n) {
+	while (n-- > 0)
+		strcat(outbuf, "\n");
+}
+
+#define TEST_TUIFMT
+#include "../sst.c"
+
+static void test_proutfn_and_proutf(void) {
+	outbuf[0] = '\0';
+	proutfn("Prompt: %s", "ready");
+	check("proutfn leaves trailing line open", outbuf, "Prompt: ready");
+
+	outbuf[0] = '\0';
+	proutf("Message: %d", 42);
+	check("proutf guarantees trailing newline", outbuf, "Message: 42\n");
+
+	outbuf[0] = '\0';
+	proutf("Line 1\nLine 2");
+	check("proutf multiline without trailing newline", outbuf, "Line 1\nLine 2\n");
+
+	outbuf[0] = '\0';
+	proutf("Already terminated\n");
+	check("proutf with trailing newline does not add extra newline", outbuf, "Already terminated\n");
+
+	outbuf[0] = '\0';
+	proutfn("Header\nPrompt: ");
+	check("proutfn multiline preserves open prompt", outbuf, "Header\nPrompt: ");
+}
+
 int main(void) {
 	test_quad_header();
 	test_quad_row();
@@ -355,6 +392,7 @@ int main(void) {
 	test_status_labels_are_aligned();
 	test_status_lines();
 	test_status_variants();
+	test_proutfn_and_proutf();
 	if (failures) {
 		printf("%d test(s) FAILED\n", failures);
 		return 1;

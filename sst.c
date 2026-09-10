@@ -1,3 +1,4 @@
+#ifndef TEST_TUIFMT
 #define INCLUDED	// Define externs here
 #include "sst.h"
 #include <errno.h>
@@ -662,13 +663,15 @@ int main(int argc, char **argv) {
 		skip(1);
 
 		if (tourn && alldone) {
-			proutf("Do you want your score recorded?");
+			skip(1);
+			proutn("Do you want your score recorded? ");
 			if (ja()) {
 				chew2();
 				freeze(FALSE);
 			}
 		}
-		proutf("Do you want to play again?");
+		skip(1);
+		proutn("Do you want to play again? ");
 		if (!ja()) break;
 		/* The terminal may have grown since the choice was made
 		   at startup, and a player told it was too small has
@@ -1066,6 +1069,7 @@ void prout(char *s) {
 	proutn(s);
 	skip(1);
 }
+#endif /* !TEST_TUIFMT */
 
 void proutf(const char *fmt, ...) {
 	char buf[512];
@@ -1087,9 +1091,30 @@ void proutf(const char *fmt, ...) {
 		skip(1);
 		p = nl + 1;
 	}
+	if (*p != '\0') {
+		proutn(p);
+		skip(1);
+	}
+}
+
+void proutfn(const char *fmt, ...) {
+	char buf[512];
+	char *p, *nl;
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	p = buf;
+	while ((nl = strchr(p, '\n')) != NULL) {
+		*nl = '\0';
+		proutn(p);
+		skip(1);
+		p = nl + 1;
+	}
 	if (*p != '\0') proutn(p);
 }
 
+#ifndef TEST_TUIFMT
 void prouts(char *s) {
 	clock_t endTime;
 	if (tui_active) {
@@ -1195,3 +1220,4 @@ void debugme(void) {
 			
 
 #endif
+#endif /* !TEST_TUIFMT */
