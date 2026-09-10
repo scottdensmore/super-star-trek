@@ -2041,12 +2041,18 @@ int tui_readline(char *buf, int buflen) {
 	if (sigcont_pending) {
 		sigcont_pending = 0;
 		sync_size();
+		clearok(curscr, TRUE);
+		tui_refresh_panels();
+		wrefresh(wmsg);
 	}
 	reader_waiting = TRUE;
 	tui_refresh_panels();
 	for (;;) {
 		c = wgetch(wmsg);
 		if (sigcont_pending || (c == ERR && errno == EINTR)) {
+			if (c != ERR && c != KEY_RESIZE) {
+				ungetch(c);
+			}
 			sigcont_pending = 0;
 			buf[len] = '\0';
 			cursor_at_prompt = FALSE;
@@ -2182,6 +2188,9 @@ int tui_getch(void) {
 	for (;;) {
 		c = wgetch(wmsg);
 		if (sigcont_pending || (c == ERR && errno == EINTR)) {
+			if (c != ERR && c != KEY_RESIZE) {
+				ungetch(c);
+			}
 			sigcont_pending = 0;
 			sync_size();
 			clearok(curscr, TRUE);

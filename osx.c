@@ -56,8 +56,8 @@ int getch(void) {
 	newstate = oldstate;
 	newstate.c_lflag &= ~ICANON;
 	newstate.c_lflag &= ~ECHO;
-	tcsetattr(0, TCSANOW,  &newstate);
 	memset(&sa, 0, sizeof(sa));
+	sigemptyset(&sa.sa_mask);
 	sa.sa_handler = on_sigcont;
 	have_oldcont = sigaction(SIGCONT, &sa, &oldcont) == 0;
 	/* A read the terminal changing shape interrupted is not a
@@ -81,9 +81,10 @@ int getch(void) {
 	   is swallowed until Enter, the terminal being canonical again
 	   while this read is still the non-canonical one set up above.
 	   That is #190, and it is this function's to fix rather than the
-	   signal disposition's: plain mode does the same. SIGCONT is not
-	   caught. Re-applying newstate inside the retry loop ensures the
-	   terminal remains non-canonical when an interrupted read restarts.
+	   signal disposition's: plain mode does the same. SIGCONT is caught
+	   without SA_RESTART to interrupt read(), and re-applying newstate
+	   inside the retry loop ensures the terminal remains non-canonical
+	   when the read restarts.
 	   The retry stays anyway: reading an interrupted read as a
 	   keypress is wrong whatever the signals happen to be.
 	   At end of input there is no keypress to report; say so rather
