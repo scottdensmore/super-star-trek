@@ -1068,7 +1068,9 @@ void prout(char *s) {
 static void vproutf_impl(int complete_line, const char *fmt, va_list ap) {
 	char buf[512];
 	char *p, *nl;
+	int empty;
 	vsnprintf(buf, sizeof(buf), fmt, ap);
+	empty = (buf[0] == '\0');
 	/* A line at a time, so the newlines written inside the string
 	   count towards paging like any others. Handing the whole
 	   thing to proutn() moves the screen on without moving the
@@ -1085,7 +1087,7 @@ static void vproutf_impl(int complete_line, const char *fmt, va_list ap) {
 	if (*p != '\0') {
 		proutn(p);
 		if (complete_line) skip(1);
-	} else if (complete_line && buf[0] == '\0') {
+	} else if (complete_line && empty) {
 		skip(1);
 	}
 }
