@@ -376,6 +376,18 @@ static void test_proutfn_and_proutf(void) {
 	outbuf[0] = '\0';
 	proutfn("Header\nPrompt: ");
 	check("proutfn multiline preserves open prompt", outbuf, "Header\nPrompt: ");
+
+	outbuf[0] = '\0';
+	proutf("");
+	check("proutf empty string emits newline", outbuf, "\n");
+
+	outbuf[0] = '\0';
+	proutf("\n");
+	check("proutf newline emits single newline", outbuf, "\n");
+
+	outbuf[0] = '\0';
+	proutfn("");
+	check("proutfn empty string emits nothing", outbuf, "");
 }
 
 int main(void) {

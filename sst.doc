@@ -1497,14 +1497,12 @@ took a peek at the DECUS version (a port, less sources, to the
 PDP-10), and some other variations.
 
 Modifications I made:
-
   Compared to original version, I've changed the "help" command to
   "call" and the "terminate" command to "quit" to better match user
   expectations. The DECUS version apparently made those changes as well
   as changing "freeze" to "save". However I like "freeze".
 
   I added EMEXIT from the 1979 version.
-
   That later version also mentions srscan and lrscan working when
   docked (using the starbase's scanners), so I made some changes here
   to do this (and indicating that fact to the player), and then
@@ -1524,7 +1522,6 @@ Modifications I made:
   deathray, but kept the original set of failure modes (great humor!).
 
   I put in the Tholian Web code from the 1979 version.
-
   I added code so that Romulans and regular Klingons could move in 
   advanced games. I re-enabled the code which allows enemy ships to
   ram the Enterprise; it had never worked right. The 1979 version
@@ -1540,7 +1537,6 @@ Modifications I made:
   became destroying Klingon ships reflecting that a Klingon ship does
   have more than one Klingon aboard! The CLOAK command and some other
   bug fixes and correction of typos are thanks to Erik Olofsen.
-
                   ********MODIFICATIONS********                       27
 
   In 2026 I added an optional full-screen interface, enabled with the
