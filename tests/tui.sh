@@ -5169,9 +5169,87 @@ else
 	fi
 fi
 
+# --- mid-move warp pause synchronizes quadrant title with displayed grid --
+# When crossing into a new quadrant, quadx and quady were updated before
+# printing "Entering Quadrant X - Y". If that print triggered a pager
+# pause in a short window, the panels repainted with the new quadrant's
+# title while quad[][] still held the old quadrant's grid. Keeping quadx
+# and quady unchanged until after the announcement keeps the title and
+# grid synchronized. #148.
+start 100 30 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "mid-move warp pause: the game never reached its command prompt"
+	dump
+else
+	tm resize-window -t "$session" -x 72 -y 14
+	sleep 1
+	if ! screen | head -1 | grep -qF 'Quadrant'; then
+		fail "mid-move warp pause: the panels are not on screen at 72x14"
+		dump
+	else
+		tm send-keys -t "$pane" 'move 1 5' Enter
+		# Wait for the first pause (Helmsman Sulu acknowledgment).
+		i=0
+		saw_pause=
+		while [ "$i" -lt 40 ]; do
+			if screen | grep -qE 'CONTINUE|HIT SPACE BAR'; then
+				saw_pause=yes
+				break
+			fi
+			i=$((i + 1))
+			sleep 0.1
+		done
+		if [ -z "$saw_pause" ]; then
+			fail "mid-move warp pause: Sulu acknowledgment never paused at 72x14"
+			dump
+		else
+			# Clear the first pause to trigger quadrant entry.
+			tm send-keys -t "$pane" Space
+			i=0
+			saw_entry_pause=
+			while [ "$i" -lt 40 ]; do
+				if screen | grep -qF 'Entering Quadrant' && screen | grep -qE 'CONTINUE|HIT SPACE BAR'; then
+					saw_entry_pause=yes
+					break
+				fi
+				i=$((i + 1))
+				sleep 0.1
+			done
+			if [ -z "$saw_entry_pause" ]; then
+				fail "mid-move warp pause: entering quadrant announcement never paused at 72x14"
+				dump
+			else
+				# At this pause, quad[][] still holds the origin quadrant (3 - 2).
+				# The quadrant title must agree with the displayed grid (Quadrant 3 - 2)
+				# rather than showing the new quadrant (Quadrant 3 - 3) prematurely.
+				if screen | head -1 | grep -qF 'Quadrant 3 - 3'; then
+					fail "mid-move warp pause: title updated to Quadrant 3 - 3 before new quadrant grid was loaded"
+					dump
+				elif ! screen | head -1 | grep -qF 'Quadrant 3 - 2'; then
+					fail "mid-move warp pause: expected Quadrant 3 - 2 title during mid-move pause"
+					dump
+				fi
+				# Complete the move by clearing the second pause.
+				tm send-keys -t "$pane" Space
+				if ! to_command; then
+					fail "mid-move warp pause: prompt did not return after completing move"
+					dump
+				elif ! screen | head -1 | grep -qF 'Quadrant 3 - 3'; then
+					fail "mid-move warp pause: title did not update to Quadrant 3 - 3 after move completed"
+					dump
+				elif ! screen | grep -qF 'B'; then
+					fail "mid-move warp pause: starbase B missing from Quadrant 3 - 3 grid"
+					dump
+				fi
+			fi
+		fi
+	fi
+fi
+
 if [ "$fails" -ne 0 ]; then
 	printf '\n%d check(s) failed.\n' "$fails" >&2
 	exit 1
 fi
 
 printf 'tui OK\n'
+
