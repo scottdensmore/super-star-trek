@@ -607,18 +607,17 @@ start() {
 }
 
 # bash, because start_shell() below needs job control, and without it
-# the pane dies at once and both suspend arms report that the game never
+# the pane dies at once and the suspend arms report that the game never
 # reached its prompt -- blaming the game for a missing tool.
 #
 # Harder than the file's other guards, and deliberately: the tmux one
 # skips with 77 off CI and only fails on it, and the pgrep and /proc
 # ones report and let the rest of the file run. This exits, so a
 # developer with tmux but no bash loses the whole test rather than the
-# two arms that need it. That is the wrong trade in general and the
+# arms that need it. That is the wrong trade in general and the
 # right one here: bash is present on both platforms CI runs, so the
-# case is a developer's machine, where an early loud exit beats two
-# arms failing for a reason neither of their messages names. Revisit it
-# if a third arm ever needs a shell.
+# case is a developer's machine, where an early loud exit beats arms
+# failing for a reason neither of their messages names.
 if ! command -v bash >/dev/null 2>&1; then
 	echo "FAIL: bash is needed for the suspend arms" >&2
 	exit 1
@@ -626,7 +625,7 @@ fi
 
 # Like start(), but with an interactive shell in the pane and the game
 # launched from it, so the pane has job control and C-z/fg are what a
-# player's are. Both suspend arms need it -- an earlier version of this
+# player's are. The suspend arms need it -- an earlier version of this
 # said only the retry one did, from before the other was rewritten to
 # stop using direct signals that a start() pane discards. Everywhere
 # else a shell in the pane is one more thing that can write to the
@@ -659,7 +658,11 @@ start_shell() {
 		exit 1
 	}
 	sleep 1
-	tm send-keys -t "$pane" "'$sstq' -t ${3:-}" Enter
+	flag="-t"
+	if [ "${4:-}" = "plain" ] || [ "${4:-}" = "" -a "$#" -ge 4 ]; then
+		flag=""
+	fi
+	tm send-keys -t "$pane" "'$sstq' $flag ${3:-}" Enter
 }
 
 # --- the game asks before it pauses, at every size it accepts -------
@@ -3620,6 +3623,48 @@ else
 		# assume for macOS.
 		kill -CONT "$stopped_pid" 2>/dev/null
 		stopped_pid=
+	fi
+fi
+
+# --- and a plain pause survives being suspended and resumed (#190) ----
+# getch() in osx.c reads the pause prompt with read(), putting the
+# terminal into non-canonical, no-echo mode. When the user suspends
+# (SIGTSTP) and resumes (SIGCONT/fg), the shell restores canonical mode.
+# Without re-applying termios inside the retry loop, read() resumes in
+# canonical mode, swallowing the Space bar until Enter is pressed.
+# Tested with kill -TSTP and kill -CONT/fg while paused at [HIT SPACE BAR].
+start_shell 80 24 'tournament 7 short novice pw' plain
+if ! wait_for 'COMMAND'; then
+	fail "suspend pause: the plain game never reached its command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'help move' Enter
+	if ! wait_for 'HIT SPACE BAR'; then
+		fail "suspend pause: help did not pause at [HIT SPACE BAR]"
+		dump
+	else
+		stopped_pid=$(game_pid)
+		kill -TSTP "$stopped_pid"
+		if ! wait_for 'Stopped'; then
+			fail "suspend pause: kill -TSTP did not suspend the game"
+			dump
+			kill -CONT "$stopped_pid" 2>/dev/null
+			stopped_pid=
+		else
+			tm send-keys -t "$pane" 'fg' Enter
+			sleep 1
+			tm send-keys -t "$pane" Space
+			if ! wait_for 'destination quadrant'; then
+				fail "suspend pause: Space after resume was swallowed until Enter"
+				dump
+				kill -CONT "$stopped_pid" 2>/dev/null
+				stopped_pid=
+			else
+				to_command
+				kill -CONT "$stopped_pid" 2>/dev/null
+				stopped_pid=
+			fi
+		fi
 	fi
 fi
 
