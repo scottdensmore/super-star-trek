@@ -105,9 +105,9 @@
 
        MODIFICATIONS. . . . . . . . . . . . . . . . . . . .  26
 
-       ACKNOWLEDGMENTS. . . . . . . . . . . . . . . . . . .  27
+       ACKNOWLEDGMENTS. . . . . . . . . . . . . . . . . . .  29
 
-       REFERENCES . . . . . . . . . . . . . . . . . . . . .  27
+       REFERENCES . . . . . . . . . . . . . . . . . . . . .  29
 
 
 
@@ -1541,6 +1541,8 @@ Modifications I made:
   have more than one Klingon aboard! The CLOAK command and some other
   bug fixes and correction of typos are thanks to Erik Olofsen.
 
+                  ********MODIFICATIONS********                       27
+
   In 2026 I added an optional full-screen interface, enabled with the
   -t command line option. It keeps the short-range scan and the status
   readout on screen at all times, with the usual game conversation
@@ -1602,6 +1604,8 @@ Modifications I made:
   display too: it neither answers a question nor turns a page for you,
   and what you had already typed is still there.
 
+                  ********MODIFICATIONS********                       28
+
   Narrower than 72 columns, the panel lines clip rather than wrap,
   and a line with more to show than there is room for ends in ">",
   so a shortened number is never mistaken for a small one. Shorter, it
@@ -1662,7 +1666,7 @@ Modifications I made:
   repeating what it wanted; answer N to decline whatever it was.
 
 
-               ----------ACKNOWLEDGMENTS----------                    27
+               ----------ACKNOWLEDGMENTS----------                    29
 
 The authors would like to thank Professor Michael Duggan for his
 encouragement and administrative assistance with the development of
