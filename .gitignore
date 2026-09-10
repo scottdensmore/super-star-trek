@@ -228,3 +228,8 @@ build-*/
 # Anchored to the root: a CLAUDE.local.md in a subdirectory is shared
 # drift, not personal, and should stay visible.
 /CLAUDE.local.md
+
+# Superpowers workflow and planning artifacts
+.superpowers/
+docs/superpowers/
+
