@@ -124,15 +124,6 @@ add_test(NAME golden
          COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/golden.sh $<TARGET_FILE:sst>)
 set_tests_properties(golden PROPERTIES TIMEOUT 120)
 
-# The score sheet's columns, read off the format strings in finish.c
-# rather than off any output -- the only way to reach ten of the twelve
-# singular forms and four of the five skill labels, which no journey
-# earns. See the script.
-add_test(NAME score
-         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/score.sh
-                 ${CMAKE_CURRENT_SOURCE_DIR})
-set_tests_properties(score PROPERTIES TIMEOUT 30)
-
 # Static analysis, which is a different question from the warnings the
 # ci-* presets make fatal: those are what the compiler notices while
 # generating code, where this walks paths and tracks what has been

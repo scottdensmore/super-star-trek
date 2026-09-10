@@ -15,6 +15,7 @@
 #define INCLUDED
 #include "../sst.h"
 #include "../rules.h"
+#include "../finish.h"
 
 static int failures = 0;
 
@@ -638,6 +639,56 @@ static void test_warp_factor_range(void) {
 		 warp_verdict(99.0, 1.0), WARP_LIMITED);
 }
 
+/* Validates that every line of the score sheet right-aligns its score
+ * at exactly column 47 when formatted (#62, #76). */
+static void test_score_sheet_columns(void) {
+	char buf[128];
+	int i;
+
+	/* Validate all 27 score row formats */
+	checkint("total score row formats", score_format_count(), 27);
+	for (i = 0; i < score_format_count(); i++) {
+		struct score_format_entry entry = score_format_at(i);
+		int len;
+
+		switch (entry.kind) {
+		case SCORE_ROW_INT_PAIR:
+			snprintf(buf, sizeof(buf), entry.fmt, 2, 20);
+			break;
+		case SCORE_ROW_DOUBLE_INT:
+			snprintf(buf, sizeof(buf), entry.fmt, 1.25, 625);
+			break;
+		case SCORE_ROW_INT_SINGLE:
+			snprintf(buf, sizeof(buf), entry.fmt, 500);
+			break;
+		default:
+			buf[0] = '\0';
+			break;
+		}
+
+		buf[strcspn(buf, "\n")] = '\0';
+		len = (int)strlen(buf);
+		checkint(entry.label, len, SCORE_SHEET_WIDTH);
+	}
+
+	/* Validate killed penalty literal */
+	snprintf(buf, sizeof(buf), "%s", SCORE_LIT_KILLED_PENALTY);
+	buf[strcspn(buf, "\n")] = '\0';
+	checkint("killed penalty literal", (int)strlen(buf), SCORE_SHEET_WIDTH);
+
+	/* Validate all 5 winning skill bonuses */
+	checkint("total skill bonuses", score_skill_count(), 5);
+	for (i = 0; i < score_skill_count(); i++) {
+		const char *label = score_skill_label(i);
+		char desc[64];
+		snprintf(buf, sizeof(buf), "%s%s" SCORE_BONUS_TAIL,
+		         SCORE_BONUS_PREFIX, label, 100 * (i + 1));
+		buf[strcspn(buf, "\n")] = '\0';
+		snprintf(desc, sizeof(desc), "bonus for %s", label);
+		checkint(desc, (int)strlen(buf), SCORE_SHEET_WIDTH);
+	}
+}
+
 int main(void) {
 	test_score_gains();
 	test_score_surrender();
@@ -646,6 +697,7 @@ int main(void) {
 	test_score_kill_rate();
 	test_score_win_bonus();
 	test_score_adds_up();
+	test_score_sheet_columns();
 	test_promotion_threshold();
 	test_promotion_is_earned_by_the_rate();
 	test_promotion_penalties();

@@ -1,6 +1,7 @@
 #include "sst.h"
 #include "tui.h"
 #include "rules.h"
+#include "finish.h"
 #include <string.h>
 #include <time.h>
 
@@ -346,67 +347,68 @@ void score(int inGame) {
     if (inGame) prout("Your score so far --");
     else prout("Your score --");
 	if (d.nromkl)
-		proutf(d.nromkl> 1 ? "%6d Romulan ships destroyed            %5d\n" : "%6d Romulan ship destroyed             %5d\n",
+		proutf(score_line_fmt(d.nromkl, SCORE_FMT_ROMKL_PLURAL, SCORE_FMT_ROMKL_SINGULAR),
 			   d.nromkl, 20*d.nromkl);
 	if (dnromrem)
-		proutf(dnromrem > 1 ? "%6d Romulan ships surrendered          %5d\n" : "%6d Romulan ship surrendered           %5d\n",
+		proutf(score_line_fmt(dnromrem, SCORE_FMT_ROMREM_PLURAL, SCORE_FMT_ROMREM_SINGULAR),
 			   dnromrem, dnromrem);
 	if (d.killk)
-		proutf(d.killk > 1 ? "%6d ordinary Klingon ships destroyed   %5d\n" : "%6d ordinary Klingon ship destroyed    %5d\n",
+		proutf(score_line_fmt(d.killk, SCORE_FMT_KILLK_PLURAL, SCORE_FMT_KILLK_SINGULAR),
 			   d.killk,  10*d.killk);
 	if (d.killc)
-		proutf(d.killc > 1 ? "%6d Klingon Commander ships destroyed  %5d\n" : "%6d Klingon Commander ship destroyed   %5d\n",
+		proutf(score_line_fmt(d.killc, SCORE_FMT_KILLC_PLURAL, SCORE_FMT_KILLC_SINGULAR),
 			   d.killc, 50*d.killc);
 	if (d.nsckill)
-		proutf("%6d Super-Commander ship destroyed     %5d\n",
+		proutf(SCORE_FMT_SUPER_COMMANDER,
 			   d.nsckill, 200*d.nsckill);
 	if (ithperd)
-		proutf("%6.2f Klingon ships per stardate         %5d\n",
+		proutf(SCORE_FMT_KILL_RATE,
 			   perdate, ithperd);
 #ifdef CAPTURE
 	if (kcaptured)
-		proutf(kcaptured > 1 ? "%6d Klingons captured                  %5d\n" : "%6d Klingon captured                   %5d\n",
+		proutf(score_line_fmt(kcaptured, SCORE_FMT_CAPTURE_PLURAL, SCORE_FMT_CAPTURE_SINGULAR),
 		        kcaptured, 3*kcaptured);
 #endif
 	if (d.starkl)
-		proutf(d.starkl > 1 ? "%6d stars destroyed by your action     %5d\n" : "%6d star destroyed by your action      %5d\n",
+		proutf(score_line_fmt(d.starkl, SCORE_FMT_STARKL_PLURAL, SCORE_FMT_STARKL_SINGULAR),
 			   d.starkl, -5*d.starkl);
 	if (d.nplankl)
-		proutf(d.nplankl > 1 ? "%6d planets destroyed by your action   %5d\n" : "%6d planet destroyed by your action    %5d\n",
+		proutf(score_line_fmt(d.nplankl, SCORE_FMT_PLANKL_PLURAL, SCORE_FMT_PLANKL_SINGULAR),
 			   d.nplankl, -10*d.nplankl);
 	if (d.basekl)
-		proutf(d.basekl > 1 ? "%6d bases destroyed by your action     %5d\n" : "%6d base destroyed by your action      %5d\n",
+		proutf(score_line_fmt(d.basekl, SCORE_FMT_BASEKL_PLURAL, SCORE_FMT_BASEKL_SINGULAR),
 			   d.basekl, -100*d.basekl);
 	if (nhelp)
-		proutf(nhelp > 1 ? "%6d calls for help from starbase       %5d\n" : "%6d call for help from starbase        %5d\n",
+		proutf(score_line_fmt(nhelp, SCORE_FMT_HELP_PLURAL, SCORE_FMT_HELP_SINGULAR),
 			   nhelp, -45*nhelp);
 	if (casual)
-		proutf(casual > 1 ? "%6d casualties incurred                %5d\n" : "%6d casualty incurred                  %5d\n",
+		proutf(score_line_fmt(casual, SCORE_FMT_CASUAL_PLURAL, SCORE_FMT_CASUAL_SINGULAR),
 			   casual, -casual);
 	if (klship)
-		proutf(klship > 1 ? "%6d ships lost or destroyed            %5d\n" : "%6d ship lost or destroyed             %5d\n",
+		proutf(score_line_fmt(klship, SCORE_FMT_SHIP_PLURAL, SCORE_FMT_SHIP_SINGULAR),
 			   klship, -100*klship);
 #ifdef CLOAKING
 	if (ncviol>0)
-		proutf(ncviol > 1 ? "%6d Treaty of Algeron violations       %5d\n" : "%6d Treaty of Algeron violation        %5d\n",
+		proutf(score_line_fmt(ncviol, SCORE_FMT_VIOL_PLURAL, SCORE_FMT_VIOL_SINGULAR),
 		       ncviol, -100*ncviol);
 #endif
 	if (alive==0)
-		prout("Penalty for getting yourself killed        -200");
+		prout(SCORE_LIT_KILLED_PENALTY);
 	if (gamewon) {
 		skip(1);
-		proutn("Bonus for winning ");
+		proutn(SCORE_BONUS_PREFIX);
 		switch (skill) {
-			case SNOVICE: proutn("Novice game  "); break;
-			case SFAIR: proutn("Fair game    "); break;
-			case SGOOD: proutn("Good game    "); break;
-			case SEXPERT: proutn("Expert game  "); break;
-			case SEMERITUS: proutn("Emeritus game"); break;
+			case SNOVICE: proutn(SCORE_BONUS_NOVICE); break;
+			case SFAIR: proutn(SCORE_BONUS_FAIR); break;
+			case SGOOD: proutn(SCORE_BONUS_GOOD); break;
+			case SEXPERT: proutn(SCORE_BONUS_EXPERT); break;
+			case SEMERITUS: proutn(SCORE_BONUS_EMERITUS); break;
 		}
-		proutf("           %5d\n", iwon);
+		proutf(SCORE_BONUS_TAIL, iwon);
 	}
 	skip(2);
-    proutf("TOTAL SCORE                               %5d\n", iscore);
+    proutf(SCORE_FMT_TOTAL, iscore);
+
     if (inGame && skill < SGOOD) proutf("REMEMBER--The score doesn't really matter until the mission is accomplished!\n");
 }
 
