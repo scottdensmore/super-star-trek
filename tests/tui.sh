@@ -192,11 +192,11 @@ game_pid() {
 # Non-zero if the game did not actually stop, which is the other way an
 # arm could pass having tested nothing.
 slept_drag() {
-	# Recorded so finish() can let it go again. tm kill-server hangs
-	# up the pane, and a SIGSTOPped process never acts on SIGHUP, so
-	# an interrupt inside this window would orphan the game still
-	# stopped -- silently, since the directory it played in is gone
-	# by then. Raised by code-review on the #168 branch.
+	# Recorded so finish() can let it go again. On Linux, POSIX
+	# orphaned process group rules send SIGHUP followed by SIGCONT
+	# when the session dies, but stopped_pid cleanup in finish()
+	# guarantees stopped processes are resumed and cleaned up
+	# portably across platforms (macOS, etc.).
 	stopped_pid=$1
 	kill -STOP "$1" 2>/dev/null || { stopped_pid=; return 1; }
 	# Polled rather than sampled once: the target has to be scheduled
