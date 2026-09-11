@@ -16,8 +16,8 @@ func TestSpockFilenameValidation(t *testing.T) {
 		}
 	}
 
-	// Invalid filenames: starts with non-letter, >9 chars, empty
-	invalid := []string{"123game", "*save*", "toolongfilename", "", "   ", ".trk", "toolongname.trk"}
+	// Invalid filenames: starts with non-letter, >9 chars, empty, multi-byte non-alphabetic
+	invalid := []string{"123game", "*save*", "toolongfilename", "", "   ", ".trk", "toolongname.trk", "🚀game", "★trek"}
 	for _, fn := range invalid {
 		if err := ValidateSaveFilename(fn); err == nil {
 			t.Errorf("expected error for invalid filename %q, got nil", fn)

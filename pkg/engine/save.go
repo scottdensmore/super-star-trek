@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"unicode"
 )
 
 // ValidateSaveFilename checks that the filename conforms to Spock's constraints:
@@ -28,8 +27,8 @@ func ValidateSaveFilename(filename string) error {
 	if len(stem) > 9 {
 		return errors.New("file name cannot exceed 9 characters")
 	}
-	firstRune := rune(stem[0])
-	if !unicode.IsLetter(firstRune) {
+	firstByte := stem[0]
+	if !((firstByte >= 'A' && firstByte <= 'Z') || (firstByte >= 'a' && firstByte <= 'z')) {
 		return fmt.Errorf("Spock- \"Captain, file names must begin with an alphabetic letter (A-Z).\"")
 	}
 	return nil
