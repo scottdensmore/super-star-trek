@@ -82,6 +82,17 @@ unavailable() {
 	exit 77
 }
 
+# Lint test scripts with shellcheck (#106)
+if command -v shellcheck >/dev/null 2>&1; then
+	if ! shellcheck -s sh "$root"/tests/*.sh; then
+		printf 'FAIL: shellcheck faulted tests/*.sh\n' >&2
+		exit 1
+	fi
+elif [ -n "${CI:-}" ] && [ "$(uname -s)" = Linux ]; then
+	printf 'FAIL: no shellcheck on Linux CI, so tests/*.sh went unlinted\n' >&2
+	exit 1
+fi
+
 if ! command -v actionlint >/dev/null 2>&1; then
 	unavailable "no actionlint"
 fi

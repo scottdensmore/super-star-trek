@@ -659,7 +659,7 @@ start_shell() {
 	}
 	sleep 1
 	flag="-t"
-	if [ "${4:-}" = "plain" ] || [ "${4:-}" = "" -a "$#" -ge 4 ]; then
+	if [ "${4:-}" = "plain" ] || { [ "${4:-}" = "" ] && [ "$#" -ge 4 ]; }; then
 		flag=""
 	fi
 	tm send-keys -t "$pane" "'$sstq' $flag ${3:-}" Enter

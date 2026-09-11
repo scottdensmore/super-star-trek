@@ -137,6 +137,7 @@ fi
 checked=0
 seen=''
 
+# shellcheck disable=SC2086
 for f in $(git -C "$src" ls-files -- $globs); do
 	path="$src/$f"
 	[ -f "$path" ] || continue
