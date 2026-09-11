@@ -127,6 +127,13 @@ fail() {
 	failures=$((failures + 1))
 }
 
+# Verify byte counting handles invalid UTF-8 portably (#205)
+probe_cr=$(printf '\xff\xfe\r\n' | LC_ALL=C tr -cd '\r' | wc -c | tr -d ' ')
+probe_lf=$(printf '\xff\xfe\r\n' | LC_ALL=C tr -cd '\n' | wc -c | tr -d ' ')
+if [ "$probe_cr" -ne 1 ] || [ "$probe_lf" -ne 1 ]; then
+	fail "self-test: byte counting failed on invalid UTF-8 (cr=$probe_cr, lf=$probe_lf)"
+fi
+
 checked=0
 seen=''
 
@@ -147,8 +154,8 @@ $f"
 		fail "$f has text=$attr; it needs -text, or core.autocrlf will convert it"
 	fi
 
-	cr=$(tr -cd '\r' < "$path" | wc -c | tr -d ' ')
-	lf=$(tr -cd '\n' < "$path" | wc -c | tr -d ' ')
+	cr=$(LC_ALL=C tr -cd '\r' < "$path" | wc -c | tr -d ' ')
+	lf=$(LC_ALL=C tr -cd '\n' < "$path" | wc -c | tr -d ' ')
 
 	# Rule 2: no file may be half-converted. A tool that rewrote part of
 	# a file leaves this, and it is the one state no vintage explains.
