@@ -1,0 +1,140 @@
+package engine
+
+// Event represents a typed occurrence resulting from an executed Action.
+type Event interface {
+	EventType() string
+}
+
+// EventShieldTransfer is emitted when energy is transferred between ship's reserves and shields.
+type EventShieldTransfer struct {
+	NewShields float64
+	NewEnergy  float64
+}
+
+// EventType returns the type name for EventShieldTransfer.
+func (e EventShieldTransfer) EventType() string { return "ShieldTransfer" }
+
+// EventTorpedoFired is emitted when a photon torpedo is launched.
+type EventTorpedoFired struct {
+	Origin Coord
+	Angle  float64
+}
+
+// EventType returns the type name for EventTorpedoFired.
+func (e EventTorpedoFired) EventType() string { return "TorpedoFired" }
+
+// EventTorpedoHit is emitted when a photon torpedo strikes an entity or obstacle.
+type EventTorpedoHit struct {
+	Target    Coord
+	Entity    EntityType
+	Damage    float64
+	Destroyed bool
+}
+
+// EventType returns the type name for EventTorpedoHit.
+func (e EventTorpedoHit) EventType() string { return "TorpedoHit" }
+
+// EventPhaserFired is emitted when ship phasers are discharged.
+type EventPhaserFired struct {
+	Energy float64
+}
+
+// EventType returns the type name for EventPhaserFired.
+func (e EventPhaserFired) EventType() string { return "PhaserFired" }
+
+// EventPhaserHit is emitted when phaser energy impacts a target vessel.
+type EventPhaserHit struct {
+	Target    Coord
+	KlingonID int
+	Damage    float64
+	Destroyed bool
+}
+
+// EventType returns the type name for EventPhaserHit.
+func (e EventPhaserHit) EventType() string { return "PhaserHit" }
+
+// EventDocked is emitted when Enterprise docks at a starbase.
+type EventDocked struct {
+	Starbase Coord
+}
+
+// EventType returns the type name for EventDocked.
+func (e EventDocked) EventType() string { return "Docked" }
+
+// EventShipMoved is emitted when Enterprise completes a movement maneuver.
+type EventShipMoved struct {
+	FromQuad   Coord
+	ToQuad     Coord
+	FromSector Coord
+	ToSector   Coord
+	Warp       float64
+	EnergyUsed float64
+	TimeUsed   float64
+}
+
+// EventType returns the type name for EventShipMoved.
+func (e EventShipMoved) EventType() string { return "ShipMoved" }
+
+// EventObstacleEncountered is emitted when Enterprise movement is blocked by an obstacle.
+type EventObstacleEncountered struct {
+	Sector Coord
+	Entity EntityType
+}
+
+// EventType returns the type name for EventObstacleEncountered.
+func (e EventObstacleEncountered) EventType() string { return "ObstacleEncountered" }
+
+// EventConditionChanged is emitted when Enterprise alert status changes.
+type EventConditionChanged struct {
+	From ConditionType
+	To   ConditionType
+}
+
+// EventType returns the type name for EventConditionChanged.
+func (e EventConditionChanged) EventType() string { return "ConditionChanged" }
+
+// GameOverReason identifies the cause of game termination.
+type GameOverReason int
+
+const (
+	GameOverWon GameOverReason = iota
+	GameOverEnergy
+	GameOverDestroyed
+	GameOverTime
+	GameOverStranded
+)
+
+// EventGameOver is emitted when the game ends.
+type EventGameOver struct {
+	Reason GameOverReason
+	Score  float64
+}
+
+// EventType returns the type name for EventGameOver.
+func (e EventGameOver) EventType() string { return "GameOver" }
+
+// EventKlingonCounterAttack is emitted when enemy ships return fire.
+type EventKlingonCounterAttack struct {
+	EnemyID int
+	Damage  float64
+}
+
+// EventType returns the type name for EventKlingonCounterAttack.
+func (e EventKlingonCounterAttack) EventType() string { return "KlingonCounterAttack" }
+
+// EventSubsystemDamaged is emitted when a ship subsystem is damaged.
+type EventSubsystemDamaged struct {
+	Device     DeviceID
+	RepairTime float64
+}
+
+// EventType returns the type name for EventSubsystemDamaged.
+func (e EventSubsystemDamaged) EventType() string { return "SubsystemDamaged" }
+
+// EventSubsystemRepaired is emitted when a ship subsystem is repaired.
+type EventSubsystemRepaired struct {
+	Device DeviceID
+}
+
+// EventType returns the type name for EventSubsystemRepaired.
+func (e EventSubsystemRepaired) EventType() string { return "SubsystemRepaired" }

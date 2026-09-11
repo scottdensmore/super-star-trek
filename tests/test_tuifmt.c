@@ -1,3 +1,5 @@
+//go:build ignore
+
 /* Unit tests for the TUI panel formatters (tuifmt.c).
  * Defines INCLUDED so sst.h instantiates the game-state globals here.
  */
