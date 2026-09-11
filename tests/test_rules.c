@@ -1,3 +1,5 @@
+//go:build ignore
+
 /* The game's rules, checked against sst.doc.
  *
  * Every expected number below was read out of the manual, not out of
