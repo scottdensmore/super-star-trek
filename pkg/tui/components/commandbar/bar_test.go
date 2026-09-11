@@ -190,3 +190,42 @@ func TestView(t *testing.T) {
 		t.Fatalf("expected width 80 view to contain prompt, got:\n%s", view80)
 	}
 }
+
+func TestAddMessage_TrailingNewlines(t *testing.T) {
+	m := New(theme.DefaultTheme())
+
+	// Add single line with trailing newline
+	m.AddMessage("Single line with newline\n")
+	// Add message with CRLF
+	m.AddMessage("Line with CRLF\r\n")
+	// Add multiline message with trailing newline
+	m.AddMessage("First of multi\nSecond of multi\n")
+
+	msgs := m.Messages()
+	if len(msgs) != 4 {
+		t.Fatalf("expected 4 messages, got %d: %v", len(msgs), msgs)
+	}
+	expected := []string{
+		"Single line with newline",
+		"Line with CRLF",
+		"First of multi",
+		"Second of multi",
+	}
+	for i, exp := range expected {
+		if msgs[i] != exp {
+			t.Errorf("msg[%d]: expected %q, got %q", i, exp, msgs[i])
+		}
+	}
+
+	for _, msg := range msgs {
+		if msg == "" {
+			t.Errorf("expected no empty lines in messages buffer, but found an empty entry")
+		}
+	}
+
+	// Empty string or only newlines should not add blank lines
+	m.AddMessage("\n\n\r\n")
+	if len(m.Messages()) != 4 {
+		t.Errorf("adding only newlines should not alter messages buffer, got %d messages", len(m.Messages()))
+	}
+}

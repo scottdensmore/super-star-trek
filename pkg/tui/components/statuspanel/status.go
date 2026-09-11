@@ -160,6 +160,7 @@ func (m Model) View(g *engine.GameState) string {
 	}
 
 	var b strings.Builder
+	b.Grow(512)
 	b.WriteString(condBanner)
 	b.WriteByte('\n')
 	b.WriteString(stardateTimeLine)

@@ -80,8 +80,13 @@ func (m *Model) AddMessage(msg string) {
 	if m.maxMessages <= 0 {
 		m.maxMessages = 4
 	}
+	msg = strings.TrimRight(msg, "\r\n")
+	if msg == "" {
+		return
+	}
 	lines := strings.Split(msg, "\n")
 	for _, line := range lines {
+		line = strings.TrimRight(line, "\r")
 		if len(m.messages) >= m.maxMessages {
 			m.messages = m.messages[1:]
 		}
