@@ -23,7 +23,6 @@ type Model struct {
 	Grid       sectorgrid.Model
 	Status     statuspanel.Model
 	CommandBar commandbar.Model
-	Err        error
 }
 
 // NewModel initializes and returns a new root TUI Model for the provided GameState and Theme.

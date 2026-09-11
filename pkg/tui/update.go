@@ -23,7 +23,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case msg.Type == tea.KeyF2 || msg.String() == "f2":
-			m.setTheme(m.Theme.Next())
+			m = m.applyTheme(m.Theme.Next())
 			return m, nil
 
 		case msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c":
@@ -60,8 +60,8 @@ func (m Model) UpdateModel(msg tea.Msg) (Model, tea.Cmd) {
 	return m, cmd
 }
 
-// setTheme updates the root theme and propagates the change to all sub-components.
-func (m *Model) setTheme(th theme.Theme) {
+// applyTheme returns a copy of the model with the new theme propagated to all sub-components.
+func (m Model) applyTheme(th theme.Theme) Model {
 	if th == nil {
 		th = theme.DefaultTheme()
 	}
@@ -69,6 +69,7 @@ func (m *Model) setTheme(th theme.Theme) {
 	m.Grid.SetTheme(th)
 	m.Status.SetTheme(th)
 	m.CommandBar.SetTheme(th)
+	return m
 }
 
 // handleCommand tokenizes, parses, and executes player commands.
@@ -91,14 +92,14 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case parsed.Special == "theme":
-			m.setTheme(m.Theme.Next())
+			m = m.applyTheme(m.Theme.Next())
 			m.CommandBar.AddMessage(fmt.Sprintf("Theme switched to %s", m.Theme.Name()))
 			return m, nil
 
 		case strings.HasPrefix(parsed.Special, "theme "):
 			name := strings.TrimSpace(strings.TrimPrefix(parsed.Special, "theme "))
 			th := theme.GetTheme(name)
-			m.setTheme(th)
+			m = m.applyTheme(th)
 			m.CommandBar.AddMessage(fmt.Sprintf("Theme switched to %s", m.Theme.Name()))
 			return m, nil
 		}
