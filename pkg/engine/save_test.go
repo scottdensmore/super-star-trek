@@ -1,0 +1,159 @@
+package engine
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+func TestSpockFilenameValidation(t *testing.T) {
+	// Valid filenames
+	valid := []string{"GAME", "save1", "TrekGame", "A", "GAME.TRK", "test.trk"}
+	for _, fn := range valid {
+		if err := ValidateSaveFilename(fn); err != nil {
+			t.Errorf("expected valid filename %q, got error: %v", fn, err)
+		}
+	}
+
+	// Invalid filenames: starts with non-letter, >9 chars, empty
+	invalid := []string{"123game", "*save*", "toolongfilename", "", "   ", ".trk", "toolongname.trk"}
+	for _, fn := range invalid {
+		if err := ValidateSaveFilename(fn); err == nil {
+			t.Errorf("expected error for invalid filename %q, got nil", fn)
+		}
+	}
+
+	// Verify Spock quote on non-letter start
+	err := ValidateSaveFilename("1bad")
+	if err == nil {
+		t.Fatalf("expected error for '1bad', got nil")
+	}
+	expectedMsg := `Spock- "Captain, file names must begin with an alphabetic letter (A-Z)."`
+	if err.Error() != expectedMsg {
+		t.Errorf("expected error %q, got %q", expectedMsg, err.Error())
+	}
+
+	// Verify length error message
+	err = ValidateSaveFilename("toolongfilename")
+	if err == nil || !strings.Contains(err.Error(), "exceed 9 characters") {
+		t.Errorf("expected length error for 'toolongfilename', got: %v", err)
+	}
+
+	// Verify empty error message
+	err = ValidateSaveFilename("")
+	if err == nil || !strings.Contains(err.Error(), "cannot be empty") {
+		t.Errorf("expected empty error for '', got: %v", err)
+	}
+}
+
+func TestGameSaveAndLoadRoundtrip(t *testing.T) {
+	tmpDir := t.TempDir()
+	savePath := filepath.Join(tmpDir, "TESTSAVE.TRK")
+
+	orig := NewGame(9999, SkillExpert, LengthLong)
+	orig.Enterprise.Energy = 4242.0
+	orig.Enterprise.Shields = 500.0
+	orig.Enterprise.Torpedoes = 8
+	orig.Stardate = 3141.5
+	orig.RemainingKlingons = 12
+
+	if err := orig.Save(savePath); err != nil {
+		t.Fatalf("failed to save game: %v", err)
+	}
+
+	loaded, err := LoadGame(savePath)
+	if err != nil {
+		t.Fatalf("failed to load game: %v", err)
+	}
+
+	if loaded.Enterprise.Energy != 4242.0 {
+		t.Errorf("mismatch loaded energy: expected 4242.0, got %f", loaded.Enterprise.Energy)
+	}
+	if loaded.Enterprise.Shields != 500.0 {
+		t.Errorf("mismatch loaded shields: expected 500.0, got %f", loaded.Enterprise.Shields)
+	}
+	if loaded.Enterprise.Torpedoes != 8 {
+		t.Errorf("mismatch loaded torpedoes: expected 8, got %d", loaded.Enterprise.Torpedoes)
+	}
+	if loaded.Stardate != 3141.5 {
+		t.Errorf("mismatch loaded stardate: expected 3141.5, got %f", loaded.Stardate)
+	}
+	if loaded.RemainingKlingons != 12 {
+		t.Errorf("mismatch loaded remaining klingons: expected 12, got %d", loaded.RemainingKlingons)
+	}
+	if loaded.Skill != SkillExpert {
+		t.Errorf("mismatch loaded skill: expected %v, got %v", SkillExpert, loaded.Skill)
+	}
+	if loaded.Length != LengthLong {
+		t.Errorf("mismatch loaded length: expected %v, got %v", LengthLong, loaded.Length)
+	}
+
+	// Verify PRNG is initialized and deterministic based on Stardate
+	if loaded.RNG == nil {
+		t.Fatalf("expected non-nil RNG after LoadGame")
+	}
+	val := loaded.RNG.Intn(100)
+	expectedPRNG := NewPRNG(int64(loaded.Stardate))
+	expectedVal := expectedPRNG.Intn(100)
+	if val != expectedVal {
+		t.Errorf("expected RNG value %d, got %d", expectedVal, val)
+	}
+}
+
+func TestGameSaveAutoAppendExtension(t *testing.T) {
+	tmpDir := t.TempDir()
+	savePathWithoutExt := filepath.Join(tmpDir, "AUTOSAVE")
+
+	orig := NewGame(1234, SkillGood, LengthMedium)
+	orig.Enterprise.Energy = 3333.0
+
+	if err := orig.Save(savePathWithoutExt); err != nil {
+		t.Fatalf("failed to save game: %v", err)
+	}
+
+	expectedPath := filepath.Join(tmpDir, "AUTOSAVE.TRK")
+	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
+		t.Fatalf("expected save file %q to exist", expectedPath)
+	}
+
+	loaded, err := LoadGame(expectedPath)
+	if err != nil {
+		t.Fatalf("failed to load game: %v", err)
+	}
+	if loaded.Enterprise.Energy != 3333.0 {
+		t.Errorf("mismatch loaded energy: expected 3333.0, got %f", loaded.Enterprise.Energy)
+	}
+}
+
+func TestGameSaveInvalidFilename(t *testing.T) {
+	tmpDir := t.TempDir()
+	savePath := filepath.Join(tmpDir, "123BADNAME.TRK")
+
+	orig := NewGame(1234, SkillFair, LengthShort)
+	err := orig.Save(savePath)
+	if err == nil {
+		t.Fatalf("expected error saving with invalid filename %q, got nil", savePath)
+	}
+}
+
+func TestLoadGameNotFound(t *testing.T) {
+	tmpDir := t.TempDir()
+	_, err := LoadGame(filepath.Join(tmpDir, "NONEXISTENT.TRK"))
+	if err == nil {
+		t.Fatalf("expected error loading nonexistent file, got nil")
+	}
+}
+
+func TestLoadGameCorrupted(t *testing.T) {
+	tmpDir := t.TempDir()
+	corruptPath := filepath.Join(tmpDir, "CORRUPT.TRK")
+	if err := os.WriteFile(corruptPath, []byte("not valid json {"), 0644); err != nil {
+		t.Fatalf("failed to write corrupt file: %v", err)
+	}
+
+	_, err := LoadGame(corruptPath)
+	if err == nil {
+		t.Fatalf("expected error loading corrupted file, got nil")
+	}
+}
