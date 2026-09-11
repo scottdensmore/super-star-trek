@@ -65,8 +65,8 @@ add_test(NAME rules COMMAND test_rules)
 
 add_test(NAME journey
          COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/journey.sh $<TARGET_FILE:sst> $<CONFIG>)
-# Run from the source tree, where a player runs the game and where the
-# in-game `help` command finds sst.doc.
+# Run from the source tree, matching standard player invocation from
+# the repository root.
 # TIMEOUT because the script's own `timeout` guard needs coreutils,
 # which macOS runners do not have.
 set_tests_properties(journey PROPERTIES
@@ -109,9 +109,9 @@ set_tests_properties(tui PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300)
 # the events and pauses that come with them. Seeded per game so a
 # failure is reproducible; see the script for why some of its
 # assertions are made of the whole battery rather than of one game.
-# About 50 seconds here, the slowest test in the suite by four times --
-# nearly all of it the busy-wait that types the game's dramatic lines
-# out slowly. The timeout leaves six times that for a slower runner.
+# About 50-70 seconds here, largely due to simulated delay typing
+# dramatic lines out slowly. The timeout leaves generous headroom for
+# slower runners.
 add_test(NAME tournament
          COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/tournament.sh $<TARGET_FILE:sst> $<CONFIG>)
 set_tests_properties(tournament PROPERTIES TIMEOUT 300)

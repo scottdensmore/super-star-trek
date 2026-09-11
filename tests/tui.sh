@@ -192,11 +192,11 @@ game_pid() {
 # Non-zero if the game did not actually stop, which is the other way an
 # arm could pass having tested nothing.
 slept_drag() {
-	# Recorded so finish() can let it go again. tm kill-server hangs
-	# up the pane, and a SIGSTOPped process never acts on SIGHUP, so
-	# an interrupt inside this window would orphan the game still
-	# stopped -- silently, since the directory it played in is gone
-	# by then. Raised by code-review on the #168 branch.
+	# Recorded so finish() can let it go again. On Linux, POSIX
+	# orphaned process group rules send SIGHUP followed by SIGCONT
+	# when the session dies, but stopped_pid cleanup in finish()
+	# guarantees stopped processes are resumed and cleaned up
+	# portably across platforms (macOS, etc.).
 	stopped_pid=$1
 	kill -STOP "$1" 2>/dev/null || { stopped_pid=; return 1; }
 	# Polled rather than sampled once: the target has to be scheduled
@@ -659,7 +659,7 @@ start_shell() {
 	}
 	sleep 1
 	flag="-t"
-	if [ "${4:-}" = "plain" ] || [ "${4:-}" = "" -a "$#" -ge 4 ]; then
+	if [ "${4:-}" = "plain" ] || { [ "${4:-}" = "" ] && [ "$#" -ge 4 ]; }; then
 		flag=""
 	fi
 	tm send-keys -t "$pane" "'$sstq' $flag ${3:-}" Enter
@@ -2694,7 +2694,7 @@ else
 	expect "wrap: the panels were refused at exactly 72x24" ' Quadrant '
 	# The question is 53 columns and the window 70, so an answer this
 	# long puts the pair over two rows and into the joined path.
-	tm send-keys -t "$pane" 'regularbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+	tm send-keys -t "$pane" 'regularzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz'
 	sleep 1
 	for h in 30 36 42; do
 		tm resize-window -t "$session" -x 72 -y "$h"
@@ -2705,17 +2705,12 @@ else
 			dump
 			break
 		fi
-		# Not asserting the answer here, though it is the half the
-		# player is looking at. Two attempts at it were blind: a
-		# per-row grep for the run of b's could never match, because
-		# the answer is what wraps and the run is split across two
-		# rows; and joining the rows back does not reassemble it
-		# either, because what capture-pane returns for the two rows
-		# does not concatenate to what was typed. Counting b's over
-		# the whole screen needs a baseline, since the banner has
-		# its own. The question alone kills the mutant this block is
-		# for, so the gap is coverage rather than a hole -- issue
-		# #115.
+		zcount=$(screen | LC_ALL=C tr -cd 'z' | wc -c | tr -d ' ')
+		if [ "$zcount" -ne 59 ]; then
+			fail "wrap: grown to 72x$h the answer characters were lost (expected 59 'z's, found $zcount)"
+			dump
+			break
+		fi
 	done
 fi
 
@@ -2899,6 +2894,19 @@ else
 			if ! screen | awk '/Are you sure\?/ { n++ }
 			                   END { exit n == 1 ? 0 : 1 }'; then
 				fail "wrapped answer: at 80x$h the question is not on screen exactly once"
+				dump
+				break
+			fi
+			if ! screen | awk '/Are you sure\?/ { q = NR }
+			                   { row[NR] = $0 }
+			                   END {
+			                       if (q == 0) exit 1
+			                       a = row[q + 1]; b = row[q + 2]
+			                       gsub(/^[ \t]+|[ \t]+$/, "", a)
+			                       gsub(/^[ \t]+|[ \t]+$/, "", b)
+			                       exit (a ~ /^yb+$/ && b ~ /^b+$/) ? 0 : 1
+			                   }'; then
+				fail "wrapped answer: at 80x$h the wrapped answer was lost or corrupted"
 				dump
 				break
 			fi

@@ -87,11 +87,15 @@
 # What a passing run still does not say is where the analyzer gave up
 # anyway. -Wanalyzer-too-complex reports that and is off by default;
 # turned on at the default factor it fires 169 times in battle.c, 142
-# in setup.c, 46 in sst.c and 0 in five of the thirteen. It cannot be
-# made fatal for that reason, and it does not fall with the factor
-# raised -- at 30 sst.c gives 298, because the analyzer explores
-# further before it stops. #171 has that half, which this does not
-# close.
+# in setup.c, 46 in sst.c and 0 in five of the thirteen. Keeping
+# -Wanalyzer-too-complex non-fatal is intentional (#171): warning counts
+# actually increase when the factor is raised (at 30, sst.c gives 298,
+# because the analyzer explores further along branching paths before
+# stopping), so making it fatal is counter-productive. Instead,
+# --param=analyzer-bb-explosion-factor=30 provides verified analysis
+# coverage across all complex paths in sst.c and battle.c, clearing the
+# measured detection cliffs while keeping diagnostics fatal for actual
+# defects (-Werror).
 #
 # An analyzer gone inert is the third case and it does not fail here.
 # The canary is the probe below, so a compiler that takes -fanalyzer

@@ -82,6 +82,29 @@ unavailable() {
 	exit 77
 }
 
+# Lint test scripts with shellcheck (#106)
+if command -v shellcheck >/dev/null 2>&1; then
+	if ! shellcheck -s sh "$root"/tests/*.sh; then
+		printf 'FAIL: shellcheck faulted tests/*.sh\n' >&2
+		exit 1
+	fi
+elif [ -n "${CI:-}" ] && [ "$(uname -s)" = Linux ]; then
+	printf 'FAIL: no shellcheck on Linux CI, so tests/*.sh went unlinted\n' >&2
+	exit 1
+fi
+
+# Verify test scripts trap all 5 required signals (#132)
+for script in "$root"/tests/*.sh; do
+	if grep -q '^trap ' "$script"; then
+		for sig in EXIT INT TERM HUP PIPE; do
+			if ! grep -q "trap .* $sig" "$script" && ! grep -q "trap .*'$sig'" "$script"; then
+				printf 'FAIL: %s is missing trap for %s\n' "$script" "$sig" >&2
+				exit 1
+			fi
+		done
+	fi
+done
+
 if ! command -v actionlint >/dev/null 2>&1; then
 	unavailable "no actionlint"
 fi
