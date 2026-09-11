@@ -120,17 +120,21 @@ void lmove(void) {
                 if (trbeam) return; /* Don't bother if we are to be beamed */
                 oldquadx = quadx;
                 oldquady = quady;
-				quadx = (ix+9)/10;
-                quady = (iy+9)/10;
-                sectx = ix - 10*(quadx-1);
-                secty = iy - 10*(quady-1);
-                if (quadx != oldquadx || quady != oldquady) {
+                int newquadx = (ix+9)/10;
+                int newquady = (iy+9)/10;
+                int newsectx = ix - 10*(newquadx-1);
+                int newsecty = iy - 10*(newquady-1);
+                if (newquadx != oldquadx || newquady != oldquady) {
                     proutn("\nEntering");
-                    cramlc(1, quadx, quady);
+                    cramlc(1, newquadx, newquady);
                 } else {
                     prout("(Negative energy barrier disturbs quadrant.)");
                 }
                 skip(1);
+                quadx = newquadx;
+                quady = newquady;
+                sectx = newsectx;
+                secty = newsecty;
                 quad[sectx][secty] = ship;
                 newqad(0);
                 return;

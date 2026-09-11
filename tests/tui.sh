@@ -607,18 +607,17 @@ start() {
 }
 
 # bash, because start_shell() below needs job control, and without it
-# the pane dies at once and both suspend arms report that the game never
+# the pane dies at once and the suspend arms report that the game never
 # reached its prompt -- blaming the game for a missing tool.
 #
 # Harder than the file's other guards, and deliberately: the tmux one
 # skips with 77 off CI and only fails on it, and the pgrep and /proc
 # ones report and let the rest of the file run. This exits, so a
 # developer with tmux but no bash loses the whole test rather than the
-# two arms that need it. That is the wrong trade in general and the
+# arms that need it. That is the wrong trade in general and the
 # right one here: bash is present on both platforms CI runs, so the
-# case is a developer's machine, where an early loud exit beats two
-# arms failing for a reason neither of their messages names. Revisit it
-# if a third arm ever needs a shell.
+# case is a developer's machine, where an early loud exit beats arms
+# failing for a reason neither of their messages names.
 if ! command -v bash >/dev/null 2>&1; then
 	echo "FAIL: bash is needed for the suspend arms" >&2
 	exit 1
@@ -626,7 +625,7 @@ fi
 
 # Like start(), but with an interactive shell in the pane and the game
 # launched from it, so the pane has job control and C-z/fg are what a
-# player's are. Both suspend arms need it -- an earlier version of this
+# player's are. The suspend arms need it -- an earlier version of this
 # said only the retry one did, from before the other was rewritten to
 # stop using direct signals that a start() pane discards. Everywhere
 # else a shell in the pane is one more thing that can write to the
@@ -659,7 +658,11 @@ start_shell() {
 		exit 1
 	}
 	sleep 1
-	tm send-keys -t "$pane" "'$sstq' -t ${3:-}" Enter
+	flag="-t"
+	if [ "${4:-}" = "plain" ] || [ "${4:-}" = "" -a "$#" -ge 4 ]; then
+		flag=""
+	fi
+	tm send-keys -t "$pane" "'$sstq' $flag ${3:-}" Enter
 }
 
 # --- the game asks before it pauses, at every size it accepts -------
@@ -2206,6 +2209,59 @@ else
 	fi
 fi
 
+# --- status panel sliver is suppressed at <= 30 columns ----------------
+# In make_windows(), statw was clamped to 1. At cols <= 30, statw is 1.
+# Calling box(wstat, 0, 0) drew a degenerate box where left and right
+# borders occupied the same column, rendering single-column border glyphs
+# (k x j) with 0 interior down the rightmost edge. Suppressing box(wstat)
+# and status lines when statw <= 1 leaves column 30 clean. #141.
+start 80 24 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "status sliver: the game never reached its command prompt"
+	dump
+else
+	tm resize-window -t "$session" -x 30 -y 8
+	sleep 1
+	# The rightmost column (column 30, 1-based) must not contain
+	# border glyphs from a degenerate 1-column status box.
+	if screen | head -5 | grep -qE '.{29}[kxj]'; then
+		fail "status sliver: single-column status border glyphs appeared at 30 columns"
+		dump
+	fi
+fi
+
+# --- pinned height at <= 3 rows does not overlap prompt on border ------
+# When terminal rows <= 3, panelh is clamped to PANELMIN (3). Unpinned,
+# stdscr has 3 rows, so mvwin(wmsg, 3, 1) fails with ERR and leaves the
+# bottom border intact with no prompt drawn. Under an exported LINES=30
+# pin, stdscr has 30 rows, so mvwin() succeeded and rendered COMMAND>
+# across the bottom border of the panel. Guarding mvwin() and wmsg
+# redraw with panelh < rows preserves the unpinned behavior. #182.
+start 100 40 'tournament 7 short novice pw' 'env LINES=30'
+if ! to_command; then
+	fail "pinned short: the game never reached its command prompt"
+	dump
+else
+	tm resize-window -t "$session" -x 100 -y 3
+	sleep 1
+	# Bottom border must be clean and COMMAND> must not overlap it.
+	if screen | grep -qF 'COMMAND'; then
+		fail "pinned short: COMMAND prompt rendered over border at 3 rows under pin"
+		dump
+	elif ! screen | sed -n '3p' | grep -qE '^mqq'; then
+		fail "pinned short: bottom border is not intact at 3 rows under pin"
+		dump
+	fi
+	# Growing back restores the conversation and command prompt.
+	tm resize-window -t "$session" -x 100 -y 30
+	sleep 1
+	if ! to_command; then
+		fail "pinned short: conversation did not return after growing back from 3 rows"
+		dump
+	fi
+fi
+
+
 # --- and paged output has something to page ----------------------------
 # The other half of the same geometry. With a page height of zero every
 # line of a paged command triggered a pause, and the message window was
@@ -3106,6 +3162,37 @@ else
 	fi
 fi
 
+# --- height grow restores prompt without gaps or duplicates (#114) ----
+start 80 24 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "height grow: the game never reached its command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'rest 5000' Enter
+	if ! wait_for 'Are you sure'; then
+		fail "height grow: rest did not ask whether it was wise"
+		dump
+	else
+		tm send-keys -t "$pane" 'y'
+		sleep 1
+		tm resize-window -t "$session" -y 16
+		sleep 1
+		tm resize-window -t "$session" -y 4
+		sleep 1
+		tm resize-window -t "$session" -y 24
+		sleep 1
+		if ! screen | awk '/Are you sure\?/ { n++ }
+		                   END { exit n == 1 ? 0 : 1 }'; then
+			fail "height grow: the question is not on screen exactly once"
+			dump
+		elif ! screen | awk 'NR == 14 && /Are you sure\?/ { seen = 1 }
+		                     END { exit seen ? 0 : 1 }'; then
+			fail "height grow: prompt has blank line gap above it"
+			dump
+		fi
+	fi
+fi
+
 # --- Ctrl-D ends the session on its own keystroke ---------------------
 # Under cbreak() the tty does no end-of-file handling of its own, so
 # Ctrl-D arrives as a character. wgetnstr returned only on Enter, so it
@@ -3623,6 +3710,92 @@ else
 	fi
 fi
 
+# --- and a plain pause survives being suspended and resumed (#190) ----
+# getch() in osx.c reads the pause prompt with read(), putting the
+# terminal into non-canonical, no-echo mode. When the user suspends
+# (SIGTSTP) and resumes (SIGCONT/fg), the shell restores canonical mode.
+# Without re-applying termios inside the retry loop, read() resumes in
+# canonical mode, swallowing the Space bar until Enter is pressed.
+# Tested with kill -TSTP and kill -CONT/fg while paused at [HIT SPACE BAR].
+start_shell 80 24 'tournament 7 short novice pw' plain
+if ! wait_for 'COMMAND'; then
+	fail "suspend pause: the plain game never reached its command prompt"
+	dump
+else
+	tm send-keys -t "$pane" 'help move' Enter
+	if ! wait_for 'HIT SPACE BAR'; then
+		fail "suspend pause: help did not pause at [HIT SPACE BAR]"
+		dump
+	else
+		stopped_pid=$(game_pid)
+		kill -TSTP "$stopped_pid"
+		if ! wait_for 'Stopped'; then
+			fail "suspend pause: kill -TSTP did not suspend the game"
+			dump
+			kill -CONT "$stopped_pid" 2>/dev/null
+			stopped_pid=
+		else
+			tm send-keys -t "$pane" 'fg' Enter
+			sleep 1
+			tm send-keys -t "$pane" Space
+			if ! wait_for 'destination quadrant'; then
+				fail "suspend pause: Space after resume was swallowed until Enter"
+				dump
+				kill -CONT "$stopped_pid" 2>/dev/null
+				stopped_pid=
+			else
+				to_command
+				kill -CONT "$stopped_pid" 2>/dev/null
+				stopped_pid=
+			fi
+		fi
+	fi
+fi
+
+# --- and a full-screen game repaints immediately on suspend resize (#191) ----
+# When a full-screen game is suspended (SIGTSTP) and the terminal window
+# is resized while suspended, resuming (SIGCONT) invokes curses' resume
+# hook which doupdate()s using the stale pre-suspend geometry. The frame
+# remains misaligned until the next user keypress reaches wgetch() and
+# returns KEY_RESIZE. Installing an un-restarted SIGCONT handler interrupts
+# wgetch() on resume so the game immediately syncs geometry, rebuilds the
+# windows, and repaints to the new dimensions without waiting for a keypress.
+start_shell 100 30 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "suspend resize: the game never reached its command prompt"
+	dump
+elif ! has_quadtitle; then
+	fail "suspend resize: the panels never came up"
+	dump
+else
+	stopped_pid=$(game_pid)
+	kill -TSTP "$stopped_pid"
+	if ! wait_for 'Stopped'; then
+		fail "suspend resize: kill -TSTP did not suspend the game"
+		dump
+		kill -CONT "$stopped_pid" 2>/dev/null
+		stopped_pid=
+	else
+		tm resize-window -t "$session" -x 90 -y 26
+		tm send-keys -t "$pane" 'fg' Enter
+		# Capture pane immediately before sending any keypress to
+		# verify frame width matches 90 columns without stale 100-column text.
+		if ! wait_panel_width 90 13; then
+			fail "suspend resize: panels did not repaint to 90 columns on resume"
+			dump
+			kill -CONT "$stopped_pid" 2>/dev/null
+			stopped_pid=
+		elif screen | awk 'NR == 1 { exit (substr($0, 89, 1) == substr($0, 90, 1)) ? 0 : 1 }'; then
+			fail "suspend resize: top border kept stale 100-column horizontal line without corner"
+			dump
+			kill -CONT "$stopped_pid" 2>/dev/null
+			stopped_pid=
+		else
+			stopped_pid=
+		fi
+	fi
+fi
+
 # --- and a size bigger than the terminal is refused -------------------
 # The gate is LINES < 24 || COLS < 72, asked of curses -- and where the
 # environment has pinned a dimension, curses' number need not be the
@@ -3888,7 +4061,7 @@ else
 					fail "env size: the retry overrode a pinned size"
 					dump
 				fi
-				if scrollback | grep -qF 'staying classic'; then
+				if [ "$(scrollback_count 'LINES/COLUMNS make it')" -ne 1 ]; then
 					fail "env size: a player who changed nothing was told the terminal moved"
 					dump_scrollback
 				fi
@@ -5027,9 +5200,87 @@ else
 	fi
 fi
 
+# --- mid-move warp pause synchronizes quadrant title with displayed grid --
+# When crossing into a new quadrant, quadx and quady were updated before
+# printing "Entering Quadrant X - Y". If that print triggered a pager
+# pause in a short window, the panels repainted with the new quadrant's
+# title while quad[][] still held the old quadrant's grid. Keeping quadx
+# and quady unchanged until after the announcement keeps the title and
+# grid synchronized. #148.
+start 100 30 'tournament 7 short novice pw'
+if ! to_command; then
+	fail "mid-move warp pause: the game never reached its command prompt"
+	dump
+else
+	tm resize-window -t "$session" -x 72 -y 14
+	sleep 1
+	if ! screen | head -1 | grep -qF 'Quadrant'; then
+		fail "mid-move warp pause: the panels are not on screen at 72x14"
+		dump
+	else
+		tm send-keys -t "$pane" 'move 1 5' Enter
+		# Wait for the first pause (Helmsman Sulu acknowledgment).
+		i=0
+		saw_pause=
+		while [ "$i" -lt 40 ]; do
+			if screen | grep -qE 'CONTINUE|HIT SPACE BAR'; then
+				saw_pause=yes
+				break
+			fi
+			i=$((i + 1))
+			sleep 0.1
+		done
+		if [ -z "$saw_pause" ]; then
+			fail "mid-move warp pause: Sulu acknowledgment never paused at 72x14"
+			dump
+		else
+			# Clear the first pause to trigger quadrant entry.
+			tm send-keys -t "$pane" Space
+			i=0
+			saw_entry_pause=
+			while [ "$i" -lt 40 ]; do
+				if screen | grep -qF 'Entering Quadrant' && screen | grep -qE 'CONTINUE|HIT SPACE BAR'; then
+					saw_entry_pause=yes
+					break
+				fi
+				i=$((i + 1))
+				sleep 0.1
+			done
+			if [ -z "$saw_entry_pause" ]; then
+				fail "mid-move warp pause: entering quadrant announcement never paused at 72x14"
+				dump
+			else
+				# At this pause, quad[][] still holds the origin quadrant (3 - 2).
+				# The quadrant title must agree with the displayed grid (Quadrant 3 - 2)
+				# rather than showing the new quadrant (Quadrant 3 - 3) prematurely.
+				if screen | head -1 | grep -qF 'Quadrant 3 - 3'; then
+					fail "mid-move warp pause: title updated to Quadrant 3 - 3 before new quadrant grid was loaded"
+					dump
+				elif ! screen | head -1 | grep -qF 'Quadrant 3 - 2'; then
+					fail "mid-move warp pause: expected Quadrant 3 - 2 title during mid-move pause"
+					dump
+				fi
+				# Complete the move by clearing the second pause.
+				tm send-keys -t "$pane" Space
+				if ! to_command; then
+					fail "mid-move warp pause: prompt did not return after completing move"
+					dump
+				elif ! screen | head -1 | grep -qF 'Quadrant 3 - 3'; then
+					fail "mid-move warp pause: title did not update to Quadrant 3 - 3 after move completed"
+					dump
+				elif ! screen | grep -qF 'B'; then
+					fail "mid-move warp pause: starbase B missing from Quadrant 3 - 3 grid"
+					dump
+				fi
+			fi
+		fi
+	fi
+fi
+
 if [ "$fails" -ne 0 ]; then
 	printf '\n%d check(s) failed.\n' "$fails" >&2
 	exit 1
 fi
 
 printf 'tui OK\n'
+

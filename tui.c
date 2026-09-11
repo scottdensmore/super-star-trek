@@ -1,6 +1,7 @@
 #include "sst.h"
 #include "tui.h"
 #include <curses.h>
+#include <errno.h>
 #include <signal.h>
 #include <sys/ioctl.h>
 #include <term.h>
@@ -346,12 +347,11 @@ static void make_windows(void) {
 	   give.
 	   The screen mvwin() judges that against is curses', not the
 	   layout, and #168 made the two able to differ: under a pin the
-	   move succeeds at three rows because stdscr is still the pinned
-	   size, and the prompt lands on the physical last row over the
+	   move would succeed at three rows because stdscr is still the pinned
+	   size, and the prompt would land on the physical last row over the
 	   panel's bottom border. Measured with LINES=24 in a pane dragged
-	   to 3 rows. So the floor described here is the unpinned one; the
-	   pinned case is #182, filed rather than fixed because it is
-	   mvwin()'s bound and not this arithmetic. */
+	   to 3 rows. So the floor described here is guarded by panelh < rows
+	   below, fixing #182. */
 	msgh = rows - panelh > 1 ? rows - panelh : 1;
 	statw = cols-QUADW > 1 ? cols-QUADW : 1;
 	msgw = cols-2 > 1 ? cols-2 : 1;
@@ -378,46 +378,48 @@ static void make_windows(void) {
 		   screen explained it. */
 		wresize(wquad, panelh, quadw);
 		wresize(wstat, panelh, statw);
-		wresize(wmsg, msgh, msgw);
-		/* And the message window is moved back, not only resized. A
-		   squeeze leaving no room under the panels puts its origin
-		   at or past the bottom of the screen, and resize_term()
-		   then treats it as living below the screen and shifts it
-		   down again by however much the terminal later grew: the
-		   panels came back whole while the conversation stayed gone,
-		   prompt and all, on a screen with eleven empty rows waiting
-		   for it.
+		if (panelh < rows) {
+			wresize(wmsg, msgh, msgw);
+			/* And the message window is moved back, not only resized. A
+			   squeeze leaving no room under the panels puts its origin
+			   at or past the bottom of the screen, and resize_term()
+			   then treats it as living below the screen and shifts it
+			   down again by however much the terminal later grew: the
+			   panels came back whole while the conversation stayed gone,
+			   prompt and all, on a screen with eleven empty rows waiting
+			   for it.
 
-		   That is curses' own resize_term(), the one it runs when it
-		   takes a resize in. Not the resize_term(0, 0) sync_size()
-		   used to make, which is gone, and not the one tui_init()
-		   calls either: every path that returns FALSE from
-		   tui_init() returns before make_windows(), sst.c retries
-		   only while !tui_active, and tui_shutdown() -- the one
-		   thing that clears that flag once the windows do exist --
-		   ends the process in both its callers. So a retry finds no
-		   windows to shift. #163.
+			   That is curses' own resize_term(), the one it runs when it
+			   takes a resize in. Not the resize_term(0, 0) sync_size()
+			   used to make, which is gone, and not the one tui_init()
+			   calls either: every path that returns FALSE from
+			   tui_init() returns before make_windows(), sst.c retries
+			   only while !tui_active, and tui_shutdown() -- the one
+			   thing that clears that flag once the windows do exist --
+			   ends the process in both its callers. So a retry finds no
+			   windows to shift. #163.
 
-		   After the resizes, not before. mvwin() refuses a move that
-		   would not fit at the destination *at the window's current
-		   size*, so moving first asks to put a window still as wide
-		   as the squeeze was into a narrower terminal. Squeeze to 82
-		   columns and come back to 80 and the move is refused, the
-		   window stays off-screen, and nothing tries again -- the
-		   display that came back looked right and swallowed
-		   everything typed into it.
+			   After the resizes, not before. mvwin() refuses a move that
+			   would not fit at the destination *at the window's current
+			   size*, so moving first asks to put a window still as wide
+			   as the squeeze was into a narrower terminal. Squeeze to 82
+			   columns and come back to 80 and the move is refused, the
+			   window stays off-screen, and nothing tries again -- the
+			   display that came back looked right and swallowed
+			   everything typed into it.
 
-		   The return is dropped on purpose: ERR comes back only
-		   where there is nowhere legal to put the window -- LINES
-		   at or under PANELMIN, or fewer than two columns -- and at
-		   those sizes the panels are the whole screen and nothing
-		   is drawn below them anyway. The next resize asks again.
-		   LINES rather than the layout size, and since #168 those
-		   can differ: under a pin the move succeeds where the same
-		   window unpinned would take the ERR path, which is what
-		   #182 is about. Every size at four rows and up is
-		   unaffected, the two agreeing there. */
-		mvwin(wmsg, panelh, 1);
+			   The return is dropped on purpose: ERR comes back only
+			   where there is nowhere legal to put the window -- LINES
+			   at or under PANELMIN, or fewer than two columns -- and at
+			   those sizes the panels are the whole screen and nothing
+			   is drawn below them anyway. The next resize asks again.
+			   LINES rather than the layout size, and since #168 those
+			   can differ: under a pin the move succeeds where the same
+			   window unpinned would take the ERR path, which is what
+			   #182 was about. Guarding against panelh < rows keeps the
+			   pinned path matching the unpinned one. */
+			mvwin(wmsg, panelh, 1);
+		}
 	}
 	/* Set every time, not only on the first: keypad in particular is
 	   what turns a resize into KEY_RESIZE rather than into whatever
@@ -760,7 +762,7 @@ static int row_blank(int r) {
  * reflowing it, so a pair that no longer fits stops being the string
  * this searches for -- and that same absence of reflow is what makes
  * the stump's height, computed below, exact. */
-static void restore_curline(int oldmsgw) {
+static void restore_curline(int oldmsgw, int oldmsgh) {
 	/* want holds curline and the answer: 160 covers readinput()'s
 	   callers, which pass 128-byte buffers (line[] in sst.c,
 	   winner[] in finish.c) of which the reader fills at most 126.
@@ -860,7 +862,7 @@ static void restore_curline(int oldmsgw) {
 		int alen = ended && pending_answer != NULL
 			   ? (int)strlen(pending_answer) : 0;
 		int arows = alen > 0 ? (alen - 1) / width + 1 : 0;
-		int start = r - wantlen / width - arows;
+		int start = r - (wantlen > 0 ? (wantlen - 1) / width : 0) - arows;
 		int rr;
 
 		if (start < 0) start = 0;
@@ -1088,35 +1090,39 @@ static void restore_curline(int oldmsgw) {
 			wscrl(wmsg, 1);
 			wmove(wmsg, maxy - 1, 0);
 		}
+	} else if (maxy > oldmsgh) {
+		/* A height grow without width change: the old stump is on
+		   screen, and last names its last row (or 0 if empty). Erasing
+		   back from last clears the stump, and positioning the cursor
+		   at start restores the prompt in place without leaving a gap
+		   of blank rows above it. #114. */
+		int total = linelen;
+		int rows, rr, k, bottom, start;
+
+		if (pending_answer != NULL)
+			total += (int)strlen(pending_answer);
+		if (ended && pending_answer != NULL && width > 0 && linelen % width != 0)
+			total += width - linelen % width;
+		rows = (width <= 0 || total == 0) ? 1 : (total - 1) / width + 1;
+		bottom = last >= 0 ? last : 0;
+		start = -1;
+		for (k = 0; k < rows && bottom - k >= 0; k++) {
+			if (row_starts_line(bottom - k, line, linelen, width, width)) {
+				start = bottom - k;
+				break;
+			}
+		}
+		if (start < 0 && bottom - rows + 1 < 0) start = 0;
+		if (start < 0) start = bottom;
+		for (rr = start; rr < maxy; rr++) {
+			wmove(wmsg, rr, 0);
+			wclrtoeol(wmsg);
+		}
+		wmove(wmsg, start, 0);
 	} else {
-		/* A width that did not change is the other case, and it
-		   comes both ways. Lost rows: the line is gone altogether
-		   and the bottom rows hold older conversation worth
-		   keeping, so this scrolls by one and writes below it.
-		   Gained rows: the line is on screen as a stump, and the
-		   scroll is what carries it off the top.
-		   Bottom-anchored, unlike the branch above, and on a grow
-		   that shows: a height-only squeeze and return leaves the
-		   pair on the last two rows with blank ones above it. That
-		   is reproducible -- 72x24, a wrapping answer, 72x14, back
-		   to 72x24 -- and it is this change that made it visible,
-		   by restoring on a grow at all. Left alone deliberately.
-		   The scroll is not only making room: it is what carries
-		   the stump off the top of the window. Anchoring under the
-		   conversation without it leaves the stump on screen above
-		   the line, which is worse than a gap.
-		   Erasing instead, the way the branch above does, is not
-		   the arithmetic problem it looks like -- the width did not
-		   change, so getmaxx(wmsg) already is the old width and the
-		   row count is one line away. What stops it is that this
-		   branch serves two opposite states. On a height grow the
-		   stump is on screen and last names its last row, so
-		   erasing back from there is right. On a height shrink
-		   wresize() truncated the line away and last names live
-		   conversation, so the same erase would wipe the line above
-		   the prompt where the scroll preserves it. A fix has to
-		   tell the two apart first, which is more than this is
-		   worth. Issue #114. */
+		/* On a height shrink wresize() truncated the line away and
+		   last names live conversation, so the scroll preserves it
+		   and writes below. */
 		wscrl(wmsg, 1);
 		wmove(wmsg, maxy - 1, 0);
 	}
@@ -1185,6 +1191,8 @@ static void restore_curline(int oldmsgw) {
  * does for the one line that matters. #166. */
 static void sync_size(void) {
 	int oldcols = builtcols;
+	int oldlines = builtlines;
+	int oldmsgh = wmsg != NULL ? getmaxy(wmsg) : (oldlines - PANELH > 1 ? oldlines - PANELH : 1);
 	int relayout = resized();
 	int trows = 0, tcols = 0;
 
@@ -1286,36 +1294,40 @@ static void sync_size(void) {
 	   dirty, and this function has already returned if there was none. */
 	werase(stdscr);
 	wnoutrefresh(stdscr);
-	touchwin(wmsg);		/* the panels redraw themselves; this does not */
-	/* On a grow as well as a shrink. A shrink writes the line into
-	   whatever room is left, which can be one row and narrower than
-	   the line: it wraps, scrolls, and leaves the tail. Growing back
-	   used to do nothing, so a corner drag returned to a stump --
-	   ` , or frozen game?` of a question still waiting to be
-	   answered, with the first keystroke of the answer eaten by the
-	   reader still sitting behind it.
-	   This was left out once because asking on a grow stood a second
-	   copy of a question up the window whenever the answer being
-	   typed was long enough to wrap. That was the one-row search:
-	   restore_curline() joins as many rows as the pair takes before
-	   looking, so an intact line is found and left alone whichever
-	   way the terminal moved, and only a line that really is gone or
-	   broken gets rewritten.
-	   The old width is what says how many rows the stump occupies,
-	   so it is passed whenever the width changed at all rather than
-	   only when it shrank.
-	   Both sides of that test are the layout width. oldcols is the
-	   builtcols this call started with and the comparison used to be
-	   against COLS, which was the same number until layout_size()
-	   made it need not be: under a pin curses' width never moves, so
-	   a shrink past the pin read as "the width did not change", and
-	   restore_curline() took its height-only branch, scrolled, and
-	   stamped a second copy of the player's half-typed command under
-	   the truncated first. Measured at COLUMNS=80 in a 100x30 pane
-	   with 62 characters typed and the pane taken to 70. #168. */
-	if (relayout)
-		restore_curline(builtcols != oldcols ? oldcols - 2 : 0);
-	wnoutrefresh(wmsg);
+	if (getmaxy(wquad) < builtlines) {
+		touchwin(wmsg);		/* the panels redraw themselves; this does not */
+		/* On a grow as well as a shrink. A shrink writes the line into
+		   whatever room is left, which can be one row and narrower than
+		   the line: it wraps, scrolls, and leaves the tail. Growing back
+		   used to do nothing, so a corner drag returned to a stump --
+		   ` , or frozen game?` of a question still waiting to be
+		   answered, with the first keystroke of the answer eaten by the
+		   reader still sitting behind it.
+		   This was left out once because asking on a grow stood a second
+		   copy of a question up the window whenever the answer being
+		   typed was long enough to wrap. That was the one-row search:
+		   restore_curline() joins as many rows as the pair takes before
+		   looking, so an intact line is found and left alone whichever
+		   way the terminal moved, and only a line that really is gone or
+		   broken gets rewritten.
+		   The old width is what says how many rows the stump occupies,
+		   so it is passed whenever the width changed at all rather than
+		   only when it shrank.
+		   The old height is passed alongside it so a height grow can
+		   clear the stump and restore without leaving a gap. #114.
+		   Both sides of that test are the layout width. oldcols is the
+		   builtcols this call started with and the comparison used to be
+		   against COLS, which was the same number until layout_size()
+		   made it need not be: under a pin curses' width never moves, so
+		   a shrink past the pin read as "the width did not change", and
+		   restore_curline() took its height-only branch, scrolled, and
+		   stamped a second copy of the player's half-typed command under
+		   the truncated first. Measured at COLUMNS=80 in a 100x30 pane
+		   with 62 characters typed and the pane taken to 70. #168. */
+		if (relayout)
+			restore_curline(builtcols != oldcols ? oldcols - 2 : 0, oldmsgh);
+		wnoutrefresh(wmsg);
+	}
 }
 
 
@@ -1360,6 +1372,17 @@ static int havecursewinch = FALSE;
  * before. */
 static struct sigaction cursetstp;
 static int havecursetstp = FALSE;
+
+/* What was installed for SIGCONT before tui_init(), kept so giving up
+ * or shutting down can restore it. */
+static struct sigaction oldcont;
+static int haveoldcont = FALSE;
+static volatile sig_atomic_t sigcont_pending = 0;
+
+static void on_sigcont(int sig) {
+	(void)sig;
+	sigcont_pending = 1;
+}
 
 /* The size curses was working from when the panels were last turned
  * down, or 0 if they have not been turned down for size. Written by
@@ -1455,7 +1478,8 @@ static int pinned(const char *name) {
  * one -- and having answered by the time this runs. */
 static int axis_moved(const char *name, int now, int refusedcurses,
 		      int refusedterm) {
-	if (!pinned(name)) return now != refusedcurses;
+	(void)name;
+	(void)refusedcurses;
 	return refusedterm != 0 && now != refusedterm;
 }
 
@@ -1471,7 +1495,7 @@ static int axis_moved(const char *name, int now, int refusedcurses,
  * one curses cannot drive): those do not change with a resize, and
  * refusedlines stays 0 to say so. */
 int tui_size_changed_since_refusal(void) {
-	struct winsize ws;
+	int r, c;
 
 	if (refusedlines == 0) return FALSE;
 	/* The size test is tui_init()'s, and for the same reason: an ioctl
@@ -1492,12 +1516,11 @@ int tui_size_changed_since_refusal(void) {
 	   repeat that main has today, by the shorter route of refusing to
 	   read 0x0 as a size at all; it is not the whole of #175, which is
 	   about comparing across sources whatever the ioctl says. */
-	if (ioctl(fileno(stdout), TIOCGWINSZ, &ws) != 0 ||
-	    ws.ws_row <= 0 || ws.ws_col <= 0)
-		return FALSE;
-	if (axis_moved("LINES", ws.ws_row, refusedlines, refusedtermlines))
+	term_size(&r, &c);
+	if (r == 0) return FALSE;
+	if (axis_moved("LINES", r, refusedlines, refusedtermlines))
 		return TRUE;
-	if (axis_moved("COLUMNS", ws.ws_col, refusedcols, refusedtermcols))
+	if (axis_moved("COLUMNS", c, refusedcols, refusedtermcols))
 		return TRUE;
 	return FALSE;
 }
@@ -1724,6 +1747,15 @@ int tui_init(void) {
 		havecursewinch = sigaction(SIGWINCH, NULL, &cursewinch) == 0;
 	if (!havecursetstp)
 		havecursetstp = sigaction(SIGTSTP, NULL, &cursetstp) == 0;
+	if (!haveoldcont)
+		haveoldcont = sigaction(SIGCONT, NULL, &oldcont) == 0;
+	{
+		struct sigaction sa;
+		memset(&sa, 0, sizeof(sa));
+		sa.sa_handler = on_sigcont;
+		sigaction(SIGCONT, &sa, NULL);
+	}
+	sigcont_pending = 0;
 	/* Ask the terminal its size rather than believing curses' cache.
 	   A second initscr() does not re-ask: the size is cached from the
 	   first, and the resize that matters here arrived while SIGWINCH
@@ -1769,11 +1801,15 @@ int tui_init(void) {
 	   than returning it as input, and sync_size() returns early from
 	   one carrying no size change, which the note above cursor_at_prompt
 	   already names. */
-	haveterm = ioctl(fileno(stdout), TIOCGWINSZ, &winsz) == 0 &&
-		   winsz.ws_row > 0 && winsz.ws_col > 0;
-	if (haveterm)
-		resize_term(pinned("LINES") ? LINES : winsz.ws_row,
-			    pinned("COLUMNS") ? COLS : winsz.ws_col);
+	int r, c;
+	term_size(&r, &c);
+	haveterm = (r > 0);
+	if (haveterm) {
+		winsz.ws_row = r;
+		winsz.ws_col = c;
+		resize_term(pinned("LINES") ? LINES : r,
+			    pinned("COLUMNS") ? COLS : c);
+	}
 	if (LINES < MINROWS || COLS < MINCOLS) {
 		/* Kept so the caller can tell a player who resized and
 		   missed from one who did nothing. */
@@ -1784,6 +1820,10 @@ int tui_init(void) {
 		endwin();
 		if (havewinch) sigaction(SIGWINCH, &oldwinch, NULL);
 		if (havetstp) sigaction(SIGTSTP, &oldtstp, NULL);
+		if (haveoldcont) {
+			sigaction(SIGCONT, &oldcont, NULL);
+			haveoldcont = FALSE;
+		}
 		return FALSE;
 	}
 	/* Clearing the floor is not enough: the panels are drawn to the
@@ -1809,6 +1849,10 @@ int tui_init(void) {
 		endwin();
 		if (havewinch) sigaction(SIGWINCH, &oldwinch, NULL);
 		if (havetstp) sigaction(SIGTSTP, &oldtstp, NULL);
+		if (haveoldcont) {
+			sigaction(SIGCONT, &oldcont, NULL);
+			haveoldcont = FALSE;
+		}
 		return FALSE;
 	}
 	/* A no-op on the first call, where this is what curses just
@@ -1819,8 +1863,15 @@ int tui_init(void) {
 	   lets a fallback game be suspended at all. */
 	if (havecursewinch)
 		sigaction(SIGWINCH, &cursewinch, NULL);
-	if (havecursetstp)
+	/* Put curses' SIGTSTP handler back, but without SA_RESTART: with
+	   SA_RESTART, resuming from suspend immediately restarts the
+	   interrupted read() inside wgetch(), so SIGCONT cannot interrupt
+	   the read and curses leaves the stale layout on screen until
+	   the user types a keystroke (#191). */
+	if (havecursetstp) {
+		cursetstp.sa_flags &= ~SA_RESTART;
 		sigaction(SIGTSTP, &cursetstp, NULL);
+	}
 	cbreak();
 	noecho();
 	start_colour();
@@ -1845,6 +1896,11 @@ void tui_shutdown(void) {
 	if (!tui_active) return;
 	tui_active = FALSE;
 	endwin();
+	if (haveoldcont) {
+		sigaction(SIGCONT, &oldcont, NULL);
+		haveoldcont = FALSE;
+	}
+	sigcont_pending = 0;
 }
 
 void tui_refresh_panels(void) {
@@ -1874,9 +1930,11 @@ void tui_refresh_panels(void) {
 	if (panel_room(wquad) >= (int)strlen(" Quadrant "))
 		mvwaddstr(wquad, 0, 2, " Quadrant ");
 	werase(wstat);
-	box(wstat, 0, 0);
-	if (panel_room(wstat) >= (int)strlen(" Status "))
-		mvwaddstr(wstat, 0, 2, " Status ");
+	if (getmaxx(wstat) > 1) {
+		box(wstat, 0, 0);
+		if (panel_room(wstat) >= (int)strlen(" Status "))
+			mvwaddstr(wstat, 0, 2, " Status ");
+	}
 	/* Nothing to show before a game is set up or after one ends; the
 	   formatters work the condition out for themselves, so nothing
 	   here writes to the game state. */
@@ -1911,14 +1969,17 @@ void tui_refresh_panels(void) {
 			fmt_quad_line(i, buf);
 			draw_quad_line(i+1, buf);
 		}
-		for (i = 1; i <= 10; i++) {
-			fmt_status_line(i, buf);
-			draw_status_line(i+1, i, buf);
+		if (getmaxx(wstat) > 1) {
+			for (i = 1; i <= 10; i++) {
+				fmt_status_line(i, buf);
+				draw_status_line(i+1, i, buf);
+			}
 		}
 	}
 	wnoutrefresh(wquad);
 	wnoutrefresh(wstat);
-	wnoutrefresh(wmsg);
+	if (getmaxy(wquad) < builtlines)
+		wnoutrefresh(wmsg);
 	doupdate();
 }
 
@@ -1977,10 +2038,35 @@ int tui_readline(char *buf, int buflen) {
 	int len = 0, room = buflen-2, c;
 
 	if (room < 0) room = 0;	/* keep room for the "\n" and the NUL */
+	if (sigcont_pending) {
+		sigcont_pending = 0;
+		sync_size();
+		clearok(curscr, TRUE);
+		tui_refresh_panels();
+		wrefresh(wmsg);
+	}
 	reader_waiting = TRUE;
 	tui_refresh_panels();
 	for (;;) {
 		c = wgetch(wmsg);
+		if (sigcont_pending || (c == ERR && errno == EINTR)) {
+			if (c != ERR && c != KEY_RESIZE) {
+				ungetch(c);
+			}
+			sigcont_pending = 0;
+			buf[len] = '\0';
+			cursor_at_prompt = FALSE;
+			pending_answer = buf;
+			sync_size();
+			clearok(curscr, TRUE);
+			tui_refresh_panels();
+			pending_answer = NULL;
+			if (cursor_at_prompt && len > 0) {
+				waddstr(wmsg, buf);
+			}
+			wrefresh(wmsg);
+			continue;
+		}
 		if (c == KEY_RESIZE) {
 			/* Written whenever the repaint moved the cursor,
 			   rather than only when it decided the line had
@@ -2087,6 +2173,13 @@ int tui_readline(char *buf, int buflen) {
 int tui_getch(void) {
 	int c;
 
+	if (sigcont_pending) {
+		sigcont_pending = 0;
+		sync_size();
+		clearok(curscr, TRUE);
+		tui_refresh_panels();
+		wrefresh(wmsg);
+	}
 	/* Same as before a typed answer: a paging prompt is a moment the
 	   player is looking at the screen, so the panels beside the text
 	   should not be older than it. */
@@ -2094,6 +2187,17 @@ int tui_getch(void) {
 	tui_refresh_panels();
 	for (;;) {
 		c = wgetch(wmsg);
+		if (sigcont_pending || (c == ERR && errno == EINTR)) {
+			if (c != ERR && c != KEY_RESIZE) {
+				ungetch(c);
+			}
+			sigcont_pending = 0;
+			sync_size();
+			clearok(curscr, TRUE);
+			tui_refresh_panels();
+			wrefresh(wmsg);
+			continue;
+		}
 		/* Not a keystroke, whatever curses calls it. Handing it back
 		   would let a window drag answer "hit space bar to continue"
 		   and page away text the player never read. */

@@ -390,6 +390,100 @@ static void test_proutfn_and_proutf(void) {
 	check("proutfn empty string emits nothing", outbuf, "");
 }
 
+static void check_bounds(const char *scenario) {
+	char buf[FMTBUFLEN];
+	int i;
+	for (i = 1; i <= 10; i++) {
+		fmt_status_line(i, buf);
+		if (strlen(buf) > 40) {
+			failures++;
+			printf("FAIL %s: status line %d exceeds 40 columns (%zu): \"%s\"\n",
+			       scenario, i, strlen(buf), buf);
+		}
+	}
+	for (i = 0; i <= 10; i++) {
+		fmt_quad_line(i, buf);
+		if (strlen(buf) > 26) {
+			failures++;
+			printf("FAIL %s: quadrant line %d exceeds 26 columns (%zu): \"%s\"\n",
+			       scenario, i, strlen(buf), buf);
+		}
+	}
+}
+
+static void test_status_panel_width_bounds(void) {
+	basestate();
+	check_bounds("base state");
+
+	/* Damaged shields */
+	basestate();
+	damage[DSHIELD] = 1.0;
+	check_bounds("damaged shields");
+
+	/* Shields up */
+	basestate();
+	shldup = TRUE;
+	shield = 2500.0;
+	inshld = 2500.0;
+	check_bounds("shields up full");
+
+	/* Docking */
+	basestate();
+	condit = IHDOCKED;
+	check_bounds("docked");
+
+	/* Low energy */
+	basestate();
+	energy = 999.0;
+	check_bounds("low energy");
+
+	/* Alerts */
+	basestate();
+	d.galaxy[quadx][quady] = 100;
+	check_bounds("red alert enemies");
+
+	basestate();
+	d.newstuf[quadx][quady] = 10;
+	check_bounds("red alert new enemies");
+
+	/* Damaged life support */
+	basestate();
+	damage[DLIFSUP] = 1.0;
+	check_bounds("damaged life support");
+
+	/* Damaged life support while docked */
+	basestate();
+	damage[DLIFSUP] = 1.0;
+	condit = IHDOCKED;
+	check_bounds("damaged life support docked");
+
+#ifdef CLOAKING
+	/* Cloaked */
+	basestate();
+	iscloaked = 1;
+	check_bounds("cloaked");
+	iscloaked = 0;
+#endif
+
+	/* Extreme coordinates and values */
+	basestate();
+	quadx = 10; quady = 10;
+	sectx = 10; secty = 10;
+	d.date = 9999.9;
+	d.remkl = 99;
+	d.remtime = 99.99;
+	energy = 9999.99;
+	torps = 10;
+	warpfac = 10.0;
+	check_bounds("extreme coordinates and values");
+
+	/* Damaged sensors and fixed coordinates */
+	basestate();
+	damage[DSRSENS] = 1.0;
+	coordfixed = 1;
+	check_bounds("damaged sensors coordfixed");
+}
+
 int main(void) {
 	test_quad_header();
 	test_quad_row();
@@ -405,6 +499,7 @@ int main(void) {
 	test_status_lines();
 	test_status_variants();
 	test_proutfn_and_proutf();
+	test_status_panel_width_bounds();
 	if (failures) {
 		printf("%d test(s) FAILED\n", failures);
 		return 1;

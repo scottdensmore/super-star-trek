@@ -10,6 +10,8 @@
 #include <errno.h>
 #include <sys/ioctl.h>
 #include <termios.h>
+#include <signal.h>
+#include <string.h>
 #include <unistd.h>
 #endif
 
@@ -37,10 +39,16 @@ int stdio_is_terminal(void) {
 	return isatty(STDIN_FILENO) && isatty(STDOUT_FILENO);
 }
 
+static void on_sigcont(int sig) {
+	(void)sig;
+}
+
 int getch(void) {
     char chbuf[1];
     ssize_t n;
     struct termios oldstate, newstate;
+    struct sigaction oldcont, sa;
+    int have_oldcont;
     if (tui_active)
         return tui_getch();
     fflush(stdout);
@@ -48,7 +56,10 @@ int getch(void) {
 	newstate = oldstate;
 	newstate.c_lflag &= ~ICANON;
 	newstate.c_lflag &= ~ECHO;
-	tcsetattr(0, TCSANOW,  &newstate);
+	memset(&sa, 0, sizeof(sa));
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = on_sigcont;
+	have_oldcont = sigaction(SIGCONT, &sa, &oldcont) == 0;
 	/* A read the terminal changing shape interrupted is not a
 	   keypress, and reporting one lets a resize answer the pause: the
 	   page the player had not finished goes by, and at pause(1) the
@@ -70,8 +81,10 @@ int getch(void) {
 	   is swallowed until Enter, the terminal being canonical again
 	   while this read is still the non-canonical one set up above.
 	   That is #190, and it is this function's to fix rather than the
-	   signal disposition's: plain mode does the same. SIGCONT is not
-	   caught.
+	   signal disposition's: plain mode does the same. SIGCONT is caught
+	   without SA_RESTART to interrupt read(), and re-applying newstate
+	   inside the retry loop ensures the terminal remains non-canonical
+	   when the read restarts.
 	   The retry stays anyway: reading an interrupted read as a
 	   keypress is wrong whatever the signals happen to be.
 	   At end of input there is no keypress to report; say so rather
@@ -80,8 +93,11 @@ int getch(void) {
 	   paging prompt, and quitting from it would cut off end-of-game
 	   output mid-score. The session ends at the next real prompt. */
 	do {
+		tcsetattr(0, TCSANOW, &newstate);
 		n = read(0, &chbuf, 1);
 	} while (n < 0 && errno == EINTR);
+	if (have_oldcont)
+		sigaction(SIGCONT, &oldcont, NULL);
 	if (n != 1)
 		chbuf[0] = '\0';
 	tcsetattr(0, TCSANOW, &oldstate);
