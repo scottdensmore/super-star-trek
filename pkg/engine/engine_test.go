@@ -462,6 +462,55 @@ func TestDispatchFirePhasers_ManualAndErrors(t *testing.T) {
 	}
 }
 
+func TestDispatchFirePhasers_ManualAllocationExploit(t *testing.T) {
+	game := NewGame(12345, SkillGood, LengthMedium)
+	game.Enterprise.Sector = Coord{4, 1}
+	game.Enterprise.Energy = 500
+
+	k1 := &Klingon{ID: 1, Sector: Coord{4, 3}, Energy: 500}
+	k2 := &Klingon{ID: 2, Sector: Coord{4, 5}, Energy: 500}
+	game.CurrentQuad.Klingons = []*Klingon{k1, k2}
+	game.CurrentQuad.Grid[4][3] = EntityKlingon
+	game.CurrentQuad.Grid[4][5] = EntityKlingon
+
+	// Exploit attempt: low a.Energy (100) but high ManualAllocation (300 + 300 = 600)
+	// Enterprise has 500 energy, so 600 should be rejected as insufficient energy
+	_, err := game.Dispatch(ActionFirePhasers{
+		Energy: 100,
+		ManualAllocation: map[int]float64{
+			1: 300,
+			2: 300,
+		},
+	})
+	if err == nil {
+		t.Fatal("expected error when total manual allocation exceeds Enterprise energy")
+	}
+
+	// Now increase energy to 1000 so 600 is affordable.
+	// Firing with a.Energy=100 and allocation of 300+300=600 must deduct 600, not 100!
+	game.Enterprise.Energy = 1000
+	events, err := game.Dispatch(ActionFirePhasers{
+		Energy: 100,
+		ManualAllocation: map[int]float64{
+			1: 300,
+			2: 300,
+		},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error firing phasers: %v", err)
+	}
+	if game.Enterprise.Energy != 400 {
+		t.Fatalf("expected energy deducted by actual manual allocation 600 (remaining 400), got %f", game.Enterprise.Energy)
+	}
+	if len(events) < 1 || events[0].EventType() != "PhaserFired" {
+		t.Fatalf("expected PhaserFired event, got %v", events)
+	}
+	firedEvt := events[0].(EventPhaserFired)
+	if firedEvt.Energy != 600 {
+		t.Fatalf("expected PhaserFired energy 600, got %f", firedEvt.Energy)
+	}
+}
+
 func TestDispatchMove(t *testing.T) {
 	game := NewGame(12345, SkillGood, LengthMedium)
 	game.Enterprise.Quad = Coord{1, 1}
@@ -581,6 +630,170 @@ func TestDispatchMove_ObstacleCollision(t *testing.T) {
 	}
 	if !hasObstacle {
 		t.Fatalf("expected ObstacleEncountered event in %v", events)
+	}
+}
+
+func TestDispatchMove_InterQuadrant(t *testing.T) {
+	game := NewGame(12345, SkillGood, LengthMedium)
+	game.Enterprise.Quad = Coord{2, 2}
+	game.Enterprise.Sector = Coord{4, 4}
+	game.CurrentQuad.Grid[4][4] = EntityEnterprise
+	game.Enterprise.Energy = 5000
+
+	// Warp factor 2.0 East (Course 0.0) -> 16 steps
+	// from Quad {2, 2}, Sector {4, 4}:
+	// totalR = 8*1 + 4 = 12
+	// totalC = 8*1 + 4 = 12
+	// destR = 12
+	// destC = 12 + 16 = 28
+	// toQuad: Coord{(12-1)/8 + 1, (28-1)/8 + 1} = Coord{2, 4}
+	// toSector: Coord{(12-1)%8 + 1, (28-1)%8 + 1} = Coord{4, 4}
+	events, err := game.Dispatch(ActionMove{
+		Course: 0.0,
+		Warp:   2.0,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error on inter-quadrant move: %v", err)
+	}
+
+	if game.Enterprise.Quad != (Coord{2, 4}) {
+		t.Fatalf("expected destination quad {2, 4}, got %v", game.Enterprise.Quad)
+	}
+	if game.Enterprise.Sector != (Coord{4, 4}) {
+		t.Fatalf("expected destination sector {4, 4}, got %v", game.Enterprise.Sector)
+	}
+	// Verify fromSector cleared in CurrentQuad.Grid
+	if game.CurrentQuad.Grid[4][4] != EntityEmpty {
+		t.Fatalf("expected fromSector cleared in old quad grid, got %v", game.CurrentQuad.Grid[4][4])
+	}
+	if len(events) == 0 || events[0].EventType() != "ShipMoved" {
+		t.Fatalf("expected ShipMoved event, got %v", events)
+	}
+	moveEvt := events[0].(EventShipMoved)
+	if moveEvt.FromQuad != (Coord{2, 2}) || moveEvt.ToQuad != (Coord{2, 4}) {
+		t.Fatalf("unexpected quads in move event: %+v", moveEvt)
+	}
+
+	// Galaxy edge clamping test:
+	// From Quad {1, 1}, Sector {2, 2}, moving North (Course math.Pi/2) with Warp 4.0 (32 steps)
+	game.Enterprise.Quad = Coord{1, 1}
+	game.Enterprise.Sector = Coord{2, 2}
+	game.CurrentQuad.Grid[2][2] = EntityEnterprise
+	game.Enterprise.Energy = 5000
+
+	_, err = game.Dispatch(ActionMove{
+		Course: math.Pi / 2, // North (dr = -1, dc = 0)
+		Warp:   4.0,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error on galaxy edge clamping move: %v", err)
+	}
+	// TotalR = 2. Clamped at row 1. Quad {1, 1}, Sector {1, 2}.
+	if game.Enterprise.Quad != (Coord{1, 1}) {
+		t.Fatalf("expected clamped quad {1, 1}, got %v", game.Enterprise.Quad)
+	}
+	if game.Enterprise.Sector != (Coord{1, 2}) {
+		t.Fatalf("expected clamped sector {1, 2}, got %v", game.Enterprise.Sector)
+	}
+
+	// Obstacle in current quadrant prevents inter-quadrant exit:
+	game.Enterprise.Quad = Coord{1, 1}
+	game.Enterprise.Sector = Coord{4, 1}
+	game.CurrentQuad.Grid[4][1] = EntityEnterprise
+	game.CurrentQuad.Grid[4][3] = EntityStar // obstacle at sector 3
+	game.Enterprise.Energy = 5000
+
+	events, err = game.Dispatch(ActionMove{
+		Course: 0.0, // East, attempting Warp 2.0 (16 steps)
+		Warp:   2.0,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// Movement must stop before obstacle at sector 2, staying in current quadrant
+	if game.Enterprise.Quad != (Coord{1, 1}) {
+		t.Fatalf("expected to remain in quad {1, 1} due to obstacle, got %v", game.Enterprise.Quad)
+	}
+	if game.Enterprise.Sector != (Coord{4, 2}) {
+		t.Fatalf("expected stopped at sector {4, 2}, got %v", game.Enterprise.Sector)
+	}
+	if game.CurrentQuad.Grid[4][2] != EntityEnterprise {
+		t.Fatalf("expected EntityEnterprise at {4, 2}, got %v", game.CurrentQuad.Grid[4][2])
+	}
+}
+
+func TestDispatchMove_ExplicitDestQuad(t *testing.T) {
+	game := NewGame(12345, SkillGood, LengthMedium)
+	game.Enterprise.Quad = Coord{1, 1}
+	game.Enterprise.Sector = Coord{3, 3}
+	game.CurrentQuad.Grid[3][3] = EntityEnterprise
+	game.Enterprise.Energy = 5000
+
+	// Move with explicit DestQuad and DestSector
+	events, err := game.Dispatch(ActionMove{
+		Warp:       1.0,
+		DestQuad:   Coord{5, 6},
+		DestSector: Coord{2, 7},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error with explicit DestQuad/DestSector: %v", err)
+	}
+	if game.Enterprise.Quad != (Coord{5, 6}) {
+		t.Fatalf("expected Enterprise Quad {5, 6}, got %v", game.Enterprise.Quad)
+	}
+	if game.Enterprise.Sector != (Coord{2, 7}) {
+		t.Fatalf("expected Enterprise Sector {2, 7}, got %v", game.Enterprise.Sector)
+	}
+	if game.CurrentQuad.Grid[3][3] != EntityEmpty {
+		t.Fatalf("expected old sector cleared in grid, got %v", game.CurrentQuad.Grid[3][3])
+	}
+	if len(events) == 0 || events[0].EventType() != "ShipMoved" {
+		t.Fatalf("expected ShipMoved event, got %v", events)
+	}
+
+	// Move with explicit DestQuad and default DestSector (Coord{4, 4})
+	game.Enterprise.Quad = Coord{1, 1}
+	game.Enterprise.Sector = Coord{2, 2}
+	game.CurrentQuad.Grid[2][2] = EntityEnterprise
+	game.Enterprise.Energy = 5000
+
+	_, err = game.Dispatch(ActionMove{
+		Warp:     1.0,
+		DestQuad: Coord{7, 8},
+	})
+	if err != nil {
+		t.Fatalf("unexpected error with explicit DestQuad without DestSector: %v", err)
+	}
+	if game.Enterprise.Quad != (Coord{7, 8}) {
+		t.Fatalf("expected Enterprise Quad {7, 8}, got %v", game.Enterprise.Quad)
+	}
+	if game.Enterprise.Sector != (Coord{4, 4}) {
+		t.Fatalf("expected default Enterprise Sector {4, 4}, got %v", game.Enterprise.Sector)
+	}
+
+	// Out of bounds DestQuad
+	outOfBoundsQuads := []Coord{{0, 1}, {9, 5}, {4, 0}, {4, 9}}
+	for _, dq := range outOfBoundsQuads {
+		_, err = game.Dispatch(ActionMove{
+			Warp:     1.0,
+			DestQuad: dq,
+		})
+		if err == nil {
+			t.Fatalf("expected error for out of bounds DestQuad %v, got nil", dq)
+		}
+	}
+
+	// Out of bounds DestSector with valid DestQuad
+	outOfBoundsSectors := []Coord{{0, 1}, {9, 5}, {4, 0}, {4, 9}}
+	for _, ds := range outOfBoundsSectors {
+		_, err = game.Dispatch(ActionMove{
+			Warp:       1.0,
+			DestQuad:   Coord{3, 3},
+			DestSector: ds,
+		})
+		if err == nil {
+			t.Fatalf("expected error for out of bounds DestSector %v, got nil", ds)
+		}
 	}
 }
 

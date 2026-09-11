@@ -36,15 +36,20 @@ func ValidateSaveFilename(filename string) error {
 
 // Save serializes the GameState to a JSON file. If path lacks the .TRK extension, it is appended.
 func (g *GameState) Save(path string) error {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return errors.New("file name cannot be empty")
+	}
 	dir := filepath.Dir(path)
 	base := filepath.Base(path)
 	if err := ValidateSaveFilename(base); err != nil {
 		return err
 	}
 
-	if !strings.HasSuffix(strings.ToUpper(path), ".TRK") {
-		path = filepath.Join(dir, base+".TRK")
+	if !strings.HasSuffix(strings.ToUpper(base), ".TRK") {
+		base = base + ".TRK"
 	}
+	path = filepath.Join(dir, base)
 
 	data, err := json.MarshalIndent(g, "", "  ")
 	if err != nil {

@@ -186,7 +186,8 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 	}
 
 	totalEnergy := a.Energy
-	if totalEnergy == 0 && len(a.ManualAllocation) > 0 {
+	if len(a.ManualAllocation) > 0 {
+		totalEnergy = 0
 		for _, e := range a.ManualAllocation {
 			if e > 0 {
 				totalEnergy += e
@@ -329,7 +330,26 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 
 	var events []Event
 
-	if a.DestSector != (Coord{}) {
+	if a.DestQuad != (Coord{}) {
+		if a.DestQuad[0] < 1 || a.DestQuad[0] > 8 || a.DestQuad[1] < 1 || a.DestQuad[1] > 8 {
+			return nil, errors.New("destination quadrant out of bounds")
+		}
+		toQuad = a.DestQuad
+		if a.DestSector != (Coord{}) {
+			if a.DestSector[0] < 1 || a.DestSector[0] > 8 || a.DestSector[1] < 1 || a.DestSector[1] > 8 {
+				return nil, errors.New("destination sector out of bounds")
+			}
+			if toQuad == fromQuad && g.CurrentQuad.Grid[a.DestSector[0]][a.DestSector[1]] != EntityEmpty && a.DestSector != fromSector {
+				return nil, errors.New("destination sector is occupied")
+			}
+			toSector = a.DestSector
+		} else {
+			toSector = Coord{4, 4}
+			if toQuad == fromQuad && g.CurrentQuad.Grid[toSector[0]][toSector[1]] != EntityEmpty && toSector != fromSector {
+				return nil, errors.New("destination sector is occupied")
+			}
+		}
+	} else if a.DestSector != (Coord{}) {
 		if a.DestSector[0] < 1 || a.DestSector[0] > 8 || a.DestSector[1] < 1 || a.DestSector[1] > 8 {
 			return nil, errors.New("destination sector out of bounds")
 		}
@@ -348,6 +368,8 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 
 		currentR := float64(fromSector[0])
 		currentC := float64(fromSector[1])
+		hitObstacle := false
+		exitedQuad := false
 
 		for step := 1; step <= numSteps; step++ {
 			nextR := int(math.Round(currentR + float64(step)*dr))
@@ -355,6 +377,7 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 
 			if nextR < 1 || nextR > 8 || nextC < 1 || nextC > 8 {
 				// Quadrant transition or edge of quadrant
+				exitedQuad = true
 				break
 			}
 
@@ -365,9 +388,29 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 					Sector: Coord{nextR, nextC},
 					Entity: cell,
 				})
+				hitObstacle = true
 				break
 			}
 			toSector = Coord{nextR, nextC}
+		}
+
+		if !hitObstacle && exitedQuad {
+			totalR := 8*(fromQuad[0]-1) + fromSector[0]
+			totalC := 8*(fromQuad[1]-1) + fromSector[1]
+			destR := int(math.Round(float64(totalR) + float64(numSteps)*dr))
+			destC := int(math.Round(float64(totalC) + float64(numSteps)*dc))
+			if destR < 1 {
+				destR = 1
+			} else if destR > 64 {
+				destR = 64
+			}
+			if destC < 1 {
+				destC = 1
+			} else if destC > 64 {
+				destC = 64
+			}
+			toQuad = Coord{(destR-1)/8 + 1, (destC-1)/8 + 1}
+			toSector = Coord{(destR-1)%8 + 1, (destC-1)%8 + 1}
 		}
 	}
 
@@ -380,8 +423,8 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 		g.Enterprise.Condition = ConditionGreen
 	}
 
+	g.CurrentQuad.Grid[fromSector[0]][fromSector[1]] = EntityEmpty
 	if toQuad == fromQuad {
-		g.CurrentQuad.Grid[fromSector[0]][fromSector[1]] = EntityEmpty
 		g.CurrentQuad.Grid[toSector[0]][toSector[1]] = EntityEnterprise
 	}
 	g.Enterprise.Sector = toSector

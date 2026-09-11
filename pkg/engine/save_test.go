@@ -157,3 +157,29 @@ func TestLoadGameCorrupted(t *testing.T) {
 		t.Fatalf("expected error loading corrupted file, got nil")
 	}
 }
+
+func TestGameSaveTrailingWhitespace(t *testing.T) {
+	tmpDir := t.TempDir()
+	savePath := filepath.Join(tmpDir, "TESTSAVE   ")
+
+	orig := NewGame(1234, SkillGood, LengthMedium)
+	orig.Enterprise.Energy = 3333.0
+
+	if err := orig.Save(savePath); err != nil {
+		t.Fatalf("failed to save game with trailing whitespace: %v", err)
+	}
+
+	expectedPath := filepath.Join(tmpDir, "TESTSAVE.TRK")
+	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
+		t.Fatalf("expected save file %q to exist", expectedPath)
+	}
+
+	loaded, err := LoadGame(expectedPath)
+	if err != nil {
+		t.Fatalf("failed to load game: %v", err)
+	}
+	if loaded.Enterprise.Energy != 3333.0 {
+		t.Errorf("mismatch loaded energy: expected 3333.0, got %f", loaded.Enterprise.Energy)
+	}
+}
+
