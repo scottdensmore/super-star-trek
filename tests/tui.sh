@@ -2694,7 +2694,7 @@ else
 	expect "wrap: the panels were refused at exactly 72x24" ' Quadrant '
 	# The question is 53 columns and the window 70, so an answer this
 	# long puts the pair over two rows and into the joined path.
-	tm send-keys -t "$pane" 'regularbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+	tm send-keys -t "$pane" 'regularzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz'
 	sleep 1
 	for h in 30 36 42; do
 		tm resize-window -t "$session" -x 72 -y "$h"
@@ -2705,17 +2705,12 @@ else
 			dump
 			break
 		fi
-		# Not asserting the answer here, though it is the half the
-		# player is looking at. Two attempts at it were blind: a
-		# per-row grep for the run of b's could never match, because
-		# the answer is what wraps and the run is split across two
-		# rows; and joining the rows back does not reassemble it
-		# either, because what capture-pane returns for the two rows
-		# does not concatenate to what was typed. Counting b's over
-		# the whole screen needs a baseline, since the banner has
-		# its own. The question alone kills the mutant this block is
-		# for, so the gap is coverage rather than a hole -- issue
-		# #115.
+		zcount=$(screen | LC_ALL=C tr -cd 'z' | wc -c | tr -d ' ')
+		if [ "$zcount" -ne 59 ]; then
+			fail "wrap: grown to 72x$h the answer characters were lost (expected 59 'z's, found $zcount)"
+			dump
+			break
+		fi
 	done
 fi
 
@@ -2899,6 +2894,19 @@ else
 			if ! screen | awk '/Are you sure\?/ { n++ }
 			                   END { exit n == 1 ? 0 : 1 }'; then
 				fail "wrapped answer: at 80x$h the question is not on screen exactly once"
+				dump
+				break
+			fi
+			if ! screen | awk '/Are you sure\?/ { q = NR }
+			                   { row[NR] = $0 }
+			                   END {
+			                       if (q == 0) exit 1
+			                       a = row[q + 1]; b = row[q + 2]
+			                       gsub(/^[ \t]+|[ \t]+$/, "", a)
+			                       gsub(/^[ \t]+|[ \t]+$/, "", b)
+			                       exit (a ~ /^yb+$/ && b ~ /^b+$/) ? 0 : 1
+			                   }'; then
+				fail "wrapped answer: at 80x$h the wrapped answer was lost or corrupted"
 				dump
 				break
 			fi
