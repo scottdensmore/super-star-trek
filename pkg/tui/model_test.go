@@ -3,10 +3,13 @@ package tui
 import (
 	"strings"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
 
@@ -334,6 +337,356 @@ func TestModelSelectedSector_ViewReticle(t *testing.T) {
 	viewSelected := m.View()
 	if !strings.Contains(viewSelected, "[.]") && !strings.Contains(viewSelected, "[E]") && !strings.Contains(viewSelected, "[K]") {
 		t.Fatalf("expected reticle bracketed cell in view when SelectedSector is [3, 4], got:\n%s", viewSelected)
+	}
+}
+
+func TestModel_OpenTargetLockHotkey(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Sector = engine.Coord{4, 4}
+	klingon := &engine.Klingon{ID: 1, Sector: engine.Coord{4, 7}, Energy: 300}
+	g.CurrentQuad.Klingons = []*engine.Klingon{klingon}
+	g.CurrentQuad.Grid[4][7] = engine.EntityKlingon
+
+	m := NewModel(g, theme.DefaultTheme())
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = updated.(Model)
+
+	// Press 't'
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}})
+	m = updated.(Model)
+
+	if m.ActiveModal != ModalTargetLock {
+		t.Fatalf("expected ActiveModal == ModalTargetLock, got %v", m.ActiveModal)
+	}
+	if m.TargetLock.CurrentTarget() == nil || m.TargetLock.CurrentTarget().KlingonID != 1 {
+		t.Fatalf("expected target lock loaded with Klingon #1, got %v", m.TargetLock.CurrentTarget())
+	}
+	if !strings.Contains(m.View(), "TACTICAL TARGET LOCK") {
+		t.Fatalf("expected view to contain target lock HUD, got:\n%s", m.View())
+	}
+}
+
+func TestModel_OpenTargetLockNoEnemies(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.CurrentQuad.Klingons = nil
+
+	m := NewModel(g, theme.DefaultTheme())
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = updated.(Model)
+
+	// Press 'T'
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'T'}})
+	m = updated.(Model)
+
+	if m.ActiveModal != ModalNone {
+		t.Fatalf("expected ActiveModal == ModalNone, got %v", m.ActiveModal)
+	}
+	msgs := m.CommandBar.Messages()
+	found := false
+	for _, msg := range msgs {
+		if strings.Contains(msg, "Sensors detect no hostile targets in sector.") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected warning message in command bar, got %v", msgs)
+	}
+}
+
+func TestModel_OpenCommandPaletteHotkey(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = updated.(Model)
+
+	// Ctrl+P opens command palette
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyCtrlP})
+	m = updated.(Model)
+	if m.ActiveModal != ModalCommandPalette {
+		t.Fatalf("expected ActiveModal == ModalCommandPalette after Ctrl+P, got %v", m.ActiveModal)
+	}
+	if !strings.Contains(m.View(), "COMMAND PALETTE") {
+		t.Fatalf("expected view to contain COMMAND PALETTE modal, got:\n%s", m.View())
+	}
+
+	// Close palette
+	m.ActiveModal = ModalNone
+
+	// '/' also opens command palette
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
+	m = updated.(Model)
+	if m.ActiveModal != ModalCommandPalette {
+		t.Fatalf("expected ActiveModal == ModalCommandPalette after '/', got %v", m.ActiveModal)
+	}
+}
+
+func TestModel_ModalDismissalEsc(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	klingon := &engine.Klingon{ID: 1, Sector: engine.Coord{4, 7}, Energy: 300}
+	g.CurrentQuad.Klingons = []*engine.Klingon{klingon}
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Open TargetLock modal
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}})
+	m = updated.(Model)
+	if m.ActiveModal != ModalTargetLock {
+		t.Fatalf("expected ActiveModal == ModalTargetLock, got %v", m.ActiveModal)
+	}
+
+	// Press Esc
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m = updated.(Model)
+	if m.ActiveModal != ModalNone {
+		t.Fatalf("expected ActiveModal == ModalNone on Esc, got %v", m.ActiveModal)
+	}
+	if !m.CommandBar.Focused() {
+		t.Fatalf("expected CommandBar refocused on Esc")
+	}
+
+	// Now open CommandPalette
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyCtrlP})
+	m = updated.(Model)
+	if m.ActiveModal != ModalCommandPalette {
+		t.Fatalf("expected ActiveModal == ModalCommandPalette, got %v", m.ActiveModal)
+	}
+
+	// Press Esc
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m = updated.(Model)
+	if m.ActiveModal != ModalNone {
+		t.Fatalf("expected ActiveModal == ModalNone on Esc, got %v", m.ActiveModal)
+	}
+	if !m.CommandBar.Focused() {
+		t.Fatalf("expected CommandBar refocused on Esc")
+	}
+}
+
+func TestModel_MouseClickSelectSector(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Row 3, Col 4: relY = 3 => msg.Y = 4, c = 4 => relX = 2 + 4*3 = 14 => msg.X = 14
+	mouseMsg := tea.MouseMsg{
+		X:      14,
+		Y:      4,
+		Button: tea.MouseButtonLeft,
+		Action: tea.MouseActionPress,
+	}
+	updated, _ := m.Update(mouseMsg)
+	m = updated.(Model)
+
+	if m.SelectedSector != (engine.Coord{3, 4}) {
+		t.Fatalf("expected SelectedSector == [3, 4], got %v", m.SelectedSector)
+	}
+	msgs := m.CommandBar.Messages()
+	found := false
+	for _, msg := range msgs {
+		if strings.Contains(msg, "Target sector selected: [3, 4]") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected sector selection logged, got %v", msgs)
+	}
+}
+
+func TestModel_MouseClickKlingonOpensHUD(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	klingon := &engine.Klingon{ID: 2, Sector: engine.Coord{3, 4}, Energy: 300}
+	g.CurrentQuad.Klingons = []*engine.Klingon{klingon}
+	g.CurrentQuad.Grid[3][4] = engine.EntityKlingon
+
+	m := NewModel(g, theme.DefaultTheme())
+	mouseMsg := tea.MouseMsg{
+		X:      14,
+		Y:      4,
+		Button: tea.MouseButtonLeft,
+		Action: tea.MouseActionPress,
+	}
+	updated, _ := m.Update(mouseMsg)
+	m = updated.(Model)
+
+	if m.ActiveModal != ModalTargetLock {
+		t.Fatalf("expected ActiveModal == ModalTargetLock, got %v", m.ActiveModal)
+	}
+	if m.TargetLock.CurrentTarget() == nil || m.TargetLock.CurrentTarget().Coord != (engine.Coord{3, 4}) {
+		t.Fatalf("expected TargetLock pre-targeted at [3, 4], got %v", m.TargetLock.CurrentTarget())
+	}
+}
+
+func TestModel_MouseDoubleClickImpulseMove(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Sector = engine.Coord{4, 4}
+	g.CurrentQuad.Grid[4][4] = engine.EntityEnterprise
+	g.CurrentQuad.Grid[5][5] = engine.EntityEmpty
+
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Cell [5, 5]: relY = 5 => msg.Y = 6, c = 5 => relX = 2 + 4*4 = 18 => msg.X = 18
+	mouseMsg := tea.MouseMsg{
+		X:      18,
+		Y:      6,
+		Button: tea.MouseButtonLeft,
+		Action: tea.MouseActionPress,
+	}
+
+	// First click
+	updated, _ := m.Update(mouseMsg)
+	m = updated.(Model)
+	if m.SelectedSector != (engine.Coord{5, 5}) {
+		t.Fatalf("expected SelectedSector [5, 5], got %v", m.SelectedSector)
+	}
+
+	// Second click immediately (double-click < 400ms)
+	updated, _ = m.Update(mouseMsg)
+	m = updated.(Model)
+
+	if g.Enterprise.Sector != (engine.Coord{5, 5}) {
+		t.Fatalf("expected Enterprise moved to [5, 5], got %v", g.Enterprise.Sector)
+	}
+}
+
+func TestModel_MouseDoubleClickDock(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Sector = engine.Coord{4, 4}
+	g.CurrentQuad.Grid[4][4] = engine.EntityEnterprise
+	sbCoord := engine.Coord{4, 5}
+	g.CurrentQuad.Starbase = &sbCoord
+	g.CurrentQuad.Grid[4][5] = engine.EntityStarbase
+
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Starbase [4, 5]: relY = 4 => msg.Y = 5, c = 5 => relX = 18 => msg.X = 18
+	mouseMsg := tea.MouseMsg{
+		X:      18,
+		Y:      5,
+		Button: tea.MouseButtonLeft,
+		Action: tea.MouseActionPress,
+	}
+
+	// First click
+	updated, _ := m.Update(mouseMsg)
+	m = updated.(Model)
+
+	// Second click
+	updated, _ = m.Update(mouseMsg)
+	m = updated.(Model)
+
+	if g.Enterprise.Condition != engine.ConditionDocked {
+		t.Fatalf("expected Enterprise ConditionDocked after double-clicking Starbase, got %v", g.Enterprise.Condition)
+	}
+}
+
+func TestModel_ModalActionDispatch(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Sector = engine.Coord{4, 4}
+	g.Enterprise.Torpedoes = 10
+	klingon := &engine.Klingon{ID: 1, Sector: engine.Coord{4, 7}, Energy: 200}
+	g.CurrentQuad.Klingons = []*engine.Klingon{klingon}
+	g.CurrentQuad.Grid[4][7] = engine.EntityKlingon
+
+	m := NewModel(g, theme.DefaultTheme())
+	m.ActiveModal = ModalTargetLock
+
+	// Dispatch FireTorpedoMsg
+	updated, _ := m.Update(targetlock.FireTorpedoMsg{Target: engine.Coord{4, 7}, Bearing: 1.0})
+	m = updated.(Model)
+	if m.ActiveModal != ModalNone {
+		t.Fatalf("expected modal closed after torpedo fire, got %v", m.ActiveModal)
+	}
+	if g.Enterprise.Torpedoes != 9 {
+		t.Fatalf("expected torpedo count decremented to 9, got %d", g.Enterprise.Torpedoes)
+	}
+	if !m.CommandBar.Focused() {
+		t.Fatalf("expected CommandBar refocused after torpedo fire")
+	}
+
+	// Dispatch FirePhasersMsg
+	m.ActiveModal = ModalTargetLock
+	initEnergy := g.Enterprise.Energy
+	updated, _ = m.Update(targetlock.FirePhasersMsg{Energy: 200})
+	m = updated.(Model)
+	if m.ActiveModal != ModalNone {
+		t.Fatalf("expected modal closed after phaser fire, got %v", m.ActiveModal)
+	}
+	if g.Enterprise.Energy >= initEnergy {
+		t.Fatalf("expected energy deducted after phaser fire, got %.0f", g.Enterprise.Energy)
+	}
+}
+
+func TestModel_ModalMessageRouting_Palette(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+	m.ActiveModal = ModalCommandPalette
+
+	// Parameterized command selection
+	updated, _ := m.Update(commandpalette.CommandSelectedMsg{
+		CommandPrefix: "tor ",
+		Parameterized: true,
+	})
+	m = updated.(Model)
+	if m.ActiveModal != ModalNone {
+		t.Fatalf("expected modal closed, got %v", m.ActiveModal)
+	}
+	if m.CommandBar.Value() != "tor " {
+		t.Fatalf("expected command bar text 'tor ', got %q", m.CommandBar.Value())
+	}
+	if !m.CommandBar.Focused() {
+		t.Fatalf("expected CommandBar focused")
+	}
+
+	// Non-parameterized command selection (e.g. quit)
+	m.ActiveModal = ModalCommandPalette
+	_, cmd := m.Update(commandpalette.CommandSelectedMsg{
+		CommandPrefix: "quit",
+		Parameterized: false,
+	})
+	if cmd == nil {
+		t.Fatalf("expected quit cmd on 'quit' palette selection")
+	}
+
+	// ClosePaletteMsg
+	m.ActiveModal = ModalCommandPalette
+	updated, _ = m.Update(commandpalette.ClosePaletteMsg{})
+	m = updated.(Model)
+	if m.ActiveModal != ModalNone {
+		t.Fatalf("expected modal closed on ClosePaletteMsg, got %v", m.ActiveModal)
+	}
+	if !m.CommandBar.Focused() {
+		t.Fatalf("expected CommandBar focused on ClosePaletteMsg")
+	}
+}
+
+func TestModel_MouseClicksSeparatedByTimeDoNotDoubleClick(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Sector = engine.Coord{4, 4}
+	g.CurrentQuad.Grid[4][4] = engine.EntityEnterprise
+	g.CurrentQuad.Grid[5][5] = engine.EntityEmpty
+
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Cell [5, 5]: relY = 5 => msg.Y = 6, c = 5 => relX = 18 => msg.X = 18
+	mouseMsg := tea.MouseMsg{
+		X:      18,
+		Y:      6,
+		Button: tea.MouseButtonLeft,
+		Action: tea.MouseActionPress,
+	}
+
+	updated, _ := m.Update(mouseMsg)
+	m = updated.(Model)
+
+	// Simulate passage of time > 400ms
+	m.LastClickTime = time.Now().Add(-500 * time.Millisecond)
+
+	updated, _ = m.Update(mouseMsg)
+	m = updated.(Model)
+
+	// Enterprise should NOT have moved
+	if g.Enterprise.Sector != (engine.Coord{4, 4}) {
+		t.Fatalf("expected Enterprise to remain at [4, 4], got %v", g.Enterprise.Sector)
 	}
 }
 

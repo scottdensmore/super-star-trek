@@ -46,6 +46,13 @@ func (m Model) renderSizeNotice() string {
 // - Middle: Horizontal split of 8x8 sector grid (left) and telemetry/status panel (right)
 // - Bottom: Interactive command bar with scrolling event history log
 func (m Model) renderDashboard() string {
+	if m.ActiveModal == ModalTargetLock {
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, m.TargetLock.View())
+	}
+	if m.ActiveModal == ModalCommandPalette {
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, m.CommandPalette.View())
+	}
+
 	header := m.renderHeader()
 
 	var quad *engine.QuadrantState
