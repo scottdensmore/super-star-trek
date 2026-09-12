@@ -75,6 +75,8 @@ func (m Model) renderDashboard() string {
 		modalView = m.TargetLock.View()
 	case ModalCommandPalette:
 		modalView = m.CommandPalette.View()
+	case ModalSaveBrowser:
+		modalView = m.SaveBrowser.View()
 	default:
 		return dashboard
 	}

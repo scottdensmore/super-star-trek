@@ -14,17 +14,43 @@ type CommandSubmittedMsg struct {
 }
 
 // Model represents the interactive command bar component, embedding bubbles/textinput.Model
-// and maintaining a scrolling buffer of recent combat/tactical log messages.
+// and maintaining a scrolling buffer of recent combat/tactical log messages,
+// a readline command history buffer, and tab keyword completion.
 type Model struct {
 	textinput.Model
 	theme       theme.Theme
 	messages    []string
 	maxMessages int
 	width       int
+
+	history     []string
+	historyIdx  int
+	draftInput  string
+	tabMatches  []string
+	tabMatchIdx int
 }
 
 // CommandBarModel is an alias for Model for backwards/spec compatibility.
 type CommandBarModel = Model
+
+var canonicalKeywords = []string{
+	"chart",
+	"damage",
+	"doc",
+	"help",
+	"lrscan",
+	"nav ",
+	"pha ",
+	"quit",
+	"saves",
+	"she ",
+	"srscan",
+	"status",
+	"target",
+	"thaw",
+	"theme ",
+	"tor ",
+}
 
 // New creates a new command bar Model initialized with prompt "COMMAND> "
 // and styles configured from the provided theme.
@@ -45,6 +71,7 @@ func New(th theme.Theme) Model {
 		theme:       th,
 		messages:    make([]string, 0, 4),
 		maxMessages: 4,
+		historyIdx:  -1,
 	}
 }
 
@@ -134,20 +161,91 @@ func (m *Model) Blur() {
 	m.Model.Blur()
 }
 
-// Update processes Bubble Tea messages, submitting commands on Enter
+// Update processes Bubble Tea messages, submitting commands on Enter,
+// navigating history with Up/Down, auto-completing keywords on Tab,
 // or delegating keystrokes to the embedded textinput.
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		switch keyMsg.Type {
+		case tea.KeyUp:
+			m.tabMatches = nil
+			m.tabMatchIdx = 0
+			if m.historyIdx == -1 {
+				if len(m.history) > 0 {
+					m.draftInput = m.Value()
+					m.historyIdx = len(m.history) - 1
+					m.SetValue(m.history[m.historyIdx])
+					m.CursorEnd()
+				}
+			} else if m.historyIdx > 0 {
+				m.historyIdx--
+				m.SetValue(m.history[m.historyIdx])
+				m.CursorEnd()
+			}
+			return m, nil
+
+		case tea.KeyDown:
+			m.tabMatches = nil
+			m.tabMatchIdx = 0
+			if m.historyIdx != -1 {
+				if m.historyIdx < len(m.history)-1 {
+					m.historyIdx++
+					m.SetValue(m.history[m.historyIdx])
+					m.CursorEnd()
+				} else if m.historyIdx == len(m.history)-1 {
+					m.historyIdx = -1
+					m.SetValue(m.draftInput)
+					m.CursorEnd()
+				}
+			}
+			return m, nil
+
+		case tea.KeyTab:
+			if len(m.tabMatches) == 0 || m.tabMatchIdx >= len(m.tabMatches) || m.Value() != m.tabMatches[m.tabMatchIdx] {
+				prefix := strings.ToLower(strings.TrimSpace(m.Value()))
+				if prefix != "" {
+					var matches []string
+					for _, kw := range canonicalKeywords {
+						trimmedKw := strings.TrimSpace(kw)
+						if strings.HasPrefix(trimmedKw, prefix) {
+							matches = append(matches, kw)
+						}
+					}
+					if len(matches) > 0 {
+						m.tabMatches = matches
+						m.tabMatchIdx = 0
+						m.SetValue(m.tabMatches[0])
+						m.CursorEnd()
+					}
+				}
+			} else {
+				m.tabMatchIdx = (m.tabMatchIdx + 1) % len(m.tabMatches)
+				m.SetValue(m.tabMatches[m.tabMatchIdx])
+				m.CursorEnd()
+			}
+			return m, nil
+
 		case tea.KeyEnter:
 			val := strings.TrimSpace(m.Value())
 			if val != "" {
+				if len(m.history) == 0 || m.history[len(m.history)-1] != val {
+					m.history = append(m.history, val)
+				}
+				m.historyIdx = -1
+				m.draftInput = ""
+				m.tabMatches = nil
+				m.tabMatchIdx = 0
 				m.Reset()
 				return m, func() tea.Msg {
 					return CommandSubmittedMsg{Text: val}
 				}
 			}
 			return m, nil
+
+		default:
+			// Any key other than Tab resets active tab cycling
+			m.tabMatches = nil
+			m.tabMatchIdx = 0
 		}
 	}
 

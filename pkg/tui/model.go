@@ -7,6 +7,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/sectorgrid"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/statuspanel"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
@@ -20,6 +21,7 @@ const (
 	ModalNone ModalType = iota
 	ModalTargetLock
 	ModalCommandPalette
+	ModalSaveBrowser
 )
 
 // Ensure Model satisfies the Bubble Tea Model interface at compile time.
@@ -28,7 +30,7 @@ var _ tea.Model = Model{}
 // Model represents the root Bubble Tea model for Super Star Trek.
 // It orchestrates the 8x8 sector grid visualizer, status/telemetry panel,
 // and interactive command bar within a split dashboard layout, along with
-// modal overlays (Target Lock HUD, Spock Command Palette).
+// modal overlays (Target Lock HUD, Spock Command Palette, Save Game Browser).
 type Model struct {
 	Game           *engine.GameState
 	Theme          theme.Theme
@@ -42,6 +44,7 @@ type Model struct {
 	ActiveModal    ModalType
 	TargetLock     targetlock.Model
 	CommandPalette commandpalette.Model
+	SaveBrowser    savebrowser.Model
 	LastClickTime  time.Time
 	LastClickCoord engine.Coord
 }
@@ -66,6 +69,7 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 		ActiveModal:    ModalNone,
 		TargetLock:     targetlock.New(th),
 		CommandPalette: commandpalette.New(th, 56, 16),
+		SaveBrowser:    savebrowser.New(th, "."),
 	}
 }
 

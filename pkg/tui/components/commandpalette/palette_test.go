@@ -14,8 +14,8 @@ func TestCommandPalette_Catalog(t *testing.T) {
 	m := New(th, 56, 16)
 
 	items := m.Items()
-	if len(items) != 16 {
-		t.Fatalf("expected 16 catalog items, got %d", len(items))
+	if len(items) != 17 {
+		t.Fatalf("expected 17 catalog items, got %d", len(items))
 	}
 
 	expectedCatalog := []struct {
@@ -34,6 +34,7 @@ func TestCommandPalette_Catalog(t *testing.T) {
 		{"STATUS", "status", false},
 		{"DAM", "dam", false},
 		{"CHART", "chart", false},
+		{"SAVES", "saves", false},
 		{"THEME: Modern", "theme modern", false},
 		{"THEME: LCARS", "theme lcars", false},
 		{"THEME: CRT", "theme crt", false},
@@ -103,8 +104,8 @@ func TestCommandPalette_FuzzyFilter(t *testing.T) {
 	if m.FilterValue() != "" {
 		t.Fatalf("expected FilterValue empty after Reset, got %q", m.FilterValue())
 	}
-	if len(m.VisibleItems()) != 16 {
-		t.Fatalf("expected 16 items after Reset, got %d", len(m.VisibleItems()))
+	if len(m.VisibleItems()) != 17 {
+		t.Fatalf("expected 17 items after Reset, got %d", len(m.VisibleItems()))
 	}
 
 	for _, r := range "nav" {

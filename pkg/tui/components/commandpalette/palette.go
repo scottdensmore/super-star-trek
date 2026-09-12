@@ -133,6 +133,12 @@ func defaultCatalog() []PaletteItem {
 			prefix:        "chart",
 			parameterized: false,
 		},
+		{
+			title:         "SAVES",
+			desc:          "Browse, inspect, and load saved missions (Ctrl+O)",
+			prefix:        "saves",
+			parameterized: false,
+		},
 
 		// Settings & Help
 		{
