@@ -183,3 +183,61 @@ func TestGameSaveTrailingWhitespace(t *testing.T) {
 	}
 }
 
+func TestInspectSave(t *testing.T) {
+	tempDir := t.TempDir()
+	savePath := filepath.Join(tempDir, "TESTSAVE.TRK")
+
+	g := NewGame(12345, SkillGood, LengthMedium)
+	g.Stardate = 3450.5
+	g.TimeRemaining = 24.5
+	g.Enterprise.Condition = ConditionYellow
+	g.RemainingKlingons = 7
+
+	if err := g.Save(savePath); err != nil {
+		t.Fatalf("failed to create test save: %v", err)
+	}
+
+	meta, err := InspectSave(savePath)
+	if err != nil {
+		t.Fatalf("InspectSave returned unexpected error: %v", err)
+	}
+
+	if meta.Filename != "TESTSAVE.TRK" {
+		t.Errorf("expected Filename 'TESTSAVE.TRK', got %q", meta.Filename)
+	}
+	if meta.Path != savePath {
+		t.Errorf("expected Path %q, got %q", savePath, meta.Path)
+	}
+	if meta.Skill != SkillGood {
+		t.Errorf("expected Skill %v, got %v", SkillGood, meta.Skill)
+	}
+	if meta.Stardate != 3450.5 {
+		t.Errorf("expected Stardate 3450.5, got %f", meta.Stardate)
+	}
+	if meta.TimeRemaining != 24.5 {
+		t.Errorf("expected TimeRemaining 24.5, got %f", meta.TimeRemaining)
+	}
+	if meta.Condition != ConditionYellow {
+		t.Errorf("expected Condition %v, got %v", ConditionYellow, meta.Condition)
+	}
+	if meta.KlingonsLeft != 7 {
+		t.Errorf("expected KlingonsLeft 7, got %d", meta.KlingonsLeft)
+	}
+	if meta.ModTime.IsZero() {
+		t.Errorf("expected non-zero ModTime")
+	}
+
+	// Test non-existent file
+	if _, err := InspectSave(filepath.Join(tempDir, "NONEXIST.TRK")); err == nil {
+		t.Errorf("expected error for non-existent file, got nil")
+	}
+
+	// Test corrupted file
+	corruptPath := filepath.Join(tempDir, "CORRUPT.TRK")
+	if err := os.WriteFile(corruptPath, []byte("NOT_JSON"), 0644); err != nil {
+		t.Fatalf("failed to write corrupt file: %v", err)
+	}
+	if _, err := InspectSave(corruptPath); err == nil {
+		t.Errorf("expected error for corrupt JSON save, got nil")
+	}
+}

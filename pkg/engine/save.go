@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // ValidateSaveFilename checks that the filename conforms to Spock's constraints:
@@ -71,4 +72,45 @@ func LoadGame(path string) (*GameState, error) {
 	}
 	state.RNG = NewPRNG(int64(state.Stardate))
 	return &state, nil
+}
+
+// SaveMetadata holds summary attributes extracted from a saved game file.
+type SaveMetadata struct {
+	Path          string
+	Filename      string
+	ModTime       time.Time
+	Skill         SkillLevel
+	Stardate      float64
+	TimeRemaining float64
+	Condition     ConditionType
+	KlingonsLeft  int
+}
+
+// InspectSave reads a .TRK file and extracts summary metadata without mutating any active game state.
+func InspectSave(path string) (*SaveMetadata, error) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var state GameState
+	if err := json.Unmarshal(data, &state); err != nil {
+		return nil, fmt.Errorf("corrupted save file %s: %w", filepath.Base(path), err)
+	}
+
+	return &SaveMetadata{
+		Path:          path,
+		Filename:      filepath.Base(path),
+		ModTime:       info.ModTime(),
+		Skill:         state.Skill,
+		Stardate:      state.Stardate,
+		TimeRemaining: state.TimeRemaining,
+		Condition:     state.Enterprise.Condition,
+		KlingonsLeft:  state.RemainingKlingons,
+	}, nil
 }
