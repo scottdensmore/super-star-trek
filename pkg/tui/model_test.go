@@ -1,12 +1,14 @@
 package tui
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
@@ -968,5 +970,44 @@ func TestModalSaveBrowser_ThawError(t *testing.T) {
 		t.Fatalf("expected 'Failed to thaw' error message after LoadGameMsg failure, got %v", msgs)
 	}
 }
+
+func TestModel_RenderHeader_SingleLineNoWrap(t *testing.T) {
+	themes := []theme.Theme{
+		theme.ModernTheme{},
+		theme.LcarsTheme{},
+		theme.CrtTheme{},
+	}
+	widths := []int{80, 90, 100, 120}
+
+	for _, th := range themes {
+		for _, w := range widths {
+			t.Run(fmt.Sprintf("%s_w%d", th.Name(), w), func(t *testing.T) {
+				m := NewModel(nil, th)
+				m.Width = w
+				m.Height = 24
+
+				header := m.renderHeader()
+
+				// Header must be exactly a single line without wrapping.
+				if strings.Contains(header, "\n") {
+					t.Fatalf("expected header to be a single line without newlines, but got multiple lines:\n%s", header)
+				}
+
+				// The theme indicator must be present on this single line.
+				expectedThemeTag := fmt.Sprintf("[Theme: %s (F2)]", strings.ToUpper(th.Name()))
+				if !strings.Contains(header, expectedThemeTag) {
+					t.Fatalf("expected header to contain %q, but got:\n%s", expectedThemeTag, header)
+				}
+
+				// Rendered width must match terminal width w.
+				renderedWidth := lipgloss.Width(header)
+				if renderedWidth != w {
+					t.Fatalf("expected rendered width %d, got %d", w, renderedWidth)
+				}
+			})
+		}
+	}
+}
+
 
 
