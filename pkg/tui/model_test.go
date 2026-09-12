@@ -314,3 +314,26 @@ func TestModelNilGameGraceful(t *testing.T) {
 		t.Fatalf("expected error message when game is nil, got: %v", msgs)
 	}
 }
+
+func TestModelSelectedSector_ViewReticle(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Resize to standard 80x24 dashboard
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = updated.(Model)
+
+	// Initially SelectedSector is {0, 0}, so no reticle brackets
+	viewInitial := m.View()
+	if strings.Contains(viewInitial, "[.]") {
+		t.Fatalf("expected no reticle brackets when SelectedSector is empty")
+	}
+
+	// Set SelectedSector to [3, 4]
+	m.SelectedSector = engine.Coord{3, 4}
+	viewSelected := m.View()
+	if !strings.Contains(viewSelected, "[.]") && !strings.Contains(viewSelected, "[E]") && !strings.Contains(viewSelected, "[K]") {
+		t.Fatalf("expected reticle bracketed cell in view when SelectedSector is [3, 4], got:\n%s", viewSelected)
+	}
+}
+

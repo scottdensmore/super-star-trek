@@ -16,13 +16,14 @@ var _ tea.Model = Model{}
 // It orchestrates the 8x8 sector grid visualizer, status/telemetry panel,
 // and interactive command bar within a split dashboard layout.
 type Model struct {
-	Game       *engine.GameState
-	Theme      theme.Theme
-	Width      int
-	Height     int
-	Grid       sectorgrid.Model
-	Status     statuspanel.Model
-	CommandBar commandbar.Model
+	Game           *engine.GameState
+	Theme          theme.Theme
+	Width          int
+	Height         int
+	Grid           sectorgrid.Model
+	Status         statuspanel.Model
+	CommandBar     commandbar.Model
+	SelectedSector engine.Coord
 }
 
 // NewModel initializes and returns a new root TUI Model for the provided GameState and Theme.

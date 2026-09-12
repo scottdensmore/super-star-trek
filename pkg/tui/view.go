@@ -55,7 +55,7 @@ func (m Model) renderDashboard() string {
 		entSector = m.Game.Enterprise.Sector
 	}
 
-	gridView := m.Grid.View(quad, entSector)
+	gridView := m.Grid.View(quad, entSector, m.SelectedSector)
 	statusView := m.Status.View(m.Game)
 	middle := lipgloss.JoinHorizontal(lipgloss.Top, gridView, statusView)
 
