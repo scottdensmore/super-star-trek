@@ -91,7 +91,7 @@ func defaultCatalog() []PaletteItem {
 		// Navigation
 		{
 			title:         "NAV",
-			desc:          "Impulse / Warp maneuver (nav <course> <warp>)",
+			desc:          "Maneuver: nav q <r c> (quad), nav s <r c> (sector), or nav <course warp>",
 			prefix:        "nav ",
 			parameterized: true,
 		},
@@ -163,6 +163,12 @@ func defaultCatalog() []PaletteItem {
 			title:         "HELP",
 			desc:          "Display tactical command reference summary",
 			prefix:        "help",
+			parameterized: false,
+		},
+		{
+			title:         "HELP NAV",
+			desc:          "Navigation reference: quadrant warping, course angles, and impulse",
+			prefix:        "help nav",
 			parameterized: false,
 		},
 		{

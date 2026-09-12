@@ -57,7 +57,7 @@ func ParseCommand(input string) ParsedCommand {
 		}
 		return ParsedCommand{Special: "theme"}
 	case "help", "?", "commands":
-		return ParsedCommand{Special: "help"}
+		return parseHelp(args)
 	case "quit", "exit", "q":
 		return ParsedCommand{Special: "quit"}
 	default:
@@ -66,40 +66,61 @@ func ParseCommand(input string) ParsedCommand {
 }
 
 func parseNav(args []string) ParsedCommand {
+	usageErr := errors.New("usage: nav q <r> <c> (quadrant), nav s <r> <c> (sector), or nav <course> <warp>. Type 'help nav' for guide.")
+
 	if len(args) < 2 {
-		return ParsedCommand{Error: errors.New("usage: nav <course> <warp> or nav <row> <col>")}
+		return ParsedCommand{Error: usageErr}
 	}
 
-	// Explicit prefixes: nav s <r> <c> or nav sector <r> <c>
-	if len(args) == 3 {
+	// 3 or 4 arguments with explicit prefix
+	if len(args) == 3 || len(args) == 4 {
 		prefix := strings.ToLower(args[0])
-		if prefix == "s" || prefix == "sec" || prefix == "sector" {
+		if prefix == "q" || prefix == "quad" || prefix == "quadrant" {
 			r, err1 := strconv.Atoi(args[1])
 			c, err2 := strconv.Atoi(args[2])
 			if err1 != nil || err2 != nil {
-				return ParsedCommand{Error: errors.New("invalid sector parameters: expected integer row and column")}
+				return ParsedCommand{Error: errors.New("invalid quadrant parameters: expected integer row and column")}
 			}
 			if r < 1 || r > 8 || c < 1 || c > 8 {
-				return ParsedCommand{Error: errors.New("sector coordinates must be between 1 and 8")}
+				return ParsedCommand{Error: errors.New("quadrant coordinates must be between 1 and 8")}
 			}
-			return ParsedCommand{Action: engine.ActionMove{DestSector: engine.Coord{r, c}, Warp: 1.0}}
+			warp := 1.0
+			if len(args) == 4 {
+				w, errW := strconv.ParseFloat(args[3], 64)
+				if errW != nil || w <= 0 {
+					return ParsedCommand{Error: errors.New("warp factor must be positive")}
+				}
+				warp = w
+			}
+			return ParsedCommand{Action: engine.ActionMove{DestQuad: engine.Coord{r, c}, Warp: warp}}
 		}
-		if prefix == "c" || prefix == "course" {
-			course, err1 := strconv.ParseFloat(args[1], 64)
-			warp, err2 := strconv.ParseFloat(args[2], 64)
-			if err1 != nil || err2 != nil {
-				return ParsedCommand{Error: errors.New("invalid course/warp parameters: expected numbers")}
-			}
-			if warp <= 0 {
-				return ParsedCommand{Error: errors.New("warp factor must be positive")}
-			}
-			return ParsedCommand{Action: engine.ActionMove{Course: course, Warp: warp}}
-		}
-		return ParsedCommand{Error: errors.New("usage: nav <course> <warp> or nav <row> <col>")}
-	}
 
-	if len(args) > 3 {
-		return ParsedCommand{Error: errors.New("usage: nav <course> <warp> or nav <row> <col>")}
+		if len(args) == 3 {
+			if prefix == "s" || prefix == "sec" || prefix == "sector" {
+				r, err1 := strconv.Atoi(args[1])
+				c, err2 := strconv.Atoi(args[2])
+				if err1 != nil || err2 != nil {
+					return ParsedCommand{Error: errors.New("invalid sector parameters: expected integer row and column")}
+				}
+				if r < 1 || r > 8 || c < 1 || c > 8 {
+					return ParsedCommand{Error: errors.New("sector coordinates must be between 1 and 8")}
+				}
+				return ParsedCommand{Action: engine.ActionMove{DestSector: engine.Coord{r, c}, Warp: 1.0}}
+			}
+			if prefix == "c" || prefix == "course" {
+				course, err1 := strconv.ParseFloat(args[1], 64)
+				warp, err2 := strconv.ParseFloat(args[2], 64)
+				if err1 != nil || err2 != nil {
+					return ParsedCommand{Error: errors.New("invalid course/warp parameters: expected numbers")}
+				}
+				if warp <= 0 {
+					return ParsedCommand{Error: errors.New("warp factor must be positive")}
+				}
+				return ParsedCommand{Action: engine.ActionMove{Course: course, Warp: warp}}
+			}
+		}
+
+		return ParsedCommand{Error: usageErr}
 	}
 
 	// 2 arguments: distinguish nav <course> <warp> vs nav <r> <c>
@@ -122,6 +143,29 @@ func parseNav(args []string) ParsedCommand {
 	}
 
 	return ParsedCommand{Action: engine.ActionMove{Course: course, Warp: warp}}
+}
+
+func parseHelp(args []string) ParsedCommand {
+	if len(args) == 0 {
+		return ParsedCommand{Special: "help"}
+	}
+	topic := strings.ToLower(args[0])
+	switch topic {
+	case "nav", "move", "warp":
+		return ParsedCommand{Special: "help nav"}
+	case "tor", "torpedo", "torpedoes", "target", "reticle":
+		return ParsedCommand{Special: "help tor"}
+	case "pha", "phaser", "phasers":
+		return ParsedCommand{Special: "help pha"}
+	case "she", "shield", "shields", "def":
+		return ParsedCommand{Special: "help she"}
+	case "doc", "dock":
+		return ParsedCommand{Special: "help doc"}
+	case "saves", "thaw", "freeze":
+		return ParsedCommand{Special: "help saves"}
+	default:
+		return ParsedCommand{Special: "help " + topic}
+	}
 }
 
 func parseTorpedo(args []string) ParsedCommand {

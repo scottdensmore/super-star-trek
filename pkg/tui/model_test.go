@@ -1009,5 +1009,55 @@ func TestModel_RenderHeader_SingleLineNoWrap(t *testing.T) {
 	}
 }
 
+func TestModel_HelpNavGuidance(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "help nav"})
+	msgs := m.CommandBar.Messages()
+
+	joined := strings.Join(msgs, "\n")
+	if !strings.Contains(joined, "NAV:") {
+		t.Fatalf("expected NAV in help nav, got:\n%s", joined)
+	}
+	if !strings.Contains(joined, "Direct Quad: nav q <r c>") {
+		t.Fatalf("expected direct quadrant help in help nav, got:\n%s", joined)
+	}
+	if !strings.Contains(joined, "Direct Sector: nav s <r c>") {
+		t.Fatalf("expected direct sector help in help nav, got:\n%s", joined)
+	}
+	if !strings.Contains(joined, "Vector: nav <course> <warp>") {
+		t.Fatalf("expected course & warp help in help nav, got:\n%s", joined)
+	}
+	if !strings.Contains(joined, "0.0=East") || !strings.Contains(joined, "1.57=North") {
+		t.Fatalf("expected course angles in help nav, got:\n%s", joined)
+	}
+}
+
+func TestModel_NavQuadrantCommand(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Move to Quadrant [4, 5]
+	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "nav q 4 5"})
+
+	if m.Game.Enterprise.Quad != (engine.Coord{4, 5}) {
+		t.Fatalf("expected enterprise in quad [4,5], got %v", m.Game.Enterprise.Quad)
+	}
+
+	msgs := m.CommandBar.Messages()
+	found := false
+	for _, msg := range msgs {
+		if strings.Contains(msg, "Quadrant [4,5]") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected quadrant arrival message in command bar, got %v", msgs)
+	}
+}
+
+
 
 

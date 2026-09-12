@@ -376,8 +376,52 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case parsed.Special == "help":
-			m.CommandBar.AddMessage("COMMANDS: nav <c> <w> | tor <c|r c> | pha <e> | she <a> | doc")
-			m.CommandBar.AddMessage("UI: theme [modern|lcars|crt] (F2) | help (?) | quit (Esc)")
+			m.CommandBar.AddMessage("COMMANDS: nav | tor | pha | she | doc | saves | theme")
+			m.CommandBar.AddMessage("Type 'help <command>' (e.g. 'help nav') for detailed guide.")
+			m.CommandBar.AddMessage("HOTKEYS: [Ctrl+P] Spock Palette | [Ctrl+O] Saves | [T] Target Lock | [F2] Theme")
+			return m, nil
+
+		case parsed.Special == "help nav":
+			m.CommandBar.AddMessage("NAV: Direct Quad: nav q <r c> [warp] (e.g. 'nav q 3 5')")
+			m.CommandBar.AddMessage("     Direct Sector: nav s <r c> (or double-click sector grid)")
+			m.CommandBar.AddMessage("     Vector: nav <course> <warp> (0.0=East, 1.57=North, 3.14=West, 4.71=South)")
+			m.CommandBar.AddMessage("     Warp 1.0 = 1 Quad (8 sec). Shields UP = 2x energy. Damaged = Max Warp 4.")
+			return m, nil
+
+		case parsed.Special == "help tor":
+			m.CommandBar.AddMessage("TOR: Target Sector: tor <r c> (e.g. 'tor 4 7')")
+			m.CommandBar.AddMessage("     Bearing Angle: tor <angle> (0.0=East, 1.57=North, 3.14=West, 4.71=South)")
+			m.CommandBar.AddMessage("     Tactical HUD: Press [T] for Target Lock auto-aiming & telemetry")
+			m.CommandBar.AddMessage("     Damaged launcher cannot fire; torpedoes do not pass obstacles.")
+			return m, nil
+
+		case parsed.Special == "help pha":
+			m.CommandBar.AddMessage("PHA: Fire phaser banks: pha <energy> (e.g. 'pha 300')")
+			m.CommandBar.AddMessage("     Energy is divided among all Klingons present in quadrant.")
+			m.CommandBar.AddMessage("     Damage drops with target distance. Damaged phasers cannot fire.")
+			return m, nil
+
+		case parsed.Special == "help she":
+			m.CommandBar.AddMessage("SHE: Transfer shield energy: she <amount> (e.g. 'she 500', 'she -200')")
+			m.CommandBar.AddMessage("     Shields protect against incoming torpedo & phaser damage.")
+			m.CommandBar.AddMessage("     Shields UP doubles warp movement energy consumption!")
+			return m, nil
+
+		case parsed.Special == "help doc":
+			m.CommandBar.AddMessage("DOC: Starbase docking: doc (must be in adjacent sector)")
+			m.CommandBar.AddMessage("     Replenishes full energy & photon torpedo supply.")
+			m.CommandBar.AddMessage("     Repairs all damaged ship systems and lowers shields.")
+			return m, nil
+
+		case parsed.Special == "help saves":
+			m.CommandBar.AddMessage("SAVES: Open Save Browser: saves or bare thaw (hotkey Ctrl+O)")
+			m.CommandBar.AddMessage("       Inspects stardates, condition, and Klingons remaining.")
+			m.CommandBar.AddMessage("       Direct load: thaw <filename> | Freeze/save: freeze <filename>")
+			return m, nil
+
+		case strings.HasPrefix(parsed.Special, "help "):
+			cmdName := strings.TrimPrefix(parsed.Special, "help ")
+			m.CommandBar.AddMessage(fmt.Sprintf("No detailed help for %q. Available: help nav, help tor, help pha, help she, help doc, help saves", cmdName))
 			return m, nil
 
 		case parsed.Special == "theme":
