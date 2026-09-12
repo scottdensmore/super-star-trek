@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
@@ -75,6 +77,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.CommandBar.Focus()
 		return m, cmd
 
+	case savebrowser.LoadGameMsg:
+		loaded, err := engine.LoadGame(msg.Path)
+		if err != nil {
+			m.CommandBar.AddMessage(fmt.Sprintf("Failed to thaw %s: %v", filepath.Base(msg.Path), err))
+		} else {
+			m.Game = loaded
+			m.SelectedSector = engine.Coord{}
+			m.CommandBar.AddMessage(fmt.Sprintf("Mission thawed: %s (Stardate %.1f)", filepath.Base(msg.Path), loaded.Stardate))
+		}
+		m.ActiveModal = ModalNone
+		cmd := m.CommandBar.Focus()
+		return m, cmd
+
+	case savebrowser.CloseBrowserMsg:
+		m.ActiveModal = ModalNone
+		cmd := m.CommandBar.Focus()
+		return m, cmd
+
 	case tea.KeyMsg:
 		if m.ActiveModal != ModalNone {
 			if msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c" {
@@ -95,6 +115,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.TargetLock, cmd = m.TargetLock.Update(msg)
 			case ModalCommandPalette:
 				m.CommandPalette, cmd = m.CommandPalette.Update(msg)
+			case ModalSaveBrowser:
+				m.SaveBrowser, cmd = m.SaveBrowser.Update(msg)
 			}
 			return m, cmd
 		}
@@ -117,6 +139,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case msg.Type == tea.KeyCtrlP || msg.String() == "ctrl+p":
 			m.CommandPalette.Reset()
 			m.ActiveModal = ModalCommandPalette
+			m.CommandBar.Blur()
+			return m, nil
+
+		case msg.Type == tea.KeyCtrlO || msg.String() == "ctrl+o":
+			_ = m.SaveBrowser.Refresh()
+			m.ActiveModal = ModalSaveBrowser
 			m.CommandBar.Blur()
 			return m, nil
 
@@ -276,6 +304,7 @@ func (m Model) applyTheme(th theme.Theme) Model {
 	m.CommandBar.SetTheme(th)
 	m.TargetLock.SetTheme(th)
 	m.CommandPalette.SetTheme(th)
+	m.SaveBrowser.SetTheme(th)
 	return m
 }
 
@@ -312,6 +341,25 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		return m, nil
 	case "chart":
 		m.CommandBar.AddMessage("Galactic chart displayed.")
+		return m, nil
+	case "saves", "thaw":
+		_ = m.SaveBrowser.Refresh()
+		m.ActiveModal = ModalSaveBrowser
+		m.CommandBar.Blur()
+		return m, nil
+	}
+
+	if strings.HasPrefix(trimmed, "thaw ") {
+		rawTrimmed := strings.TrimSpace(text)
+		path := strings.TrimSpace(rawTrimmed[5:])
+		loaded, err := engine.LoadGame(path)
+		if err != nil {
+			m.CommandBar.AddMessage(fmt.Sprintf("Failed to thaw %s: %v", path, err))
+		} else {
+			m.Game = loaded
+			m.SelectedSector = engine.Coord{}
+			m.CommandBar.AddMessage(fmt.Sprintf("Mission thawed: %s (Stardate %.1f)", filepath.Base(path), loaded.Stardate))
+		}
 		return m, nil
 	}
 

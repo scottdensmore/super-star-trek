@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
@@ -830,4 +832,141 @@ func TestModel_MouseDoubleClickThirdClickDoesNotDoubleClick(t *testing.T) {
 		t.Fatalf("expected 3rd click to record new non-zero LastClickTime")
 	}
 }
+
+func TestModalSaveBrowserIntegration(t *testing.T) {
+	tempDir := t.TempDir()
+	g := engine.NewGame(12345, engine.SkillNovice, engine.LengthShort)
+	savePath := filepath.Join(tempDir, "TESTSAV.TRK")
+	g.Stardate = 3150.0
+	_ = g.Save(savePath)
+
+	m := NewModel(g, theme.DefaultTheme())
+	m.Width = 100
+	m.Height = 30
+	m.SaveBrowser = savebrowser.New(theme.DefaultTheme(), tempDir)
+
+	// Test 1: Open via Ctrl+O
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyCtrlO})
+	if m.ActiveModal != ModalSaveBrowser {
+		t.Fatalf("expected ActiveModal == ModalSaveBrowser after Ctrl+O, got %v", m.ActiveModal)
+	}
+
+	// Test 2: Dismiss via CloseBrowserMsg
+	m, _ = m.UpdateModel(savebrowser.CloseBrowserMsg{})
+	if m.ActiveModal != ModalNone {
+		t.Fatalf("expected ActiveModal == ModalNone after CloseBrowserMsg, got %v", m.ActiveModal)
+	}
+
+	// Test 3: Open via "saves" command
+	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "saves"})
+	if m.ActiveModal != ModalSaveBrowser {
+		t.Fatalf("expected ActiveModal == ModalSaveBrowser after 'saves' command, got %v", m.ActiveModal)
+	}
+
+	// Test 4: Thaw via LoadGameMsg
+	m, _ = m.UpdateModel(savebrowser.LoadGameMsg{Path: savePath})
+	if m.ActiveModal != ModalNone {
+		t.Fatalf("expected ActiveModal == ModalNone after LoadGameMsg, got %v", m.ActiveModal)
+	}
+	if m.Game.Stardate != 3150.0 {
+		t.Errorf("expected loaded Game.Stardate 3150.0, got %f", m.Game.Stardate)
+	}
+
+	// Test 5: Open via "thaw" command without args
+	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "thaw"})
+	if m.ActiveModal != ModalSaveBrowser {
+		t.Fatalf("expected ActiveModal == ModalSaveBrowser after bare 'thaw' command, got %v", m.ActiveModal)
+	}
+
+	// Test 6: Direct load via "thaw <filename>"
+	m.ActiveModal = ModalNone
+	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "thaw " + savePath})
+	if m.Game.Stardate != 3150.0 {
+		t.Errorf("expected loaded Game.Stardate 3150.0 from thaw command, got %f", m.Game.Stardate)
+	}
+}
+
+func TestModalSaveBrowser_ThemePropagation(t *testing.T) {
+	tempDir := t.TempDir()
+	g := engine.NewGame(12345, engine.SkillNovice, engine.LengthShort)
+	m := NewModel(g, theme.DefaultTheme())
+	m.Width = 100
+	m.Height = 30
+	m.SaveBrowser = savebrowser.New(theme.DefaultTheme(), tempDir)
+
+	// Open save browser via Ctrl+O
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyCtrlO})
+	if m.ActiveModal != ModalSaveBrowser {
+		t.Fatalf("expected ActiveModal == ModalSaveBrowser, got %v", m.ActiveModal)
+	}
+
+	// Cycle theme with F2 while save browser is open
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyF2})
+	if m.Theme.Name() != "lcars" {
+		t.Fatalf("expected root theme 'lcars', got %s", m.Theme.Name())
+	}
+
+	// Cycle theme again with F2 -> CRT
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyF2})
+	if m.Theme.Name() != "crt" {
+		t.Fatalf("expected root theme 'crt', got %s", m.Theme.Name())
+	}
+}
+
+func TestModalSaveBrowser_ViewOverlay(t *testing.T) {
+	tempDir := t.TempDir()
+	g := engine.NewGame(12345, engine.SkillNovice, engine.LengthShort)
+	m := NewModel(g, theme.DefaultTheme())
+	m.Width = 100
+	m.Height = 30
+	m.SaveBrowser = savebrowser.New(theme.DefaultTheme(), tempDir)
+
+	m.ActiveModal = ModalSaveBrowser
+	view := m.View()
+
+	if !strings.Contains(view, "SAVED MISSIONS") {
+		t.Fatalf("expected view to contain 'SAVED MISSIONS', got:\n%s", view)
+	}
+	if !strings.Contains(view, "SUPER STAR TREK") {
+		t.Fatalf("expected background dashboard header in view:\n%s", view)
+	}
+}
+
+func TestModalSaveBrowser_ThawError(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillNovice, engine.LengthShort)
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Thaw non-existent file directly
+	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "thaw /path/that/does/not/exist.trk"})
+	msgs := m.CommandBar.Messages()
+	found := false
+	for _, msg := range msgs {
+		if strings.Contains(msg, "Failed to thaw") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected 'Failed to thaw' error message in command bar, got %v", msgs)
+	}
+
+	// LoadGameMsg with invalid path
+	m.ActiveModal = ModalSaveBrowser
+	m, _ = m.UpdateModel(savebrowser.LoadGameMsg{Path: "/path/that/does/not/exist.trk"})
+	if m.ActiveModal != ModalNone {
+		t.Fatalf("expected ActiveModal == ModalNone after LoadGameMsg error, got %v", m.ActiveModal)
+	}
+	msgs = m.CommandBar.Messages()
+	found = false
+	for _, msg := range msgs {
+		if strings.Contains(msg, "Failed to thaw") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected 'Failed to thaw' error message after LoadGameMsg failure, got %v", msgs)
+	}
+}
+
 
