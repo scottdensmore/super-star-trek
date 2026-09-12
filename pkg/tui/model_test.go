@@ -260,6 +260,10 @@ func TestModelInit(t *testing.T) {
 }
 
 func TestModelViewStructure(t *testing.T) {
+	TestModel_ViewStructure(t)
+}
+
+func TestModel_ViewStructure(t *testing.T) {
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
 	m := NewModel(g, theme.DefaultTheme())
 
@@ -271,6 +275,9 @@ func TestModelViewStructure(t *testing.T) {
 	// Verify Header
 	if !strings.Contains(view, "SUPER STAR TREK") {
 		t.Fatalf("view missing header title:\n%s", view)
+	}
+	if !strings.Contains(view, "USS ENTERPRISE") {
+		t.Fatalf("view missing Enterprise title in header:\n%s", view)
 	}
 	// Verify Grid axes and Enterprise
 	if !strings.Contains(view, "<E>") {
@@ -286,6 +293,48 @@ func TestModelViewStructure(t *testing.T) {
 	// Verify Command Bar prompt
 	if !strings.Contains(view, "COMMAND>") {
 		t.Fatalf("view missing command bar prompt:\n%s", view)
+	}
+
+	// Verify ModalCommandPalette compositing over background dashboard
+	mPalette := m
+	mPalette.ActiveModal = ModalCommandPalette
+	paletteView := mPalette.View()
+
+	if !strings.Contains(paletteView, "COMMAND PALETTE") {
+		t.Fatalf("palette overlay missing modal title in view:\n%s", paletteView)
+	}
+	if !strings.Contains(paletteView, "SUPER STAR TREK") {
+		t.Fatalf("palette overlay missing background header 'SUPER STAR TREK':\n%s", paletteView)
+	}
+	if !strings.Contains(paletteView, "USS ENTERPRISE") {
+		t.Fatalf("palette overlay missing background header 'USS ENTERPRISE':\n%s", paletteView)
+	}
+	if !strings.Contains(paletteView, "COMMAND>") {
+		t.Fatalf("palette overlay missing background command prompt 'COMMAND>':\n%s", paletteView)
+	}
+
+	// Verify ModalTargetLock compositing over background dashboard
+	klingon := &engine.Klingon{ID: 1, Sector: engine.Coord{4, 7}, Energy: 300}
+	g.CurrentQuad.Klingons = []*engine.Klingon{klingon}
+	g.CurrentQuad.Grid[4][7] = engine.EntityKlingon
+	updatedTarget, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}})
+	mTarget := updatedTarget.(Model)
+	if mTarget.ActiveModal != ModalTargetLock {
+		t.Fatalf("expected ActiveModal == ModalTargetLock, got %v", mTarget.ActiveModal)
+	}
+	targetView := mTarget.View()
+
+	if !strings.Contains(targetView, "TACTICAL TARGET LOCK") {
+		t.Fatalf("target lock overlay missing modal title in view:\n%s", targetView)
+	}
+	if !strings.Contains(targetView, "SUPER STAR TREK") {
+		t.Fatalf("target lock overlay missing background header 'SUPER STAR TREK':\n%s", targetView)
+	}
+	if !strings.Contains(targetView, "USS ENTERPRISE") {
+		t.Fatalf("target lock overlay missing background header 'USS ENTERPRISE':\n%s", targetView)
+	}
+	if !strings.Contains(targetView, "COMMAND>") {
+		t.Fatalf("target lock overlay missing background command prompt 'COMMAND>':\n%s", targetView)
 	}
 }
 

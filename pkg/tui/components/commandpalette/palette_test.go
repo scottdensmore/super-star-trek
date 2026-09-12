@@ -299,3 +299,69 @@ func TestCommandPalette_NoMatch(t *testing.T) {
 		t.Errorf("expected nil cmd on Enter with no matches, got %v", cmd)
 	}
 }
+
+func TestCommandPalette_RuneSafeBackspaceAndWindowSize(t *testing.T) {
+	th := theme.DefaultTheme()
+	m := New(th, 56, 16)
+
+	// Type multi-byte runes: emoji, non-ASCII latin, CJK
+	input := []rune{'🚀', '🎯', 'é', '漢', '字'}
+	for _, r := range input {
+		m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+	}
+
+	expectedQuery := "🚀🎯é漢字"
+	if m.FilterValue() != expectedQuery {
+		t.Fatalf("expected query %q, got %q", expectedQuery, m.FilterValue())
+	}
+
+	// Backspace once: should safely remove '字'
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	if m.FilterValue() != "🚀🎯é漢" {
+		t.Fatalf("expected query %q after backspace, got %q", "🚀🎯é漢", m.FilterValue())
+	}
+
+	// Backspace again: should safely remove '漢'
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	if m.FilterValue() != "🚀🎯é" {
+		t.Fatalf("expected query %q after backspace, got %q", "🚀🎯é", m.FilterValue())
+	}
+
+	// Backspace again: should safely remove 'é'
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	if m.FilterValue() != "🚀🎯" {
+		t.Fatalf("expected query %q after backspace, got %q", "🚀🎯", m.FilterValue())
+	}
+
+	// Backspace again: should safely remove '🎯'
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	if m.FilterValue() != "🚀" {
+		t.Fatalf("expected query %q after backspace, got %q", "🚀", m.FilterValue())
+	}
+
+	// Backspace again: should safely remove '🚀'
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	if m.FilterValue() != "" {
+		t.Fatalf("expected query empty after backspace, got %q", m.FilterValue())
+	}
+
+	// Backspace on empty query should be a safe no-op
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	if m.FilterValue() != "" {
+		t.Fatalf("expected query empty after backspace on empty, got %q", m.FilterValue())
+	}
+
+	// Verify WindowSizeMsg is safely ignored to maintain fixed dialog dimensions
+	m, _ = m.Update(tea.WindowSizeMsg{Width: 120, Height: 40})
+	view := m.View()
+	lines := strings.Split(strings.TrimRight(view, "\n"), "\n")
+	if len(lines) != 16 {
+		t.Fatalf("expected palette height to remain 16 after WindowSizeMsg, got %d", len(lines))
+	}
+	for i, line := range lines {
+		w := lipgloss.Width(line)
+		if w != 56 {
+			t.Fatalf("expected line %d width to remain 56, got %d", i, w)
+		}
+	}
+}

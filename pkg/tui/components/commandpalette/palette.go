@@ -427,8 +427,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 		// Filter editing: Backspace / Delete
 		if msg.Type == tea.KeyBackspace || msg.Type == tea.KeyDelete || keyStr == "backspace" || keyStr == "delete" {
-			if len(m.query) > 0 {
-				m.query = m.query[:len(m.query)-1]
+			runes := []rune(m.query)
+			if len(runes) > 0 {
+				m.query = string(runes[:len(runes)-1])
 				m.applyFilter()
 			}
 			return m, nil
@@ -454,7 +455,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
-		m.SetSize(msg.Width, msg.Height)
+		// Safely ignore WindowSizeMsg to preserve fixed dialog dimensions (e.g. 56x16)
 		return m, nil
 	}
 
