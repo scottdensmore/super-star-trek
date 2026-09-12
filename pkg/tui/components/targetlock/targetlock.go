@@ -69,6 +69,14 @@ func (m *Model) SetTheme(th theme.Theme) {
 	m.theme = th
 }
 
+// Theme returns the currently active theme.
+func (m Model) Theme() theme.Theme {
+	if m.theme == nil {
+		return theme.DefaultTheme()
+	}
+	return m.theme
+}
+
 // SetState updates ship status and populates telemetry for hostile targets,
 // sorting them by distance from Enterprise and selecting initialTarget if provided.
 func (m *Model) SetState(

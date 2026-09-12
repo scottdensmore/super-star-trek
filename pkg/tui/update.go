@@ -66,8 +66,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmd := m.CommandBar.Focus()
 			return m, cmd
 		}
-		m.CommandBar.Focus()
-		return m.handleCommand(msg.CommandPrefix)
+		cmd := m.CommandBar.Focus()
+		resModel, resCmd := m.handleCommand(msg.CommandPrefix)
+		return resModel, tea.Batch(cmd, resCmd)
 
 	case commandpalette.ClosePaletteMsg:
 		m.ActiveModal = ModalNone
@@ -113,6 +114,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.CommandBar.Reset()
 			return m, nil
 
+		case msg.Type == tea.KeyCtrlP || msg.String() == "ctrl+p":
+			m.CommandPalette.Reset()
+			m.ActiveModal = ModalCommandPalette
+			m.CommandBar.Blur()
+			return m, nil
+
 		case strings.TrimSpace(m.CommandBar.Value()) == "":
 			switch {
 			case msg.String() == "t" || msg.String() == "T":
@@ -131,7 +138,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.CommandBar.Blur()
 				return m, nil
 
-			case msg.Type == tea.KeyCtrlP || msg.String() == "ctrl+p" || msg.String() == "/":
+			case msg.String() == "/":
 				m.CommandPalette.Reset()
 				m.ActiveModal = ModalCommandPalette
 				m.CommandBar.Blur()
@@ -164,7 +171,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		isDoubleClick := coord == m.LastClickCoord && !m.LastClickTime.IsZero() && time.Since(m.LastClickTime) < 400*time.Millisecond
 
 		if isDoubleClick {
-			m.LastClickTime = now
+			m.LastClickTime = time.Time{}
 			m.LastClickCoord = coord
 
 			var ent engine.EntityType = engine.EntityEmpty

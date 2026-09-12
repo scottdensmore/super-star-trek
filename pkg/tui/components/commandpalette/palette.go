@@ -221,6 +221,14 @@ func (m *Model) SetTheme(th theme.Theme) {
 	m.SetSize(m.width, m.height)
 }
 
+// Theme returns the currently active theme.
+func (m Model) Theme() theme.Theme {
+	if m.theme == nil {
+		return theme.DefaultTheme()
+	}
+	return m.theme
+}
+
 // SetSize updates the width and height of the modal dialog and list component.
 func (m *Model) SetSize(width, height int) {
 	if width <= 0 {

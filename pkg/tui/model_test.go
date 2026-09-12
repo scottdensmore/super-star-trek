@@ -690,3 +690,95 @@ func TestModel_MouseClicksSeparatedByTimeDoNotDoubleClick(t *testing.T) {
 	}
 }
 
+func TestModel_OpenCommandPaletteWithInputBuffer(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+	m.CommandBar.SetValue("nav 1.0")
+
+	// Ctrl+P opens command palette even with text in command bar
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyCtrlP})
+	m = updated.(Model)
+	if m.ActiveModal != ModalCommandPalette {
+		t.Fatalf("expected ActiveModal == ModalCommandPalette with non-empty input buffer, got %v", m.ActiveModal)
+	}
+}
+
+func TestModel_ThemePropagationToOpenOverlays(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	klingon := &engine.Klingon{ID: 1, Sector: engine.Coord{4, 7}, Energy: 300}
+	g.CurrentQuad.Klingons = []*engine.Klingon{klingon}
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Open TargetLock modal
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'t'}})
+	m = updated.(Model)
+	if m.ActiveModal != ModalTargetLock {
+		t.Fatalf("expected ActiveModal == ModalTargetLock, got %v", m.ActiveModal)
+	}
+
+	// Press F2 to cycle theme while TargetLock is open
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyF2})
+	m = updated.(Model)
+	if m.Theme.Name() != "lcars" {
+		t.Fatalf("expected root theme lcars, got %s", m.Theme.Name())
+	}
+	if m.TargetLock.Theme().Name() != "lcars" {
+		t.Fatalf("expected TargetLock theme propagated to lcars, got %s", m.TargetLock.Theme().Name())
+	}
+
+	// Close modal and open CommandPalette
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m = updated.(Model)
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyCtrlP})
+	m = updated.(Model)
+	if m.ActiveModal != ModalCommandPalette {
+		t.Fatalf("expected ActiveModal == ModalCommandPalette, got %v", m.ActiveModal)
+	}
+
+	// Press F2 to cycle theme while CommandPalette is open
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyF2})
+	m = updated.(Model)
+	if m.Theme.Name() != "crt" {
+		t.Fatalf("expected root theme crt, got %s", m.Theme.Name())
+	}
+	if m.CommandPalette.Theme().Name() != "crt" {
+		t.Fatalf("expected CommandPalette theme propagated to crt, got %s", m.CommandPalette.Theme().Name())
+	}
+}
+
+func TestModel_MouseDoubleClickThirdClickDoesNotDoubleClick(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Sector = engine.Coord{4, 4}
+	g.CurrentQuad.Grid[4][4] = engine.EntityEnterprise
+	g.CurrentQuad.Grid[5][5] = engine.EntityEmpty
+
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Cell [5, 5]: relY = 5 => msg.Y = 6, c = 5 => relX = 18 => msg.X = 18
+	mouseMsg := tea.MouseMsg{
+		X:      18,
+		Y:      6,
+		Button: tea.MouseButtonLeft,
+		Action: tea.MouseActionPress,
+	}
+
+	// First click
+	updated, _ := m.Update(mouseMsg)
+	m = updated.(Model)
+
+	// Second click (double click -> moves Enterprise to [5, 5])
+	updated, _ = m.Update(mouseMsg)
+	m = updated.(Model)
+	if g.Enterprise.Sector != (engine.Coord{5, 5}) {
+		t.Fatalf("expected Enterprise moved to [5, 5] on 2nd click")
+	}
+
+	// Rapid 3rd click on [5, 5] - should NOT trigger another double-click (since click pair was consumed)
+	// LastClickTime should be reset to time.Time{} right after double-click, and then 3rd click sets it to time.Now()
+	updated, _ = m.Update(mouseMsg)
+	m = updated.(Model)
+	if m.LastClickTime.IsZero() {
+		t.Fatalf("expected 3rd click to record new non-zero LastClickTime")
+	}
+}
+
