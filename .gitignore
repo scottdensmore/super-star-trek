@@ -230,7 +230,6 @@ build-*/
 # drift, not personal, and should stay visible.
 /CLAUDE.local.md
 
-# Superpowers workflow and planning artifacts
+# Superpowers workflow scratch artifacts
 .superpowers/
-docs/superpowers/
 
