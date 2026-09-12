@@ -57,7 +57,7 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	selectedTheme := theme.GetTheme(*themeName)
 
 	p := tui.NewModel(game, selectedTheme)
-	if err := runProgram(p, tea.WithAltScreen()); err != nil {
+	if err := runProgram(p, tea.WithAltScreen(), tea.WithMouseCellMotion()); err != nil {
 		fmt.Fprintf(errOut, "Error running game: %v\n", err)
 		return 1
 	}

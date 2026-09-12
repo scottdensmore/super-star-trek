@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -169,3 +170,40 @@ func TestRun_TUIProgramError(t *testing.T) {
 		t.Fatalf("expected error output to contain 'terminal failure', got %q", errOut.String())
 	}
 }
+
+func TestRun_TUIMouseCellMotionOption(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	var capturedOpts []tea.ProgramOption
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		capturedOpts = opts
+		return nil
+	}
+
+	in := strings.NewReader("")
+	var out, errOut bytes.Buffer
+
+	exitCode := run([]string{}, in, &out, &errOut)
+	if exitCode != 0 {
+		t.Fatalf("expected exit code 0, got %d", exitCode)
+	}
+
+	dummy := tea.NewProgram(nil, capturedOpts...)
+	field := reflect.ValueOf(dummy).Elem().FieldByName("startupOptions")
+	if !field.IsValid() {
+		t.Fatalf("could not inspect startupOptions field")
+	}
+	actualStartupOptions := field.Int()
+
+	refMouse := reflect.ValueOf(tea.NewProgram(nil, tea.WithMouseCellMotion())).Elem().FieldByName("startupOptions").Int()
+	refAlt := reflect.ValueOf(tea.NewProgram(nil, tea.WithAltScreen())).Elem().FieldByName("startupOptions").Int()
+
+	if actualStartupOptions&refMouse == 0 {
+		t.Errorf("expected runProgram to be called with tea.WithMouseCellMotion(), options bitmask: %b", actualStartupOptions)
+	}
+	if actualStartupOptions&refAlt == 0 {
+		t.Errorf("expected runProgram to be called with tea.WithAltScreen(), options bitmask: %b", actualStartupOptions)
+	}
+}
+
