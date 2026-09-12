@@ -191,5 +191,5 @@ func (m Model) renderHeader() string {
 	}
 	headerLine := title + strings.Repeat(" ", gap) + themeInfo
 
-	return styles.Title.Width(contentWidth).Render(headerLine)
+	return styles.Title.Width(w).Render(headerLine)
 }
