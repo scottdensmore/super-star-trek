@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
@@ -266,6 +267,58 @@ func TestSaveBrowserDeleteFailurePreservesError(t *testing.T) {
 	view := m.View()
 	if !strings.Contains(view, "Delete failed") {
 		t.Errorf("expected View() to display error message %q, got: %s", m.errorMessage, view)
+	}
+}
+
+func TestSaveBrowserUnicodeFilenameTruncation(t *testing.T) {
+	tempDir := t.TempDir()
+	// Multi-byte Unicode filename: each Japanese character is 3 bytes in UTF-8.
+	// "日本語ミッション保存ファイル.TRK" has 17 runes and 43 bytes.
+	// Byte slicing at 10 would cut inside the 4th rune 'ミ' (bytes 9-11), resulting in invalid UTF-8.
+	unicodeName := "日本語ミッション保存ファイル.TRK"
+	p := createTestSave(t, tempDir, "VALID.TRK", 3141.5, engine.SkillGood)
+	unicodePath := filepath.Join(tempDir, unicodeName)
+	if err := os.Rename(p, unicodePath); err != nil {
+		t.Fatalf("rename failed: %v", err)
+	}
+
+	m := New(theme.DefaultTheme(), tempDir)
+	if err := m.Refresh(); err != nil {
+		t.Fatalf("Refresh failed: %v", err)
+	}
+
+	if len(m.saves) != 1 {
+		t.Fatalf("expected 1 save, got %d", len(m.saves))
+	}
+
+	view := m.View()
+	if !utf8.ValidString(view) {
+		t.Errorf("View() output is not valid UTF-8 due to split rune")
+	}
+
+	expectedTruncated := string([]rune(unicodeName)[:10])
+	if !strings.Contains(view, expectedTruncated) {
+		t.Errorf("expected View() to contain rune-truncated filename %q, got: %s", expectedTruncated, view)
+	}
+}
+
+func TestSaveBrowserKeyDeleteToggle(t *testing.T) {
+	tempDir := t.TempDir()
+	createTestSave(t, tempDir, "DELTOGGLE.TRK", 3500.0, engine.SkillFair)
+
+	m := New(theme.DefaultTheme(), tempDir)
+	_ = m.Refresh()
+
+	// Press KeyDelete to toggle deleting mode on
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDelete})
+	if !m.deleting {
+		t.Errorf("expected deleting to be true after KeyDelete")
+	}
+
+	// Press KeyDelete again to toggle deleting mode off
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDelete})
+	if m.deleting {
+		t.Errorf("expected deleting to be false after second KeyDelete")
 	}
 }
 

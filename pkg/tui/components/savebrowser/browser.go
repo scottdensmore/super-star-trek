@@ -161,7 +161,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 		case tea.KeyDelete:
 			if len(m.saves) > 0 {
-				m.deleting = true
+				m.deleting = !m.deleting
 			}
 			return m, nil
 
@@ -183,53 +183,6 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					m.deleting = !m.deleting
 				}
 				return m, nil
-			}
-
-		default:
-			switch msg.String() {
-			case "k", "K", "up":
-				if !m.deleting && m.cursor > 0 {
-					m.cursor--
-				}
-				return m, nil
-			case "j", "J", "down":
-				if !m.deleting && m.cursor < len(m.saves)-1 {
-					m.cursor++
-				}
-				return m, nil
-			case "d", "D":
-				if len(m.saves) > 0 {
-					m.deleting = !m.deleting
-				}
-				return m, nil
-			case "enter":
-				if m.deleting {
-					if len(m.saves) > 0 && m.cursor >= 0 && m.cursor < len(m.saves) {
-						target := m.saves[m.cursor].Path
-						if err := os.Remove(target); err != nil {
-							m.errorMessage = fmt.Sprintf("Delete failed: %v", err)
-						} else {
-							_ = m.Refresh()
-						}
-						m.deleting = false
-					}
-					return m, nil
-				}
-				if len(m.saves) > 0 && m.cursor >= 0 && m.cursor < len(m.saves) {
-					selectedPath := m.saves[m.cursor].Path
-					return m, func() tea.Msg {
-						return LoadGameMsg{Path: selectedPath}
-					}
-				}
-				return m, nil
-			case "esc":
-				if m.deleting {
-					m.deleting = false
-					return m, nil
-				}
-				return m, func() tea.Msg {
-					return CloseBrowserMsg{}
-				}
 			}
 		}
 	}
@@ -285,8 +238,9 @@ func (m Model) View() string {
 			condStr := formatCondition(s.Condition)
 			modStr := s.ModTime.Format("01-02 15:04")
 			baseName := s.Filename
-			if len(baseName) > 10 {
-				baseName = baseName[:10]
+			runes := []rune(baseName)
+			if len(runes) > 10 {
+				baseName = string(runes[:10])
 			}
 
 			line := fmt.Sprintf("%s%-10s %-9.1f %-7s %-7s %-9d %s",
