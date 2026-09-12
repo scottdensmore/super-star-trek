@@ -293,6 +293,55 @@ func TestTargetLock_FirePhasersPrompt(t *testing.T) {
 	}
 }
 
+func TestTargetLock_PhaserWarningClearedOnTyping(t *testing.T) {
+	m := New(theme.DefaultTheme())
+	entSector := engine.Coord{4, 4}
+	klingon := &engine.Klingon{ID: 1, Sector: engine.Coord{4, 7}, Energy: 400}
+
+	m.SetState(entSector, 5000, 10, []*engine.Klingon{klingon}, engine.Coord{})
+
+	// Activate phaser mode
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
+
+	// Press Enter with empty input -> invalid amount warning
+	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if cmd != nil {
+		t.Errorf("expected nil cmd on invalid input")
+	}
+	if !strings.Contains(m.WarningMessage(), "INVALID ENERGY") {
+		t.Fatalf("expected warning message to contain 'INVALID ENERGY', got %q", m.WarningMessage())
+	}
+	if !strings.Contains(m.View(), "INVALID ENERGY") {
+		t.Errorf("expected View to show warning message")
+	}
+
+	// Typing a digit must clear the warning and display the input buffer
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'2'}})
+	if m.WarningMessage() != "" {
+		t.Errorf("expected warning to be cleared after typing digit, got %q", m.WarningMessage())
+	}
+	view := m.View()
+	if strings.Contains(view, "INVALID ENERGY") {
+		t.Errorf("expected View to no longer show warning message")
+	}
+	if !strings.Contains(view, "PHASER ENERGY> 2") {
+		t.Errorf("expected View to show input buffer 'PHASER ENERGY> 2', got:\n%s", view)
+	}
+
+	// Trigger warning again with invalid input (e.g. empty)
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace}) // removes '2'
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if m.WarningMessage() == "" {
+		t.Fatalf("expected warning message")
+	}
+
+	// Backspace must also clear warning
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyBackspace})
+	if m.WarningMessage() != "" {
+		t.Errorf("expected warning to be cleared on backspace, got %q", m.WarningMessage())
+	}
+}
+
 func TestTargetLock_Close(t *testing.T) {
 	m := New(theme.DefaultTheme())
 	m.SetState(engine.Coord{4, 4}, 5000, 10, nil, engine.Coord{})

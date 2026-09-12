@@ -192,8 +192,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	}
 
 	if m.inputtingPhaser {
-		switch keyMsg.Type {
-		case tea.KeyEnter:
+		switch {
+		case keyMsg.Type == tea.KeyEnter || keyStr == "enter":
 			val := strings.TrimSpace(m.phaserInput)
 			energy, err := strconv.ParseFloat(val, 64)
 			if err == nil && energy > 0 {
@@ -206,13 +206,15 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			}
 			m.warningMessage = "*** INVALID ENERGY AMOUNT ***"
 			return m, nil
-		case tea.KeyBackspace:
+		case keyMsg.Type == tea.KeyBackspace || keyStr == "backspace":
+			m.warningMessage = ""
 			if len(m.phaserInput) > 0 {
 				m.phaserInput = m.phaserInput[:len(m.phaserInput)-1]
 			}
 			return m, nil
 		default:
 			if (len(keyStr) == 1 && keyStr[0] >= '0' && keyStr[0] <= '9') || keyStr == "." {
+				m.warningMessage = ""
 				m.phaserInput += keyStr
 			}
 			return m, nil
@@ -220,59 +222,28 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	}
 
 	// Target cycling and firing controls
-	switch keyMsg.Type {
-	case tea.KeyTab, tea.KeyRight:
+	switch {
+	case keyMsg.Type == tea.KeyTab || keyMsg.Type == tea.KeyRight || keyStr == "tab" || keyStr == "right":
 		if len(m.targets) > 0 {
 			m.targetIdx = (m.targetIdx + 1) % len(m.targets)
 			m.warningMessage = ""
 		}
 		return m, nil
 
-	case tea.KeyShiftTab, tea.KeyLeft:
+	case keyMsg.Type == tea.KeyShiftTab || keyMsg.Type == tea.KeyLeft || keyStr == "shift+tab" || keyStr == "left":
 		if len(m.targets) > 0 {
 			m.targetIdx = (m.targetIdx - 1 + len(m.targets)) % len(m.targets)
 			m.warningMessage = ""
 		}
 		return m, nil
 
-	case tea.KeyEnter:
-		if m.torpedoCount <= 0 {
-			m.warningMessage = "*** NO TORPEDOES REMAINING ***"
-			return m, nil
-		}
+	case keyMsg.Type == tea.KeyEnter || keyStr == "enter":
 		target := m.CurrentTarget()
 		if target == nil {
 			return m, nil
 		}
-		cur := *target
-		return m, func() tea.Msg {
-			return FireTorpedoMsg{
-				Target:  cur.Coord,
-				Bearing: cur.Bearing,
-			}
-		}
-	}
-
-	switch keyStr {
-	case "tab", "right":
-		if len(m.targets) > 0 {
-			m.targetIdx = (m.targetIdx + 1) % len(m.targets)
-			m.warningMessage = ""
-		}
-		return m, nil
-	case "shift+tab", "left":
-		if len(m.targets) > 0 {
-			m.targetIdx = (m.targetIdx - 1 + len(m.targets)) % len(m.targets)
-			m.warningMessage = ""
-		}
-		return m, nil
-	case "enter":
 		if m.torpedoCount <= 0 {
 			m.warningMessage = "*** NO TORPEDOES REMAINING ***"
-			return m, nil
-		}
-		target := m.CurrentTarget()
-		if target == nil {
 			return m, nil
 		}
 		cur := *target
