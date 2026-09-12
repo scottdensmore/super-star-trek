@@ -134,9 +134,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 					target := m.saves[m.cursor].Path
 					if err := os.Remove(target); err != nil {
 						m.errorMessage = fmt.Sprintf("Delete failed: %v", err)
+					} else {
+						_ = m.Refresh()
 					}
 					m.deleting = false
-					_ = m.Refresh()
 				}
 				return m, nil
 			}
@@ -207,9 +208,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 						target := m.saves[m.cursor].Path
 						if err := os.Remove(target); err != nil {
 							m.errorMessage = fmt.Sprintf("Delete failed: %v", err)
+						} else {
+							_ = m.Refresh()
 						}
 						m.deleting = false
-						_ = m.Refresh()
 					}
 					return m, nil
 				}
@@ -243,8 +245,10 @@ func (m Model) View() string {
 	styles := th.Styles()
 
 	dialogWidth := 60
-	if m.width > 0 {
+	if m.width >= 2 {
 		dialogWidth = m.width - 2
+	} else if m.width > 0 {
+		dialogWidth = 0
 	}
 
 	titleText := " SAVED MISSIONS (Ctrl+O) "
@@ -304,7 +308,11 @@ func (m Model) View() string {
 	if borderFg != nil {
 		dividerStyle = dividerStyle.Foreground(borderFg)
 	}
-	divider := dividerStyle.Render(strings.Repeat("─", dialogWidth))
+	dividerStr := ""
+	if dialogWidth > 0 {
+		dividerStr = strings.Repeat("─", dialogWidth)
+	}
+	divider := dividerStyle.Render(dividerStr)
 
 	var footer string
 	if m.deleting && len(m.saves) > 0 && m.cursor < len(m.saves) {

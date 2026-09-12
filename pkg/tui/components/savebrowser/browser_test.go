@@ -224,3 +224,48 @@ func TestSaveBrowserInvalidDirectory(t *testing.T) {
 		t.Errorf("expected errorMessage to be populated")
 	}
 }
+
+func TestSaveBrowserNarrowWidthNoPanic(t *testing.T) {
+	m := New(theme.DefaultTheme(), t.TempDir())
+	m.SetSize(1, 1)
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("m.View() panicked on narrow size (1, 1): %v", r)
+		}
+	}()
+	_ = m.View()
+}
+
+func TestSaveBrowserDeleteFailurePreservesError(t *testing.T) {
+	tempDir := t.TempDir()
+	p := createTestSave(t, tempDir, "NODELETE.TRK", 3400.0, engine.SkillFair)
+
+	m := New(theme.DefaultTheme(), tempDir)
+	_ = m.Refresh()
+
+	// Delete file out of band before confirming delete in browser so os.Remove fails
+	if err := os.Remove(p); err != nil {
+		t.Fatalf("failed to remove test file: %v", err)
+	}
+
+	// Enter deleting mode
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	if !m.deleting {
+		t.Fatalf("expected deleting mode true")
+	}
+
+	// Confirm delete -> os.Remove(p) will fail because file does not exist
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	if m.errorMessage == "" {
+		t.Errorf("expected non-empty errorMessage after delete failure")
+	}
+	if !strings.Contains(m.errorMessage, "Delete failed") {
+		t.Errorf("expected errorMessage to contain 'Delete failed', got %q", m.errorMessage)
+	}
+	view := m.View()
+	if !strings.Contains(view, "Delete failed") {
+		t.Errorf("expected View() to display error message %q, got: %s", m.errorMessage, view)
+	}
+}
+
