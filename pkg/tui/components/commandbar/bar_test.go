@@ -229,3 +229,171 @@ func TestAddMessage_TrailingNewlines(t *testing.T) {
 		t.Errorf("adding only newlines should not alter messages buffer, got %d messages", len(m.Messages()))
 	}
 }
+
+func TestCommandBarHistory(t *testing.T) {
+	th := theme.DefaultTheme()
+	cb := New(th)
+
+	// Type and submit "nav 1 2"
+	cb.SetValue("nav 1 2")
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	// Type and submit "tor 3 4"
+	cb.SetValue("tor 3 4")
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	// Start typing draft "ph"
+	cb.SetValue("ph")
+
+	// Press Up -> recall "tor 3 4"
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if cb.Value() != "tor 3 4" {
+		t.Errorf("expected recalled history 'tor 3 4', got %q", cb.Value())
+	}
+
+	// Press Up again -> recall "nav 1 2"
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if cb.Value() != "nav 1 2" {
+		t.Errorf("expected recalled history 'nav 1 2', got %q", cb.Value())
+	}
+
+	// Press Up again at the oldest entry -> stays at "nav 1 2"
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if cb.Value() != "nav 1 2" {
+		t.Errorf("expected oldest history to remain 'nav 1 2', got %q", cb.Value())
+	}
+
+	// Press Down -> back to "tor 3 4"
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if cb.Value() != "tor 3 4" {
+		t.Errorf("expected recalled history 'tor 3 4', got %q", cb.Value())
+	}
+
+	// Press Down again -> restore draft "ph"
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if cb.Value() != "ph" {
+		t.Errorf("expected restored draft 'ph', got %q", cb.Value())
+	}
+
+	// Press Down again when already at draft -> stays at "ph"
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if cb.Value() != "ph" {
+		t.Errorf("expected draft to remain 'ph', got %q", cb.Value())
+	}
+}
+
+func TestCommandBarHistoryDeduplication(t *testing.T) {
+	th := theme.DefaultTheme()
+	cb := New(th)
+
+	// Submitting duplicate consecutive commands should not duplicate in history
+	cb.SetValue("status")
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	cb.SetValue("status")
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	cb.SetValue("nav 1 2")
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyEnter})
+
+	// Up -> "nav 1 2"
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if cb.Value() != "nav 1 2" {
+		t.Errorf("expected 'nav 1 2', got %q", cb.Value())
+	}
+
+	// Up -> "status"
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if cb.Value() != "status" {
+		t.Errorf("expected 'status', got %q", cb.Value())
+	}
+
+	// Up again -> should stay "status" because duplicate wasn't added
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if cb.Value() != "status" {
+		t.Errorf("expected 'status' (no duplicate), got %q", cb.Value())
+	}
+}
+
+func TestCommandBarHistoryEmpty(t *testing.T) {
+	th := theme.DefaultTheme()
+	cb := New(th)
+
+	// With empty history, Up / Down does nothing
+	cb.SetValue("draft")
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if cb.Value() != "draft" {
+		t.Errorf("expected 'draft' on Up with empty history, got %q", cb.Value())
+	}
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if cb.Value() != "draft" {
+		t.Errorf("expected 'draft' on Down with empty history, got %q", cb.Value())
+	}
+}
+
+func TestCommandBarTabCompletion(t *testing.T) {
+	th := theme.DefaultTheme()
+	cb := New(th)
+
+	// Single match: "ph" -> "pha "
+	cb.SetValue("ph")
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyTab})
+	if cb.Value() != "pha " {
+		t.Errorf("expected tab completion 'pha ', got %q", cb.Value())
+	}
+
+	// Multiple matches: "s" -> ["saves", "she ", "srscan", "status"]
+	cb.SetValue("s")
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyTab})
+	firstMatch := cb.Value()
+	if firstMatch != "saves" {
+		t.Errorf("expected first tab candidate 'saves', got %q", firstMatch)
+	}
+
+	// Tab cycle 2
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyTab})
+	if cb.Value() != "she " {
+		t.Errorf("expected second tab candidate 'she ', got %q", cb.Value())
+	}
+
+	// Tab cycle 3
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyTab})
+	if cb.Value() != "srscan" {
+		t.Errorf("expected third tab candidate 'srscan', got %q", cb.Value())
+	}
+
+	// Tab cycle 4
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyTab})
+	if cb.Value() != "status" {
+		t.Errorf("expected fourth tab candidate 'status', got %q", cb.Value())
+	}
+
+	// Tab cycle wraps back to 1
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyTab})
+	if cb.Value() != "saves" {
+		t.Errorf("expected wrapped tab candidate 'saves', got %q", cb.Value())
+	}
+
+	// Typing key resets tab cycle
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'x'}})
+	cb.SetValue("doc")
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyTab})
+	if cb.Value() != "doc" {
+		t.Errorf("expected instant match 'doc', got %q", cb.Value())
+	}
+
+	// Non-matching tab completion preserves input
+	cb.SetValue("xyz")
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyTab})
+	if cb.Value() != "xyz" {
+		t.Errorf("expected 'xyz' to remain unchanged on no match, got %q", cb.Value())
+	}
+
+	// Empty input tab completion does nothing
+	cb.SetValue("")
+	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyTab})
+	if cb.Value() != "" {
+		t.Errorf("expected empty string to remain on tab with empty input, got %q", cb.Value())
+	}
+}
+
