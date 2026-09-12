@@ -235,3 +235,15 @@ add_test(NAME lineendings
 # tarball has no attributes to ask about, and a guard that cannot run
 # should say so rather than pass.
 set_tests_properties(lineendings PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+
+install(TARGETS sst DESTINATION bin)
+install(FILES sst.doc DESTINATION share/doc/super-star-trek)
+
+set(CPACK_PACKAGE_NAME "super-star-trek")
+set(CPACK_PACKAGE_VENDOR "Super Star Trek Authors")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Classic terminal space-strategy game written in C17")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_GENERATOR "TGZ;DEB")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Super Star Trek Authors")
+set(CPACK_DEBIAN_PACKAGE_SECTION "games")
+include(CPack)
