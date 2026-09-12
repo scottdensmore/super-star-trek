@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
@@ -45,6 +46,7 @@ func (m Model) renderSizeNotice() string {
 // - Top: Header banner with game title and active theme
 // - Middle: Horizontal split of 8x8 sector grid (left) and telemetry/status panel (right)
 // - Bottom: Interactive command bar with scrolling event history log
+// When an overlay modal is active, it is composited centered over the background dashboard.
 func (m Model) renderDashboard() string {
 	header := m.renderHeader()
 
@@ -55,7 +57,7 @@ func (m Model) renderDashboard() string {
 		entSector = m.Game.Enterprise.Sector
 	}
 
-	gridView := m.Grid.View(quad, entSector)
+	gridView := m.Grid.View(quad, entSector, m.SelectedSector)
 	statusView := m.Status.View(m.Game)
 	middle := lipgloss.JoinHorizontal(lipgloss.Top, gridView, statusView)
 
@@ -65,7 +67,102 @@ func (m Model) renderDashboard() string {
 	}
 	commandBarView := cb.View()
 
-	return lipgloss.JoinVertical(lipgloss.Left, header, middle, commandBarView)
+	dashboard := lipgloss.JoinVertical(lipgloss.Left, header, middle, commandBarView)
+
+	var modalView string
+	switch m.ActiveModal {
+	case ModalTargetLock:
+		modalView = m.TargetLock.View()
+	case ModalCommandPalette:
+		modalView = m.CommandPalette.View()
+	default:
+		return dashboard
+	}
+
+	return compositeOverlay(dashboard, modalView, m.Width, m.Height)
+}
+
+// compositeOverlay composites a floating modal overlay centered over a background dashboard.
+// It uses ANSI-aware line cutting and truncation so the background remains visible
+// around the overlay modal.
+func compositeOverlay(background, overlay string, totalWidth, totalHeight int) string {
+	bgLines := strings.Split(background, "\n")
+	overlayLines := strings.Split(overlay, "\n")
+
+	// Calculate maximum overlay dimensions
+	overlayWidth := 0
+	for _, line := range overlayLines {
+		if w := ansi.StringWidth(line); w > overlayWidth {
+			overlayWidth = w
+		}
+	}
+	overlayHeight := len(overlayLines)
+
+	if totalHeight < overlayHeight {
+		totalHeight = overlayHeight
+	}
+	if totalHeight < len(bgLines) {
+		totalHeight = len(bgLines)
+	}
+	if totalWidth < overlayWidth {
+		totalWidth = overlayWidth
+	}
+	if totalWidth <= 0 {
+		for _, line := range bgLines {
+			if w := ansi.StringWidth(line); w > totalWidth {
+				totalWidth = w
+			}
+		}
+	}
+
+	// Pad background lines if fewer than totalHeight
+	for len(bgLines) < totalHeight {
+		bgLines = append(bgLines, "")
+	}
+
+	startX := (totalWidth - overlayWidth) / 2
+	if startX < 0 {
+		startX = 0
+	}
+	startY := (totalHeight - overlayHeight) / 2
+	if startY < 0 {
+		startY = 0
+	}
+
+	result := make([]string, len(bgLines))
+	for y, bgLine := range bgLines {
+		if y < startY || y >= startY+overlayHeight {
+			result[y] = bgLine
+			continue
+		}
+
+		modalLine := overlayLines[y-startY]
+		modalLineWidth := ansi.StringWidth(modalLine)
+		if modalLineWidth < overlayWidth {
+			modalLine += strings.Repeat(" ", overlayWidth-modalLineWidth)
+		}
+
+		bgWidth := ansi.StringWidth(bgLine)
+		var left string
+		if bgWidth <= startX {
+			left = bgLine + strings.Repeat(" ", startX-bgWidth)
+		} else {
+			left = ansi.Truncate(bgLine, startX, "")
+			leftWidth := ansi.StringWidth(left)
+			if leftWidth < startX {
+				left += strings.Repeat(" ", startX-leftWidth)
+			}
+		}
+
+		var right string
+		if bgWidth > startX+overlayWidth {
+			right = ansi.TruncateLeft(bgLine, startX+overlayWidth, "")
+		}
+
+		result[y] = left + "\x1b[0m" + modalLine + right
+	}
+
+	return strings.Join(result, "\n")
 }
 
 // renderHeader formats the top status banner with game title and theme indicator.

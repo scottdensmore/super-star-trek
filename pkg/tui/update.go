@@ -3,10 +3,13 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
 
@@ -20,7 +23,82 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.CommandBar.SetWidth(msg.Width)
 		return m, nil
 
+	case targetlock.FireTorpedoMsg:
+		if m.Game != nil {
+			events, err := m.Game.Dispatch(engine.ActionFireTorpedo{
+				Target: msg.Target,
+				Angle:  msg.Bearing,
+			})
+			if err != nil {
+				m.CommandBar.AddMessage(err.Error())
+			} else {
+				m.logEvents(events)
+			}
+		}
+		m.ActiveModal = ModalNone
+		cmd := m.CommandBar.Focus()
+		return m, cmd
+
+	case targetlock.FirePhasersMsg:
+		if m.Game != nil {
+			events, err := m.Game.Dispatch(engine.ActionFirePhasers{
+				Energy: msg.Energy,
+			})
+			if err != nil {
+				m.CommandBar.AddMessage(err.Error())
+			} else {
+				m.logEvents(events)
+			}
+		}
+		m.ActiveModal = ModalNone
+		cmd := m.CommandBar.Focus()
+		return m, cmd
+
+	case targetlock.CloseHUDMsg:
+		m.ActiveModal = ModalNone
+		cmd := m.CommandBar.Focus()
+		return m, cmd
+
+	case commandpalette.CommandSelectedMsg:
+		m.ActiveModal = ModalNone
+		if msg.Parameterized {
+			m.CommandBar.SetValue(msg.CommandPrefix)
+			cmd := m.CommandBar.Focus()
+			return m, cmd
+		}
+		cmd := m.CommandBar.Focus()
+		resModel, resCmd := m.handleCommand(msg.CommandPrefix)
+		return resModel, tea.Batch(cmd, resCmd)
+
+	case commandpalette.ClosePaletteMsg:
+		m.ActiveModal = ModalNone
+		cmd := m.CommandBar.Focus()
+		return m, cmd
+
 	case tea.KeyMsg:
+		if m.ActiveModal != ModalNone {
+			if msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c" {
+				return m, tea.Quit
+			}
+			if msg.Type == tea.KeyEsc || msg.String() == "esc" {
+				m.ActiveModal = ModalNone
+				cmd := m.CommandBar.Focus()
+				return m, cmd
+			}
+			if msg.Type == tea.KeyF2 || msg.String() == "f2" {
+				m = m.applyTheme(m.Theme.Next())
+				return m, nil
+			}
+			var cmd tea.Cmd
+			switch m.ActiveModal {
+			case ModalTargetLock:
+				m.TargetLock, cmd = m.TargetLock.Update(msg)
+			case ModalCommandPalette:
+				m.CommandPalette, cmd = m.CommandPalette.Update(msg)
+			}
+			return m, cmd
+		}
+
 		switch {
 		case msg.Type == tea.KeyF2 || msg.String() == "f2":
 			m = m.applyTheme(m.Theme.Next())
@@ -35,11 +113,138 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.CommandBar.Reset()
 			return m, nil
+
+		case msg.Type == tea.KeyCtrlP || msg.String() == "ctrl+p":
+			m.CommandPalette.Reset()
+			m.ActiveModal = ModalCommandPalette
+			m.CommandBar.Blur()
+			return m, nil
+
+		case strings.TrimSpace(m.CommandBar.Value()) == "":
+			switch {
+			case msg.String() == "t" || msg.String() == "T":
+				if m.Game == nil || len(m.Game.CurrentQuad.Klingons) == 0 {
+					m.CommandBar.AddMessage("Sensors detect no hostile targets in sector.")
+					return m, nil
+				}
+				m.TargetLock.SetState(
+					m.Game.Enterprise.Sector,
+					m.Game.Enterprise.Energy,
+					m.Game.Enterprise.Torpedoes,
+					m.Game.CurrentQuad.Klingons,
+					engine.Coord{},
+				)
+				m.ActiveModal = ModalTargetLock
+				m.CommandBar.Blur()
+				return m, nil
+
+			case msg.String() == "/":
+				m.CommandPalette.Reset()
+				m.ActiveModal = ModalCommandPalette
+				m.CommandBar.Blur()
+				return m, nil
+			}
 		}
 
 		var cmd tea.Cmd
 		m.CommandBar, cmd = m.CommandBar.Update(msg)
 		return m, cmd
+
+	case tea.MouseMsg:
+		if m.ActiveModal != ModalNone {
+			return m, nil
+		}
+		isLeftClick := msg.Button == tea.MouseButtonLeft || msg.Type == tea.MouseLeft
+		if !isLeftClick || msg.Action == tea.MouseActionRelease || msg.Action == tea.MouseActionMotion {
+			return m, nil
+		}
+
+		relX := msg.X
+		relY := msg.Y - 1
+
+		coord, ok := m.Grid.HitTest(relX, relY)
+		if !ok {
+			return m, nil
+		}
+
+		now := time.Now()
+		isDoubleClick := coord == m.LastClickCoord && !m.LastClickTime.IsZero() && time.Since(m.LastClickTime) < 400*time.Millisecond
+
+		if isDoubleClick {
+			m.LastClickTime = time.Time{}
+			m.LastClickCoord = coord
+
+			var ent engine.EntityType = engine.EntityEmpty
+			if m.Game != nil && coord[0] >= 1 && coord[0] <= 8 && coord[1] >= 1 && coord[1] <= 8 {
+				ent = m.Game.CurrentQuad.Grid[coord[0]][coord[1]]
+			}
+			if m.Game != nil && m.Game.Enterprise.Sector == coord {
+				ent = engine.EntityEnterprise
+			}
+
+			if ent == engine.EntityEmpty {
+				if m.Game != nil {
+					events, err := m.Game.Dispatch(engine.ActionMove{DestSector: coord, Warp: 1.0})
+					if err != nil {
+						m.CommandBar.AddMessage(err.Error())
+					} else {
+						m.logEvents(events)
+					}
+				}
+				return m, nil
+			}
+
+			if ent == engine.EntityStarbase || (m.Game != nil && m.Game.CurrentQuad.Starbase != nil && *m.Game.CurrentQuad.Starbase == coord) {
+				if m.Game != nil {
+					events, err := m.Game.Dispatch(engine.ActionDock{})
+					if err != nil {
+						m.CommandBar.AddMessage(err.Error())
+					} else {
+						m.logEvents(events)
+					}
+				}
+				return m, nil
+			}
+
+			return m, nil
+		}
+
+		// Single click
+		m.SelectedSector = coord
+		m.LastClickTime = now
+		m.LastClickCoord = coord
+
+		isKlingon := false
+		if m.Game != nil {
+			for _, k := range m.Game.CurrentQuad.Klingons {
+				if k != nil && k.Sector == coord {
+					isKlingon = true
+					break
+				}
+			}
+			if !isKlingon && coord[0] >= 1 && coord[0] <= 8 && coord[1] >= 1 && coord[1] <= 8 {
+				gridEnt := m.Game.CurrentQuad.Grid[coord[0]][coord[1]]
+				if gridEnt == engine.EntityKlingon || gridEnt == engine.EntityCommander || gridEnt == engine.EntitySuperCommander {
+					isKlingon = true
+				}
+			}
+		}
+
+		if isKlingon {
+			m.TargetLock.SetState(
+				m.Game.Enterprise.Sector,
+				m.Game.Enterprise.Energy,
+				m.Game.Enterprise.Torpedoes,
+				m.Game.CurrentQuad.Klingons,
+				coord,
+			)
+			m.ActiveModal = ModalTargetLock
+			m.CommandBar.Blur()
+			return m, nil
+		}
+
+		m.CommandBar.AddMessage(fmt.Sprintf("Target sector selected: [%d, %d]", coord[0], coord[1]))
+		return m, nil
 
 	case commandbar.CommandSubmittedMsg:
 		return m.handleCommand(msg.Text)
@@ -69,11 +274,47 @@ func (m Model) applyTheme(th theme.Theme) Model {
 	m.Grid.SetTheme(th)
 	m.Status.SetTheme(th)
 	m.CommandBar.SetTheme(th)
+	m.TargetLock.SetTheme(th)
+	m.CommandPalette.SetTheme(th)
 	return m
 }
 
 // handleCommand tokenizes, parses, and executes player commands.
 func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
+	trimmed := strings.ToLower(strings.TrimSpace(text))
+	switch trimmed {
+	case "target":
+		if m.Game == nil || len(m.Game.CurrentQuad.Klingons) == 0 {
+			m.CommandBar.AddMessage("Sensors detect no hostile targets in sector.")
+			return m, nil
+		}
+		m.TargetLock.SetState(
+			m.Game.Enterprise.Sector,
+			m.Game.Enterprise.Energy,
+			m.Game.Enterprise.Torpedoes,
+			m.Game.CurrentQuad.Klingons,
+			engine.Coord{},
+		)
+		m.ActiveModal = ModalTargetLock
+		m.CommandBar.Blur()
+		return m, nil
+	case "srscan":
+		m.CommandBar.AddMessage("Short-range scan updated.")
+		return m, nil
+	case "lrscan":
+		m.CommandBar.AddMessage("Long-range scan complete.")
+		return m, nil
+	case "status":
+		m.CommandBar.AddMessage("Ship status nominal.")
+		return m, nil
+	case "dam":
+		m.CommandBar.AddMessage("Damage report: all systems operational.")
+		return m, nil
+	case "chart":
+		m.CommandBar.AddMessage("Galactic chart displayed.")
+		return m, nil
+	}
+
 	parsed := ParseCommand(text)
 
 	if parsed.Error != nil {
@@ -117,16 +358,21 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-		for _, ev := range events {
-			formatted := formatEvent(ev)
-			if formatted != "" {
-				m.CommandBar.AddMessage(formatted)
-			}
-		}
+		m.logEvents(events)
 		return m, nil
 	}
 
 	return m, nil
+}
+
+// logEvents formats and appends engine events to the command bar log buffer.
+func (m *Model) logEvents(events []engine.Event) {
+	for _, ev := range events {
+		formatted := formatEvent(ev)
+		if formatted != "" {
+			m.CommandBar.AddMessage(formatted)
+		}
+	}
 }
 
 // formatEvent translates an engine.Event into human-readable tactical log messages.
