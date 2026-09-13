@@ -161,9 +161,18 @@ func TestTUIGolden_ModalGalacticChart(t *testing.T) {
 	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	m = updated.(tui.Model)
 
-	m.GalacticChart.SetState(g.Enterprise.Quad, g.GalaxyChart, g.ChartDiscovered)
+	m.GalacticChart.SetState(g.Enterprise.Quad, g.GalaxyChart, g.ChartDiscovered, g.ChartKnownBases, false)
 	m.ActiveModal = tui.ModalGalacticChart
 	compareOrUpdate(t, "modal_galactic_chart", m.View())
+}
+
+func TestTUIGolden_LrsDamagedDashboard(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Devices[engine.DeviceLRSensors] = 3.5 // Damaged!
+	m := tui.NewModel(g, theme.ModernTheme{})
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = updated.(tui.Model)
+	compareOrUpdate(t, "lrs_damaged_dashboard_80x24", m.View())
 }
 
 func TestTUIGolden_SectorReticleSelected(t *testing.T) {

@@ -1217,6 +1217,100 @@ func TestModel_HelpMapCommand(t *testing.T) {
 	}
 }
 
+func TestModel_LRScanCommand(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Devices[engine.DeviceLRSensors] = 0
+	for r := 1; r <= 8; r++ {
+		for c := 1; c <= 8; c++ {
+			g.ChartDiscovered[r][c] = false
+		}
+	}
+	m := NewModel(g, theme.ModernTheme{})
 
+	updated, _ := m.handleCommand("lrscan")
+	mod := updated.(Model)
 
+	messages := mod.CommandBar.Messages()
+	if len(messages) == 0 || !strings.Contains(messages[len(messages)-1], "Long-range scan complete") {
+		t.Errorf("expected completion message for lrscan, got: %v", messages)
+	}
+	if !g.ChartDiscovered[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] {
+		t.Errorf("expected enterprise quad to be discovered after lrscan")
+	}
 
+	// Damaged LRS
+	g.Enterprise.Devices[engine.DeviceLRSensors] = 2.0
+	updatedDamaged, _ := mod.handleCommand("lrscan")
+	modDamaged := updatedDamaged.(Model)
+	messagesDamaged := modDamaged.CommandBar.Messages()
+	if len(messagesDamaged) == 0 || !strings.Contains(messagesDamaged[len(messagesDamaged)-1], "LONG-RANGE SENSORS DAMAGED") {
+		t.Errorf("expected damaged warning message for lrscan, got: %v", messagesDamaged)
+	}
+}
+
+func TestModel_DockSurveillance(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	sbCoord := engine.Coord{4, 4}
+	g.CurrentQuad.Starbase = &sbCoord
+	g.CurrentQuad.Grid[4][4] = engine.EntityStarbase
+	g.Enterprise.Sector = engine.Coord{4, 5}
+	g.Enterprise.Condition = engine.ConditionGreen
+
+	m := NewModel(g, theme.ModernTheme{})
+	updated, _ := m.handleCommand("dock")
+	mod := updated.(Model)
+
+	messages := mod.CommandBar.Messages()
+	foundSurveillance := false
+	for _, msg := range messages {
+		if strings.Contains(msg, "surveillance") {
+			foundSurveillance = true
+			break
+		}
+	}
+	if !foundSurveillance {
+		t.Errorf("expected docking to log starbase surveillance message, got: %v", messages)
+	}
+}
+
+func TestModel_DynamicDamageReport(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Devices[engine.DeviceLRSensors] = 3.2
+	g.Enterprise.Devices[engine.DeviceComputer] = 1.5
+
+	m := NewModel(g, theme.ModernTheme{})
+	updated, _ := m.handleCommand("dam")
+	mod := updated.(Model)
+
+	messages := mod.CommandBar.Messages()
+	lastMsg := messages[len(messages)-1]
+	if !strings.Contains(lastMsg, "LRS") || !strings.Contains(lastMsg, "Computer") {
+		t.Errorf("expected damage report to list damaged devices, got: %s", lastMsg)
+	}
+}
+
+func TestModel_GalacticChart_WarpBlocked(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Devices[engine.DeviceComputer] = 2.0 // Computer damaged!
+	m := NewModel(g, theme.ModernTheme{})
+
+	// Open chart
+	m, _ = m.openGalacticChart()
+	if m.ActiveModal != ModalGalacticChart {
+		t.Fatalf("expected ModalGalacticChart")
+	}
+
+	// Send WarpBlockedMsg
+	updated, _ := m.Update(galacticchart.WarpBlockedMsg{
+		Reason: "COMPUTER DAMAGED, USE A POCKET CALCULATOR.",
+	})
+	mod := updated.(Model)
+
+	if mod.ActiveModal != ModalNone {
+		t.Errorf("expected modal to close on WarpBlockedMsg")
+	}
+	messages := mod.CommandBar.Messages()
+	if len(messages) == 0 || !strings.Contains(messages[len(messages)-1], "COMPUTER DAMAGED") {
+		t.Errorf("expected pocket calculator warning message, got: %v", messages)
+	}
+}
