@@ -329,3 +329,81 @@ func TestParseUnknownAndEmpty(t *testing.T) {
 		}
 	}
 }
+
+func TestParseNavQuadrant(t *testing.T) {
+	tests := []struct {
+		input     string
+		wantQuad  engine.Coord
+		wantWarp  float64
+		wantError bool
+	}{
+		{"nav q 3 5", engine.Coord{3, 5}, 1.0, false},
+		{"NAV QUAD 1 8", engine.Coord{1, 8}, 1.0, false},
+		{"move quadrant 7 2", engine.Coord{7, 2}, 1.0, false},
+		{"nav q 4 6 2.5", engine.Coord{4, 6}, 2.5, false},
+		{"nav q 0 5", engine.Coord{}, 0, true},
+		{"nav q 9 1", engine.Coord{}, 0, true},
+		{"nav q 4 9", engine.Coord{}, 0, true},
+		{"nav q abc 2", engine.Coord{}, 0, true},
+		{"nav q 2 xyz", engine.Coord{}, 0, true},
+		{"nav q 2 3 -1", engine.Coord{}, 0, true},
+	}
+
+	for _, tc := range tests {
+		res := ParseCommand(tc.input)
+		if tc.wantError {
+			if res.Error == nil {
+				t.Errorf("ParseCommand(%q) expected error, got nil", tc.input)
+			}
+			continue
+		}
+		if res.Error != nil {
+			t.Fatalf("ParseCommand(%q) unexpected error: %v", tc.input, res.Error)
+		}
+		mv, ok := res.Action.(engine.ActionMove)
+		if !ok {
+			t.Fatalf("ParseCommand(%q) action is %T, want ActionMove", tc.input, res.Action)
+		}
+		if mv.DestQuad != tc.wantQuad {
+			t.Errorf("ParseCommand(%q) DestQuad = %v, want %v", tc.input, mv.DestQuad, tc.wantQuad)
+		}
+		if math.Abs(mv.Warp-tc.wantWarp) > 1e-6 {
+			t.Errorf("ParseCommand(%q) Warp = %v, want %v", tc.input, mv.Warp, tc.wantWarp)
+		}
+	}
+}
+
+func TestParseHelpContext(t *testing.T) {
+	tests := []struct {
+		input       string
+		wantSpecial string
+	}{
+		{"help", "help"},
+		{"?", "help"},
+		{"commands", "help"},
+		{"help nav", "help nav"},
+		{"help move", "help nav"},
+		{"help warp", "help nav"},
+		{"help tor", "help tor"},
+		{"help torpedo", "help tor"},
+		{"help pha", "help pha"},
+		{"help phasers", "help pha"},
+		{"help she", "help she"},
+		{"help shields", "help she"},
+		{"help doc", "help doc"},
+		{"help dock", "help doc"},
+		{"help saves", "help saves"},
+		{"help thaw", "help saves"},
+	}
+
+	for _, tc := range tests {
+		res := ParseCommand(tc.input)
+		if res.Error != nil {
+			t.Fatalf("ParseCommand(%q) unexpected error: %v", tc.input, res.Error)
+		}
+		if res.Special != tc.wantSpecial {
+			t.Errorf("ParseCommand(%q) Special = %q, want %q", tc.input, res.Special, tc.wantSpecial)
+		}
+	}
+}
+

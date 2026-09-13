@@ -71,7 +71,7 @@ func (m Model) View(g *engine.GameState) string {
 		return styles.Panel.Render(styles.GaugeLabel.Render("NO TELEMETRY AVAILABLE"))
 	}
 
-	// 1. Condition alert banner
+	// 1. Condition alert banner & Location readout
 	var condStr string
 	var condStyle lipgloss.Style
 	switch g.Enterprise.Condition {
@@ -92,23 +92,24 @@ func (m Model) View(g *engine.GameState) string {
 		condStyle = styles.ConditionGreen
 	}
 	condBanner := condStyle.Render(condStr)
+	condLocLine := condBanner + "   " + styles.GaugeLabel.Render("LOC: ") + styles.Prompt.Render(fmt.Sprintf("Q[%d,%d] S[%d,%d]", g.Enterprise.Quad[0], g.Enterprise.Quad[1], g.Enterprise.Sector[0], g.Enterprise.Sector[1]))
 
-	// 2. Stardate & Time remaining
+	// 3. Stardate & Time remaining
 	stardateStr := styles.GaugeLabel.Render("Stardate: ") +
 		styles.GaugeValue.Render(fmt.Sprintf("%.1f", g.Stardate))
 	timeStr := styles.GaugeLabel.Render("Time Remaining: ") +
 		styles.GaugeValue.Render(fmt.Sprintf("%.1f", g.TimeRemaining))
 	stardateTimeLine := stardateStr + "   " + timeStr
 
-	// 3. Energy & Shields telemetry meters
+	// 4. Energy & Shields telemetry meters
 	energyLine := renderProgressBar("Energy", g.Enterprise.Energy, 5000, styles)
 	shieldsLine := renderProgressBar("Shields", g.Enterprise.Shields, 2500, styles)
 
-	// 4. Torpedo inventory
+	// 5. Torpedo inventory
 	torpLine := styles.GaugeLabel.Render("Torpedoes: ") +
 		styles.GaugeValue.Render(fmt.Sprintf("[TORP: %d/10]", g.Enterprise.Torpedoes))
 
-	// 5. Subsystem device repair countdowns (2 columns of 4 devices)
+	// 6. Subsystem device repair countdowns (2 columns of 4 devices)
 	devHeader := styles.PanelTitle.Render("SUBSYSTEM REPAIR STATUS:")
 	var devRows [4]string
 	for i := 0; i < 4; i++ {
@@ -133,35 +134,40 @@ func (m Model) View(g *engine.GameState) string {
 		devRows[i] = col1Str + "  " + col2Str
 	}
 
-	// 6. 3x3 surrounding quadrant radar box
-	radarHeader := styles.PanelTitle.Render("RADAR (3x3 QUADRANTS):")
+	// 7. 3x3 surrounding quadrant radar box
 	qr := g.Enterprise.Quad[0]
 	qc := g.Enterprise.Quad[1]
+	radarHeader := styles.PanelTitle.Render("RADAR (±1) [K-B-S]:") +
+		fmt.Sprintf("  %-4s %-4s %-4s", radarColHeader(qc-1), radarColHeader(qc), radarColHeader(qc+1))
 
 	var radarRows [3]string
 	for dr := -1; dr <= 1; dr++ {
+		r := qr + dr
 		var rowCells [3]string
 		for dc := -1; dc <= 1; dc++ {
-			r := qr + dr
 			c := qc + dc
 			idx := dc + 1
 			if r < 1 || r > 8 || c < 1 || c > 8 {
 				rowCells[idx] = styles.Empty.Render("***")
 			} else {
-				cellVal := fmt.Sprintf("%03d", g.GalaxyChart[r][c])
 				if dr == 0 && dc == 0 {
-					rowCells[idx] = styles.Enterprise.Render(cellVal)
+					rowCells[idx] = styles.Enterprise.Render(fmt.Sprintf("<%03d>", g.GalaxyChart[r][c]))
 				} else {
-					rowCells[idx] = styles.GaugeLabel.Render(cellVal)
+					rowCells[idx] = styles.GaugeLabel.Render(fmt.Sprintf("%03d", g.GalaxyChart[r][c]))
 				}
 			}
 		}
-		radarRows[dr+1] = "  " + rowCells[0] + "  " + rowCells[1] + "  " + rowCells[2]
+		rowHdr := radarRowHeader(r)
+		if dr == 0 {
+			radarRows[dr+1] = fmt.Sprintf("  %s  %s %s %s", rowHdr, rowCells[0], rowCells[1], rowCells[2])
+		} else {
+			radarRows[dr+1] = fmt.Sprintf("  %s  %s  %s  %s", rowHdr, rowCells[0], rowCells[1], rowCells[2])
+		}
 	}
 
 	var b strings.Builder
 	b.Grow(512)
-	b.WriteString(condBanner)
+	b.WriteString(condLocLine)
 	b.WriteByte('\n')
 	b.WriteString(stardateTimeLine)
 	b.WriteByte('\n')
@@ -216,3 +222,18 @@ func renderProgressBar(label string, current, maxVal float64, styles theme.Style
 
 	return fmt.Sprintf("%s %s %s", lbl, bar, val)
 }
+
+func radarColHeader(c int) string {
+	if c < 1 || c > 8 {
+		return " "
+	}
+	return fmt.Sprintf("%d", c)
+}
+
+func radarRowHeader(r int) string {
+	if r < 1 || r > 8 {
+		return " "
+	}
+	return fmt.Sprintf("%d", r)
+}
+

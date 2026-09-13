@@ -14,8 +14,8 @@ func TestCommandPalette_Catalog(t *testing.T) {
 	m := New(th, 56, 16)
 
 	items := m.Items()
-	if len(items) != 17 {
-		t.Fatalf("expected 17 catalog items, got %d", len(items))
+	if len(items) != 18 {
+		t.Fatalf("expected 18 catalog items, got %d", len(items))
 	}
 
 	expectedCatalog := []struct {
@@ -39,6 +39,7 @@ func TestCommandPalette_Catalog(t *testing.T) {
 		{"THEME: LCARS", "theme lcars", false},
 		{"THEME: CRT", "theme crt", false},
 		{"HELP", "help", false},
+		{"HELP NAV", "help nav", false},
 		{"QUIT", "quit", false},
 	}
 
@@ -65,6 +66,12 @@ func TestCommandPalette_Catalog(t *testing.T) {
 		if it.FilterValue() == "" {
 			t.Errorf("command %q: expected non-empty filter value", exp.title)
 		}
+	}
+
+	chartItem := itemMap["CHART"]
+	expectedChartDesc := "Interactive 8x8 galactic star chart and warp planner (Ctrl+M)"
+	if chartItem.Description() != expectedChartDesc {
+		t.Errorf("expected CHART description %q, got %q", expectedChartDesc, chartItem.Description())
 	}
 }
 
@@ -104,8 +111,8 @@ func TestCommandPalette_FuzzyFilter(t *testing.T) {
 	if m.FilterValue() != "" {
 		t.Fatalf("expected FilterValue empty after Reset, got %q", m.FilterValue())
 	}
-	if len(m.VisibleItems()) != 17 {
-		t.Fatalf("expected 17 items after Reset, got %d", len(m.VisibleItems()))
+	if len(m.VisibleItems()) != 18 {
+		t.Fatalf("expected 18 items after Reset, got %d", len(m.VisibleItems()))
 	}
 
 	for _, r := range "nav" {

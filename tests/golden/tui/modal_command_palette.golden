@@ -1,6 +1,6 @@
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
-│  1   2   3   4   5   6   7   8  ││ CONDITION GREEN                         │  
+│  1   2   3   4   5   6   7   8  ││ CONDITION GREEN   LOC: Q[3,4] S[2,6]    │  
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2508.0   Time Remaining: 30.0 │  
 │2  .   .   [0m╭──────────────────────────────────────────────────────╮0        │  
 │3  .   .   [0m│   COMMAND PALETTE                                    │0        │  
@@ -10,11 +10,11 @@
 │7  .   .   [0m│  PHA                                                 │   OK    │  
 │8  .   .   [0m│  Fire ship phaser bank with energy (pha <energy>)    │   OK    │  
 └───────────[0m│  SHE                                                 │   OK    │  
-            [0m│  Transfer energy between warp and shields (she <amou…│         │  
+            [0m│  Transfer energy between warp and shields (she <amou…│5        │  
             [0m│  TARGET                                              │         │  
             [0m│  Open Tactical Target Lock HUD                       │         │  
             [0m│  NAV                                                 │         │  
-            [0m│  Impulse / Warp maneuver (nav <course> <warp>)       │─────────╯  
+            [0m│  Maneuver: nav q <r c> (quad), nav s <r c> (sector),…│─────────╯  
 ╭───────────[0m│  DOC                                                 │───────────╮
 │           [0m│  Dock with adjacent Starbase for fuel & repair       │           │
 │           [0m╰──────────────────────────────────────────────────────╯           │

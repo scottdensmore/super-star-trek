@@ -91,7 +91,7 @@ func defaultCatalog() []PaletteItem {
 		// Navigation
 		{
 			title:         "NAV",
-			desc:          "Impulse / Warp maneuver (nav <course> <warp>)",
+			desc:          "Maneuver: nav q <r c> (quad), nav s <r c> (sector), or nav <course warp>",
 			prefix:        "nav ",
 			parameterized: true,
 		},
@@ -129,7 +129,7 @@ func defaultCatalog() []PaletteItem {
 		},
 		{
 			title:         "CHART",
-			desc:          "Display explored galaxy quadrant chart",
+			desc:          "Interactive 8x8 galactic star chart and warp planner (Ctrl+M)",
 			prefix:        "chart",
 			parameterized: false,
 		},
@@ -163,6 +163,12 @@ func defaultCatalog() []PaletteItem {
 			title:         "HELP",
 			desc:          "Display tactical command reference summary",
 			prefix:        "help",
+			parameterized: false,
+		},
+		{
+			title:         "HELP NAV",
+			desc:          "Navigation reference: quadrant warping, course angles, and impulse",
+			prefix:        "help nav",
 			parameterized: false,
 		},
 		{

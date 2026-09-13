@@ -10,6 +10,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/galacticchart"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
@@ -95,6 +96,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.CommandBar.Focus()
 		return m, cmd
 
+	case galacticchart.WarpToQuadrantMsg:
+		m.ActiveModal = ModalNone
+		if m.Game != nil {
+			events, err := m.Game.Dispatch(engine.ActionMove{DestQuad: msg.DestQuad, Warp: msg.Warp})
+			if err != nil {
+				m.CommandBar.AddMessage(err.Error())
+			} else {
+				m.logEvents(events)
+			}
+		}
+		cmd := m.CommandBar.Focus()
+		return m, cmd
+
+	case galacticchart.CloseChartMsg:
+		m.ActiveModal = ModalNone
+		cmd := m.CommandBar.Focus()
+		return m, cmd
+
 	case tea.KeyMsg:
 		if m.ActiveModal != ModalNone {
 			if msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c" {
@@ -117,6 +136,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.CommandPalette, cmd = m.CommandPalette.Update(msg)
 			case ModalSaveBrowser:
 				m.SaveBrowser, cmd = m.SaveBrowser.Update(msg)
+			case ModalGalacticChart:
+				m.GalacticChart, cmd = m.GalacticChart.Update(msg)
 			}
 			return m, cmd
 		}
@@ -148,6 +169,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.CommandBar.Blur()
 			return m, nil
 
+		case msg.Type == tea.KeyCtrlM || msg.String() == "ctrl+m":
+			return m.openGalacticChart()
+
 		case strings.TrimSpace(m.CommandBar.Value()) == "":
 			switch {
 			case msg.String() == "t" || msg.String() == "T":
@@ -171,6 +195,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.ActiveModal = ModalCommandPalette
 				m.CommandBar.Blur()
 				return m, nil
+
+			case msg.String() == "c" || msg.String() == "C" || msg.String() == "m" || msg.String() == "M":
+				return m.openGalacticChart()
 			}
 		}
 
@@ -305,7 +332,24 @@ func (m Model) applyTheme(th theme.Theme) Model {
 	m.TargetLock.SetTheme(th)
 	m.CommandPalette.SetTheme(th)
 	m.SaveBrowser.SetTheme(th)
+	m.GalacticChart.SetTheme(th)
 	return m
+}
+
+// openGalacticChart updates star chart state from the active game and activates ModalGalacticChart.
+func (m Model) openGalacticChart() (Model, tea.Cmd) {
+	var entQuad engine.Coord = engine.Coord{1, 1}
+	var chart [9][9]int
+	var discovered [9][9]bool
+	if m.Game != nil {
+		entQuad = m.Game.Enterprise.Quad
+		chart = m.Game.GalaxyChart
+		discovered = m.Game.ChartDiscovered
+	}
+	m.GalacticChart.SetState(entQuad, chart, discovered)
+	m.ActiveModal = ModalGalacticChart
+	m.CommandBar.Blur()
+	return m, nil
 }
 
 // handleCommand tokenizes, parses, and executes player commands.
@@ -339,9 +383,8 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 	case "dam":
 		m.CommandBar.AddMessage("Damage report: all systems operational.")
 		return m, nil
-	case "chart":
-		m.CommandBar.AddMessage("Galactic chart displayed.")
-		return m, nil
+	case "chart", "map":
+		return m.openGalacticChart()
 	case "saves", "thaw":
 		_ = m.SaveBrowser.Refresh()
 		m.ActiveModal = ModalSaveBrowser
@@ -376,8 +419,58 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case parsed.Special == "help":
-			m.CommandBar.AddMessage("COMMANDS: nav <c> <w> | tor <c|r c> | pha <e> | she <a> | doc")
-			m.CommandBar.AddMessage("UI: theme [modern|lcars|crt] (F2) | help (?) | quit (Esc)")
+			m.CommandBar.AddMessage("COMMANDS: nav | tor | pha | she | doc | chart | saves | theme")
+			m.CommandBar.AddMessage("Type 'help <command>' (e.g. 'help nav') for detailed guide.")
+			m.CommandBar.AddMessage("HOTKEYS: [Ctrl+P] Spock Palette | [Ctrl+M] Star Chart | [Ctrl+O] Saves | [T] Target Lock | [F2] Theme")
+			return m, nil
+
+		case parsed.Special == "help nav":
+			m.CommandBar.AddMessage("NAV: Direct Quad: nav q <r c> [warp] (e.g. 'nav q 3 5')")
+			m.CommandBar.AddMessage("     Direct Sector: nav s <r c> (or double-click sector grid)")
+			m.CommandBar.AddMessage("     Vector: nav <course> <warp> (0.0=East, 1.57=North, 3.14=West, 4.71=South)")
+			m.CommandBar.AddMessage("     Warp 1.0 = 1 Quad. Dist = sqrt(ΔR²+ΔC²). [Ctrl+M] map tool. Shields UP = 2x energy.")
+			return m, nil
+
+		case parsed.Special == "help tor":
+			m.CommandBar.AddMessage("TOR: Target Sector: tor <r c> (e.g. 'tor 4 7')")
+			m.CommandBar.AddMessage("     Bearing Angle: tor <angle> (0.0=East, 1.57=North, 3.14=West, 4.71=South)")
+			m.CommandBar.AddMessage("     Tactical HUD: Press [T] for Target Lock auto-aiming & telemetry")
+			m.CommandBar.AddMessage("     Damaged launcher cannot fire; torpedoes do not pass obstacles.")
+			return m, nil
+
+		case parsed.Special == "help pha":
+			m.CommandBar.AddMessage("PHA: Fire phaser banks: pha <energy> (e.g. 'pha 300')")
+			m.CommandBar.AddMessage("     Energy is divided among all Klingons present in quadrant.")
+			m.CommandBar.AddMessage("     Damage drops with target distance. Damaged phasers cannot fire.")
+			return m, nil
+
+		case parsed.Special == "help she":
+			m.CommandBar.AddMessage("SHE: Transfer shield energy: she <amount> (e.g. 'she 500', 'she -200')")
+			m.CommandBar.AddMessage("     Shields protect against incoming torpedo & phaser damage.")
+			m.CommandBar.AddMessage("     Shields UP doubles warp movement energy consumption!")
+			return m, nil
+
+		case parsed.Special == "help doc":
+			m.CommandBar.AddMessage("DOC: Starbase docking: doc (must be in adjacent sector)")
+			m.CommandBar.AddMessage("     Replenishes full energy & photon torpedo supply.")
+			m.CommandBar.AddMessage("     Repairs all damaged ship systems and lowers shields.")
+			return m, nil
+
+		case parsed.Special == "help chart":
+			m.CommandBar.AddMessage("CHART: Interactive Galactic Star Chart & Warp Planner (Ctrl+M or 'chart')")
+			m.CommandBar.AddMessage("       Inspect 8x8 quadrant grid, telemetry vectors, and distance calculations.")
+			m.CommandBar.AddMessage("       [Arrows/HJKL] Move cursor  [Enter] Warp to quadrant  [Esc] Close")
+			return m, nil
+
+		case parsed.Special == "help saves":
+			m.CommandBar.AddMessage("SAVES: Open Save Browser: saves or bare thaw (hotkey Ctrl+O)")
+			m.CommandBar.AddMessage("       Inspects stardates, condition, and Klingons remaining.")
+			m.CommandBar.AddMessage("       Direct load: thaw <filename> | Freeze/save: freeze <filename>")
+			return m, nil
+
+		case strings.HasPrefix(parsed.Special, "help "):
+			cmdName := strings.TrimPrefix(parsed.Special, "help ")
+			m.CommandBar.AddMessage(fmt.Sprintf("No detailed help for %q. Available: help nav, help tor, help pha, help she, help doc, help chart, help saves", cmdName))
 			return m, nil
 
 		case parsed.Special == "theme":
