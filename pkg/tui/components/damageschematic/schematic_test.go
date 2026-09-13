@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
@@ -133,3 +134,75 @@ func TestSchematic_DockedAndOverflowDevices(t *testing.T) {
 		t.Errorf("expected overflow indicator for 5 damaged subsystems (+2 more)")
 	}
 }
+
+func TestSchematic_UpdateDismissKeys(t *testing.T) {
+	th := theme.DefaultTheme()
+	m := New(th, 66, 18)
+
+	dismissKeys := []string{"esc", "enter", "q", "Q", "d", "D", " ", "space"}
+	for _, k := range dismissKeys {
+		var keyMsg tea.KeyMsg
+		switch k {
+		case "esc":
+			keyMsg = tea.KeyMsg{Type: tea.KeyEsc}
+		case "enter":
+			keyMsg = tea.KeyMsg{Type: tea.KeyEnter}
+		case "space":
+			keyMsg = tea.KeyMsg{Type: tea.KeySpace}
+		case " ":
+			keyMsg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(" ")}
+		default:
+			keyMsg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(k)}
+		}
+
+		updated, cmd := m.Update(keyMsg)
+		_ = updated
+		if cmd == nil {
+			t.Errorf("expected CloseModalMsg command on key %q, got nil", k)
+			continue
+		}
+		msg := cmd()
+		if _, ok := msg.(CloseModalMsg); !ok {
+			t.Errorf("expected CloseModalMsg on key %q, got %T", k, msg)
+		}
+	}
+
+	// Non-dismissal key should not emit CloseModalMsg
+	otherKey := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")}
+	_, cmd := m.Update(otherKey)
+	if cmd != nil {
+		t.Errorf("expected nil cmd on non-dismiss key 'x', got %v", cmd())
+	}
+
+	// Non-key message should not emit CloseModalMsg
+	otherMsg := struct{}{}
+	_, cmd = m.Update(otherMsg)
+	if cmd != nil {
+		t.Errorf("expected nil cmd on non-key message, got %v", cmd())
+	}
+}
+
+func TestSchematic_DamageControlSubsystemImpact(t *testing.T) {
+	th := theme.DefaultTheme()
+	m := New(th, 66, 18)
+
+	var ent engine.EnterpriseState
+	ent.Devices[engine.DeviceDamageControl] = 1.0
+
+	m.SetState(ent, "GREEN", false, 1.0)
+	view := m.View()
+
+	if !strings.Contains(view, "Repairs Slow") {
+		t.Errorf("expected 'Repairs Slow' impact description for Damage Control, got:\n%s", view)
+	}
+
+	// Verify all rows still exactly 66 chars wide
+	lines := strings.Split(view, "\n")
+	for i, line := range lines {
+		w := ansi.StringWidth(line)
+		if w != 66 {
+			t.Errorf("line %d width = %d, expected 66 (content: %q)", i, w, line)
+		}
+	}
+}
+

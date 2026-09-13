@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
@@ -23,7 +24,7 @@ var devices = []deviceMeta{
 	{engine.DeviceLRSensors, "LRS", "Long-Range Sens", "LRS Offline"},
 	{engine.DevicePhasers, "PHAS", "Phaser Controls", "Phasers Locked"},
 	{engine.DevicePhotonTubes, "TUB", "Photon Tubes", "Tubes Locked"},
-	{engine.DeviceDamageControl, "DAM", "Damage Control", "Repairs Delayed"},
+	{engine.DeviceDamageControl, "DAM", "Damage Control", "Repairs Slow"},
 	{engine.DeviceShields, "SHL", "Shield System", "Shields Locked"},
 	{engine.DeviceComputer, "COMP", "Library Computer", "No Chart/Nav"},
 }
@@ -97,6 +98,23 @@ func (m *Model) SetState(enterprise engine.EnterpriseState, condition string, is
 		repairMult = 1.0
 	}
 	m.repairMult = repairMult
+}
+
+// CloseModalMsg is emitted when the player presses a dismissal key in the schematic modal.
+type CloseModalMsg struct{}
+
+// Update handles keyboard messages for the damage schematic modal.
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc", "enter", "q", "Q", "d", "D", " ", "space":
+			return m, func() tea.Msg {
+				return CloseModalMsg{}
+			}
+		}
+	}
+	return m, nil
 }
 
 func (m Model) formatPin(dev engine.DeviceID, tag string, styles schematicStyles) string {
