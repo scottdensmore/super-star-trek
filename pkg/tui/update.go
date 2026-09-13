@@ -121,6 +121,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case tea.KeyMsg:
+		if m.showOptions {
+			if msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c" {
+				return m, tea.Quit
+			}
+			if msg.Type == tea.KeyF2 || msg.String() == "f2" {
+				m = m.applyTheme(m.Theme.Next())
+				return m, nil
+			}
+			var cmd tea.Cmd
+			m.optionsModal, cmd = m.optionsModal.Update(msg)
+			if m.optionsModal.Closed {
+				m.showOptions = false
+				if m.Game != nil {
+					m.Game.Rules = m.optionsModal.Rules()
+				}
+				m.optionsModal.Closed = false
+				return m, m.CommandBar.Focus()
+			}
+			return m, cmd
+		}
+
 		if m.ActiveModal != ModalNone {
 			if msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c" {
 				return m, tea.Quit
@@ -204,6 +225,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case msg.String() == "c" || msg.String() == "C" || msg.String() == "m" || msg.String() == "M":
 				return m.openGalacticChart()
+
+			case msg.String() == "o" || msg.String() == "O":
+				if m.Game != nil {
+					m.optionsModal.SetRules(m.Game.Rules)
+				}
+				m.showOptions = true
+				m.CommandBar.Blur()
+				return m, nil
 			}
 		}
 
@@ -212,7 +241,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case tea.MouseMsg:
-		if m.ActiveModal != ModalNone {
+		if m.ActiveModal != ModalNone || m.showOptions {
 			return m, nil
 		}
 		isLeftClick := msg.Button == tea.MouseButtonLeft || msg.Type == tea.MouseLeft
@@ -339,6 +368,7 @@ func (m Model) applyTheme(th theme.Theme) Model {
 	m.CommandPalette.SetTheme(th)
 	m.SaveBrowser.SetTheme(th)
 	m.GalacticChart.SetTheme(th)
+	m.optionsModal.SetTheme(th)
 	return m
 }
 
@@ -432,6 +462,13 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		m.ActiveModal = ModalSaveBrowser
 		m.CommandBar.Blur()
 		return m, nil
+	case "opts", "options", "settings":
+		if m.Game != nil {
+			m.optionsModal.SetRules(m.Game.Rules)
+		}
+		m.showOptions = true
+		m.CommandBar.Blur()
+		return m, nil
 	}
 
 	if strings.HasPrefix(trimmed, "thaw ") {
@@ -460,10 +497,18 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		case parsed.Special == "quit":
 			return m, tea.Quit
 
+		case parsed.Special == "options":
+			if m.Game != nil {
+				m.optionsModal.SetRules(m.Game.Rules)
+			}
+			m.showOptions = true
+			m.CommandBar.Blur()
+			return m, nil
+
 		case parsed.Special == "help":
-			m.CommandBar.AddMessage("COMMANDS: nav | tor | pha | she | doc | chart | saves | theme")
+			m.CommandBar.AddMessage("COMMANDS: nav | tor | pha | she | doc | chart | saves | theme | options")
 			m.CommandBar.AddMessage("Type 'help <command>' (e.g. 'help nav') for detailed guide.")
-			m.CommandBar.AddMessage("HOTKEYS: [Ctrl+P] Spock Palette | [Ctrl+M] Star Chart | [Ctrl+O] Saves | [T] Target Lock | [F2] Theme")
+			m.CommandBar.AddMessage("HOTKEYS: [Ctrl+P] Spock Palette | [Ctrl+M] Star Chart | [Ctrl+O] Saves | [O] Options | [T] Target Lock | [F2] Theme")
 			return m, nil
 
 		case parsed.Special == "help nav":
@@ -510,9 +555,14 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			m.CommandBar.AddMessage("       Direct load: thaw <filename> | Freeze/save: freeze <filename>")
 			return m, nil
 
+		case parsed.Special == "help options":
+			m.CommandBar.AddMessage("OPTIONS: Configure game difficulty & realism settings (hotkey [O] or 'options')")
+			m.CommandBar.AddMessage("         Adjust difficulty profile, surveillance mode, sensors, repair, and cloaking.")
+			return m, nil
+
 		case strings.HasPrefix(parsed.Special, "help "):
 			cmdName := strings.TrimPrefix(parsed.Special, "help ")
-			m.CommandBar.AddMessage(fmt.Sprintf("No detailed help for %q. Available: help nav, help tor, help pha, help she, help doc, help chart, help saves", cmdName))
+			m.CommandBar.AddMessage(fmt.Sprintf("No detailed help for %q. Available: help nav, help tor, help pha, help she, help doc, help chart, help saves, help options", cmdName))
 			return m, nil
 
 		case parsed.Special == "theme":

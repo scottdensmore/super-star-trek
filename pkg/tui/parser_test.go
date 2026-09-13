@@ -407,3 +407,12 @@ func TestParseHelpContext(t *testing.T) {
 	}
 }
 
+func TestParseOptionsCommand(t *testing.T) {
+	for _, cmd := range []string{"opts", "options", "settings"} {
+		parsed := ParseCommand(cmd)
+		if parsed.Special != "options" {
+			t.Errorf("command %q: expected Special 'options', got %q", cmd, parsed.Special)
+		}
+	}
+}
+

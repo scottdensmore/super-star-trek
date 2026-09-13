@@ -16,6 +16,10 @@ func (m Model) View() string {
 	if m.Width < 80 || m.Height < 24 {
 		return m.renderSizeNotice()
 	}
+	if m.showOptions {
+		overlay := m.optionsModal.View()
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, overlay)
+	}
 	return m.renderDashboard()
 }
 

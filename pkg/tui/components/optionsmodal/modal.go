@@ -55,6 +55,14 @@ func (m *Model) SetRules(r engine.GameRules) {
 	m.rules = r
 }
 
+// SetTheme updates the active styling theme.
+func (m *Model) SetTheme(th theme.Theme) {
+	if th == nil {
+		th = theme.DefaultTheme()
+	}
+	m.Theme = th
+}
+
 // Active reports whether the modal is currently open and accepting input.
 func (m Model) Active() bool {
 	return !m.Closed

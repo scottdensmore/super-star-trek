@@ -1314,3 +1314,122 @@ func TestModel_GalacticChart_WarpBlocked(t *testing.T) {
 		t.Errorf("expected pocket calculator warning message, got: %v", messages)
 	}
 }
+
+func TestModel_OptionsModal_Hotkey(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Press 'o' when command bar is empty
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
+	m = updated.(Model)
+	if !m.showOptions {
+		t.Fatalf("expected showOptions to be true after pressing 'o'")
+	}
+	if m.CommandBar.Focused() {
+		t.Fatalf("expected CommandBar to be blurred")
+	}
+	if m.optionsModal.Rules().Profile != g.Rules.Profile {
+		t.Fatalf("expected optionsModal rules synced to game rules")
+	}
+
+	// Close with esc
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m = updated.(Model)
+	if m.showOptions {
+		t.Fatalf("expected showOptions to be false after Esc")
+	}
+	if !m.CommandBar.Focused() {
+		t.Fatalf("expected CommandBar focused after closing options")
+	}
+
+	// Press 'O'
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'O'}})
+	m = updated.(Model)
+	if !m.showOptions {
+		t.Fatalf("expected showOptions to be true after pressing 'O'")
+	}
+}
+
+func TestModel_OptionsModal_Commands(t *testing.T) {
+	for _, cmdStr := range []string{"opts", "options", "settings"} {
+		t.Run(cmdStr, func(t *testing.T) {
+			g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+			m := NewModel(g, theme.DefaultTheme())
+
+			updated, _ := m.Update(commandbar.CommandSubmittedMsg{Text: cmdStr})
+			m = updated.(Model)
+			if !m.showOptions {
+				t.Fatalf("expected showOptions to be true after submitting %q", cmdStr)
+			}
+			if m.CommandBar.Focused() {
+				t.Fatalf("expected CommandBar to be blurred")
+			}
+		})
+	}
+}
+
+func TestModel_OptionsModal_CycleAndSyncRules(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Open options modal
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
+	m = updated.(Model)
+
+	// RowProfile is active. Press right arrow to cycle profile (normal -> hardcore)
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	m = updated.(Model)
+	if m.optionsModal.Rules().Profile != engine.ProfileHardcore {
+		t.Fatalf("expected optionsModal profile to be hardcore, got %v", m.optionsModal.Rules().Profile)
+	}
+
+	// Close with 'q'
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	m = updated.(Model)
+	if m.showOptions {
+		t.Fatalf("expected showOptions to be false after 'q'")
+	}
+	// Game rules must now reflect hardcore!
+	if m.Game.Rules.Profile != engine.ProfileHardcore {
+		t.Fatalf("expected Game.Rules to be synced to hardcore, got %v", m.Game.Rules.Profile)
+	}
+	if !m.CommandBar.Focused() {
+		t.Fatalf("expected CommandBar focused after close")
+	}
+	if m.optionsModal.Closed {
+		t.Fatalf("expected optionsModal.Closed to be reset to false")
+	}
+}
+
+func TestModel_OptionsModal_ViewRendering(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	m.showOptions = true
+	view := m.View()
+	if !strings.Contains(view, "STARFLEET CONFIGURATION & RULES") {
+		t.Fatalf("expected view to contain modal title, got:\n%s", view)
+	}
+	if !strings.Contains(view, "Difficulty Profile") {
+		t.Fatalf("expected view to contain 'Difficulty Profile', got:\n%s", view)
+	}
+	if !strings.Contains(view, "NORMAL") {
+		t.Fatalf("expected view to contain 'NORMAL', got:\n%s", view)
+	}
+}
+
+func TestModel_OptionsModal_ThemePropagation(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	m.showOptions = true
+	// F2 while showOptions is true cycles theme
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyF2})
+	m = updated.(Model)
+	if m.Theme.Name() != "lcars" {
+		t.Fatalf("expected theme lcars, got %s", m.Theme.Name())
+	}
+	if m.optionsModal.Theme.Name() != "lcars" {
+		t.Fatalf("expected optionsModal theme lcars, got %s", m.optionsModal.Theme.Name())
+	}
+}

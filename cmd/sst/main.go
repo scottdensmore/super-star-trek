@@ -40,6 +40,11 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	_ = fs.Bool("classic", false, "run in teletype plain mode")
 	themeName := fs.String("theme", "modern", "initial theme name (modern, lcars, crt)")
 	seed := fs.Int64("seed", 0, "PRNG seed (0 for random)")
+	difficulty := fs.String("difficulty", "normal", "difficulty profile (casual, normal, hardcore, nightmare)")
+	surveillance := fs.String("surveillance", "", "surveillance extent (full, classic, local, blackout)")
+	sensorDegradation := fs.Bool("sensor-degradation", true, "enable two-tier sensor degradation curve")
+	repairMult := fs.Float64("repair-multiplier", 1.0, "subsystem repair duration multiplier")
+	klingonCloak := fs.Bool("klingon-cloak", false, "enable Klingon commander tactical cloaking")
 
 	if err := fs.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -48,12 +53,35 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 		return 1
 	}
 
+	visited := make(map[string]bool)
+	fs.Visit(func(f *flag.Flag) {
+		visited[f.Name] = true
+	})
+
+	rules := engine.DefaultRulesForProfile(engine.DifficultyProfile(*difficulty))
+	if visited["surveillance"] {
+		rules.Surveillance = engine.SurveillanceMode(*surveillance)
+		rules.Profile = engine.ProfileCustom
+	}
+	if visited["sensor-degradation"] {
+		rules.SensorDegradation = *sensorDegradation
+		rules.Profile = engine.ProfileCustom
+	}
+	if visited["repair-multiplier"] {
+		rules.RepairMultiplier = *repairMult
+		rules.Profile = engine.ProfileCustom
+	}
+	if visited["klingon-cloak"] {
+		rules.KlingonCloak = *klingonCloak
+		rules.Profile = engine.ProfileCustom
+	}
+
 	s := *seed
 	if s == 0 {
 		s = time.Now().UnixNano()
 	}
 
-	game := engine.NewGame(s, engine.SkillGood, engine.LengthMedium)
+	game := engine.NewGameWithOptions(s, engine.SkillGood, engine.LengthMedium, rules)
 	selectedTheme := theme.GetTheme(*themeName)
 
 	p := tui.NewModel(game, selectedTheme)
