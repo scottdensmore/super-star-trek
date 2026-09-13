@@ -16,7 +16,8 @@ func TestGalacticChart_CursorNavigationAndBounds(t *testing.T) {
 	m := New(th, 64, 18)
 	var chart [9][9]int
 	var discovered [9][9]bool
-	m.SetState(engine.Coord{3, 3}, chart, discovered)
+	var knownBases [9][9]bool
+	m.SetState(engine.Coord{3, 3}, chart, discovered, knownBases, false)
 
 	if m.Cursor() != (engine.Coord{3, 3}) {
 		t.Fatalf("expected cursor initialized to enterprise quad [3,3], got %v", m.Cursor())
@@ -84,7 +85,8 @@ func TestGalacticChart_EnterAndEscMessages(t *testing.T) {
 	m := New(th, 64, 18)
 	var chart [9][9]int
 	var discovered [9][9]bool
-	m.SetState(engine.Coord{3, 3}, chart, discovered)
+	var knownBases [9][9]bool
+	m.SetState(engine.Coord{3, 3}, chart, discovered, knownBases, false)
 
 	// Move to [2, 3]
 	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
@@ -122,7 +124,8 @@ func TestGalacticChart_ViewDimensionsAndLayout(t *testing.T) {
 	discovered[3][3] = true
 	chart[2][5] = 105
 	discovered[2][5] = true
-	m.SetState(engine.Coord{3, 3}, chart, discovered)
+	var knownBases [9][9]bool
+	m.SetState(engine.Coord{3, 3}, chart, discovered, knownBases, false)
 
 	view := m.View()
 	if !strings.Contains(view, "GALACTIC STAR CHART") {
@@ -149,7 +152,8 @@ func TestGalacticChart_TelemetryFormatting(t *testing.T) {
 	m := New(th, 64, 18)
 	var chart [9][9]int
 	var discovered [9][9]bool
-	m.SetState(engine.Coord{3, 3}, chart, discovered)
+	var knownBases [9][9]bool
+	m.SetState(engine.Coord{3, 3}, chart, discovered, knownBases, false)
 
 	// When cursor is on enterprise quad:
 	vCurrent := m.View()
@@ -245,11 +249,12 @@ func TestGalacticChart_ColumnHeaderAlignment(t *testing.T) {
 	m := New(th, 64, 18)
 	var chart [9][9]int
 	var discovered [9][9]bool
+	var knownBases [9][9]bool
 	for c := 1; c <= 8; c++ {
 		chart[1][c] = c * 10
 		discovered[1][c] = true
 	}
-	m.SetState(engine.Coord{1, 1}, chart, discovered)
+	m.SetState(engine.Coord{1, 1}, chart, discovered, knownBases, false)
 
 	view := m.View()
 	lines := strings.Split(strings.TrimRight(view, "\n"), "\n")
@@ -300,11 +305,86 @@ func TestGalacticChart_SetStateClampsEnterpriseQuad(t *testing.T) {
 	m := New(nil, 64, 18)
 	var chart [9][9]int
 	var discovered [9][9]bool
-	m.SetState(engine.Coord{0, 10}, chart, discovered)
+	var knownBases [9][9]bool
+	m.SetState(engine.Coord{0, 10}, chart, discovered, knownBases, false)
 	if m.enterpriseQuad != (engine.Coord{1, 8}) {
 		t.Errorf("expected enterpriseQuad clamped to [1, 8], got %v", m.enterpriseQuad)
 	}
 	if m.Cursor() != (engine.Coord{1, 8}) {
 		t.Errorf("expected cursor clamped to [1, 8], got %v", m.Cursor())
+	}
+}
+
+func TestGalacticChart_KnownBaseRendering(t *testing.T) {
+	th := theme.ModernTheme{}
+	m := New(th, 64, 18)
+	var chart [9][9]int
+	var disc [9][9]bool
+	var knownBases [9][9]bool
+
+	chart[2][3] = 15 // base at [2,3]
+	knownBases[2][3] = true
+	// Not yet discovered!
+
+	m.SetState(engine.Coord{4, 4}, chart, disc, knownBases, false)
+	view := m.View()
+
+	if !strings.Contains(view, ".1.") {
+		t.Errorf("expected view to contain '.1.' for known base quadrant, got:\n%s", view)
+	}
+}
+
+func TestGalacticChart_ComputerDamagedTelemetryAndLockout(t *testing.T) {
+	th := theme.ModernTheme{}
+	m := New(th, 64, 18)
+	var chart [9][9]int
+	var disc [9][9]bool
+	var knownBases [9][9]bool
+
+	m.SetState(engine.Coord{4, 4}, chart, disc, knownBases, true) // Computer damaged!
+	view := m.View()
+
+	if !strings.Contains(view, "[CALC OFFLINE]") {
+		t.Errorf("expected '[CALC OFFLINE]' in footer, got:\n%s", view)
+	}
+	if !strings.Contains(view, "Disabled (Comp Offline)") {
+		t.Errorf("expected action hint to indicate Enter disabled, got:\n%s", view)
+	}
+
+	// Test Enter lockout
+	m.cursor = engine.Coord{6, 6}
+	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if cmd == nil {
+		t.Fatalf("expected command emitting WarpBlockedMsg, got nil")
+	}
+	msg := cmd()
+	blocked, ok := msg.(WarpBlockedMsg)
+	if !ok {
+		t.Fatalf("expected WarpBlockedMsg, got %T", msg)
+	}
+	if !strings.Contains(blocked.Reason, "COMPUTER DAMAGED") {
+		t.Errorf("expected reason to contain 'COMPUTER DAMAGED', got: %s", blocked.Reason)
+	}
+}
+
+func TestGalacticChart_ComputerDamagedDimensions(t *testing.T) {
+	th := theme.ModernTheme{}
+	m := New(th, 64, 18)
+	var chart [9][9]int
+	var disc [9][9]bool
+	var knownBases [9][9]bool
+
+	m.SetState(engine.Coord{4, 4}, chart, disc, knownBases, true)
+	view := m.View()
+
+	lines := strings.Split(strings.TrimRight(view, "\n"), "\n")
+	if len(lines) != 18 {
+		t.Fatalf("expected height 18 rows when computer damaged, got %d", len(lines))
+	}
+	for i, line := range lines {
+		w := lipgloss.Width(line)
+		if w != 64 {
+			t.Fatalf("line %d width %d != 64 when computer damaged: %q", i, w, line)
+		}
 	}
 }
