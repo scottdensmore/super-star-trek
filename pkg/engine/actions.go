@@ -70,19 +70,59 @@ func (a ActionDock) Execute(g *GameState) ([]Event, error) {
 	}
 
 	// Starbase surveillance download
+	survMode := g.Rules.Surveillance
+	if survMode == "" {
+		survMode = SurveillanceClassic
+	}
+
 	updatedQuads := 0
-	for r := 1; r <= 8; r++ {
-		for c := 1; c <= 8; c++ {
-			if (g.GalaxyChart[r][c]%100)/10 > 0 {
-				g.ChartKnownBases[r][c] = true
-				for dr := -1; dr <= 1; dr++ {
-					for dc := -1; dc <= 1; dc++ {
-						nr := r + dr
-						nc := c + dc
-						if nr >= 1 && nr <= 8 && nc >= 1 && nc <= 8 {
-							if !g.ChartDiscovered[nr][nc] {
-								g.ChartDiscovered[nr][nc] = true
-								updatedQuads++
+	switch survMode {
+	case SurveillanceFull:
+		for r := 1; r <= 8; r++ {
+			for c := 1; c <= 8; c++ {
+				if (g.GalaxyChart[r][c]%100)/10 > 0 {
+					g.ChartKnownBases[r][c] = true
+				}
+				if !g.ChartDiscovered[r][c] {
+					g.ChartDiscovered[r][c] = true
+					updatedQuads++
+				}
+			}
+		}
+	case SurveillanceLocal:
+		eq := g.Enterprise.Quad
+		g.ChartKnownBases[eq[0]][eq[1]] = true
+		for dr := -1; dr <= 1; dr++ {
+			for dc := -1; dc <= 1; dc++ {
+				nr, nc := eq[0]+dr, eq[1]+dc
+				if nr >= 1 && nr <= 8 && nc >= 1 && nc <= 8 {
+					if !g.ChartDiscovered[nr][nc] {
+						g.ChartDiscovered[nr][nc] = true
+						updatedQuads++
+					}
+				}
+			}
+		}
+	case SurveillanceBlackout:
+		eq := g.Enterprise.Quad
+		g.ChartKnownBases[eq[0]][eq[1]] = true
+		// Discovers no extra quadrants
+	case SurveillanceClassic:
+		fallthrough
+	default:
+		for r := 1; r <= 8; r++ {
+			for c := 1; c <= 8; c++ {
+				if (g.GalaxyChart[r][c]%100)/10 > 0 {
+					g.ChartKnownBases[r][c] = true
+					for dr := -1; dr <= 1; dr++ {
+						for dc := -1; dc <= 1; dc++ {
+							nr := r + dr
+							nc := c + dc
+							if nr >= 1 && nr <= 8 && nc >= 1 && nc <= 8 {
+								if !g.ChartDiscovered[nr][nc] {
+									g.ChartDiscovered[nr][nc] = true
+									updatedQuads++
+								}
 							}
 						}
 					}
@@ -98,6 +138,7 @@ func (a ActionDock) Execute(g *GameState) ([]Event, error) {
 		EventStarbaseSurveillance{
 			StarbaseCoord: sb,
 			UpdatedQuads:  updatedQuads,
+			Mode:          survMode,
 		},
 	}, nil
 }
@@ -475,11 +516,12 @@ type ActionLRScan struct{}
 
 // Execute applies the long-range scan action to GameState.
 func (a ActionLRScan) Execute(g *GameState) ([]Event, error) {
-	if g.Enterprise.Devices[DeviceLRSensors] > 0 && g.Enterprise.Condition != ConditionDocked {
+	if g.Enterprise.Condition != ConditionDocked && g.Enterprise.Devices[DeviceLRSensors] >= 2.0 {
 		return nil, errors.New("long-range sensors damaged")
 	}
 
 	relayed := (g.Enterprise.Condition == ConditionDocked && g.Enterprise.Devices[DeviceLRSensors] > 0)
+	degraded := g.Rules.SensorDegradation && g.Enterprise.Devices[DeviceLRSensors] > 0 && !relayed
 	center := g.Enterprise.Quad
 	var scanned []Coord
 
@@ -499,6 +541,7 @@ func (a ActionLRScan) Execute(g *GameState) ([]Event, error) {
 			CenterQuad:    center,
 			ScannedQuads:  scanned,
 			RelayedByBase: relayed,
+			Degraded:      degraded,
 		},
 	}, nil
 }

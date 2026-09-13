@@ -362,3 +362,28 @@ func TestStatusPanel_HeightAndLineBudget(t *testing.T) {
 	}
 }
 
+func TestRadarDegradation_TwoTier(t *testing.T) {
+	th := theme.ModernTheme{}
+
+	// Light damage: [LRS DEGRADED]
+	panelLight := New(th)
+	dataLight := SamplePanelData()
+	dataLight.Rules = engine.DefaultRulesForProfile(engine.ProfileNormal)
+	dataLight.Devices[engine.DeviceLRSensors] = 1.0
+	outLight := panelLight.Render(dataLight)
+	if !strings.Contains(outLight, "[LRS DEGRADED]") {
+		t.Errorf("expected [LRS DEGRADED] in light damage, got:\n%s", outLight)
+	}
+
+	// Heavy damage: [LRS OFFLINE]
+	panelHeavy := New(th)
+	dataHeavy := SamplePanelData()
+	dataHeavy.Rules = engine.DefaultRulesForProfile(engine.ProfileNormal)
+	dataHeavy.Devices[engine.DeviceLRSensors] = 2.5
+	outHeavy := panelHeavy.Render(dataHeavy)
+	if !strings.Contains(outHeavy, "[LRS OFFLINE]") {
+		t.Errorf("expected [LRS OFFLINE] in heavy damage, got:\n%s", outHeavy)
+	}
+}
+
+

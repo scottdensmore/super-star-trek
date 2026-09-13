@@ -144,6 +144,7 @@ type EventLRScanCompleted struct {
 	CenterQuad    Coord
 	ScannedQuads  []Coord
 	RelayedByBase bool
+	Degraded      bool
 }
 
 // EventType returns the type name for EventLRScanCompleted.
@@ -153,6 +154,7 @@ func (e EventLRScanCompleted) EventType() string { return "LRScanCompleted" }
 type EventStarbaseSurveillance struct {
 	StarbaseCoord Coord
 	UpdatedQuads  int
+	Mode          SurveillanceMode
 }
 
 // EventType returns the type name for EventStarbaseSurveillance.

@@ -10,6 +10,37 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
 
+// PanelData encapsulates the telemetry and configuration state needed to render the status panel.
+type PanelData struct {
+	Enterprise    engine.Enterprise
+	Devices       [8]float64
+	TimeRemaining float64
+	IsDocked      bool
+	GalaxyChart   [9][9]int
+	Stardate      float64
+	Rules         engine.GameRules
+}
+
+// SamplePanelData returns a default populated PanelData for testing and preview rendering.
+func SamplePanelData() PanelData {
+	return PanelData{
+		Enterprise: engine.Enterprise{
+			Quad:      engine.Coord{4, 4},
+			Sector:    engine.Coord{2, 3},
+			Energy:    5000,
+			Shields:   1000,
+			Torpedoes: 10,
+			Condition: engine.ConditionGreen,
+		},
+		Devices:       [8]float64{},
+		TimeRemaining: 30.0,
+		IsDocked:      false,
+		GalaxyChart:   [9][9]int{},
+		Stardate:      2800.0,
+		Rules:         engine.DefaultRulesForProfile(engine.ProfileNormal),
+	}
+}
+
 // Model represents the telemetry and status panel component.
 type Model struct {
 	theme         theme.Theme
@@ -20,6 +51,7 @@ type Model struct {
 	isDocked      bool
 	galaxyChart   [9][9]int
 	stardate      float64
+	rules         engine.GameRules
 	hasState      bool
 }
 
@@ -64,11 +96,16 @@ func New(th theme.Theme, dims ...int) Model {
 }
 
 // SetState updates the panel state from raw simulation parameters.
-func (m *Model) SetState(ent engine.Enterprise, timeRemaining float64, klingonsLeft int, starbasesLeft int, isDocked bool, chart [9][9]int) {
+func (m *Model) SetState(ent engine.Enterprise, timeRemaining float64, klingonsLeft int, starbasesLeft int, isDocked bool, chart [9][9]int, rules ...engine.GameRules) {
 	m.enterprise = ent
 	m.timeRemaining = timeRemaining
 	m.isDocked = isDocked
 	m.galaxyChart = chart
+	if len(rules) > 0 {
+		m.rules = rules[0]
+	} else if m.rules.Profile == "" {
+		m.rules = engine.DefaultRulesForProfile(engine.ProfileNormal)
+	}
 	m.hasState = true
 }
 
@@ -111,14 +148,38 @@ func (m Model) renderRadar(styles panelStyles) (string, [3]string) {
 	qr := m.enterprise.Quad[0]
 	qc := m.enterprise.Quad[1]
 
-	lrsDamaged := m.enterprise.Devices[engine.DeviceLRSensors] > 0 && !m.isDocked
+	lrsSensor := m.enterprise.Devices[engine.DeviceLRSensors]
+	sensorDegradation := m.rules.SensorDegradation
+	if m.rules.Profile == "" && !m.rules.SensorDegradation {
+		sensorDegradation = true
+	}
+
+	isOffline := false
+	isDegraded := false
+
+	if !m.isDocked {
+		if sensorDegradation {
+			if lrsSensor >= 2.0 {
+				isOffline = true
+			} else if lrsSensor > 0 {
+				isDegraded = true
+			}
+		} else {
+			if lrsSensor >= 2.0 {
+				isOffline = true
+			}
+		}
+	}
+
 	radarTitle := styles.TextMuted.Render("RADAR (±1) [K-B-S]:")
-	if lrsDamaged {
+	if isOffline {
 		radarTitle = styles.TextWarn.Render("RADAR (±1) [LRS OFFLINE]:")
+	} else if isDegraded {
+		radarTitle = styles.TextWarn.Render("RADAR (±1) [LRS DEGRADED]:")
 	}
 
 	radarHeader := radarTitle
-	if !lrsDamaged {
+	if !isOffline && !isDegraded {
 		radarHeader += fmt.Sprintf("  %-4s %-4s %-4s", radarColHeader(qc-1), radarColHeader(qc), radarColHeader(qc+1))
 	}
 
@@ -136,8 +197,10 @@ func (m Model) renderRadar(styles panelStyles) (string, [3]string) {
 				if dr == 0 && dc == 0 {
 					// Enterprise quadrant remains visible via short range sensors
 					rowCells[idx] = styles.Enterprise.Render(fmt.Sprintf("<%03d>", val))
-				} else if lrsDamaged {
+				} else if isOffline {
 					rowCells[idx] = styles.TextWarn.Render(" ??? ")
+				} else if isDegraded {
+					rowCells[idx] = styles.TextWarn.Render("  ?  ")
 				} else {
 					rowCells[idx] = styles.Normal.Render(fmt.Sprintf(" %03d ", val))
 				}
@@ -150,22 +213,59 @@ func (m Model) renderRadar(styles panelStyles) (string, [3]string) {
 	return radarHeader, radarRows
 }
 
+// Render renders the status panel for the provided PanelData.
+func (m Model) Render(data PanelData) string {
+	devices := data.Devices
+	allZero := true
+	for _, v := range devices {
+		if v != 0 {
+			allZero = false
+			break
+		}
+	}
+	if allZero {
+		devices = data.Enterprise.Devices
+	}
+	ent := data.Enterprise
+	ent.Devices = devices
+
+	m.enterprise = ent
+	m.timeRemaining = data.TimeRemaining
+	m.isDocked = data.IsDocked
+	m.galaxyChart = data.GalaxyChart
+	m.stardate = data.Stardate
+	m.rules = data.Rules
+	if m.rules.Profile == "" && !m.rules.SensorDegradation {
+		m.rules = engine.DefaultRulesForProfile(engine.ProfileNormal)
+	}
+	m.hasState = true
+	return m.render()
+}
+
 // View renders the status panel containing condition alert, telemetry progress bars,
 // torpedo inventory, stardate/time remaining, subsystem countdowns, and surrounding quadrant radar.
 func (m Model) View(gs ...*engine.GameState) string {
-	styles := getPanelStyles(m.theme)
-
 	if len(gs) > 0 && gs[0] != nil {
 		g := gs[0]
-		m.enterprise = g.Enterprise
-		m.timeRemaining = g.TimeRemaining
-		m.isDocked = (g.Enterprise.Condition == engine.ConditionDocked)
-		m.galaxyChart = g.GalaxyChart
-		m.stardate = g.Stardate
-		m.hasState = true
-	} else if !m.hasState {
+		return m.Render(PanelData{
+			Enterprise:    g.Enterprise,
+			Devices:       g.Enterprise.Devices,
+			TimeRemaining: g.TimeRemaining,
+			IsDocked:      (g.Enterprise.Condition == engine.ConditionDocked),
+			GalaxyChart:   g.GalaxyChart,
+			Stardate:      g.Stardate,
+			Rules:         g.Rules,
+		})
+	}
+	if !m.hasState {
+		styles := getPanelStyles(m.theme)
 		return styles.Panel.Render(styles.GaugeLabel.Render("NO TELEMETRY AVAILABLE"))
 	}
+	return m.render()
+}
+
+func (m Model) render() string {
+	styles := getPanelStyles(m.theme)
 
 	// 1. Condition alert banner & Location readout
 	var condStr string
