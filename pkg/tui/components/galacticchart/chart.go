@@ -177,6 +177,32 @@ func getChartStyles(th theme.Theme) chartStyles {
 	}
 }
 
+func (m Model) renderFooter(styles chartStyles) (string, string) {
+	var lineTelem1, lineTelem2 string
+	if m.computerDamaged {
+		targetStr := styles.GaugeLabel.Render("Target: ") + styles.Prompt.Render(fmt.Sprintf("Quad [%d, %d]", m.cursor[0], m.cursor[1]))
+		distanceStr := styles.TextWarn.Render("Distance: [CALC OFFLINE]")
+		lineTelem1 = targetStr + styles.GaugeLabel.Render("  •  ") + distanceStr
+		lineTelem2 = styles.TextWarn.Render("Course: [CALC OFFLINE] • Warp: [CALC OFFLINE]")
+	} else {
+		telem := CalculateTelemetry(m.enterpriseQuad, m.cursor)
+		if telem.IsCurrent {
+			lineTelem1 = styles.GaugeLabel.Render("Target: ") +
+				styles.Prompt.Render(fmt.Sprintf("Quad [%d, %d]", telem.To[0], telem.To[1])) +
+				styles.GaugeLabel.Render("  •  Current Position")
+			lineTelem2 = styles.GaugeLabel.Render("Course: --  •  Warp: --")
+		} else {
+			lineTelem1 = styles.GaugeLabel.Render("Target: ") +
+				styles.Prompt.Render(fmt.Sprintf("Quad [%d, %d]", telem.To[0], telem.To[1])) +
+				styles.GaugeLabel.Render(fmt.Sprintf("  •  Dist: %.1f quads (ΔR: %s, ΔC: %s)",
+					telem.Distance, formatDelta(telem.DeltaR), formatDelta(telem.DeltaC)))
+			lineTelem2 = styles.GaugeLabel.Render(fmt.Sprintf("Course: %.2f rad (%s)  •  Warp: %.1f",
+				telem.Course, telem.Direction, telem.RecommendedWarp))
+		}
+	}
+	return lineTelem1, lineTelem2
+}
+
 // View renders the 64x18 galactic star chart dialog with 8x8 grid and navigation telemetry.
 func (m Model) View() string {
 	styles := getChartStyles(m.theme)
@@ -284,26 +310,7 @@ func (m Model) View() string {
 	lineDivider := styles.GridHeader.Render(strings.Repeat("─", innerWidth))
 
 	// Lines 13-14: Navigation telemetry
-	var lineTelem1, lineTelem2 string
-	if m.computerDamaged {
-		lineTelem1 = styles.TextWarn.Render("Distance: [CALC OFFLINE]")
-		lineTelem2 = styles.TextWarn.Render("Course: [CALC OFFLINE] • Warp: [CALC OFFLINE]")
-	} else {
-		telem := CalculateTelemetry(m.enterpriseQuad, m.cursor)
-		if telem.IsCurrent {
-			lineTelem1 = styles.GaugeLabel.Render("Target: ") +
-				styles.Prompt.Render(fmt.Sprintf("Quad [%d, %d]", telem.To[0], telem.To[1])) +
-				styles.GaugeLabel.Render("  •  Current Position")
-			lineTelem2 = styles.GaugeLabel.Render("Course: --  •  Warp: --")
-		} else {
-			lineTelem1 = styles.GaugeLabel.Render("Target: ") +
-				styles.Prompt.Render(fmt.Sprintf("Quad [%d, %d]", telem.To[0], telem.To[1])) +
-				styles.GaugeLabel.Render(fmt.Sprintf("  •  Dist: %.1f quads (ΔR: %s, ΔC: %s)",
-					telem.Distance, formatDelta(telem.DeltaR), formatDelta(telem.DeltaC)))
-			lineTelem2 = styles.GaugeLabel.Render(fmt.Sprintf("Course: %.2f rad (%s)  •  Warp: %.1f",
-				telem.Course, telem.Direction, telem.RecommendedWarp))
-		}
-	}
+	lineTelem1, lineTelem2 := m.renderFooter(styles)
 
 	// Line 15: Empty spacer
 	lineSpacer2 := ""

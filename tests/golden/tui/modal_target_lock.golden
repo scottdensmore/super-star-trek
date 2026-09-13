@@ -1,24 +1,24 @@
- ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)]      
-┌─────────────────────────────────┐╭────────────────────────────────────────────────╮
-│  1   2   3   4   5   6   7   8  ││ CONDITION GREEN   LOC: Q[3,4] S[2,6]           │
-│1  .   .   .   .   .   .   .   . ││ Stardate: 2508.0   Time Remaining: 30.0        │
-│2  .   .   .   .   .  <E>  .   . ││ Energy:   [██████████] 5000/5000               │
-│3  .   .   .   .   .   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500               │
-│4  .   .   . [0m╭──────────────────────────────────────────────────╮                  │
-│5  .   .   . [0m│               TACTICAL TARGET LOCK               │                  │
-│6  .  +K+  . [0m│ Target: KLINGON BATTLECRUISER #1                 │     OK           │
-│7  .   .   . [0m│ Position: Sector [4, 7]                          │:    OK           │
-│8  .   .   . [0m│ Range: 2.24 sectors  Bearing: 7.59 (SE)          │     OK           │
-└─────────────[0m│ Hit Prob: 85%     Target Shielding: ~300 units   │     OK           │
-              [0m│ ──────────────────────────────────────────────── │:  3    4    5    │
-              [0m│ Enterprise Weapons: [TORP: 10/10] [ENERGY: 5000] │                  │
-              [0m│                                                  │                  │
-              [0m│ [Enter] Fire Torpedo [P] Phaser [Tab] Next [Esc] │                  │
-              [0m│                                                  │──────────────────╯
-╭─────────────[0m╰──────────────────────────────────────────────────╯─────────────╮     
-│                                                                              │     
-│                                                                              │     
-│ Super Star Trek — Tactical Display Online                                    │     
-│ Type 'help' for commands, 'quit' to exit, F2 to cycle themes                 │     
-│ COMMAND>                                                                     │     
-╰──────────────────────────────────────────────────────────────────────────────╯     
+ ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
+┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
+│  1   2   3   4   5   6   7   8  ││ CONDITION GREEN   LOC: Q[3,4] S[2,6]    │  
+│1  .   .   .   .   .   .   .   . ││ Stardate: 2508.0   Time Remaining: 30.0 │  
+│2  .   .   .   .   .  <E>  .   . ││ Energy:   [██████████] 5000/5000        │  
+│3  .   .   .   .   .   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
+│4  .   .   . [0m╭──────────────────────────────────────────────────╮           │  
+│5  .   .   . [0m│               TACTICAL TARGET LOCK               │           │  
+│6  .  +K+  . [0m│ Target: KLINGON BATTLECRUISER #1                 │     OK    │  
+│7  .   .   . [0m│ Position: Sector [4, 7]                          │:    OK    │  
+│8  .   .   . [0m│ Range: 2.24 sectors  Bearing: 7.59 (SE)          │     OK    │  
+└─────────────[0m│ Hit Prob: 85%     Target Shielding: ~300 units   │     OK    │  
+              [0m│ ──────────────────────────────────────────────── │  5        │  
+              [0m│ Enterprise Weapons: [TORP: 10/10] [ENERGY: 5000] │           │  
+              [0m│                                                  │           │  
+              [0m│ [Enter] Fire Torpedo [P] Phaser [Tab] Next [Esc] │           │  
+              [0m│                                                  │───────────╯  
+╭─────────────[0m╰──────────────────────────────────────────────────╯─────────────╮
+│                                                                              │
+│                                                                              │
+│ Super Star Trek — Tactical Display Online                                    │
+│ Type 'help' for commands, 'quit' to exit, F2 to cycle themes                 │
+│ COMMAND>                                                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯

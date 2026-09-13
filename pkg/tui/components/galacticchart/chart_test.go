@@ -347,6 +347,12 @@ func TestGalacticChart_ComputerDamagedTelemetryAndLockout(t *testing.T) {
 	if !strings.Contains(view, "[CALC OFFLINE]") {
 		t.Errorf("expected '[CALC OFFLINE]' in footer, got:\n%s", view)
 	}
+	if !strings.Contains(view, "Target: ") {
+		t.Errorf("expected 'Target: ' in footer, got:\n%s", view)
+	}
+	if !strings.Contains(view, "Quad [") {
+		t.Errorf("expected 'Quad [' in footer, got:\n%s", view)
+	}
 	if !strings.Contains(view, "Disabled (Comp Offline)") {
 		t.Errorf("expected action hint to indicate Enter disabled, got:\n%s", view)
 	}

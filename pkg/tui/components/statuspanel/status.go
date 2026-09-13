@@ -17,8 +17,6 @@ type Model struct {
 	height        int
 	enterprise    engine.Enterprise
 	timeRemaining float64
-	klingonsLeft  int
-	starbasesLeft int
 	isDocked      bool
 	galaxyChart   [9][9]int
 	stardate      float64
@@ -69,8 +67,6 @@ func New(th theme.Theme, dims ...int) Model {
 func (m *Model) SetState(ent engine.Enterprise, timeRemaining float64, klingonsLeft int, starbasesLeft int, isDocked bool, chart [9][9]int) {
 	m.enterprise = ent
 	m.timeRemaining = timeRemaining
-	m.klingonsLeft = klingonsLeft
-	m.starbasesLeft = starbasesLeft
 	m.isDocked = isDocked
 	m.galaxyChart = chart
 	m.hasState = true
@@ -116,9 +112,9 @@ func (m Model) renderRadar(styles panelStyles) (string, [3]string) {
 	qc := m.enterprise.Quad[1]
 
 	lrsDamaged := m.enterprise.Devices[engine.DeviceLRSensors] > 0 && !m.isDocked
-	radarTitle := styles.TextMuted.Render("RADAR (QUADRANTS ±1)  [K-B-S]:")
+	radarTitle := styles.TextMuted.Render("RADAR (±1) [K-B-S]:")
 	if lrsDamaged {
-		radarTitle = styles.TextWarn.Render("RADAR (QUAD ±1) [LRS OFFLINE]:")
+		radarTitle = styles.TextWarn.Render("RADAR (±1) [LRS OFFLINE]:")
 	}
 
 	radarHeader := radarTitle

@@ -1,24 +1,24 @@
- ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701                 [Theme: CRT (F2)]      
-┌─────────────────────────────────┐┌────────────────────────────────────────────────┐
-│  1   2   3   4   5   6   7   8  ││ CONDITION GREEN   LOC: Q[3,4] S[2,6]           │
-│1  .   .   .   .   .   .   .   . ││ Stardate: 2508.0   Time Remaining: 30.0        │
-│2  .   .   .   .   .  <E>  .   . ││ Energy:   [██████████] 5000/5000               │
-│3  .   .   .   .   .   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500               │
-│4  .   .   .   .   .   .   .   . ││ Torpedoes: [TORP: 10/10]                       │
-│5  .   .   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                       │
-│6  .   .   .   .   .   .   .   . ││ Warp:      OK  Tubes:             OK           │
-│7  .   .   .   .   .   .   .   . ││ SRS:       OK  Damage Control:    OK           │
-│8  .   .   .   .   .   .   .   . ││ LRS:       OK  Shields:           OK           │
-└─────────────────────────────────┘│ Phasers:   OK  Computer:          OK           │
-                                   │ RADAR (QUADRANTS ±1)  [K-B-S]:  3    4    5    │
-                                   │   2   008  004  006                            │
-                                   │   3   007 <006> 008                            │
-                                   │   4   005  008  004                            │
-                                   └────────────────────────────────────────────────┘
-┌──────────────────────────────────────────────────────────────────────────────┐     
-│                                                                              │     
-│                                                                              │     
-│ Super Star Trek — Tactical Display Online                                    │     
-│ Type 'help' for commands, 'quit' to exit, F2 to cycle themes                 │     
-│ COMMAND>                                                                     │     
-└──────────────────────────────────────────────────────────────────────────────┘     
+ ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701                 [Theme: CRT (F2)] 
+┌─────────────────────────────────┐┌─────────────────────────────────────────┐  
+│  1   2   3   4   5   6   7   8  ││ CONDITION GREEN   LOC: Q[3,4] S[2,6]    │  
+│1  .   .   .   .   .   .   .   . ││ Stardate: 2508.0   Time Remaining: 30.0 │  
+│2  .   .   .   .   .  <E>  .   . ││ Energy:   [██████████] 5000/5000        │  
+│3  .   .   .   .   .   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
+│4  .   .   .   .   .   .   .   . ││ Torpedoes: [TORP: 10/10]                │  
+│5  .   .   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                │  
+│6  .   .   .   .   .   .   .   . ││ Warp:      OK  Tubes:             OK    │  
+│7  .   .   .   .   .   .   .   . ││ SRS:       OK  Damage Control:    OK    │  
+│8  .   .   .   .   .   .   .   . ││ LRS:       OK  Shields:           OK    │  
+└─────────────────────────────────┘│ Phasers:   OK  Computer:          OK    │  
+                                   │ RADAR (±1) [K-B-S]:  3    4    5        │  
+                                   │   2   008  004  006                     │  
+                                   │   3   007 <006> 008                     │  
+                                   │   4   005  008  004                     │  
+                                   └─────────────────────────────────────────┘  
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                                                              │
+│                                                                              │
+│ Super Star Trek — Tactical Display Online                                    │
+│ Type 'help' for commands, 'quit' to exit, F2 to cycle themes                 │
+│ COMMAND>                                                                     │
+└──────────────────────────────────────────────────────────────────────────────┘

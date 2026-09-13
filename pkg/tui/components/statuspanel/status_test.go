@@ -207,8 +207,8 @@ func TestStatusPanel_LocationReadoutAndRadarHeaders(t *testing.T) {
 	if !strings.Contains(view, "LOC: ") || !strings.Contains(view, "Q[3,5] S[2,6]") {
 		t.Fatalf("expected combined location readout 'LOC: Q[3,5] S[2,6]', got:\n%s", view)
 	}
-	if !strings.Contains(view, "RADAR (QUADRANTS ±1)  [K-B-S]:") && !strings.Contains(view, "RADAR (±1) [K-B-S]:") {
-		t.Fatalf("expected radar header to contain 'RADAR (QUADRANTS ±1)  [K-B-S]:' or 'RADAR (±1) [K-B-S]:', got:\n%s", view)
+	if !strings.Contains(view, "RADAR (±1) [K-B-S]:") {
+		t.Fatalf("expected radar header to contain 'RADAR (±1) [K-B-S]:', got:\n%s", view)
 	}
 	// Verify coordinate headers for row 2, 3, 4 and col 4, 5, 6
 	if !strings.Contains(view, "4    5    6") {
@@ -297,6 +297,9 @@ func TestStatusPanel_RadarLrsDamaged(t *testing.T) {
 	m.SetState(ent, 25.0, 10, 3, false, chart)
 	view := m.View()
 
+	if !strings.Contains(view, "RADAR (±1) [LRS OFFLINE]:") {
+		t.Errorf("expected view to contain 'RADAR (±1) [LRS OFFLINE]:', got:\n%s", view)
+	}
 	if !strings.Contains(view, "[LRS OFFLINE]") {
 		t.Errorf("expected view to contain '[LRS OFFLINE]', got:\n%s", view)
 	}
