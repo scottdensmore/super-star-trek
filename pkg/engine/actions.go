@@ -69,9 +69,35 @@ func (a ActionDock) Execute(g *GameState) ([]Event, error) {
 		g.Enterprise.Devices[i] = 0
 	}
 
+	// Starbase surveillance download
+	updatedQuads := 0
+	for r := 1; r <= 8; r++ {
+		for c := 1; c <= 8; c++ {
+			if (g.GalaxyChart[r][c]%100)/10 > 0 {
+				g.ChartKnownBases[r][c] = true
+				for dr := -1; dr <= 1; dr++ {
+					for dc := -1; dc <= 1; dc++ {
+						nr := r + dr
+						nc := c + dc
+						if nr >= 1 && nr <= 8 && nc >= 1 && nc <= 8 {
+							if !g.ChartDiscovered[nr][nc] {
+								g.ChartDiscovered[nr][nc] = true
+								updatedQuads++
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return []Event{
 		EventDocked{
 			Starbase: sb,
+		},
+		EventStarbaseSurveillance{
+			StarbaseCoord: sb,
+			UpdatedQuads:  updatedQuads,
 		},
 	}, nil
 }
@@ -443,3 +469,37 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 
 	return events, nil
 }
+
+// ActionLRScan initiates a long-range sensor scan of the quadrants immediately surrounding the Enterprise.
+type ActionLRScan struct{}
+
+// Execute applies the long-range scan action to GameState.
+func (a ActionLRScan) Execute(g *GameState) ([]Event, error) {
+	if g.Enterprise.Devices[DeviceLRSensors] > 0 && g.Enterprise.Condition != ConditionDocked {
+		return nil, errors.New("long-range sensors damaged")
+	}
+
+	relayed := (g.Enterprise.Condition == ConditionDocked && g.Enterprise.Devices[DeviceLRSensors] > 0)
+	center := g.Enterprise.Quad
+	var scanned []Coord
+
+	for dr := -1; dr <= 1; dr++ {
+		for dc := -1; dc <= 1; dc++ {
+			r := center[0] + dr
+			c := center[1] + dc
+			if r >= 1 && r <= 8 && c >= 1 && c <= 8 {
+				g.ChartDiscovered[r][c] = true
+				scanned = append(scanned, Coord{r, c})
+			}
+		}
+	}
+
+	return []Event{
+		EventLRScanCompleted{
+			CenterQuad:    center,
+			ScannedQuads:  scanned,
+			RelayedByBase: relayed,
+		},
+	}, nil
+}
+

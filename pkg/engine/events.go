@@ -138,3 +138,23 @@ type EventSubsystemRepaired struct {
 
 // EventType returns the type name for EventSubsystemRepaired.
 func (e EventSubsystemRepaired) EventType() string { return "SubsystemRepaired" }
+
+// EventLRScanCompleted is emitted when a long-range scan completes.
+type EventLRScanCompleted struct {
+	CenterQuad    Coord
+	ScannedQuads  []Coord
+	RelayedByBase bool
+}
+
+// EventType returns the type name for EventLRScanCompleted.
+func (e EventLRScanCompleted) EventType() string { return "LRScanCompleted" }
+
+// EventStarbaseSurveillance is emitted when starbase records update the galactic star chart.
+type EventStarbaseSurveillance struct {
+	StarbaseCoord Coord
+	UpdatedQuads  int
+}
+
+// EventType returns the type name for EventStarbaseSurveillance.
+func (e EventStarbaseSurveillance) EventType() string { return "StarbaseSurveillance" }
+
