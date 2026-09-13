@@ -1058,6 +1058,148 @@ func TestModel_NavQuadrantCommand(t *testing.T) {
 	}
 }
 
+func TestModel_GalacticChart_HotkeyAndCommand(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Test 1: 'chart' command activates ModalGalacticChart
+	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "chart"})
+	if m.ActiveModal != ModalGalacticChart {
+		t.Fatalf("expected ActiveModal=ModalGalacticChart after 'chart', got %v", m.ActiveModal)
+	}
+
+	// Test 2: Esc closes modal
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyEsc})
+	if m.ActiveModal != ModalNone {
+		t.Fatalf("expected ActiveModal=ModalNone after Esc, got %v", m.ActiveModal)
+	}
+
+	// Test 3: Ctrl+M hotkey activates ModalGalacticChart
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyCtrlM})
+	if m.ActiveModal != ModalGalacticChart {
+		t.Fatalf("expected ActiveModal=ModalGalacticChart after Ctrl+M, got %v", m.ActiveModal)
+	}
+
+	// Test 4: View composites modal over dashboard
+	view := m.View()
+	if !strings.Contains(view, "GALACTIC STAR CHART") {
+		t.Fatalf("expected View to contain star chart overlay, got:\n%s", view)
+	}
+}
+
+func TestModel_GalacticChart_WarpSelection(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Quad = engine.Coord{3, 3}
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Open chart
+	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "chart"})
+
+	// Move cursor to [4, 5] and press Enter
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyDown})  // row 4
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRight}) // col 4
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRight}) // col 5
+
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyEnter})
+
+	// Verify modal closed and Enterprise moved to [4, 5]
+	if m.ActiveModal != ModalNone {
+		t.Fatalf("expected modal closed, got %v", m.ActiveModal)
+	}
+	if m.Game.Enterprise.Quad != (engine.Coord{4, 5}) {
+		t.Fatalf("expected Enterprise at quad [4,5], got %v", m.Game.Enterprise.Quad)
+	}
+}
+
+func TestModel_HelpChartAndNavDistance(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "help chart"})
+	msgs := m.CommandBar.Messages()
+	joined := strings.Join(msgs, "\n")
+	if !strings.Contains(joined, "CHART:") || !strings.Contains(joined, "Ctrl+M") {
+		t.Fatalf("expected help chart with Ctrl+M, got:\n%s", joined)
+	}
+
+	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "help nav"})
+	msgs = m.CommandBar.Messages()
+	joined = strings.Join(msgs, "\n")
+	if !strings.Contains(joined, "Ctrl+M") {
+		t.Fatalf("expected help nav to mention Ctrl+M map tool, got:\n%s", joined)
+	}
+}
+
+func TestModel_GalacticChart_SingleKeyHotkeys(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Press 'c' with empty input -> opens chart
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'c'}})
+	if m.ActiveModal != ModalGalacticChart {
+		t.Fatalf("expected ActiveModal=ModalGalacticChart on 'c' with empty input, got %v", m.ActiveModal)
+	}
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyEsc})
+
+	// Press 'm' with empty input -> opens chart
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}})
+	if m.ActiveModal != ModalGalacticChart {
+		t.Fatalf("expected ActiveModal=ModalGalacticChart on 'm' with empty input, got %v", m.ActiveModal)
+	}
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyEsc})
+
+	// Type with existing text: 'c' should NOT open chart modal, should type into command bar
+	m.CommandBar.SetValue("do")
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'c'}})
+	if m.ActiveModal != ModalNone {
+		t.Fatalf("expected ActiveModal=ModalNone when typing 'c' into non-empty command bar, got %v", m.ActiveModal)
+	}
+	if m.CommandBar.Value() != "doc" {
+		t.Fatalf("expected command bar value 'doc', got %q", m.CommandBar.Value())
+	}
+}
+
+func TestModel_GalacticChart_ThemePropagation(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Open chart
+	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "chart"})
+	if m.ActiveModal != ModalGalacticChart {
+		t.Fatalf("expected ActiveModal=ModalGalacticChart, got %v", m.ActiveModal)
+	}
+
+	// Cycle theme with F2
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyF2})
+	if m.Theme.Name() != "lcars" {
+		t.Fatalf("expected root theme 'lcars', got %s", m.Theme.Name())
+	}
+	if m.GalacticChart.Theme().Name() != "lcars" {
+		t.Fatalf("expected GalacticChart theme 'lcars', got %s", m.GalacticChart.Theme().Name())
+	}
+
+	// Cycle theme again with F2 -> CRT
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyF2})
+	if m.Theme.Name() != "crt" {
+		t.Fatalf("expected root theme 'crt', got %s", m.Theme.Name())
+	}
+	if m.GalacticChart.Theme().Name() != "crt" {
+		t.Fatalf("expected GalacticChart theme 'crt', got %s", m.GalacticChart.Theme().Name())
+	}
+}
+
+func TestModel_HelpMapCommand(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "help map"})
+	msgs := m.CommandBar.Messages()
+	joined := strings.Join(msgs, "\n")
+	if !strings.Contains(joined, "CHART:") || !strings.Contains(joined, "Ctrl+M") {
+		t.Fatalf("expected help map to show chart help, got:\n%s", joined)
+	}
+}
+
 
 
 

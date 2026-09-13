@@ -161,6 +161,8 @@ func parseHelp(args []string) ParsedCommand {
 		return ParsedCommand{Special: "help she"}
 	case "doc", "dock":
 		return ParsedCommand{Special: "help doc"}
+	case "chart", "map":
+		return ParsedCommand{Special: "help chart"}
 	case "saves", "thaw", "freeze":
 		return ParsedCommand{Special: "help saves"}
 	default:

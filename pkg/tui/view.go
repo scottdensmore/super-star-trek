@@ -77,6 +77,8 @@ func (m Model) renderDashboard() string {
 		modalView = m.CommandPalette.View()
 	case ModalSaveBrowser:
 		modalView = m.SaveBrowser.View()
+	case ModalGalacticChart:
+		modalView = m.GalacticChart.View()
 	default:
 		return dashboard
 	}

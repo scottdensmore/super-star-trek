@@ -67,6 +67,12 @@ func TestCommandPalette_Catalog(t *testing.T) {
 			t.Errorf("command %q: expected non-empty filter value", exp.title)
 		}
 	}
+
+	chartItem := itemMap["CHART"]
+	expectedChartDesc := "Interactive 8x8 galactic star chart and warp planner (Ctrl+M)"
+	if chartItem.Description() != expectedChartDesc {
+		t.Errorf("expected CHART description %q, got %q", expectedChartDesc, chartItem.Description())
+	}
 }
 
 func TestCommandPalette_FuzzyFilter(t *testing.T) {
