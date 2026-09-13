@@ -91,6 +91,7 @@ type QuadrantState struct {
 // GameState holds all mutable state for an active game session.
 type GameState struct {
 	RNG                *PRNG
+	Rules              GameRules `json:"rules"`
 	Skill              SkillLevel
 	Length             GameLength
 	Enterprise         Enterprise
@@ -107,13 +108,19 @@ type GameState struct {
 
 // NewGame initializes a new game session with deterministic initial state from the given seed.
 func NewGame(seed int64, skill SkillLevel, length GameLength) *GameState {
+	return NewGameWithOptions(seed, skill, length, DefaultRulesForProfile(ProfileNormal))
+}
+
+// NewGameWithOptions initializes a new game session with specified rules and deterministic initial state from the given seed.
+func NewGameWithOptions(seed int64, skill SkillLevel, length GameLength, rules GameRules) *GameState {
 	rng := NewPRNG(seed)
 	g := &GameState{
 		RNG:                rng,
+		Rules:              rules,
 		Skill:              skill,
 		Length:             length,
 		Stardate:           float64(2000 + rng.Intn(1000)),
-		TimeRemaining:      30.0,
+		TimeRemaining:      30.0 * rules.TimeMargin,
 		RemainingKlingons:  15,
 		RemainingStarbases: 3,
 		Enterprise: Enterprise{
@@ -142,7 +149,9 @@ func NewGame(seed int64, skill SkillLevel, length GameLength) *GameState {
 		c := rng.Intn(8) + 1
 		if (g.GalaxyChart[r][c]%100)/10 == 0 {
 			g.GalaxyChart[r][c] += 10
-			g.ChartKnownBases[r][c] = true
+			if rules.Surveillance != SurveillanceBlackout {
+				g.ChartKnownBases[r][c] = true
+			}
 			placedBases++
 		}
 	}
