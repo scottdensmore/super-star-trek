@@ -97,6 +97,7 @@ type GameState struct {
 	CurrentQuad        QuadrantState
 	GalaxyChart        [9][9]int // Klingons*100 + Starbases*10 + Stars
 	ChartDiscovered    [9][9]bool
+	ChartKnownBases    [9][9]bool
 	RemainingKlingons  int
 	RemainingStarbases int
 	Stardate           float64
@@ -125,5 +126,48 @@ func NewGame(seed int64, skill SkillLevel, length GameLength) *GameState {
 		},
 	}
 	g.InitialStardate = g.Stardate
+
+	// Procedural generation:
+	// 1. Stars (1..9 in each quadrant)
+	for r := 1; r <= 8; r++ {
+		for c := 1; c <= 8; c++ {
+			g.GalaxyChart[r][c] = rng.Intn(9) + 1
+		}
+	}
+
+	// 2. Starbases across RemainingStarbases distinct quadrants
+	placedBases := 0
+	for placedBases < g.RemainingStarbases {
+		r := rng.Intn(8) + 1
+		c := rng.Intn(8) + 1
+		if (g.GalaxyChart[r][c]%100)/10 == 0 {
+			g.GalaxyChart[r][c] += 10
+			g.ChartKnownBases[r][c] = true
+			placedBases++
+		}
+	}
+
+	// 3. Klingons distributed in clusters of 1..3
+	klingonsToPlace := g.RemainingKlingons
+	for klingonsToPlace > 0 {
+		r := rng.Intn(8) + 1
+		c := rng.Intn(8) + 1
+		currentK := g.GalaxyChart[r][c] / 100
+		if currentK < 9 {
+			cluster := rng.Intn(3) + 1
+			if cluster > klingonsToPlace {
+				cluster = klingonsToPlace
+			}
+			if currentK+cluster > 9 {
+				cluster = 9 - currentK
+			}
+			g.GalaxyChart[r][c] += cluster * 100
+			klingonsToPlace -= cluster
+		}
+	}
+
+	// 4. Starting quadrant discovered
+	g.ChartDiscovered[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] = true
+
 	return g
 }
