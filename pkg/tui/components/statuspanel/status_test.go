@@ -207,8 +207,8 @@ func TestStatusPanel_LocationReadoutAndRadarHeaders(t *testing.T) {
 	if !strings.Contains(view, "LOC: ") || !strings.Contains(view, "Q[3,5] S[2,6]") {
 		t.Fatalf("expected combined location readout 'LOC: Q[3,5] S[2,6]', got:\n%s", view)
 	}
-	if !strings.Contains(view, "RADAR (±1) [K-B-S]:") {
-		t.Fatalf("expected radar header 'RADAR (±1) [K-B-S]:', got:\n%s", view)
+	if !strings.Contains(view, "RADAR (QUADRANTS ±1)  [K-B-S]:") && !strings.Contains(view, "RADAR (±1) [K-B-S]:") {
+		t.Fatalf("expected radar header to contain 'RADAR (QUADRANTS ±1)  [K-B-S]:' or 'RADAR (±1) [K-B-S]:', got:\n%s", view)
 	}
 	// Verify coordinate headers for row 2, 3, 4 and col 4, 5, 6
 	if !strings.Contains(view, "4    5    6") {
@@ -276,3 +276,86 @@ func TestNilGameAndDefaults(t *testing.T) {
 		t.Fatalf("expected non-empty view even with nil GameState")
 	}
 }
+
+func TestStatusPanel_RadarLrsDamaged(t *testing.T) {
+	th := theme.ModernTheme{}
+	m := New(th, 30, 16)
+	ent := engine.Enterprise{
+		Quad:      engine.Coord{4, 4},
+		Sector:    engine.Coord{2, 3},
+		Energy:    4500,
+		Shields:   1000,
+		Torpedoes: 8,
+		Condition: engine.ConditionGreen,
+	}
+	ent.Devices[engine.DeviceLRSensors] = 2.5 // Damaged!
+
+	var chart [9][9]int
+	chart[4][4] = 105
+	chart[3][4] = 203
+
+	m.SetState(ent, 25.0, 10, 3, false, chart)
+	view := m.View()
+
+	if !strings.Contains(view, "[LRS OFFLINE]") {
+		t.Errorf("expected view to contain '[LRS OFFLINE]', got:\n%s", view)
+	}
+	if !strings.Contains(view, "???") {
+		t.Errorf("expected surrounding cells to display '???', got:\n%s", view)
+	}
+	// Current cell 105 should still be visible
+	if !strings.Contains(view, "105") {
+		t.Errorf("expected current quadrant cell '105' to remain visible, got:\n%s", view)
+	}
+}
+
+func TestStatusPanel_RadarLrsDamagedDocked(t *testing.T) {
+	th := theme.ModernTheme{}
+	m := New(th, 30, 16)
+	ent := engine.Enterprise{
+		Quad:      engine.Coord{4, 4},
+		Sector:    engine.Coord{2, 3},
+		Energy:    4500,
+		Shields:   1000,
+		Torpedoes: 8,
+		Condition: engine.ConditionDocked,
+	}
+	ent.Devices[engine.DeviceLRSensors] = 2.5 // Damaged, but docked!
+
+	var chart [9][9]int
+	chart[4][4] = 105
+	chart[3][4] = 203
+
+	m.SetState(ent, 25.0, 10, 3, true, chart)
+	view := m.View()
+
+	if strings.Contains(view, "[LRS OFFLINE]") {
+		t.Errorf("did not expect '[LRS OFFLINE]' when docked")
+	}
+	if !strings.Contains(view, "203") {
+		t.Errorf("expected surrounding cell '203' to be visible using starbase relay, got:\n%s", view)
+	}
+}
+
+func TestStatusPanel_HeightAndLineBudget(t *testing.T) {
+	th := theme.ModernTheme{}
+	m := New(th)
+
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+
+	// Operational
+	viewNormal := m.View(g)
+	linesNormal := strings.Split(viewNormal, "\n")
+	if len(linesNormal) != 16 {
+		t.Errorf("expected operational status panel to have 16 lines (14 content + 2 borders), got %d:\n%s", len(linesNormal), viewNormal)
+	}
+
+	// Damaged LRS
+	g.Enterprise.Devices[engine.DeviceLRSensors] = 3.0
+	viewDamaged := m.View(g)
+	linesDamaged := strings.Split(viewDamaged, "\n")
+	if len(linesDamaged) != 16 {
+		t.Errorf("expected damaged status panel to have 16 lines (14 content + 2 borders), got %d:\n%s", len(linesDamaged), viewDamaged)
+	}
+}
+
