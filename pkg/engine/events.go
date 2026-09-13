@@ -160,3 +160,12 @@ type EventStarbaseSurveillance struct {
 // EventType returns the type name for EventStarbaseSurveillance.
 func (e EventStarbaseSurveillance) EventType() string { return "StarbaseSurveillance" }
 
+// EventKlingonCloakState is emitted when a Klingon vessel cloaks or decloaks.
+type EventKlingonCloakState struct {
+	KlingonID int
+	Cloaked   bool
+}
+
+// EventType returns the type name for EventKlingonCloakState.
+func (e EventKlingonCloakState) EventType() string { return "KlingonCloakState" }
+

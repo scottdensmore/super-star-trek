@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"math"
 )
 
@@ -75,4 +76,33 @@ func ResolveShieldHit(enterprise *Enterprise, damage float64) (float64, float64)
 	enterprise.Shields = 0
 	enterprise.Energy -= remainder
 	return absorbed, remainder
+}
+
+// ActionTorpedoDirect fires a photon torpedo with target lock on a specific sector.
+type ActionTorpedoDirect struct {
+	TargetSector Coord
+}
+
+// Execute applies target-lock torpedo firing to GameState, rejecting target lock on cloaked vessels.
+func (a ActionTorpedoDirect) Execute(g *GameState) ([]Event, error) {
+	for _, k := range g.CurrentQuad.Klingons {
+		if k.Sector == a.TargetSector && k.IsCloaked {
+			return nil, errors.New("TARGET LOCK FAILED: CLOAKED VESSEL")
+		}
+	}
+	return ActionFireTorpedo{Target: a.TargetSector}.Execute(g)
+}
+
+// DecloakKlingon decloaks a Klingon vessel if currently cloaked and returns corresponding events.
+func DecloakKlingon(g *GameState, k *Klingon) []Event {
+	if k == nil || !k.IsCloaked {
+		return nil
+	}
+	k.IsCloaked = false
+	return []Event{
+		EventKlingonCloakState{
+			KlingonID: k.ID,
+			Cloaked:   false,
+		},
+	}
 }

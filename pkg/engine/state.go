@@ -78,6 +78,7 @@ type Klingon struct {
 	Sector      Coord
 	Energy      float64
 	IsCommander bool
+	IsCloaked   bool
 }
 
 // QuadrantState stores the layout and entities within the currently occupied quadrant.
