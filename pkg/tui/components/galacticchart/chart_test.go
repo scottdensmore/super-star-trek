@@ -1,6 +1,7 @@
 package galacticchart
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -227,5 +228,80 @@ func TestGalacticChart_ThemeAndLifecycle(t *testing.T) {
 	m, cmd = m.Update(customMsg{})
 	if cmd != nil {
 		t.Errorf("expected nil cmd on custom message, got %v", cmd)
+	}
+}
+
+var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+
+func stripAnsi(s string) string {
+	return ansiRegex.ReplaceAllString(s, "")
+}
+
+func TestGalacticChart_ColumnHeaderAlignment(t *testing.T) {
+	th := theme.DefaultTheme()
+	m := New(th, 64, 18)
+	var chart [9][9]int
+	var discovered [9][9]bool
+	for c := 1; c <= 8; c++ {
+		chart[1][c] = c * 10
+		discovered[1][c] = true
+	}
+	m.SetState(engine.Coord{1, 1}, chart, discovered)
+
+	view := m.View()
+	lines := strings.Split(strings.TrimRight(view, "\n"), "\n")
+
+	var headerLine string
+	var headerLineIdx int
+	for idx, line := range lines {
+		stripped := stripAnsi(line)
+		if strings.Contains(stripped, "1") && strings.Contains(stripped, "8") && strings.Contains(stripped, "2") && strings.Contains(stripped, "3") {
+			headerLine = stripped
+			headerLineIdx = idx
+			break
+		}
+	}
+	if headerLine == "" {
+		t.Fatalf("could not find column header line in View:\n%s", view)
+	}
+
+	row1Line := stripAnsi(lines[headerLineIdx+1])
+	headerRunes := []rune(headerLine)
+	rowRunes := []rune(row1Line)
+
+	for col := 1; col <= 8; col++ {
+		digitRune := rune('0' + col)
+		headerColIdx := -1
+		for rIdx, r := range headerRunes {
+			if r == digitRune {
+				headerColIdx = rIdx
+				break
+			}
+		}
+		if headerColIdx == -1 {
+			t.Fatalf("digit %d not found in header line: %q", col, headerLine)
+		}
+
+		expectedCenterRune := digitRune
+		if headerColIdx >= len(rowRunes) {
+			t.Fatalf("headerColIdx %d exceeds row line length %d", headerColIdx, len(rowRunes))
+		}
+		if rowRunes[headerColIdx] != expectedCenterRune {
+			t.Errorf("column %d digit %c at index %d does not align with cell center in row 1 (found %c, expected %c):\nheader: %s\nrow 1:  %s",
+				col, digitRune, headerColIdx, rowRunes[headerColIdx], expectedCenterRune, headerLine, row1Line)
+		}
+	}
+}
+
+func TestGalacticChart_SetStateClampsEnterpriseQuad(t *testing.T) {
+	m := New(nil, 64, 18)
+	var chart [9][9]int
+	var discovered [9][9]bool
+	m.SetState(engine.Coord{0, 10}, chart, discovered)
+	if m.enterpriseQuad != (engine.Coord{1, 8}) {
+		t.Errorf("expected enterpriseQuad clamped to [1, 8], got %v", m.enterpriseQuad)
+	}
+	if m.Cursor() != (engine.Coord{1, 8}) {
+		t.Errorf("expected cursor clamped to [1, 8], got %v", m.Cursor())
 	}
 }

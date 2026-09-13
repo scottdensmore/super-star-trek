@@ -77,9 +77,11 @@ func (m *Model) SetSize(w, h int) {
 // and resets cursor position to the Enterprise quadrant.
 func (m *Model) SetState(entQuad engine.Coord, chart [9][9]int, discovered [9][9]bool) {
 	m.enterpriseQuad = entQuad
+	m.enterpriseQuad[0] = clampCoord(m.enterpriseQuad[0], 1, 8)
+	m.enterpriseQuad[1] = clampCoord(m.enterpriseQuad[1], 1, 8)
 	m.galaxyChart = chart
 	m.chartDiscovered = discovered
-	m.cursor = entQuad
+	m.cursor = m.enterpriseQuad
 	m.cursor[0] = clampCoord(m.cursor[0], 1, 8)
 	m.cursor[1] = clampCoord(m.cursor[1], 1, 8)
 }
@@ -177,6 +179,11 @@ func (m Model) View() string {
 		innerHeight = 1
 	}
 
+	// In Lip Gloss, Style.Width(w) and Style.Height(h) define the container dimensions
+	// excluding outer borders, but including padding (similar to CSS padding-box).
+	// Therefore, widthNoBorders = targetWidth - borderH and heightNoBorders = targetHeight - borderV
+	// ensure the final rendered container with outer borders matches targetWidth (64) and targetHeight (18).
+	// innerWidth = targetWidth - borderH - paddingH defines the inner content width between left/right padding.
 	widthNoBorders := targetWidth - borderH
 	heightNoBorders := targetHeight - borderV
 
@@ -187,12 +194,12 @@ func (m Model) View() string {
 	// Line 2: Empty spacer
 	lineSpacer1 := ""
 
-	// Line 3: Column numbers header (1..8)
+	// Line 3: Column numbers header (1..8) with 7-character stride matching 5-char cell + 2-space separator
 	var colHeaderBuilder strings.Builder
 	colHeaderBuilder.WriteString("     ")
 	for col := 1; col <= 8; col++ {
 		if col < 8 {
-			colHeaderBuilder.WriteString(fmt.Sprintf("  %d   ", col))
+			colHeaderBuilder.WriteString(fmt.Sprintf("  %d    ", col))
 		} else {
 			colHeaderBuilder.WriteString(fmt.Sprintf("  %d  ", col))
 		}
