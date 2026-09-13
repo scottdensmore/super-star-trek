@@ -147,6 +147,25 @@ func TestTUIGolden_ModalSaveBrowser(t *testing.T) {
 	compareOrUpdate(t, "modal_save_browser", m.View())
 }
 
+func TestTUIGolden_ModalGalacticChart(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Quad = engine.Coord{3, 3}
+	g.GalaxyChart[3][3] = 3
+	g.ChartDiscovered[3][3] = true
+	g.GalaxyChart[2][5] = 105
+	g.ChartDiscovered[2][5] = true
+	g.GalaxyChart[3][4] = 12
+	g.ChartDiscovered[3][4] = true
+
+	m := tui.NewModel(g, theme.ModernTheme{})
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = updated.(tui.Model)
+
+	m.GalacticChart.SetState(g.Enterprise.Quad, g.GalaxyChart, g.ChartDiscovered)
+	m.ActiveModal = tui.ModalGalacticChart
+	compareOrUpdate(t, "modal_galactic_chart", m.View())
+}
+
 func TestTUIGolden_SectorReticleSelected(t *testing.T) {
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
 	m := tui.NewModel(g, theme.ModernTheme{})
