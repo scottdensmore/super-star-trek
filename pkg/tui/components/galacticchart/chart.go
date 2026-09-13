@@ -16,6 +16,11 @@ type WarpToQuadrantMsg struct {
 	Warp     float64
 }
 
+// WarpBlockedMsg is emitted when quick-warp is attempted with a damaged library computer.
+type WarpBlockedMsg struct {
+	Reason string
+}
+
 // CloseChartMsg is emitted when dismissing the galactic chart modal without warping.
 type CloseChartMsg struct{}
 
@@ -26,6 +31,8 @@ type Model struct {
 	enterpriseQuad  engine.Coord
 	galaxyChart     [9][9]int
 	chartDiscovered [9][9]bool
+	knownBases      [9][9]bool
+	computerDamaged bool
 	width           int
 	height          int
 }
@@ -76,12 +83,14 @@ func (m *Model) SetSize(w, h int) {
 
 // SetState updates Enterprise position, chart data, and discovered flags,
 // and resets cursor position to the Enterprise quadrant.
-func (m *Model) SetState(entQuad engine.Coord, chart [9][9]int, discovered [9][9]bool) {
+func (m *Model) SetState(entQuad engine.Coord, chart [9][9]int, discovered [9][9]bool, knownBases [9][9]bool, computerDamaged bool) {
 	m.enterpriseQuad = entQuad
 	m.enterpriseQuad[0] = clampCoord(m.enterpriseQuad[0], 1, 8)
 	m.enterpriseQuad[1] = clampCoord(m.enterpriseQuad[1], 1, 8)
 	m.galaxyChart = chart
 	m.chartDiscovered = discovered
+	m.knownBases = knownBases
+	m.computerDamaged = computerDamaged
 	m.cursor = m.enterpriseQuad
 	m.cursor[0] = clampCoord(m.cursor[0], 1, 8)
 	m.cursor[1] = clampCoord(m.cursor[1], 1, 8)
@@ -127,6 +136,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			return m, nil
 
 		case msg.Type == tea.KeyEnter || msg.String() == "enter":
+			if m.computerDamaged {
+				return m, func() tea.Msg {
+					return WarpBlockedMsg{
+						Reason: "COMPUTER DAMAGED, USE A POCKET CALCULATOR. Manual navigation required (nav q <r> <c> [warp]).",
+					}
+				}
+			}
 			dest := m.cursor
 			telem := CalculateTelemetry(m.enterpriseQuad, dest)
 			return m, func() tea.Msg {
@@ -143,13 +159,53 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	return m, nil
 }
 
-// View renders the 64x18 galactic star chart dialog with 8x8 grid and navigation telemetry.
-func (m Model) View() string {
-	th := m.theme
+type chartStyles struct {
+	theme.Styles
+	TextWarn  lipgloss.Style
+	TextMuted lipgloss.Style
+}
+
+func getChartStyles(th theme.Theme) chartStyles {
 	if th == nil {
 		th = theme.DefaultTheme()
 	}
-	styles := th.Styles()
+	base := th.Styles()
+	return chartStyles{
+		Styles:    base,
+		TextWarn:  base.SubsystemDamaged,
+		TextMuted: base.Empty,
+	}
+}
+
+func (m Model) renderFooter(styles chartStyles) (string, string) {
+	var lineTelem1, lineTelem2 string
+	if m.computerDamaged {
+		targetStr := styles.GaugeLabel.Render("Target: ") + styles.Prompt.Render(fmt.Sprintf("Quad [%d, %d]", m.cursor[0], m.cursor[1]))
+		distanceStr := styles.TextWarn.Render("Distance: [CALC OFFLINE]")
+		lineTelem1 = targetStr + styles.GaugeLabel.Render("  •  ") + distanceStr
+		lineTelem2 = styles.TextWarn.Render("Course: [CALC OFFLINE] • Warp: [CALC OFFLINE]")
+	} else {
+		telem := CalculateTelemetry(m.enterpriseQuad, m.cursor)
+		if telem.IsCurrent {
+			lineTelem1 = styles.GaugeLabel.Render("Target: ") +
+				styles.Prompt.Render(fmt.Sprintf("Quad [%d, %d]", telem.To[0], telem.To[1])) +
+				styles.GaugeLabel.Render("  •  Current Position")
+			lineTelem2 = styles.GaugeLabel.Render("Course: --  •  Warp: --")
+		} else {
+			lineTelem1 = styles.GaugeLabel.Render("Target: ") +
+				styles.Prompt.Render(fmt.Sprintf("Quad [%d, %d]", telem.To[0], telem.To[1])) +
+				styles.GaugeLabel.Render(fmt.Sprintf("  •  Dist: %.1f quads (ΔR: %s, ΔC: %s)",
+					telem.Distance, formatDelta(telem.DeltaR), formatDelta(telem.DeltaC)))
+			lineTelem2 = styles.GaugeLabel.Render(fmt.Sprintf("Course: %.2f rad (%s)  •  Warp: %.1f",
+				telem.Course, telem.Direction, telem.RecommendedWarp))
+		}
+	}
+	return lineTelem1, lineTelem2
+}
+
+// View renders the 64x18 galactic star chart dialog with 8x8 grid and navigation telemetry.
+func (m Model) View() string {
+	styles := getChartStyles(m.theme)
 
 	targetWidth := m.width
 	if targetWidth <= 0 {
@@ -219,6 +275,8 @@ func (m Model) View() string {
 			valStr := "···"
 			if m.chartDiscovered[row][col] {
 				valStr = fmt.Sprintf("%03d", m.galaxyChart[row][col])
+			} else if m.knownBases[row][col] {
+				valStr = ".1."
 			}
 
 			isEnt := (row == m.enterpriseQuad[0] && col == m.enterpriseQuad[1])
@@ -252,27 +310,18 @@ func (m Model) View() string {
 	lineDivider := styles.GridHeader.Render(strings.Repeat("─", innerWidth))
 
 	// Lines 13-14: Navigation telemetry
-	telem := CalculateTelemetry(m.enterpriseQuad, m.cursor)
-	var lineTelem1, lineTelem2 string
-	if telem.IsCurrent {
-		lineTelem1 = styles.GaugeLabel.Render("Target: ") +
-			styles.Prompt.Render(fmt.Sprintf("Quad [%d, %d]", telem.To[0], telem.To[1])) +
-			styles.GaugeLabel.Render("  •  Current Position")
-		lineTelem2 = styles.GaugeLabel.Render("Course: --  •  Warp: --")
-	} else {
-		lineTelem1 = styles.GaugeLabel.Render("Target: ") +
-			styles.Prompt.Render(fmt.Sprintf("Quad [%d, %d]", telem.To[0], telem.To[1])) +
-			styles.GaugeLabel.Render(fmt.Sprintf("  •  Dist: %.1f quads (ΔR: %s, ΔC: %s)",
-				telem.Distance, formatDelta(telem.DeltaR), formatDelta(telem.DeltaC)))
-		lineTelem2 = styles.GaugeLabel.Render(fmt.Sprintf("Course: %.2f rad (%s)  •  Warp: %.1f",
-			telem.Course, telem.Direction, telem.RecommendedWarp))
-	}
+	lineTelem1, lineTelem2 := m.renderFooter(styles)
 
 	// Line 15: Empty spacer
 	lineSpacer2 := ""
 
 	// Line 16: Action controls hint
-	lineHint := styles.LogText.Render("[Enter] Warp  [Arrows/HJKL] Move  [Esc] Close")
+	var lineHint string
+	if m.computerDamaged {
+		lineHint = styles.TextMuted.Render("[Enter] Disabled (Comp Offline)  [Arrows/HJKL] Move  [Esc] Close")
+	} else {
+		lineHint = styles.LogText.Render("[Enter] Warp  [Arrows/HJKL] Move  [Esc] Close")
+	}
 
 	contentLines := []string{
 		lineTitle,
@@ -289,9 +338,11 @@ func (m Model) View() string {
 		lineDivider,
 		lineTelem1,
 		lineTelem2,
-		lineSpacer2,
-		lineHint,
 	}
+	if !m.computerDamaged {
+		contentLines = append(contentLines, lineSpacer2)
+	}
+	contentLines = append(contentLines, lineHint)
 
 	content := strings.Join(contentLines, "\n")
 	return panelStyle.Width(widthNoBorders).Height(heightNoBorders).Render(content)

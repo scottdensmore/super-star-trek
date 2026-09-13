@@ -109,6 +109,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.CommandBar.Focus()
 		return m, cmd
 
+	case galacticchart.WarpBlockedMsg:
+		m.ActiveModal = ModalNone
+		cmd := m.CommandBar.Focus()
+		m.CommandBar.AddMessage(msg.Reason)
+		return m, cmd
+
 	case galacticchart.CloseChartMsg:
 		m.ActiveModal = ModalNone
 		cmd := m.CommandBar.Focus()
@@ -341,12 +347,16 @@ func (m Model) openGalacticChart() (Model, tea.Cmd) {
 	var entQuad engine.Coord = engine.Coord{1, 1}
 	var chart [9][9]int
 	var discovered [9][9]bool
+	var knownBases [9][9]bool
+	var compDamaged bool
 	if m.Game != nil {
 		entQuad = m.Game.Enterprise.Quad
 		chart = m.Game.GalaxyChart
 		discovered = m.Game.ChartDiscovered
+		knownBases = m.Game.ChartKnownBases
+		compDamaged = m.Game.Enterprise.Devices[engine.DeviceComputer] > 0
 	}
-	m.GalacticChart.SetState(entQuad, chart, discovered)
+	m.GalacticChart.SetState(entQuad, chart, discovered, knownBases, compDamaged)
 	m.ActiveModal = ModalGalacticChart
 	m.CommandBar.Blur()
 	return m, nil
@@ -375,13 +385,45 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		m.CommandBar.AddMessage("Short-range scan updated.")
 		return m, nil
 	case "lrscan":
-		m.CommandBar.AddMessage("Long-range scan complete.")
+		if m.Game == nil {
+			m.CommandBar.AddMessage("No active game.")
+			return m, nil
+		}
+		events, err := m.Game.Dispatch(engine.ActionLRScan{})
+		if err != nil {
+			m.CommandBar.AddMessage(fmt.Sprintf("LONG-RANGE SENSORS DAMAGED. %v", err))
+			return m, nil
+		}
+		for _, ev := range events {
+			if scanEvt, ok := ev.(engine.EventLRScanCompleted); ok {
+				if scanEvt.RelayedByBase {
+					m.CommandBar.AddMessage("Starbase relay: Long-range scan complete. Star chart updated.")
+				} else {
+					m.CommandBar.AddMessage("Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.")
+				}
+			}
+		}
 		return m, nil
 	case "status":
 		m.CommandBar.AddMessage("Ship status nominal.")
 		return m, nil
-	case "dam":
-		m.CommandBar.AddMessage("Damage report: all systems operational.")
+	case "dam", "damages":
+		if m.Game == nil {
+			m.CommandBar.AddMessage("No active game.")
+			return m, nil
+		}
+		var damagedList []string
+		for dev := engine.DeviceID(0); dev < engine.NumDevices; dev++ {
+			turns := m.Game.Enterprise.Devices[dev]
+			if turns > 0 {
+				damagedList = append(damagedList, fmt.Sprintf("%s: %.1f stardates", deviceShortString(dev), turns))
+			}
+		}
+		if len(damagedList) == 0 {
+			m.CommandBar.AddMessage("Damage report: all systems nominal.")
+		} else {
+			m.CommandBar.AddMessage("Damage report: " + strings.Join(damagedList, ", "))
+		}
 		return m, nil
 	case "chart", "map":
 		return m.openGalacticChart()
@@ -543,6 +585,15 @@ func formatEvent(ev engine.Event) string {
 	case engine.EventDocked:
 		return fmt.Sprintf("Docked with Starbase at [%d,%d]. Systems refueled.", e.Starbase[0], e.Starbase[1])
 
+	case engine.EventStarbaseSurveillance:
+		return fmt.Sprintf("Starbase at [%d,%d] downloaded surveillance. Updated %d quadrants.", e.StarbaseCoord[0], e.StarbaseCoord[1], e.UpdatedQuads)
+
+	case engine.EventLRScanCompleted:
+		if e.RelayedByBase {
+			return "Starbase relay: Long-range scan complete. Star chart updated."
+		}
+		return "Long-range scan complete. Star chart updated for 3x3 surrounding quadrants."
+
 	case engine.EventShipMoved:
 		return fmt.Sprintf("Ship arrived at Quadrant [%d,%d], Sector [%d,%d]", e.ToQuad[0], e.ToQuad[1], e.ToSector[0], e.ToSector[1])
 
@@ -609,6 +660,29 @@ func deviceString(d engine.DeviceID) string {
 		return "Phasers"
 	case engine.DevicePhotonTubes:
 		return "Photon Tubes"
+	case engine.DeviceDamageControl:
+		return "Damage Control"
+	case engine.DeviceShields:
+		return "Shields"
+	case engine.DeviceComputer:
+		return "Computer"
+	default:
+		return "Subsystem"
+	}
+}
+
+func deviceShortString(d engine.DeviceID) string {
+	switch d {
+	case engine.DeviceWarp:
+		return "Warp"
+	case engine.DeviceSRSensors:
+		return "SRS"
+	case engine.DeviceLRSensors:
+		return "LRS"
+	case engine.DevicePhasers:
+		return "Phasers"
+	case engine.DevicePhotonTubes:
+		return "Tubes"
 	case engine.DeviceDamageControl:
 		return "Damage Control"
 	case engine.DeviceShields:
