@@ -23,7 +23,7 @@ const (
 	ModalTargetLock
 	ModalCommandPalette
 	ModalSaveBrowser
-	ModalGalacticChart ModalType = 4
+	ModalGalacticChart
 )
 
 // Ensure Model satisfies the Bubble Tea Model interface at compile time.

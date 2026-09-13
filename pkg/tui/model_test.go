@@ -12,6 +12,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/galacticchart"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
@@ -1100,7 +1101,23 @@ func TestModel_GalacticChart_WarpSelection(t *testing.T) {
 	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRight}) // col 4
 	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRight}) // col 5
 
-	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyEnter})
+	var cmd tea.Cmd
+	m, cmd = m.UpdateModel(tea.KeyMsg{Type: tea.KeyEnter})
+	if cmd == nil {
+		t.Fatalf("expected command returned on Enter in GalacticChart modal, got nil")
+	}
+	msg := cmd()
+	warpMsg, ok := msg.(galacticchart.WarpToQuadrantMsg)
+	if !ok {
+		t.Fatalf("expected WarpToQuadrantMsg from cmd(), got %T", msg)
+	}
+	if warpMsg.DestQuad != (engine.Coord{4, 5}) {
+		t.Fatalf("expected DestQuad [4,5], got %v", warpMsg.DestQuad)
+	}
+	if warpMsg.Warp != 2.2 {
+		t.Fatalf("expected Warp 2.2, got %v", warpMsg.Warp)
+	}
+	m, _ = m.UpdateModel(msg)
 
 	// Verify modal closed and Enterprise moved to [4, 5]
 	if m.ActiveModal != ModalNone {

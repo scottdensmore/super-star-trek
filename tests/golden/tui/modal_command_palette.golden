@@ -1,25 +1,23 @@
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
-│  1   2   3   4   5   6   7   8  ││ LOCATION: Quad [3, 4]   Sec [2, 6]      │  
-│1  .   .   .   .   .   .   .   . ││ CONDITION GREEN                         │  
-│2  .   .   .   .   .  <E>  .   . ││ Stardate: 2508.0   Time Remaining: 30.0 │  
-│3  .   .   [0m╭──────────────────────────────────────────────────────╮0        │  
-│4  .   .   [0m│   COMMAND PALETTE                                    │0        │  
-│5  .   .   [0m│                                                      │         │  
-│6  .   .   [0m││ TOR                                                 │         │  
-│7  .   .   [0m││ Fire photon torpedo along bearing or sector (tor <c…│   OK    │  
-│8  .   .   [0m│  PHA                                                 │   OK    │  
-└───────────[0m│  Fire ship phaser bank with energy (pha <energy>)    │   OK    │  
-            [0m│  SHE                                                 │   OK    │  
-            [0m│  Transfer energy between warp and shields (she <amou…│         │  
+│  1   2   3   4   5   6   7   8  ││ CONDITION GREEN   LOC: Q[3,4] S[2,6]    │  
+│1  .   .   .   .   .   .   .   . ││ Stardate: 2508.0   Time Remaining: 30.0 │  
+│2  .   .   [0m╭──────────────────────────────────────────────────────╮0        │  
+│3  .   .   [0m│   COMMAND PALETTE                                    │0        │  
+│4  .   .   [0m│                                                      │         │  
+│5  .   .   [0m││ TOR                                                 │         │  
+│6  .   .   [0m││ Fire photon torpedo along bearing or sector (tor <c…│   OK    │  
+│7  .   .   [0m│  PHA                                                 │   OK    │  
+│8  .   .   [0m│  Fire ship phaser bank with energy (pha <energy>)    │   OK    │  
+└───────────[0m│  SHE                                                 │   OK    │  
+            [0m│  Transfer energy between warp and shields (she <amou…│5        │  
             [0m│  TARGET                                              │         │  
             [0m│  Open Tactical Target Lock HUD                       │         │  
             [0m│  NAV                                                 │         │  
-            [0m│  Maneuver: nav q <r c> (quad), nav s <r c> (sector),…│         │  
-            [0m│  DOC                                                 │─────────╯  
-╭───────────[0m│  Dock with adjacent Starbase for fuel & repair       │───────────╮
+            [0m│  Maneuver: nav q <r c> (quad), nav s <r c> (sector),…│─────────╯  
+╭───────────[0m│  DOC                                                 │───────────╮
+│           [0m│  Dock with adjacent Starbase for fuel & repair       │           │
 │           [0m╰──────────────────────────────────────────────────────╯           │
-│                                                                              │
 │ Super Star Trek — Tactical Display Online                                    │
 │ Type 'help' for commands, 'quit' to exit, F2 to cycle themes                 │
 │ COMMAND>                                                                     │

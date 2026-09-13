@@ -13,6 +13,7 @@ import (
 // WarpToQuadrantMsg is emitted when the user confirms warping to a destination quadrant.
 type WarpToQuadrantMsg struct {
 	DestQuad engine.Coord
+	Warp     float64
 }
 
 // CloseChartMsg is emitted when dismissing the galactic chart modal without warping.
@@ -127,8 +128,9 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 		case msg.Type == tea.KeyEnter || msg.String() == "enter":
 			dest := m.cursor
+			telem := CalculateTelemetry(m.enterpriseQuad, dest)
 			return m, func() tea.Msg {
-				return WarpToQuadrantMsg{DestQuad: dest}
+				return WarpToQuadrantMsg{DestQuad: dest, Warp: telem.RecommendedWarp}
 			}
 
 		case msg.Type == tea.KeyEsc || msg.String() == "esc":

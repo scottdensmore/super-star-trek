@@ -99,7 +99,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case galacticchart.WarpToQuadrantMsg:
 		m.ActiveModal = ModalNone
 		if m.Game != nil {
-			events, err := m.Game.Dispatch(engine.ActionMove{DestQuad: msg.DestQuad, Warp: 1.0})
+			events, err := m.Game.Dispatch(engine.ActionMove{DestQuad: msg.DestQuad, Warp: msg.Warp})
 			if err != nil {
 				m.CommandBar.AddMessage(err.Error())
 			} else {
@@ -138,9 +138,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.SaveBrowser, cmd = m.SaveBrowser.Update(msg)
 			case ModalGalacticChart:
 				m.GalacticChart, cmd = m.GalacticChart.Update(msg)
-				if cmd != nil {
-					return m.Update(cmd())
-				}
 			}
 			return m, cmd
 		}

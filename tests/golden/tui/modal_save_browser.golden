@@ -1,24 +1,22 @@
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
-│  1   2   3   4   5   6   7   8  ││ LOCATION: Quad [3, 4]   Sec [2, 6]      │  
-│1  .   .   .   .   .   .   .   . ││ CONDITION GREEN                         │  
-│2  .   .   .   .   .  <E>  .   . ││ Stardate: 2508.0   Time Remaining: 30.0 │  
-│3  .   .[0m╭────────────────────────────────────────────────────────────╮      │  
-│4  .   .[0m│   SAVED MISSIONS (Ctrl+O)                                  │      │  
-│5  .   .[0m│                                                            │      │  
-│6  .   .[0m│   FILE       STARDATE  SKILL   COND    KLINGONS  MODIFIED  │      │  
-│7  .   .[0m│   No saved missions (*.TRK) found.                         │OK    │  
+│  1   2   3   4   5   6   7   8  ││ CONDITION GREEN   LOC: Q[3,4] S[2,6]    │  
+│1  .   .   .   .   .   .   .   . ││ Stardate: 2508.0   Time Remaining: 30.0 │  
+│2  .   .[0m╭────────────────────────────────────────────────────────────╮      │  
+│3  .   .[0m│   SAVED MISSIONS (Ctrl+O)                                  │      │  
+│4  .   .[0m│                                                            │      │  
+│5  .   .[0m│   FILE       STARDATE  SKILL   COND    KLINGONS  MODIFIED  │      │  
+│6  .   .[0m│   No saved missions (*.TRK) found.                         │OK    │  
+│7  .   .[0m│                                                            │OK    │  
 │8  .   .[0m│                                                            │OK    │  
 └────────[0m│                                                            │OK    │  
-         [0m│                                                            │OK    │  
          [0m│                                                            │      │  
          [0m│                                                            │      │  
          [0m│                                                            │      │  
          [0m│ ────────────────────────────────────────────────────────── │      │  
-         [0m│ ──                                                         │      │  
-         [0m│ [Enter] Thaw  [D] Delete  [↑/↓] Select  [Esc] Close        │──────╯  
-╭────────[0m╰────────────────────────────────────────────────────────────╯────────╮
-│                                                                              │
+         [0m│ ──                                                         │──────╯  
+╭────────[0m│ [Enter] Thaw  [D] Delete  [↑/↓] Select  [Esc] Close        │────────╮
+│        [0m╰────────────────────────────────────────────────────────────╯        │
 │                                                                              │
 │ Super Star Trek — Tactical Display Online                                    │
 │ Type 'help' for commands, 'quit' to exit, F2 to cycle themes                 │

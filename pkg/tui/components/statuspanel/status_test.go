@@ -204,15 +204,20 @@ func TestStatusPanel_LocationReadoutAndRadarHeaders(t *testing.T) {
 	m := New(theme.DefaultTheme())
 	view := m.View(g)
 
-	if !strings.Contains(view, "LOCATION: Quad [3, 5]   Sec [2, 6]") {
-		t.Fatalf("expected location readout 'LOCATION: Quad [3, 5]   Sec [2, 6]', got:\n%s", view)
+	if !strings.Contains(view, "LOC: ") || !strings.Contains(view, "Q[3,5] S[2,6]") {
+		t.Fatalf("expected combined location readout 'LOC: Q[3,5] S[2,6]', got:\n%s", view)
 	}
-	if !strings.Contains(view, "RADAR (QUADRANTS ±1)  [K-B-S]:") {
-		t.Fatalf("expected radar header with K-B-S legend, got:\n%s", view)
+	if !strings.Contains(view, "RADAR (±1) [K-B-S]:") {
+		t.Fatalf("expected radar header 'RADAR (±1) [K-B-S]:', got:\n%s", view)
 	}
 	// Verify coordinate headers for row 2, 3, 4 and col 4, 5, 6
 	if !strings.Contains(view, "4    5    6") {
 		t.Fatalf("expected radar column headers '4    5    6', got:\n%s", view)
+	}
+	for _, rowHdr := range []string{"  2  ", "  3  ", "  4  "} {
+		if !strings.Contains(view, rowHdr) {
+			t.Fatalf("expected radar row header %q, got:\n%s", rowHdr, view)
+		}
 	}
 	if !strings.Contains(view, "<003>") {
 		t.Fatalf("expected Enterprise current quad cell '<003>', got:\n%s", view)

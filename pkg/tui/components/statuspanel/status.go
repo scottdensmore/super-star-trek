@@ -71,12 +71,7 @@ func (m Model) View(g *engine.GameState) string {
 		return styles.Panel.Render(styles.GaugeLabel.Render("NO TELEMETRY AVAILABLE"))
 	}
 
-	// 1. Location readout
-	locLabel := styles.GaugeLabel.Render("LOCATION: ")
-	locVal := styles.Prompt.Render(fmt.Sprintf("Quad [%d, %d]   Sec [%d, %d]", g.Enterprise.Quad[0], g.Enterprise.Quad[1], g.Enterprise.Sector[0], g.Enterprise.Sector[1]))
-	locationLine := locLabel + locVal
-
-	// 2. Condition alert banner
+	// 1. Condition alert banner & Location readout
 	var condStr string
 	var condStyle lipgloss.Style
 	switch g.Enterprise.Condition {
@@ -97,6 +92,7 @@ func (m Model) View(g *engine.GameState) string {
 		condStyle = styles.ConditionGreen
 	}
 	condBanner := condStyle.Render(condStr)
+	condLocLine := condBanner + "   " + styles.GaugeLabel.Render("LOC: ") + styles.Prompt.Render(fmt.Sprintf("Q[%d,%d] S[%d,%d]", g.Enterprise.Quad[0], g.Enterprise.Quad[1], g.Enterprise.Sector[0], g.Enterprise.Sector[1]))
 
 	// 3. Stardate & Time remaining
 	stardateStr := styles.GaugeLabel.Render("Stardate: ") +
@@ -139,17 +135,16 @@ func (m Model) View(g *engine.GameState) string {
 	}
 
 	// 7. 3x3 surrounding quadrant radar box
-	radarHeader := styles.PanelTitle.Render("RADAR (QUADRANTS ±1)  [K-B-S]:")
 	qr := g.Enterprise.Quad[0]
 	qc := g.Enterprise.Quad[1]
-
-	colHdr := fmt.Sprintf("      %-4s %-4s %-4s", radarColHeader(qc-1), radarColHeader(qc), radarColHeader(qc+1))
+	radarHeader := styles.PanelTitle.Render("RADAR (±1) [K-B-S]:") +
+		fmt.Sprintf("  %-4s %-4s %-4s", radarColHeader(qc-1), radarColHeader(qc), radarColHeader(qc+1))
 
 	var radarRows [3]string
 	for dr := -1; dr <= 1; dr++ {
+		r := qr + dr
 		var rowCells [3]string
 		for dc := -1; dc <= 1; dc++ {
-			r := qr + dr
 			c := qc + dc
 			idx := dc + 1
 			if r < 1 || r > 8 || c < 1 || c > 8 {
@@ -162,7 +157,6 @@ func (m Model) View(g *engine.GameState) string {
 				}
 			}
 		}
-		r := qr + dr
 		rowHdr := radarRowHeader(r)
 		if dr == 0 {
 			radarRows[dr+1] = fmt.Sprintf("  %s  %s %s %s", rowHdr, rowCells[0], rowCells[1], rowCells[2])
@@ -173,9 +167,7 @@ func (m Model) View(g *engine.GameState) string {
 
 	var b strings.Builder
 	b.Grow(512)
-	b.WriteString(locationLine)
-	b.WriteByte('\n')
-	b.WriteString(condBanner)
+	b.WriteString(condLocLine)
 	b.WriteByte('\n')
 	b.WriteString(stardateTimeLine)
 	b.WriteByte('\n')
@@ -192,8 +184,6 @@ func (m Model) View(g *engine.GameState) string {
 	}
 	b.WriteByte('\n')
 	b.WriteString(radarHeader)
-	b.WriteByte('\n')
-	b.WriteString(colHdr)
 	for _, radarRow := range radarRows {
 		b.WriteByte('\n')
 		b.WriteString(radarRow)

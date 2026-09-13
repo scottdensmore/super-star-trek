@@ -99,6 +99,9 @@ func TestGalacticChart_EnterAndEscMessages(t *testing.T) {
 	if !ok || warpMsg.DestQuad != (engine.Coord{2, 3}) {
 		t.Fatalf("expected WarpToQuadrantMsg with [2,3], got %v", msg)
 	}
+	if warpMsg.Warp != 1.0 {
+		t.Fatalf("expected Warp 1.0, got %v", warpMsg.Warp)
+	}
 
 	// Esc emits CloseChartMsg
 	m, cmd = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
