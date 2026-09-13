@@ -193,8 +193,35 @@ func TestSurroundingQuadrantRadar(t *testing.T) {
 	}
 }
 
+func TestStatusPanel_LocationReadoutAndRadarHeaders(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Quad = engine.Coord{3, 5}
+	g.Enterprise.Sector = engine.Coord{2, 6}
+	g.GalaxyChart[3][5] = 3
+	g.GalaxyChart[2][5] = 105
+	g.GalaxyChart[3][6] = 12
+
+	m := New(theme.DefaultTheme())
+	view := m.View(g)
+
+	if !strings.Contains(view, "LOCATION: Quad [3, 5]   Sec [2, 6]") {
+		t.Fatalf("expected location readout 'LOCATION: Quad [3, 5]   Sec [2, 6]', got:\n%s", view)
+	}
+	if !strings.Contains(view, "RADAR (QUADRANTS ±1)  [K-B-S]:") {
+		t.Fatalf("expected radar header with K-B-S legend, got:\n%s", view)
+	}
+	// Verify coordinate headers for row 2, 3, 4 and col 4, 5, 6
+	if !strings.Contains(view, "4    5    6") {
+		t.Fatalf("expected radar column headers '4    5    6', got:\n%s", view)
+	}
+	if !strings.Contains(view, "<003>") {
+		t.Fatalf("expected Enterprise current quad cell '<003>', got:\n%s", view)
+	}
+}
+
 func TestSetTheme(t *testing.T) {
 	lipgloss.SetColorProfile(termenv.TrueColor)
+	defer lipgloss.SetColorProfile(termenv.Ascii)
 
 	m := New(theme.ModernTheme{})
 	if m.Theme().Name() != "modern" {
