@@ -284,3 +284,70 @@ func TestViewWithReticle(t *testing.T) {
 		}
 	}
 }
+
+func TestCloakedKlingonRendering_SensorAnomaly(t *testing.T) {
+	th := theme.DefaultTheme()
+	m := New(th)
+
+	var quad engine.QuadrantState
+	quad.Grid[4][5] = engine.EntityCommander
+	cloakedKlingon := &engine.Klingon{
+		ID:          1,
+		Sector:      engine.Coord{4, 5},
+		IsCommander: true,
+		IsCloaked:   true,
+	}
+	quad.Klingons = []*engine.Klingon{cloakedKlingon}
+
+	// 1. Unselected cloaked Klingon should render as " ? " sensor ghost, NOT "+K+"
+	viewUnselected := m.View(&quad, engine.Coord{1, 1}, engine.Coord{0, 0})
+	if !strings.Contains(viewUnselected, " ? ") {
+		t.Fatalf("expected cloaked Klingon to render as sensor anomaly echo ' ? ', got view:\n%s", viewUnselected)
+	}
+	if strings.Contains(viewUnselected, "+K+") {
+		t.Fatalf("did not expect '+K+' to render for cloaked Klingon, got view:\n%s", viewUnselected)
+	}
+
+	// 2. Selected cloaked Klingon should render as "[?]", NOT "[K]"
+	viewSelected := m.View(&quad, engine.Coord{1, 1}, engine.Coord{4, 5})
+	if !strings.Contains(viewSelected, "[?]") {
+		t.Fatalf("expected selected cloaked Klingon to render as '[?]', got view:\n%s", viewSelected)
+	}
+	if strings.Contains(viewSelected, "[K]") {
+		t.Fatalf("did not expect '[K]' to render for selected cloaked Klingon, got view:\n%s", viewSelected)
+	}
+
+	// 3. When decloaked, should render as standard Klingon "+K+" / "[K]"
+	cloakedKlingon.IsCloaked = false
+	viewDecloaked := m.View(&quad, engine.Coord{1, 1}, engine.Coord{0, 0})
+	if !strings.Contains(viewDecloaked, "+K+") {
+		t.Fatalf("expected decloaked Klingon to render as '+K+', got view:\n%s", viewDecloaked)
+	}
+	if strings.Contains(viewDecloaked, " ? ") {
+		t.Fatalf("did not expect ' ? ' for decloaked Klingon, got view:\n%s", viewDecloaked)
+	}
+
+	viewDecloakedSel := m.View(&quad, engine.Coord{1, 1}, engine.Coord{4, 5})
+	if !strings.Contains(viewDecloakedSel, "[K]") {
+		t.Fatalf("expected selected decloaked Klingon to render as '[K]', got view:\n%s", viewDecloakedSel)
+	}
+
+	// 4. Quadrant with 1 cloaked commander and 1 uncloaked Klingon
+	cloakedKlingon.IsCloaked = true
+	uncloakedKlingon := &engine.Klingon{
+		ID:          2,
+		Sector:      engine.Coord{6, 6},
+		IsCommander: false,
+		IsCloaked:   false,
+	}
+	quad.Grid[6][6] = engine.EntityKlingon
+	quad.Klingons = []*engine.Klingon{cloakedKlingon, uncloakedKlingon}
+
+	viewBoth := m.View(&quad, engine.Coord{1, 1}, engine.Coord{0, 0})
+	if !strings.Contains(viewBoth, " ? ") {
+		t.Fatalf("expected view to contain ' ? ' for cloaked commander:\n%s", viewBoth)
+	}
+	if !strings.Contains(viewBoth, "+K+") {
+		t.Fatalf("expected view to contain '+K+' for uncloaked Klingon:\n%s", viewBoth)
+	}
+}

@@ -87,8 +87,17 @@ func (m Model) View(quad *engine.QuadrantState, entSector engine.Coord, selected
 			if entSector[0] == r && entSector[1] == c {
 				ent = engine.EntityEnterprise
 			}
+			isCloaked := false
+			if quad != nil && ent != engine.EntityEnterprise {
+				for _, k := range quad.Klingons {
+					if k != nil && k.Sector[0] == r && k.Sector[1] == c && k.IsCloaked {
+						isCloaked = true
+						break
+					}
+				}
+			}
 			isSelected := selected[0] == r && selected[1] == c
-			b.WriteString(entityGlyph(ent, styles, isSelected))
+			b.WriteString(entityGlyph(ent, styles, isSelected, isCloaked))
 			if c < 8 {
 				b.WriteByte(' ')
 			}
@@ -99,7 +108,14 @@ func (m Model) View(quad *engine.QuadrantState, entSector engine.Coord, selected
 }
 
 // entityGlyph formats and styles the 3-character glyph for an entity, applying reticle styling when selected.
-func entityGlyph(ent engine.EntityType, styles theme.Styles, selected bool) string {
+func entityGlyph(ent engine.EntityType, styles theme.Styles, selected bool, cloaked bool) string {
+	if cloaked {
+		if selected {
+			return styles.Empty.Reverse(true).Render("[?]")
+		}
+		return styles.Empty.Render(" ? ")
+	}
+
 	if selected {
 		switch ent {
 		case engine.EntityEnterprise:

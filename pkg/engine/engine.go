@@ -26,8 +26,15 @@ func AdvanceRepairs(g *GameState, elapsed float64) {
 	}
 }
 
-// AdvanceTurn advances time and subsystem repairs.
+// AdvanceTurn advances time and subsystem repairs, allowing commanders to cloak when rules permit.
 func (g *GameState) AdvanceTurn(elapsed float64) {
 	AdvanceRepairs(g, elapsed)
+	if g != nil && g.Rules.KlingonCloak {
+		for _, k := range g.CurrentQuad.Klingons {
+			if k != nil && k.IsCommander && !k.IsCloaked {
+				CloakKlingon(g, k)
+			}
+		}
+	}
 }
 

@@ -106,3 +106,41 @@ func DecloakKlingon(g *GameState, k *Klingon) []Event {
 		},
 	}
 }
+
+// CloakKlingon cloaks a Klingon commander if rules permit and not already cloaked, returning corresponding events.
+func CloakKlingon(g *GameState, k *Klingon) []Event {
+	if k == nil || k.IsCloaked {
+		return nil
+	}
+	if g != nil && !g.Rules.KlingonCloak {
+		return nil
+	}
+	if !k.IsCommander {
+		return nil
+	}
+	k.IsCloaked = true
+	return []Event{
+		EventKlingonCloakState{
+			KlingonID: k.ID,
+			Cloaked:   true,
+		},
+	}
+}
+
+// KlingonCounterAttack simulates return fire from a Klingon vessel against the Enterprise.
+// If the attacking vessel is cloaked, it decloaks prior to firing.
+func KlingonCounterAttack(g *GameState, k *Klingon, damage float64) []Event {
+	if g == nil || k == nil || damage <= 0 {
+		return nil
+	}
+	var events []Event
+	if k.IsCloaked {
+		events = append(events, DecloakKlingon(g, k)...)
+	}
+	ResolveShieldHit(&g.Enterprise, damage)
+	events = append(events, EventKlingonCounterAttack{
+		EnemyID: k.ID,
+		Damage:  damage,
+	})
+	return events
+}

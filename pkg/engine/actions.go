@@ -173,11 +173,19 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 
 	hitCoord, hitEntity, hit := TraceTorpedoPath(g.Enterprise.Sector, angle, &g.CurrentQuad)
 	if !hit {
+		if g.Rules.KlingonCloak {
+			for _, k := range g.CurrentQuad.Klingons {
+				if k != nil && k.IsCommander && !k.IsCloaked {
+					events = append(events, CloakKlingon(g, k)...)
+				}
+			}
+		}
 		return events, nil
 	}
 
 	damage := 500.0
 	destroyed := false
+	var hitCommander *Klingon
 
 	switch hitEntity {
 	case EntityKlingon, EntityCommander, EntitySuperCommander:
@@ -192,6 +200,10 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 		}
 
 		if targetKlingon != nil {
+			hitCommander = targetKlingon
+			if targetKlingon.IsCloaked {
+				events = append(events, DecloakKlingon(g, targetKlingon)...)
+			}
 			if damage >= targetKlingon.Energy {
 				destroyed = true
 				damage = targetKlingon.Energy
@@ -235,6 +247,14 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 		Damage:    damage,
 		Destroyed: destroyed,
 	})
+
+	if g.Rules.KlingonCloak {
+		for _, k := range g.CurrentQuad.Klingons {
+			if k != nil && k != hitCommander && k.IsCommander && !k.IsCloaked {
+				events = append(events, CloakKlingon(g, k)...)
+			}
+		}
+	}
 
 	return events, nil
 }
@@ -312,6 +332,17 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 				Damage:    damage,
 				Destroyed: destroyed,
 			})
+			if k.IsCloaked {
+				events = append(events, DecloakKlingon(g, k)...)
+			}
+		}
+		if g.Rules.KlingonCloak {
+			for _, k := range g.CurrentQuad.Klingons {
+				alloc, ok := a.ManualAllocation[k.ID]
+				if (!ok || alloc <= 0) && k.IsCommander && !k.IsCloaked && k.Energy > 0 {
+					events = append(events, CloakKlingon(g, k)...)
+				}
+			}
 		}
 	} else {
 		numEnemies := float64(len(g.CurrentQuad.Klingons))
@@ -337,6 +368,9 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 				Damage:    damage,
 				Destroyed: destroyed,
 			})
+			if k.IsCloaked {
+				events = append(events, DecloakKlingon(g, k)...)
+			}
 		}
 	}
 
@@ -508,6 +542,14 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 	}
 	events = append([]Event{shipMovedEvt}, events...)
 
+	if toQuad == fromQuad && g.Rules.KlingonCloak {
+		for _, k := range g.CurrentQuad.Klingons {
+			if k != nil && k.IsCommander && !k.IsCloaked {
+				events = append(events, CloakKlingon(g, k)...)
+			}
+		}
+	}
+
 	return events, nil
 }
 
@@ -544,5 +586,29 @@ func (a ActionLRScan) Execute(g *GameState) ([]Event, error) {
 			Degraded:      degraded,
 		},
 	}, nil
+}
+
+// ActionKlingonCounterAttack simulates return fire from a Klingon vessel in the quadrant.
+type ActionKlingonCounterAttack struct {
+	EnemyID int
+	Damage  float64
+}
+
+// Execute applies Klingon counter-attack damage to the Enterprise, decloaking the attacker if cloaked.
+func (a ActionKlingonCounterAttack) Execute(g *GameState) ([]Event, error) {
+	if a.Damage <= 0 {
+		return nil, errors.New("counter attack damage must be positive")
+	}
+	var attacker *Klingon
+	for _, k := range g.CurrentQuad.Klingons {
+		if k.ID == a.EnemyID {
+			attacker = k
+			break
+		}
+	}
+	if attacker == nil {
+		return nil, errors.New("attacker not found in quadrant")
+	}
+	return KlingonCounterAttack(g, attacker, a.Damage), nil
 }
 

@@ -656,6 +656,12 @@ func formatEvent(ev engine.Event) string {
 	case engine.EventKlingonCounterAttack:
 		return fmt.Sprintf("Klingon #%d returned fire: %.0f damage", e.EnemyID, e.Damage)
 
+	case engine.EventKlingonCloakState:
+		if e.Cloaked {
+			return fmt.Sprintf("Klingon #%d engaged cloaking device.", e.KlingonID)
+		}
+		return fmt.Sprintf("Klingon #%d decloaked!", e.KlingonID)
+
 	case engine.EventSubsystemDamaged:
 		return fmt.Sprintf("%s damaged! Repair time: %.1f stardates", deviceString(e.Device), e.RepairTime)
 
