@@ -1,0 +1,254 @@
+package halloffame
+
+import (
+	"path/filepath"
+	"strings"
+	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/x/ansi"
+	"github.com/scottdensmore/super-star-trek/pkg/engine"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
+)
+
+func TestHallOfFame_DimensionsAndTabSwitching(t *testing.T) {
+	th := theme.DefaultTheme()
+	m := New(th, 66, 18, "")
+
+	score := engine.ScoreBreakdown{
+		KlingonsKilled:   5,
+		KlingonPoints:    50,
+		KillRate:         1.0,
+		KillRatePoints:   500,
+		TotalScore:       550,
+		RankBadge:        "[COMM]",
+		RankTitle:        "Commodore",
+		ElapsedStardates: 5.0,
+	}
+	lb := engine.DefaultLeaderboard()
+
+	m.SetState(score, lb, false)
+
+	// Tab 1: Mission Telemetry
+	view1 := m.View()
+	lines1 := strings.Split(view1, "\n")
+	if len(lines1) != 18 {
+		t.Fatalf("expected 18 lines on Tab 1, got %d", len(lines1))
+	}
+	for i, l := range lines1 {
+		if w := ansi.StringWidth(l); w != 66 {
+			t.Errorf("Tab 1 line %d width = %d, expected 66", i, w)
+		}
+	}
+	if !strings.Contains(view1, "MISSION DEBRIEF") || !strings.Contains(view1, "CURRENT NET SCORE") {
+		t.Errorf("expected mission telemetry contents in Tab 1")
+	}
+
+	// Switch to Tab 2 via Tab key
+	tabMsg := tea.KeyMsg{Type: tea.KeyTab}
+	updated, _ := m.Update(tabMsg)
+	mTab2 := updated
+
+	view2 := mTab2.View()
+	lines2 := strings.Split(view2, "\n")
+	if len(lines2) != 18 {
+		t.Fatalf("expected 18 lines on Tab 2, got %d", len(lines2))
+	}
+	for i, l := range lines2 {
+		if w := ansi.StringWidth(l); w != 66 {
+			t.Errorf("Tab 2 line %d width = %d, expected 66", i, w)
+		}
+	}
+	if !strings.Contains(view2, "HALL OF FAME") || !strings.Contains(view2, "James T. Kirk") {
+		t.Errorf("expected leaderboard table in Tab 2")
+	}
+}
+
+func TestHallOfFame_DismissalKeys(t *testing.T) {
+	th := theme.DefaultTheme()
+	m := New(th, 66, 18, "")
+
+	for _, k := range []string{"esc", "q", "h"} {
+		var keyMsg tea.KeyMsg
+		if k == "esc" {
+			keyMsg = tea.KeyMsg{Type: tea.KeyEsc}
+		} else {
+			keyMsg = tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(k)}
+		}
+
+		_, cmd := m.Update(keyMsg)
+		if cmd == nil {
+			t.Fatalf("expected dismissal command on key %s", k)
+		}
+		if _, ok := cmd().(CloseModalMsg); !ok {
+			t.Errorf("expected CloseModalMsg on key %s, got %T", k, cmd())
+		}
+	}
+}
+
+func TestHallOfFame_NameSubmission(t *testing.T) {
+	th := theme.DefaultTheme()
+	tmpDir := t.TempDir()
+	scoreFile := filepath.Join(tmpDir, "highscores.json")
+	m := New(th, 66, 18, scoreFile)
+
+	score := engine.ScoreBreakdown{
+		KlingonsKilled:   10,
+		KlingonPoints:    100,
+		TotalScore:       1500,
+		RankBadge:        "[FADM]",
+		RankTitle:        "Fleet Admiral",
+		ElapsedStardates: 8.0,
+		GameWon:          true,
+	}
+	lb := engine.DefaultLeaderboard()
+	m.SetState(score, lb, true)
+
+	// Verify view on Tab 2 with prompt
+	view := m.View()
+	lines := strings.Split(view, "\n")
+	if len(lines) != 18 {
+		t.Fatalf("expected 18 lines, got %d", len(lines))
+	}
+	for i, l := range lines {
+		if w := ansi.StringWidth(l); w != 66 {
+			t.Errorf("line %d width = %d, expected 66", i, w)
+		}
+	}
+	if !strings.Contains(view, "ENTER CALLSIGN") {
+		t.Errorf("expected CALLSIGN prompt in view")
+	}
+
+	// Type "Picard"
+	for _, r := range "Picard" {
+		var cmd tea.Cmd
+		m, cmd = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
+		_ = cmd
+	}
+
+	// Press Enter to submit
+	enterMsg := tea.KeyMsg{Type: tea.KeyEnter}
+	var submitCmd tea.Cmd
+	m, submitCmd = m.Update(enterMsg)
+	if submitCmd == nil {
+		t.Fatalf("expected submitCmd on enter, got nil")
+	}
+	recordedMsg, ok := submitCmd().(ScoreRecordedMsg)
+	if !ok {
+		t.Fatalf("expected ScoreRecordedMsg, got %T", submitCmd())
+	}
+	if recordedMsg.Entry.CaptainName != "Picard" {
+		t.Errorf("expected captain name 'Picard', got %q", recordedMsg.Entry.CaptainName)
+	}
+	if recordedMsg.Entry.Score != 1500 {
+		t.Errorf("expected score 1500, got %d", recordedMsg.Entry.Score)
+	}
+
+	// Verify leaderboard has Picard
+	if lb.Entries[0].CaptainName != "Picard" {
+		t.Errorf("expected Picard to be #1, got %s", lb.Entries[0].CaptainName)
+	}
+
+	// Verify saved to disk
+	loaded, err := engine.LoadLeaderboard(scoreFile)
+	if err != nil {
+		t.Fatalf("failed to load saved leaderboard: %v", err)
+	}
+	if len(loaded.Entries) == 0 || loaded.Entries[0].CaptainName != "Picard" {
+		t.Errorf("expected Picard in loaded leaderboard from disk")
+	}
+
+	// Subsequent enter should dismiss
+	_, dismissCmd := m.Update(enterMsg)
+	if dismissCmd == nil {
+		t.Fatalf("expected dismiss command on enter after submission")
+	}
+	if _, ok := dismissCmd().(CloseModalMsg); !ok {
+		t.Errorf("expected CloseModalMsg on enter, got %T", dismissCmd())
+	}
+}
+
+func TestHallOfFame_TabKeysAndThemes(t *testing.T) {
+	th := theme.DefaultTheme()
+	m := New(th, 66, 18, "")
+
+	// Test '2' key switches to Tab 2
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("2")})
+	view2 := m.View()
+	if !strings.Contains(view2, "HALL OF FAME") {
+		t.Errorf("expected Tab 2 after pressing '2'")
+	}
+
+	// Test '1' key switches to Tab 1
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("1")})
+	view1 := m.View()
+	if !strings.Contains(view1, "MISSION DEBRIEF") {
+		t.Errorf("expected Tab 1 after pressing '1'")
+	}
+
+	// Test SetTheme
+	m.SetTheme(theme.CrtTheme{})
+	if m.theme.Name() != "crt" {
+		t.Errorf("expected theme to be updated to crt, got %s", m.theme.Name())
+	}
+}
+
+func TestHallOfFame_EdgeCases(t *testing.T) {
+	// Nil theme and zero dimensions fallback
+	m := New(nil, 0, 0, "")
+	if m.width != 66 || m.height != 18 {
+		t.Errorf("expected 66x18 fallback, got %dx%d", m.width, m.height)
+	}
+	m.SetTheme(nil)
+	if m.theme == nil {
+		t.Errorf("expected default theme on nil SetTheme")
+	}
+
+	// Negative score and rank evaluation fallback
+	negScore := engine.ScoreBreakdown{
+		TotalScore: -50,
+	}
+	m.SetState(negScore, nil, false)
+	view := m.View()
+	if !strings.Contains(view, "[DISHONOR]") {
+		t.Errorf("expected [DISHONOR] badge for negative score")
+	}
+
+	// Esc during name entry cancels and emits CloseModalMsg
+	m.SetState(negScore, nil, true)
+	if !m.promptName {
+		t.Errorf("expected promptName to be true")
+	}
+	escMsg := tea.KeyMsg{Type: tea.KeyEsc}
+	updated, cmd := m.Update(escMsg)
+	if updated.promptName {
+		t.Errorf("expected promptName to be false after Esc")
+	}
+	if cmd == nil {
+		t.Fatalf("expected dismissal command on Esc during prompt")
+	}
+	if _, ok := cmd().(CloseModalMsg); !ok {
+		t.Errorf("expected CloseModalMsg on Esc during prompt, got %T", cmd())
+	}
+
+	// Name submission with empty storagePath and empty name fallback
+	highScore := engine.ScoreBreakdown{
+		TotalScore: 2000,
+	}
+	m.SetState(highScore, nil, true)
+	enterMsg := tea.KeyMsg{Type: tea.KeyEnter}
+	updated2, submitCmd := m.Update(enterMsg)
+	if submitCmd == nil {
+		t.Fatalf("expected submitCmd on empty name enter")
+	}
+	rec, ok := submitCmd().(ScoreRecordedMsg)
+	if !ok {
+		t.Fatalf("expected ScoreRecordedMsg, got %T", submitCmd())
+	}
+	if rec.Entry.CaptainName != "Unknown Captain" {
+		t.Errorf("expected 'Unknown Captain' on blank submission, got %q", rec.Entry.CaptainName)
+	}
+	if updated2.promptName {
+		t.Errorf("expected promptName to be false after submission")
+	}
+}
