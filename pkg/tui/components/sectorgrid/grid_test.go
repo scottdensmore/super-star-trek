@@ -4,7 +4,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/anim"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
 
@@ -361,3 +364,90 @@ func TestCloakedKlingonRendering_SensorAnomaly(t *testing.T) {
 		t.Fatalf("expected view to contain '+K+' for uncloaked Klingon:\n%s", viewBoth)
 	}
 }
+
+func TestSectorGrid_AnimOverrides(t *testing.T) {
+	th := theme.DefaultTheme()
+	m := New(th)
+	var quad engine.QuadrantState
+	entSector := engine.Coord{1, 1}
+
+	// 1. Initial view has no overrides
+	viewInit := m.View(&quad, entSector, engine.Coord{})
+	if strings.Contains(viewInit, "***") {
+		t.Fatalf("unexpected explosion glyph in initial grid")
+	}
+
+	// 2. Set animation override at (2, 2)
+	overrides := map[engine.Coord]anim.CellOverride{
+		{2, 2}: {
+			Glyph: "***",
+			Style: lipgloss.NewStyle().Foreground(lipgloss.Color("9")),
+		},
+	}
+	m.SetAnimOverrides(overrides)
+	viewAnim := m.View(&quad, entSector, engine.Coord{})
+
+	if !strings.Contains(viewAnim, "***") {
+		t.Errorf("expected override glyph '***' in animated view")
+	}
+
+	// 3. Verify exact dimensions preserved (comparing against initial grid layout)
+	linesInit := strings.Split(viewInit, "\n")
+	linesAnim := strings.Split(viewAnim, "\n")
+	if len(linesAnim) != len(linesInit) {
+		t.Errorf("expected %d lines, got %d", len(linesInit), len(linesAnim))
+	}
+	for i, l := range linesAnim {
+		w := ansi.StringWidth(l)
+		expectedW := ansi.StringWidth(linesInit[i])
+		if w != expectedW {
+			t.Errorf("line %d width = %d, expected %d", i, w, expectedW)
+		}
+	}
+
+	// 4. Clear overrides restores grid
+	m.ClearAnimOverrides()
+	viewClean := m.View(&quad, entSector, engine.Coord{})
+	if strings.Contains(viewClean, "***") {
+		t.Errorf("expected override removed after ClearAnimOverrides")
+	}
+	if viewClean != viewInit {
+		t.Errorf("expected clean view to exactly match initial view")
+	}
+}
+
+func TestSectorGrid_AnimOverrides_Padding(t *testing.T) {
+	th := theme.DefaultTheme()
+	m := New(th)
+	var quad engine.QuadrantState
+	entSector := engine.Coord{1, 1}
+	viewInit := m.View(&quad, entSector, engine.Coord{})
+	linesInit := strings.Split(viewInit, "\n")
+
+	// Overrides with non-3-rune glyphs (shorter and longer)
+	overrides := map[engine.Coord]anim.CellOverride{
+		{3, 3}: {
+			Glyph: "*", // 1 rune -> padded to 3 runes
+			Style: lipgloss.NewStyle(),
+		},
+		{4, 4}: {
+			Glyph: "OVERLONG", // >3 runes -> truncated to 3 runes
+			Style: lipgloss.NewStyle(),
+		},
+	}
+	m.SetAnimOverrides(overrides)
+	viewAnim := m.View(&quad, entSector, engine.Coord{})
+
+	linesAnim := strings.Split(viewAnim, "\n")
+	if len(linesAnim) != len(linesInit) {
+		t.Errorf("expected %d lines, got %d", len(linesInit), len(linesAnim))
+	}
+	for i, l := range linesAnim {
+		w := ansi.StringWidth(l)
+		expectedW := ansi.StringWidth(linesInit[i])
+		if w != expectedW {
+			t.Errorf("line %d width = %d, expected %d", i, w, expectedW)
+		}
+	}
+}
+

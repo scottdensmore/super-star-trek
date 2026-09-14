@@ -5,12 +5,14 @@ import (
 	"strings"
 
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/anim"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
 
 // Model represents the 8x8 sector grid visualizer component.
 type Model struct {
-	theme theme.Theme
+	theme         theme.Theme
+	animOverrides map[engine.Coord]anim.CellOverride
 }
 
 // New creates a new sector grid Model with the provided theme.
@@ -27,6 +29,16 @@ func (m *Model) SetTheme(th theme.Theme) {
 		th = theme.DefaultTheme()
 	}
 	m.theme = th
+}
+
+// SetAnimOverrides sets temporary cell overrides for animation rendering.
+func (m *Model) SetAnimOverrides(overrides map[engine.Coord]anim.CellOverride) {
+	m.animOverrides = overrides
+}
+
+// ClearAnimOverrides removes all active cell animation overrides.
+func (m *Model) ClearAnimOverrides() {
+	m.animOverrides = nil
 }
 
 // Theme returns the currently active theme.
@@ -85,6 +97,19 @@ func (m Model) View(quad *engine.QuadrantState, entSector engine.Coord, selected
 		b.WriteByte('\n')
 		b.WriteString(styles.GridHeader.Render(fmt.Sprintf("%d ", r)))
 		for c := 1; c <= 8; c++ {
+			coord := engine.Coord{r, c}
+			if ov, ok := m.animOverrides[coord]; ok {
+				glyph := ov.Glyph
+				if len([]rune(glyph)) != 3 {
+					glyph = padCell(glyph)
+				}
+				b.WriteString(ov.Style.Render(glyph))
+				if c < 8 {
+					b.WriteByte(' ')
+				}
+				continue
+			}
+
 			ent := engine.EntityEmpty
 			if quad != nil && r >= 1 && r <= 8 && c >= 1 && c <= 8 {
 				ent = quad.Grid[r][c]
@@ -161,3 +186,21 @@ func entityGlyph(ent engine.EntityType, styles theme.Styles, selected bool, cloa
 		return styles.Empty.Render(" . ")
 	}
 }
+
+// padCell ensures a cell override glyph is strictly clamped and padded to exactly 3 runes.
+func padCell(s string) string {
+	runes := []rune(s)
+	switch len(runes) {
+	case 0:
+		return "   "
+	case 1:
+		return " " + s + " "
+	case 2:
+		return " " + s
+	case 3:
+		return s
+	default:
+		return string(runes[:3])
+	}
+}
+
