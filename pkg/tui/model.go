@@ -7,6 +7,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/galacticchart"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/optionsmodal"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
@@ -25,6 +26,7 @@ const (
 	ModalCommandPalette
 	ModalSaveBrowser
 	ModalGalacticChart
+	ModalDamageSchematic
 )
 
 // Ensure Model satisfies the Bubble Tea Model interface at compile time.
@@ -44,15 +46,16 @@ type Model struct {
 	CommandBar     commandbar.Model
 	SelectedSector engine.Coord
 
-	ActiveModal    ModalType
-	TargetLock     targetlock.Model
-	CommandPalette commandpalette.Model
-	SaveBrowser    savebrowser.Model
-	GalacticChart  galacticchart.Model
-	optionsModal   optionsmodal.Model
-	showOptions    bool
-	LastClickTime  time.Time
-	LastClickCoord engine.Coord
+	ActiveModal     ModalType
+	TargetLock      targetlock.Model
+	CommandPalette  commandpalette.Model
+	SaveBrowser     savebrowser.Model
+	GalacticChart   galacticchart.Model
+	DamageSchematic damageschematic.Model
+	optionsModal    optionsmodal.Model
+	showOptions     bool
+	LastClickTime   time.Time
+	LastClickCoord  engine.Coord
 }
 
 // NewModel initializes and returns a new root TUI Model for the provided GameState and Theme.
@@ -74,20 +77,21 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 	}
 
 	return Model{
-		Game:           g,
-		Theme:          th,
-		Width:          80,
-		Height:         24,
-		Grid:           sectorgrid.New(th),
-		Status:         statuspanel.New(th),
-		CommandBar:     cb,
-		ActiveModal:    ModalNone,
-		TargetLock:     targetlock.New(th),
-		CommandPalette: commandpalette.New(th, 56, 16),
-		SaveBrowser:    savebrowser.New(th, "."),
-		GalacticChart:  galacticchart.New(th, 64, 18),
-		optionsModal:   optionsmodal.New(th, rules),
-		showOptions:    false,
+		Game:            g,
+		Theme:           th,
+		Width:           80,
+		Height:          24,
+		Grid:            sectorgrid.New(th),
+		Status:          statuspanel.New(th),
+		CommandBar:      cb,
+		ActiveModal:     ModalNone,
+		TargetLock:      targetlock.New(th),
+		CommandPalette:  commandpalette.New(th, 56, 16),
+		SaveBrowser:     savebrowser.New(th, "."),
+		GalacticChart:   galacticchart.New(th, 64, 18),
+		DamageSchematic: damageschematic.New(th, 66, 18),
+		optionsModal:    optionsmodal.New(th, rules),
+		showOptions:     false,
 	}
 }
 

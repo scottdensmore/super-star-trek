@@ -10,6 +10,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/galacticchart"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
@@ -120,6 +121,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.CommandBar.Focus()
 		return m, cmd
 
+	case damageschematic.CloseModalMsg:
+		m.ActiveModal = ModalNone
+		cmd := m.CommandBar.Focus()
+		return m, cmd
+
 	case tea.KeyMsg:
 		if m.showOptions {
 			if msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c" {
@@ -155,6 +161,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m = m.applyTheme(m.Theme.Next())
 				return m, nil
 			}
+			if m.ActiveModal == ModalDamageSchematic {
+				switch msg.String() {
+				case "enter", "q", "Q", "d", "D", " ", "space":
+					m.ActiveModal = ModalNone
+					cmd := m.CommandBar.Focus()
+					return m, cmd
+				}
+				var cmd tea.Cmd
+				m.DamageSchematic, cmd = m.DamageSchematic.Update(msg)
+				return m, cmd
+			}
+
 			var cmd tea.Cmd
 			switch m.ActiveModal {
 			case ModalTargetLock:
@@ -199,6 +217,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case msg.Type == tea.KeyCtrlM || msg.String() == "ctrl+m":
 			return m.openGalacticChart()
 
+		case msg.Type == tea.KeyCtrlD || msg.String() == "ctrl+d":
+			if strings.TrimSpace(m.CommandBar.Value()) == "" {
+				return m.openDamageSchematic()
+			}
+
 		case strings.TrimSpace(m.CommandBar.Value()) == "":
 			switch {
 			case msg.String() == "t" || msg.String() == "T":
@@ -225,6 +248,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case msg.String() == "c" || msg.String() == "C" || msg.String() == "m" || msg.String() == "M":
 				return m.openGalacticChart()
+
+			case msg.String() == "d" || msg.String() == "D":
+				return m.openDamageSchematic()
 
 			case msg.String() == "o" || msg.String() == "O":
 				if m.Game != nil {
@@ -368,6 +394,7 @@ func (m Model) applyTheme(th theme.Theme) Model {
 	m.CommandPalette.SetTheme(th)
 	m.SaveBrowser.SetTheme(th)
 	m.GalacticChart.SetTheme(th)
+	m.DamageSchematic.SetTheme(th)
 	m.optionsModal.SetTheme(th)
 	return m
 }
@@ -388,6 +415,35 @@ func (m Model) openGalacticChart() (Model, tea.Cmd) {
 	}
 	m.GalacticChart.SetState(entQuad, chart, discovered, knownBases, compDamaged)
 	m.ActiveModal = ModalGalacticChart
+	m.CommandBar.Blur()
+	return m, nil
+}
+
+// openDamageSchematic synchronizes Enterprise damage state and activates ModalDamageSchematic.
+func (m Model) openDamageSchematic() (Model, tea.Cmd) {
+	cond := "GREEN"
+	isDocked := false
+	repairMult := 1.0
+	var ent engine.EnterpriseState
+	if m.Game != nil {
+		ent = m.Game.Enterprise
+		isDocked = (m.Game.Enterprise.Condition == engine.ConditionDocked)
+		switch m.Game.Enterprise.Condition {
+		case engine.ConditionYellow:
+			cond = "YELLOW"
+		case engine.ConditionRed:
+			cond = "RED"
+		case engine.ConditionDocked:
+			cond = "DOCKED"
+		default:
+			cond = "GREEN"
+		}
+		if m.Game.Rules.RepairMultiplier > 0 {
+			repairMult = m.Game.Rules.RepairMultiplier
+		}
+	}
+	m.DamageSchematic.SetState(ent, cond, isDocked, repairMult)
+	m.ActiveModal = ModalDamageSchematic
 	m.CommandBar.Blur()
 	return m, nil
 }
@@ -437,24 +493,8 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 	case "status":
 		m.CommandBar.AddMessage("Ship status nominal.")
 		return m, nil
-	case "dam", "damages":
-		if m.Game == nil {
-			m.CommandBar.AddMessage("No active game.")
-			return m, nil
-		}
-		var damagedList []string
-		for dev := engine.DeviceID(0); dev < engine.NumDevices; dev++ {
-			turns := m.Game.Enterprise.Devices[dev]
-			if turns > 0 {
-				damagedList = append(damagedList, fmt.Sprintf("%s: %.1f stardates", deviceShortString(dev), turns))
-			}
-		}
-		if len(damagedList) == 0 {
-			m.CommandBar.AddMessage("Damage report: all systems nominal.")
-		} else {
-			m.CommandBar.AddMessage("Damage report: " + strings.Join(damagedList, ", "))
-		}
-		return m, nil
+	case "dam", "damage", "damages":
+		return m.openDamageSchematic()
 	case "chart", "map":
 		return m.openGalacticChart()
 	case "saves", "thaw":
