@@ -203,12 +203,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.ActiveModal == ModalManual {
 				var cmd tea.Cmd
 				m.Manual, cmd = m.Manual.Update(msg)
-				if cmd != nil {
-					if _, ok := cmd().(manual.CloseModalMsg); ok {
-						m.ActiveModal = ModalNone
-						return m, m.CommandBar.Focus()
-					}
-				}
 				return m, cmd
 			}
 			if msg.Type == tea.KeyEsc || msg.String() == "esc" {
@@ -315,7 +309,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.CommandBar.Blur()
 				return m, nil
 
-			case msg.String() == "?" || msg.Type == tea.KeyF1 || msg.String() == "f1":
+			case msg.String() == "?":
 				return m.openManual("")
 			}
 		}

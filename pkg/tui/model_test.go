@@ -2004,7 +2004,10 @@ func TestModel_Manual_OpenAndDismiss(t *testing.T) {
 
 	// 3. Dismiss via 'esc' key
 	escKey := tea.KeyMsg{Type: tea.KeyEsc}
-	updatedAfterEsc, _ := modHelp.Update(escKey)
+	updatedAfterEsc, cmd := modHelp.Update(escKey)
+	if cmd != nil {
+		updatedAfterEsc, _ = updatedAfterEsc.(Model).Update(cmd())
+	}
 	modClosed := updatedAfterEsc.(Model)
 	if modClosed.ActiveModal != ModalNone {
 		t.Errorf("expected ActiveModal = ModalNone after 'esc' dismiss, got %v", modClosed.ActiveModal)

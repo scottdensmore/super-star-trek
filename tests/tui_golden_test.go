@@ -259,5 +259,3 @@ func TestTUIGolden_ModalManual(t *testing.T) {
 	m = updatedCombat.(tui.Model)
 	compareOrUpdate(t, "modal_manual_combat", m.View())
 }
-
-
