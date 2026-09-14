@@ -7,6 +7,16 @@ import (
 // Coord represents a 1-indexed coordinate [row, col] (1..8) within a quadrant or galaxy.
 type Coord [2]int // 1-indexed: [row, col] (1..8)
 
+// Row returns the 1-indexed row coordinate (1..8).
+func (c Coord) Row() int {
+	return c[0]
+}
+
+// Col returns the 1-indexed column coordinate (1..8).
+func (c Coord) Col() int {
+	return c[1]
+}
+
 // Distance calculates Euclidean distance between two coordinates.
 func Distance(c1, c2 Coord) float64 {
 	dr := float64(c1[0] - c2[0])
