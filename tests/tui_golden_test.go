@@ -219,3 +219,27 @@ func TestTUIGolden_SizeWarningDialog(t *testing.T) {
 	m = updated.(tui.Model)
 	compareOrUpdate(t, "size_warning_dialog", m.View())
 }
+
+func TestTUIGolden_ModalHallOfFame(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Metrics.KlingonsKilled = 8
+	g.Metrics.CommandersKilled = 2
+	g.Metrics.Casualties = 12
+
+	m := tui.NewModel(g, theme.ModernTheme{})
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = updated.(tui.Model)
+
+	// Tab 1: Telemetry
+	updatedModal, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("h")})
+	m = updatedModal.(tui.Model)
+	compareOrUpdate(t, "modal_hall_of_fame_telemetry", m.View())
+
+	// Tab 2: Leaderboard
+	updatedTab2, _ := m.Update(tea.KeyMsg{Type: tea.KeyTab})
+	m = updatedTab2.(tui.Model)
+	compareOrUpdate(t, "modal_hall_of_fame_leaderboard", m.View())
+}
+
