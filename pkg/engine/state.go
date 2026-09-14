@@ -92,6 +92,21 @@ type QuadrantState struct {
 	Stars    []Coord
 }
 
+// GameMetrics records cumulative mission counters for scoring.
+type GameMetrics struct {
+	KlingonsKilled        int `json:"klingons_killed"`         // Regular Klingons destroyed (+10 pts)
+	CommandersKilled      int `json:"commanders_killed"`       // Commanders destroyed (+50 pts)
+	SuperCommandersKilled int `json:"super_commanders_killed"` // Super-Commanders destroyed (+200 pts)
+	RomulansKilled        int `json:"romulans_killed"`         // Romulans destroyed (+20 pts)
+	RomulansSurrendered   int `json:"romulans_surrendered"`    // Romulans surrendered (+1 pt)
+	StarbasesDestroyed    int `json:"starbases_destroyed"`     // Friendly starbases lost (-100 pts)
+	StarsDestroyed        int `json:"stars_destroyed"`         // Stars destroyed by torpedoes (-5 pts)
+	PlanetsDestroyed      int `json:"planets_destroyed"`       // Planets destroyed (-10 pts)
+	Casualties            int `json:"casualties"`              // Crew casualties suffered (-1 pt)
+	HelpCalls             int `json:"help_calls"`              // Distress calls to starbase (-45 pts)
+	StarshipsLost         int `json:"starships_lost"`          // Starships lost (-100 pts each)
+}
+
 // GameState holds all mutable state for an active game session.
 type GameState struct {
 	RNG                *PRNG
@@ -108,6 +123,8 @@ type GameState struct {
 	Stardate           float64
 	InitialStardate    float64
 	TimeRemaining      float64
+	Metrics            GameMetrics `json:"metrics"`
+	GameWon            bool        `json:"game_won"`
 }
 
 // NewGame initializes a new game session with deterministic initial state from the given seed.

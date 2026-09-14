@@ -169,3 +169,9 @@ type EventKlingonCloakState struct {
 // EventType returns the type name for EventKlingonCloakState.
 func (e EventKlingonCloakState) EventType() string { return "KlingonCloakState" }
 
+// EventHelpCalled is emitted when Enterprise calls for assistance.
+type EventHelpCalled struct{}
+
+// EventType returns the type name for EventHelpCalled.
+func (e EventHelpCalled) EventType() string { return "HelpCalled" }
+
