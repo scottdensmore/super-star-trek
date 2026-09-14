@@ -243,3 +243,21 @@ func TestTUIGolden_ModalHallOfFame(t *testing.T) {
 	compareOrUpdate(t, "modal_hall_of_fame_leaderboard", m.View())
 }
 
+func TestTUIGolden_ModalManual(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := tui.NewModel(g, theme.ModernTheme{})
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = updated.(tui.Model)
+
+	// Chapter 1: Systems (default)
+	updatedModal, _ := m.Update(tea.KeyMsg{Type: tea.KeyF1})
+	m = updatedModal.(tui.Model)
+	compareOrUpdate(t, "modal_manual_systems", m.View())
+
+	// Chapter 3: Combat (press '3')
+	updatedCombat, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("3")})
+	m = updatedCombat.(tui.Model)
+	compareOrUpdate(t, "modal_manual_combat", m.View())
+}
+
+

@@ -1,0 +1,24 @@
+ ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
+┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
+│  1   2   3   4   5   6   7   8  ││ CONDITION GREEN   LOC: Q[3,4] S[2,6]    │  
+│1  .  [0m┌─ [F1] STARFLEET TECHNICAL MANUAL & LIBRARY COMPUTER ───────────┐0.0 │  
+│2  .  [0m│ CHAPTERS           │ CHAPTER 1: SYSTEMS & SUBSYSTEMS   [01/43] │    │  
+│3  .  [0m│                    │ 1. PRIMARY VESSEL SUBSYSTEMS              │    │  
+│4  .  [0m│▶ [1] SYSTEMS       │ ───────────────────────────────────────── │    │  
+│5  .  [0m│  [2] NAVIGATION    │ The USS Enterprise (NCC-1701) is equipped │    │  
+│6  .  [0m│  [3] COMBAT        │ with 8 vital operating systems:           │    │  
+│7  .  [0m│  [4] SHIELDS       │                                           │    │  
+│8  .  [0m│  [5] STARBASES     │ • [WARP] Warp Engines: Faster-than-light  │    │  
+└──────[0m│  [6] TACTICS       │   propulsion across quadrants & sectors.  │    │  
+       [0m│  [7] SCORING       │ • [SRS] Short-Range Sensors: Scans the    │    │  
+       [0m│  [8] COMMANDS      │   immediate 8x8 sector grid.              │    │  
+       [0m│                    │ • [LRS] Long-Range Sensors: Scans adjacent│    │  
+       [0m│ ────────────────── │   3x3 quadrants for hostiles & bases.     │    │  
+       [0m│ [Tab] Focus Reader │ • [PHA] Phaser Controls: Beam weapons     │────╯  
+╭──────[0m│ [1-8] Direct Jump  │   drawing directly from main energy.      │──────╮
+│      [0m│                    │ • [TOR] Photon Tubes: Torpedo launcher    │      │
+│      [0m│                    │     ▲ [↑/↓, J/K to scroll 14 lines] ▼     │      │
+│ Super[0m└─ [Tab: Pane]  [↑/↓: Move]  [1-8: Jump]  [Esc/Q/F1: Close] ─────┘      │
+│ Type 'help' for commands, 'quit' to exit, F2 to cycle themes                 │
+│ COMMAND>                                                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
