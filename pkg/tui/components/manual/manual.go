@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
@@ -178,6 +179,125 @@ func (m *Model) SelectChapter(topicOrNum string) {
 	if idx, ok := aliases[s]; ok && idx >= 0 && idx < len(m.chapters) {
 		m.selectedIdx = idx
 	}
+}
+
+// CloseModalMsg is emitted when the user requests closing the manual modal.
+type CloseModalMsg struct{}
+
+// Update handles keyboard navigation, scrolling math, chapter jumps, and dismissal.
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	keyMsg, ok := msg.(tea.KeyMsg)
+	if !ok {
+		return m, nil
+	}
+
+	keyStr := keyMsg.String()
+
+	if len(m.chapters) == 0 {
+		return m, nil
+	}
+
+	// Ensure selectedIdx is in valid range
+	if m.selectedIdx < 0 {
+		m.selectedIdx = 0
+	} else if m.selectedIdx >= len(m.chapters) {
+		m.selectedIdx = len(m.chapters) - 1
+	}
+
+	// Ensure scrollOffsets slice has sufficient length
+	if len(m.scrollOffsets) < len(m.chapters) {
+		offsets := make([]int, len(m.chapters))
+		copy(offsets, m.scrollOffsets)
+		m.scrollOffsets = offsets
+	}
+
+	// Global dismissal keys (active in either pane): q, Q, F1, ?
+	if keyMsg.Type == tea.KeyF1 || keyStr == "f1" || keyStr == "F1" || keyStr == "q" || keyStr == "Q" || keyStr == "?" {
+		return m, func() tea.Msg { return CloseModalMsg{} }
+	}
+
+	// Esc in FocusChapters closes the modal
+	if m.focus == FocusChapters && (keyMsg.Type == tea.KeyEsc || keyStr == "esc") {
+		return m, func() tea.Msg { return CloseModalMsg{} }
+	}
+
+	// Global focus toggling: Tab and Shift+Tab
+	if keyMsg.Type == tea.KeyTab || keyStr == "tab" || keyMsg.Type == tea.KeyShiftTab || keyStr == "shift+tab" {
+		if m.focus == FocusChapters {
+			m.focus = FocusContent
+		} else {
+			m.focus = FocusChapters
+		}
+		return m, nil
+	}
+
+	// Global direct numeric chapter jumps: '1' - '8'
+	if len(keyStr) == 1 && keyStr[0] >= '1' && keyStr[0] <= '8' {
+		idx := int(keyStr[0] - '1')
+		if idx >= 0 && idx < len(m.chapters) {
+			m.selectedIdx = idx
+			if idx < len(m.scrollOffsets) {
+				m.scrollOffsets[idx] = 0
+			}
+		}
+		return m, nil
+	}
+
+	if m.focus == FocusChapters {
+		switch {
+		case keyMsg.Type == tea.KeyUp || keyStr == "up" || keyStr == "k":
+			m.selectedIdx = (m.selectedIdx - 1 + len(m.chapters)) % len(m.chapters)
+			return m, nil
+
+		case keyMsg.Type == tea.KeyDown || keyStr == "down" || keyStr == "j":
+			m.selectedIdx = (m.selectedIdx + 1) % len(m.chapters)
+			return m, nil
+
+		case keyMsg.Type == tea.KeyEnter || keyStr == "enter" || keyMsg.Type == tea.KeyRight || keyStr == "right" || keyStr == "l":
+			m.focus = FocusContent
+			return m, nil
+		}
+	} else if m.focus == FocusContent {
+		maxOffset := len(m.chapters[m.selectedIdx].Lines) - 14
+		if maxOffset < 0 {
+			maxOffset = 0
+		}
+
+		switch {
+		case keyMsg.Type == tea.KeyLeft || keyStr == "left" || keyStr == "h" || keyMsg.Type == tea.KeyEsc || keyStr == "esc":
+			m.focus = FocusChapters
+			return m, nil
+
+		case keyMsg.Type == tea.KeyUp || keyStr == "up" || keyStr == "k":
+			m.scrollOffsets[m.selectedIdx]--
+
+		case keyMsg.Type == tea.KeyDown || keyStr == "down" || keyStr == "j":
+			m.scrollOffsets[m.selectedIdx]++
+
+		case keyMsg.Type == tea.KeyPgUp || keyStr == "pgup" || keyStr == "b" || keyMsg.Type == tea.KeyCtrlU || keyStr == "ctrl+u":
+			m.scrollOffsets[m.selectedIdx] -= 10
+
+		case keyMsg.Type == tea.KeyPgDown || keyStr == "pgdown" || keyMsg.Type == tea.KeySpace || keyStr == " " || keyStr == "space" || keyMsg.Type == tea.KeyCtrlD || keyStr == "ctrl+d":
+			m.scrollOffsets[m.selectedIdx] += 10
+
+		case keyMsg.Type == tea.KeyHome || keyStr == "home" || keyStr == "g":
+			m.scrollOffsets[m.selectedIdx] = 0
+
+		case keyMsg.Type == tea.KeyEnd || keyStr == "end" || keyStr == "G":
+			m.scrollOffsets[m.selectedIdx] = maxOffset
+		}
+
+		// Clamp scroll offset within [0, maxOffset]
+		if m.scrollOffsets[m.selectedIdx] < 0 {
+			m.scrollOffsets[m.selectedIdx] = 0
+		}
+		if m.scrollOffsets[m.selectedIdx] > maxOffset {
+			m.scrollOffsets[m.selectedIdx] = maxOffset
+		}
+		return m, nil
+	}
+
+	return m, nil
 }
 
 // View renders the exact 66-column x 18-line wireframe layout.
