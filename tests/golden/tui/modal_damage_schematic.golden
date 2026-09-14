@@ -1,0 +1,24 @@
+ ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
+┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
+│  1   2   3   4   5   6   7   8  ││ CONDITION GREEN   LOC: Q[3,4] S[2,6]    │  
+│1  .  [0m┌─DAMAGE CONTROL SCHEMATIC───────────────────────────────────────┐0.0 │  
+│2  .  [0m│ USS ENTERPRISE  NCC-1701                ALERT STATUS: GREEN    │    │  
+│3  .  [0m│                                                                │    │  
+│4  .  [0m│          .---[SRS: OK]---.              [LRS: OK]              │    │  
+│5  .  [0m│         /    [COMP: 2.1]  \             [PHAS: OK]             │    │  
+│6  .  [0m│        |   (=) Saucer      |===[TUB: 1.4]===.                  │    │  
+│7  .  [0m│         \     Bridge      /                 |                  │    │  
+│8  .  [0m│          '---[SHL: OK]---'                  |                  │    │  
+└──────[0m│                   \                         |                  │    │  
+       [0m│                    \===[DAM: OK]======[WARP: OK]               │    │  
+       [0m│                                                                │    │  
+       [0m│ SUBSYSTEM          STATUS    IN-FLIGHT  DOCKED  EFFECT         │    │  
+       [0m│ Photon Tubes       DAMAGED     1.4 SD    0.3 SD  Tubes Locked  │    │  
+       [0m│ Library Computer   OFFLINE     2.1 SD    0.5 SD  No Chart/Nav  │────╯  
+╭──────[0m│ All other primary and tactical systems operational.            │──────╮
+│      [0m│ Dock at starbase for accelerated 4x damage repair.             │      │
+│      [0m│ [ESC / ENTER / Q / D] Dismiss Damage Schematic                 │      │
+│ Super[0m└────────────────────────────────────────────────────────────────┘      │
+│ Type 'help' for commands, 'quit' to exit, F2 to cycle themes                 │
+│ COMMAND>                                                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯
