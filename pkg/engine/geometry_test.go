@@ -2,6 +2,7 @@ package engine
 
 import (
 	"math"
+	"path/filepath"
 	"testing"
 )
 
@@ -132,3 +133,71 @@ func TestEnumsAndConstants(t *testing.T) {
 		t.Errorf("unexpected GameLength enum values: Short=%d, Long=%d", LengthShort, LengthLong)
 	}
 }
+
+func TestProceduralGalaxyGeneration(t *testing.T) {
+	seed := int64(12345)
+	g := NewGame(seed, SkillGood, LengthMedium)
+
+	totalStars := 0
+	totalStarbases := 0
+	totalKlingons := 0
+
+	for r := 1; r <= 8; r++ {
+		for c := 1; c <= 8; c++ {
+			val := g.GalaxyChart[r][c]
+			k := val / 100
+			b := (val % 100) / 10
+			s := val % 10
+
+			if s < 1 || s > 9 {
+				t.Errorf("quadrant [%d,%d] invalid star count: %d", r, c, s)
+			}
+			totalStars += s
+			totalStarbases += b
+			totalKlingons += k
+
+			if b > 0 && !g.ChartKnownBases[r][c] {
+				t.Errorf("quadrant [%d,%d] has starbase but ChartKnownBases is false", r, c)
+			}
+		}
+	}
+
+	if totalStarbases != g.RemainingStarbases {
+		t.Errorf("expected total starbases %d, got %d", g.RemainingStarbases, totalStarbases)
+	}
+	if totalKlingons != g.RemainingKlingons {
+		t.Errorf("expected total klingons %d, got %d", g.RemainingKlingons, totalKlingons)
+	}
+	if !g.ChartDiscovered[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] {
+		t.Errorf("starting quadrant %v was not marked discovered", g.Enterprise.Quad)
+	}
+}
+
+func TestSaveRoundtripDiscoveryAndBases(t *testing.T) {
+	tempDir := t.TempDir()
+	savePath := filepath.Join(tempDir, "TESTDISC.TRK")
+
+	g := NewGame(12345, SkillGood, LengthMedium)
+	g.ChartDiscovered[2][3] = true
+	g.ChartKnownBases[4][5] = true
+
+	if err := g.Save(savePath); err != nil {
+		t.Fatalf("failed to save: %v", err)
+	}
+
+	loaded, err := LoadGame(savePath)
+	if err != nil {
+		t.Fatalf("failed to load: %v", err)
+	}
+
+	if loaded.GalaxyChart != g.GalaxyChart {
+		t.Errorf("GalaxyChart mismatch after save/load")
+	}
+	if loaded.ChartDiscovered != g.ChartDiscovered {
+		t.Errorf("ChartDiscovered mismatch after save/load")
+	}
+	if loaded.ChartKnownBases != g.ChartKnownBases {
+		t.Errorf("ChartKnownBases mismatch after save/load")
+	}
+}
+

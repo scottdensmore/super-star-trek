@@ -2,6 +2,7 @@ package engine
 
 import (
 	"math"
+	"strings"
 	"testing"
 )
 
@@ -234,4 +235,178 @@ func TestResolveShieldHit(t *testing.T) {
 			t.Fatalf("expected (0, 0) for nil enterprise, got (%f, %f)", shieldDmg, hullDmg)
 		}
 	})
+}
+
+func TestKlingonCloaking_LockLockoutAndDecloak(t *testing.T) {
+	rules := DefaultRulesForProfile(ProfileHardcore)
+	g := NewGameWithOptions(100, SkillGood, LengthMedium, rules)
+	klingon := &Klingon{
+		ID:          1,
+		Sector:      Coord{4, 4},
+		Energy:      400,
+		IsCommander: true,
+		IsCloaked:   true,
+	}
+	g.CurrentQuad.Klingons = []*Klingon{klingon}
+	g.CurrentQuad.Grid[4][4] = EntityCommander
+
+	// Firing direct torpedo at cloaked commander must fail target lock
+	action := ActionTorpedoDirect{TargetSector: Coord{4, 4}}
+	_, err := action.Execute(g)
+	if err == nil || !strings.Contains(err.Error(), "CLOAKED") {
+		t.Errorf("expected error containing 'CLOAKED', got %v", err)
+	}
+
+	// Phaser sweep or direct hit decloaks commander
+	events := DecloakKlingon(g, klingon)
+	if klingon.IsCloaked {
+		t.Errorf("klingon should be decloaked")
+	}
+	if len(events) == 0 {
+		t.Errorf("expected EventKlingonCloakState event")
+	}
+	if ev, ok := events[0].(EventKlingonCloakState); !ok || ev.Cloaked || ev.KlingonID != 1 {
+		t.Errorf("expected EventKlingonCloakState with Cloaked=false, KlingonID=1, got %+v", events[0])
+	}
+	if events[0].EventType() != "KlingonCloakState" {
+		t.Errorf("expected EventType 'KlingonCloakState', got %q", events[0].EventType())
+	}
+
+	// Decloaking already uncloaked Klingon produces nil events
+	events2 := DecloakKlingon(g, klingon)
+	if events2 != nil {
+		t.Errorf("expected nil events when already uncloaked, got %v", events2)
+	}
+
+	// Direct torpedo on uncloaked Klingon should proceed without cloaked vessel error
+	_, err = action.Execute(g)
+	if err != nil && strings.Contains(err.Error(), "CLOAKED") {
+		t.Errorf("unexpected cloaked vessel error when uncloaked: %v", err)
+	}
+}
+
+func TestRepairMultiplier(t *testing.T) {
+	rules := GameRules{RepairMultiplier: 2.0}
+	g := NewGameWithOptions(100, SkillGood, LengthMedium, rules)
+	g.Enterprise.Devices[DeviceWarp] = 4.0
+
+	// Advance turn by 1.0 stardate unit
+	// With 2.0x multiplier, repaired amount is 1.0 / 2.0 = 0.5 units
+	AdvanceRepairs(g, 1.0)
+	expected := 3.5
+	if g.Enterprise.Devices[DeviceWarp] != expected {
+		t.Errorf("expected device warp damage %f, got %f", expected, g.Enterprise.Devices[DeviceWarp])
+	}
+
+	// Repair exceeding remaining damage clamps to zero
+	AdvanceRepairs(g, 10.0)
+	if g.Enterprise.Devices[DeviceWarp] != 0 {
+		t.Errorf("expected device warp damage clamped to 0, got %f", g.Enterprise.Devices[DeviceWarp])
+	}
+
+	// Zero or negative elapsed time does nothing
+	g.Enterprise.Devices[DeviceWarp] = 2.0
+	AdvanceRepairs(g, 0.0)
+	AdvanceRepairs(g, -1.0)
+	if g.Enterprise.Devices[DeviceWarp] != 2.0 {
+		t.Errorf("expected device warp damage unchanged at 2.0, got %f", g.Enterprise.Devices[DeviceWarp])
+	}
+
+	// Zero or negative repair multiplier defaults to 1.0
+	g.Rules.RepairMultiplier = 0
+	AdvanceRepairs(g, 0.5)
+	if g.Enterprise.Devices[DeviceWarp] != 1.5 {
+		t.Errorf("expected device warp damage 1.5 with default multiplier, got %f", g.Enterprise.Devices[DeviceWarp])
+	}
+
+	// nil game state does not crash
+	AdvanceRepairs(nil, 1.0)
+}
+
+func TestCloakKlingon_SuccessAndGuards(t *testing.T) {
+	rules := GameRules{KlingonCloak: true}
+	g := NewGameWithOptions(100, SkillGood, LengthMedium, rules)
+
+	// Commander cloaking succeeds
+	cmd := &Klingon{ID: 1, IsCommander: true, IsCloaked: false}
+	events := CloakKlingon(g, cmd)
+	if !cmd.IsCloaked {
+		t.Fatalf("expected commander to be cloaked")
+	}
+	if len(events) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(events))
+	}
+	ev, ok := events[0].(EventKlingonCloakState)
+	if !ok || !ev.Cloaked || ev.KlingonID != 1 {
+		t.Fatalf("expected EventKlingonCloakState with Cloaked=true, ID=1, got %+v", events[0])
+	}
+
+	// Already cloaked returns nil
+	events2 := CloakKlingon(g, cmd)
+	if events2 != nil {
+		t.Errorf("expected nil events when already cloaked, got %v", events2)
+	}
+
+	// Non-commander cannot cloak
+	regular := &Klingon{ID: 2, IsCommander: false, IsCloaked: false}
+	regEvents := CloakKlingon(g, regular)
+	if regEvents != nil || regular.IsCloaked {
+		t.Errorf("expected regular Klingon not to cloak, got events=%v, cloaked=%v", regEvents, regular.IsCloaked)
+	}
+
+	// Rules disabled prevents cloaking
+	gNoCloak := NewGameWithOptions(100, SkillGood, LengthMedium, GameRules{KlingonCloak: false})
+	cmd2 := &Klingon{ID: 3, IsCommander: true, IsCloaked: false}
+	eventsNoCloak := CloakKlingon(gNoCloak, cmd2)
+	if eventsNoCloak != nil || cmd2.IsCloaked {
+		t.Errorf("expected commander not to cloak when rules disabled, got events=%v, cloaked=%v", eventsNoCloak, cmd2.IsCloaked)
+	}
+
+	// nil Klingon returns nil
+	if evNil := CloakKlingon(g, nil); evNil != nil {
+		t.Errorf("expected nil for nil Klingon, got %v", evNil)
+	}
+}
+
+func TestKlingonCounterAttack_DecloaksAttacker(t *testing.T) {
+	rules := GameRules{KlingonCloak: true}
+	g := NewGameWithOptions(100, SkillGood, LengthMedium, rules)
+	g.Enterprise.Shields = 500
+	g.Enterprise.Energy = 3000
+
+	cmd := &Klingon{
+		ID:          1,
+		IsCommander: true,
+		IsCloaked:   true,
+		Energy:      400,
+	}
+
+	// Attacking decloaks cloaked commander and damages Enterprise
+	events := KlingonCounterAttack(g, cmd, 150)
+	if cmd.IsCloaked {
+		t.Errorf("expected commander to decloak upon counter-attack")
+	}
+	if len(events) != 2 {
+		t.Fatalf("expected 2 events (decloak + counter-attack), got %d: %+v", len(events), events)
+	}
+	cloakEv, ok := events[0].(EventKlingonCloakState)
+	if !ok || cloakEv.Cloaked || cloakEv.KlingonID != 1 {
+		t.Errorf("expected EventKlingonCloakState with Cloaked=false, got %+v", events[0])
+	}
+	atkEv, ok := events[1].(EventKlingonCounterAttack)
+	if !ok || atkEv.EnemyID != 1 || atkEv.Damage != 150 {
+		t.Errorf("expected EventKlingonCounterAttack with EnemyID=1, Damage=150, got %+v", events[1])
+	}
+	if g.Enterprise.Shields != 350 {
+		t.Errorf("expected shields 350, got %f", g.Enterprise.Shields)
+	}
+
+	// Subsequent attack when already uncloaked does not emit decloak event
+	events2 := KlingonCounterAttack(g, cmd, 100)
+	if len(events2) != 1 {
+		t.Fatalf("expected 1 event for uncloaked attack, got %d", len(events2))
+	}
+	if _, ok := events2[0].(EventKlingonCounterAttack); !ok {
+		t.Errorf("expected EventKlingonCounterAttack, got %+v", events2[0])
+	}
 }

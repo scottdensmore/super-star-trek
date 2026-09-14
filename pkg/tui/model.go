@@ -8,6 +8,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/galacticchart"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/optionsmodal"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/sectorgrid"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/statuspanel"
@@ -48,6 +49,8 @@ type Model struct {
 	CommandPalette commandpalette.Model
 	SaveBrowser    savebrowser.Model
 	GalacticChart  galacticchart.Model
+	optionsModal   optionsmodal.Model
+	showOptions    bool
 	LastClickTime  time.Time
 	LastClickCoord engine.Coord
 }
@@ -63,6 +66,13 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 	cb.AddMessage("Super Star Trek — Tactical Display Online")
 	cb.AddMessage("Type 'help' for commands, 'quit' to exit, F2 to cycle themes")
 
+	var rules engine.GameRules
+	if g != nil {
+		rules = g.Rules
+	} else {
+		rules = engine.DefaultRulesForProfile(engine.ProfileNormal)
+	}
+
 	return Model{
 		Game:           g,
 		Theme:          th,
@@ -76,6 +86,8 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 		CommandPalette: commandpalette.New(th, 56, 16),
 		SaveBrowser:    savebrowser.New(th, "."),
 		GalacticChart:  galacticchart.New(th, 64, 18),
+		optionsModal:   optionsmodal.New(th, rules),
+		showOptions:    false,
 	}
 }
 

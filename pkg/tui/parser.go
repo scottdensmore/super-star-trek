@@ -51,6 +51,8 @@ func ParseCommand(input string) ParsedCommand {
 		return parseShields(args)
 	case "doc", "dock":
 		return ParsedCommand{Action: engine.ActionDock{}}
+	case "opts", "options", "settings":
+		return ParsedCommand{Special: "options"}
 	case "theme":
 		if len(args) > 0 {
 			return ParsedCommand{Special: "theme " + strings.ToLower(args[0])}
@@ -165,6 +167,8 @@ func parseHelp(args []string) ParsedCommand {
 		return ParsedCommand{Special: "help chart"}
 	case "saves", "thaw", "freeze":
 		return ParsedCommand{Special: "help saves"}
+	case "opts", "options", "settings":
+		return ParsedCommand{Special: "help options"}
 	default:
 		return ParsedCommand{Special: "help " + topic}
 	}

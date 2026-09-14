@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/scottdensmore/super-star-trek/pkg/engine"
+	"github.com/scottdensmore/super-star-trek/pkg/tui"
 )
 
 func TestIsClassic(t *testing.T) {
@@ -204,6 +206,77 @@ func TestRun_TUIMouseCellMotionOption(t *testing.T) {
 	}
 	if actualStartupOptions&refAlt == 0 {
 		t.Errorf("expected runProgram to be called with tea.WithAltScreen(), options bitmask: %b", actualStartupOptions)
+	}
+}
+
+func TestCLIFlags_DifficultyAndSurveillance(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	var capturedModel tea.Model
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		capturedModel = m
+		return nil
+	}
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--difficulty=nightmare", "--seed=12345"}, strings.NewReader(""), &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("run failed with code %d: %s", code, stderr.String())
+	}
+
+	model, ok := capturedModel.(tui.Model)
+	if !ok {
+		t.Fatalf("captured model is not tui.Model: %T", capturedModel)
+	}
+	if model.Game.Rules.Profile != engine.ProfileNightmare {
+		t.Errorf("expected Nightmare profile, got %v", model.Game.Rules.Profile)
+	}
+	if model.Game.Rules.Surveillance != engine.SurveillanceBlackout {
+		t.Errorf("expected SurveillanceBlackout, got %v", model.Game.Rules.Surveillance)
+	}
+	if !model.Game.Rules.KlingonCloak {
+		t.Errorf("expected KlingonCloak=true for nightmare, got false")
+	}
+	if model.Game.Rules.RepairMultiplier != 2.0 {
+		t.Errorf("expected RepairMultiplier=2.0 for nightmare, got %v", model.Game.Rules.RepairMultiplier)
+	}
+}
+
+func TestCLIFlags_Overrides(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	var capturedModel tea.Model
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		capturedModel = m
+		return nil
+	}
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--difficulty=nightmare", "--surveillance=full", "--klingon-cloak=false", "--repair-multiplier=1.25", "--sensor-degradation=false"}, strings.NewReader(""), &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("run failed with code %d: %s", code, stderr.String())
+	}
+
+	model, ok := capturedModel.(tui.Model)
+	if !ok {
+		t.Fatalf("captured model is not tui.Model: %T", capturedModel)
+	}
+	if model.Game.Rules.Profile != engine.ProfileCustom {
+		t.Errorf("expected Custom profile after overrides, got %v", model.Game.Rules.Profile)
+	}
+	if model.Game.Rules.Surveillance != engine.SurveillanceFull {
+		t.Errorf("expected SurveillanceFull, got %v", model.Game.Rules.Surveillance)
+	}
+	if model.Game.Rules.KlingonCloak != false {
+		t.Errorf("expected KlingonCloak=false, got %v", model.Game.Rules.KlingonCloak)
+	}
+	if model.Game.Rules.RepairMultiplier != 1.25 {
+		t.Errorf("expected RepairMultiplier=1.25, got %v", model.Game.Rules.RepairMultiplier)
+	}
+	if model.Game.Rules.SensorDegradation != false {
+		t.Errorf("expected SensorDegradation=false, got %v", model.Game.Rules.SensorDegradation)
 	}
 }
 

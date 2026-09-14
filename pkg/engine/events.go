@@ -138,3 +138,34 @@ type EventSubsystemRepaired struct {
 
 // EventType returns the type name for EventSubsystemRepaired.
 func (e EventSubsystemRepaired) EventType() string { return "SubsystemRepaired" }
+
+// EventLRScanCompleted is emitted when a long-range scan completes.
+type EventLRScanCompleted struct {
+	CenterQuad    Coord
+	ScannedQuads  []Coord
+	RelayedByBase bool
+	Degraded      bool
+}
+
+// EventType returns the type name for EventLRScanCompleted.
+func (e EventLRScanCompleted) EventType() string { return "LRScanCompleted" }
+
+// EventStarbaseSurveillance is emitted when starbase records update the galactic star chart.
+type EventStarbaseSurveillance struct {
+	StarbaseCoord Coord
+	UpdatedQuads  int
+	Mode          SurveillanceMode
+}
+
+// EventType returns the type name for EventStarbaseSurveillance.
+func (e EventStarbaseSurveillance) EventType() string { return "StarbaseSurveillance" }
+
+// EventKlingonCloakState is emitted when a Klingon vessel cloaks or decloaks.
+type EventKlingonCloakState struct {
+	KlingonID int
+	Cloaked   bool
+}
+
+// EventType returns the type name for EventKlingonCloakState.
+func (e EventKlingonCloakState) EventType() string { return "KlingonCloakState" }
+

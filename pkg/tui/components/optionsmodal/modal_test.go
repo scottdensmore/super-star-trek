@@ -1,0 +1,166 @@
+package optionsmodal
+
+import (
+	"strings"
+	"testing"
+
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/scottdensmore/super-star-trek/pkg/engine"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
+)
+
+func TestOptionsModal_NavigationAndCycle(t *testing.T) {
+	th := theme.DefaultTheme()
+	rules := engine.DefaultRulesForProfile(engine.ProfileNormal)
+	m := New(th, rules)
+
+	// Default row is 0 (Difficulty Preset)
+	if m.SelectedRow != 0 {
+		t.Fatalf("expected initial SelectedRow 0, got %d", m.SelectedRow)
+	}
+
+	// Press right arrow to cycle preset to Hardcore
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.Rules().Profile != engine.ProfileHardcore {
+		t.Errorf("expected ProfileHardcore after cycling right, got %s", m.Rules().Profile)
+	}
+	if m.Rules().Surveillance != engine.SurveillanceLocal {
+		t.Errorf("expected SurveillanceLocal from preset cascade, got %s", m.Rules().Surveillance)
+	}
+
+	// Navigate down to Surveillance row (row 1)
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if m.SelectedRow != 1 {
+		t.Fatalf("expected SelectedRow 1, got %d", m.SelectedRow)
+	}
+
+	// Cycle surveillance to Blackout
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.Rules().Surveillance != engine.SurveillanceBlackout {
+		t.Errorf("expected SurveillanceBlackout, got %s", m.Rules().Surveillance)
+	}
+	// Manual adjustment should tag profile as Custom
+	if m.Rules().Profile != engine.ProfileCustom {
+		t.Errorf("expected ProfileCustom after manual setting change, got %s", m.Rules().Profile)
+	}
+}
+
+func TestOptionsModal_RenderLayout(t *testing.T) {
+	th := theme.DefaultTheme()
+	rules := engine.DefaultRulesForProfile(engine.ProfileNormal)
+	m := New(th, rules)
+
+	view := m.View()
+	expectedStrings := []string{
+		"STARFLEET CONFIGURATION & RULES",
+		"Difficulty Profile",
+		"Starbase Surveillance",
+		"Sensor Degradation",
+		"Repair Multiplier",
+		"Klingon Cloaking",
+	}
+	for _, exp := range expectedStrings {
+		if !strings.Contains(view, exp) {
+			t.Errorf("expected modal view to contain %q, view:\n%s", exp, view)
+		}
+	}
+}
+
+func TestOptionsModal_CloseAndActive(t *testing.T) {
+	th := theme.DefaultTheme()
+	rules := engine.DefaultRulesForProfile(engine.ProfileNormal)
+	m := New(th, rules)
+
+	if !m.Active() {
+		t.Errorf("expected modal to be active initially")
+	}
+	if m.Closed {
+		t.Errorf("expected modal not to be closed initially")
+	}
+
+	// Press esc to close
+	mEsc, _ := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	if !mEsc.Closed || mEsc.Active() {
+		t.Errorf("expected modal to be closed after Esc, got Closed=%v, Active=%v", mEsc.Closed, mEsc.Active())
+	}
+
+	// Press 'q' to close
+	mQ, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	if !mQ.Closed || mQ.Active() {
+		t.Errorf("expected modal to be closed after 'q', got Closed=%v, Active=%v", mQ.Closed, mQ.Active())
+	}
+
+	// Navigate to RowDone and press Enter
+	mDone := m
+	mDone.SelectedRow = RowDone
+	mDone, _ = mDone.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if !mDone.Closed || mDone.Active() {
+		t.Errorf("expected modal to be closed after Enter on RowDone, got Closed=%v, Active=%v", mDone.Closed, mDone.Active())
+	}
+}
+
+func TestOptionsModal_CycleAllOptions(t *testing.T) {
+	th := theme.DefaultTheme()
+	rules := engine.DefaultRulesForProfile(engine.ProfileNormal)
+	m := New(th, rules)
+
+	// Sensor degradation toggle (RowSensorDegradation)
+	m.SelectedRow = RowSensorDegradation
+	origSensor := m.Rules().SensorDegradation
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.Rules().SensorDegradation == origSensor {
+		t.Errorf("expected SensorDegradation to toggle")
+	}
+	if m.Rules().Profile != engine.ProfileCustom {
+		t.Errorf("expected ProfileCustom after toggling SensorDegradation")
+	}
+
+	// Repair multiplier cycle (RowRepairMultiplier)
+	m.SelectedRow = RowRepairMultiplier
+	origRepair := m.Rules().RepairMultiplier
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.Rules().RepairMultiplier == origRepair {
+		t.Errorf("expected RepairMultiplier to change")
+	}
+
+	// Klingon cloak toggle (RowKlingonCloak)
+	m.SelectedRow = RowKlingonCloak
+	origCloak := m.Rules().KlingonCloak
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.Rules().KlingonCloak == origCloak {
+		t.Errorf("expected KlingonCloak to toggle")
+	}
+
+	// Time margin cycle (RowTimeMargin)
+	m.SelectedRow = RowTimeMargin
+	origTime := m.Rules().TimeMargin
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.Rules().TimeMargin == origTime {
+		t.Errorf("expected TimeMargin to change")
+	}
+
+	// SetRules
+	customRules := engine.DefaultRulesForProfile(engine.ProfileCasual)
+	m.SetRules(customRules)
+	if m.Rules().Profile != engine.ProfileCasual {
+		t.Errorf("expected ProfileCasual after SetRules, got %s", m.Rules().Profile)
+	}
+}
+
+func TestOptionsModal_NavigationWrapping(t *testing.T) {
+	th := theme.DefaultTheme()
+	rules := engine.DefaultRulesForProfile(engine.ProfileNormal)
+	m := New(th, rules)
+
+	// Up from 0 should wrap to NumRows - 1 (RowDone)
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if m.SelectedRow != RowDone {
+		t.Errorf("expected RowDone after wrapping up from 0, got %d", m.SelectedRow)
+	}
+
+	// Down from RowDone should wrap to 0 (RowProfile)
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if m.SelectedRow != RowProfile {
+		t.Errorf("expected RowProfile after wrapping down from RowDone, got %d", m.SelectedRow)
+	}
+}

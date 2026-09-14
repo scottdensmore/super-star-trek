@@ -70,6 +70,9 @@ func LoadGame(path string) (*GameState, error) {
 	if err := json.Unmarshal(data, &state); err != nil {
 		return nil, err
 	}
+	if state.Rules.Profile == "" {
+		state.Rules = DefaultRulesForProfile(ProfileNormal)
+	}
 	state.RNG = NewPRNG(int64(state.Stardate))
 	return &state, nil
 }

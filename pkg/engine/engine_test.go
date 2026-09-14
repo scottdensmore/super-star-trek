@@ -844,6 +844,8 @@ func TestEventTypes(t *testing.T) {
 		EventKlingonCounterAttack{EnemyID: 1, Damage: 50},
 		EventSubsystemDamaged{Device: DeviceWarp, RepairTime: 3.5},
 		EventSubsystemRepaired{Device: DeviceWarp},
+		EventLRScanCompleted{},
+		EventStarbaseSurveillance{},
 	}
 
 	expectedTypes := []string{
@@ -860,6 +862,8 @@ func TestEventTypes(t *testing.T) {
 		"KlingonCounterAttack",
 		"SubsystemDamaged",
 		"SubsystemRepaired",
+		"LRScanCompleted",
+		"StarbaseSurveillance",
 	}
 
 	for i, e := range events {
@@ -868,3 +872,123 @@ func TestEventTypes(t *testing.T) {
 		}
 	}
 }
+
+func TestActionLRScan_Operational(t *testing.T) {
+	g := NewGame(12345, SkillGood, LengthMedium)
+	g.Enterprise.Quad = Coord{3, 3}
+	g.Enterprise.Devices[DeviceLRSensors] = 0
+
+	events, err := g.Dispatch(ActionLRScan{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(events) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(events))
+	}
+	scanEvt, ok := events[0].(EventLRScanCompleted)
+	if !ok {
+		t.Fatalf("expected EventLRScanCompleted, got %T", events[0])
+	}
+	if scanEvt.RelayedByBase {
+		t.Errorf("expected RelayedByBase false")
+	}
+	if len(scanEvt.ScannedQuads) != 9 {
+		t.Errorf("expected 9 scanned quads, got %d", len(scanEvt.ScannedQuads))
+	}
+	for dr := -1; dr <= 1; dr++ {
+		for dc := -1; dc <= 1; dc++ {
+			if !g.ChartDiscovered[3+dr][3+dc] {
+				t.Errorf("quad [%d,%d] not marked discovered", 3+dr, 3+dc)
+			}
+		}
+	}
+}
+
+func TestActionLRScan_DamagedUndocked(t *testing.T) {
+	g := NewGame(12345, SkillGood, LengthMedium)
+	g.Enterprise.Devices[DeviceLRSensors] = 2.5
+	g.Enterprise.Condition = ConditionGreen
+
+	_, err := g.Dispatch(ActionLRScan{})
+	if err == nil {
+		t.Fatalf("expected error when LRS damaged and undocked, got nil")
+	}
+}
+
+func TestActionLRScan_DamagedDocked(t *testing.T) {
+	g := NewGame(12345, SkillGood, LengthMedium)
+	g.Enterprise.Devices[DeviceLRSensors] = 2.5
+	g.Enterprise.Condition = ConditionDocked
+
+	events, err := g.Dispatch(ActionLRScan{})
+	if err != nil {
+		t.Fatalf("unexpected error when docked with damaged LRS: %v", err)
+	}
+	scanEvt := events[0].(EventLRScanCompleted)
+	if !scanEvt.RelayedByBase {
+		t.Errorf("expected RelayedByBase true")
+	}
+}
+
+func TestActionLRScan_CornerQuadrant(t *testing.T) {
+	g := NewGame(12345, SkillGood, LengthMedium)
+	g.Enterprise.Quad = Coord{1, 1}
+	g.Enterprise.Devices[DeviceLRSensors] = 0
+
+	events, err := g.Dispatch(ActionLRScan{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	scanEvt, ok := events[0].(EventLRScanCompleted)
+	if !ok {
+		t.Fatalf("expected EventLRScanCompleted, got %T", events[0])
+	}
+	if len(scanEvt.ScannedQuads) != 4 {
+		t.Errorf("expected 4 scanned quads for corner quadrant [1,1], got %d", len(scanEvt.ScannedQuads))
+	}
+	expected := []Coord{{1, 1}, {1, 2}, {2, 1}, {2, 2}}
+	for _, c := range expected {
+		if !g.ChartDiscovered[c[0]][c[1]] {
+			t.Errorf("quad [%d,%d] not marked discovered", c[0], c[1])
+		}
+	}
+}
+
+func TestActionDock_Surveillance(t *testing.T) {
+	g := NewGame(12345, SkillGood, LengthMedium)
+	sbCoord := Coord{4, 4}
+	g.CurrentQuad.Starbase = &sbCoord
+	g.CurrentQuad.Grid[4][4] = EntityStarbase
+	g.Enterprise.Sector = Coord{4, 5}
+	g.Enterprise.Condition = ConditionGreen
+
+	// Set a starbase at quad [5, 5]
+	g.GalaxyChart[5][5] = 15 // 1 starbase, 5 stars
+
+	events, err := g.Dispatch(ActionDock{})
+	if err != nil {
+		t.Fatalf("unexpected error docking: %v", err)
+	}
+
+	foundSurveillance := false
+	for _, ev := range events {
+		if surv, ok := ev.(EventStarbaseSurveillance); ok {
+			foundSurveillance = true
+			if surv.StarbaseCoord != sbCoord {
+				t.Errorf("expected starbase coord %v, got %v", sbCoord, surv.StarbaseCoord)
+			}
+		}
+	}
+	if !foundSurveillance {
+		t.Errorf("EventStarbaseSurveillance was not emitted")
+	}
+	// Verify 3x3 perimeter around starbase [5, 5] was discovered
+	for dr := -1; dr <= 1; dr++ {
+		for dc := -1; dc <= 1; dc++ {
+			if !g.ChartDiscovered[5+dr][5+dc] {
+				t.Errorf("perimeter quad [%d,%d] of starbase [5,5] not marked discovered", 5+dr, 5+dc)
+			}
+		}
+	}
+}
+

@@ -109,12 +109,39 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.CommandBar.Focus()
 		return m, cmd
 
+	case galacticchart.WarpBlockedMsg:
+		m.ActiveModal = ModalNone
+		cmd := m.CommandBar.Focus()
+		m.CommandBar.AddMessage(msg.Reason)
+		return m, cmd
+
 	case galacticchart.CloseChartMsg:
 		m.ActiveModal = ModalNone
 		cmd := m.CommandBar.Focus()
 		return m, cmd
 
 	case tea.KeyMsg:
+		if m.showOptions {
+			if msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c" {
+				return m, tea.Quit
+			}
+			if msg.Type == tea.KeyF2 || msg.String() == "f2" {
+				m = m.applyTheme(m.Theme.Next())
+				return m, nil
+			}
+			var cmd tea.Cmd
+			m.optionsModal, cmd = m.optionsModal.Update(msg)
+			if m.optionsModal.Closed {
+				m.showOptions = false
+				if m.Game != nil {
+					m.Game.Rules = m.optionsModal.Rules()
+				}
+				m.optionsModal.Closed = false
+				return m, m.CommandBar.Focus()
+			}
+			return m, cmd
+		}
+
 		if m.ActiveModal != ModalNone {
 			if msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c" {
 				return m, tea.Quit
@@ -198,6 +225,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case msg.String() == "c" || msg.String() == "C" || msg.String() == "m" || msg.String() == "M":
 				return m.openGalacticChart()
+
+			case msg.String() == "o" || msg.String() == "O":
+				if m.Game != nil {
+					m.optionsModal.SetRules(m.Game.Rules)
+				}
+				m.showOptions = true
+				m.CommandBar.Blur()
+				return m, nil
 			}
 		}
 
@@ -206,7 +241,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case tea.MouseMsg:
-		if m.ActiveModal != ModalNone {
+		if m.ActiveModal != ModalNone || m.showOptions {
 			return m, nil
 		}
 		isLeftClick := msg.Button == tea.MouseButtonLeft || msg.Type == tea.MouseLeft
@@ -333,6 +368,7 @@ func (m Model) applyTheme(th theme.Theme) Model {
 	m.CommandPalette.SetTheme(th)
 	m.SaveBrowser.SetTheme(th)
 	m.GalacticChart.SetTheme(th)
+	m.optionsModal.SetTheme(th)
 	return m
 }
 
@@ -341,12 +377,16 @@ func (m Model) openGalacticChart() (Model, tea.Cmd) {
 	var entQuad engine.Coord = engine.Coord{1, 1}
 	var chart [9][9]int
 	var discovered [9][9]bool
+	var knownBases [9][9]bool
+	var compDamaged bool
 	if m.Game != nil {
 		entQuad = m.Game.Enterprise.Quad
 		chart = m.Game.GalaxyChart
 		discovered = m.Game.ChartDiscovered
+		knownBases = m.Game.ChartKnownBases
+		compDamaged = m.Game.Enterprise.Devices[engine.DeviceComputer] > 0
 	}
-	m.GalacticChart.SetState(entQuad, chart, discovered)
+	m.GalacticChart.SetState(entQuad, chart, discovered, knownBases, compDamaged)
 	m.ActiveModal = ModalGalacticChart
 	m.CommandBar.Blur()
 	return m, nil
@@ -375,19 +415,58 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		m.CommandBar.AddMessage("Short-range scan updated.")
 		return m, nil
 	case "lrscan":
-		m.CommandBar.AddMessage("Long-range scan complete.")
+		if m.Game == nil {
+			m.CommandBar.AddMessage("No active game.")
+			return m, nil
+		}
+		events, err := m.Game.Dispatch(engine.ActionLRScan{})
+		if err != nil {
+			m.CommandBar.AddMessage(fmt.Sprintf("LONG-RANGE SENSORS DAMAGED. %v", err))
+			return m, nil
+		}
+		for _, ev := range events {
+			if scanEvt, ok := ev.(engine.EventLRScanCompleted); ok {
+				if scanEvt.RelayedByBase {
+					m.CommandBar.AddMessage("Starbase relay: Long-range scan complete. Star chart updated.")
+				} else {
+					m.CommandBar.AddMessage("Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.")
+				}
+			}
+		}
 		return m, nil
 	case "status":
 		m.CommandBar.AddMessage("Ship status nominal.")
 		return m, nil
-	case "dam":
-		m.CommandBar.AddMessage("Damage report: all systems operational.")
+	case "dam", "damages":
+		if m.Game == nil {
+			m.CommandBar.AddMessage("No active game.")
+			return m, nil
+		}
+		var damagedList []string
+		for dev := engine.DeviceID(0); dev < engine.NumDevices; dev++ {
+			turns := m.Game.Enterprise.Devices[dev]
+			if turns > 0 {
+				damagedList = append(damagedList, fmt.Sprintf("%s: %.1f stardates", deviceShortString(dev), turns))
+			}
+		}
+		if len(damagedList) == 0 {
+			m.CommandBar.AddMessage("Damage report: all systems nominal.")
+		} else {
+			m.CommandBar.AddMessage("Damage report: " + strings.Join(damagedList, ", "))
+		}
 		return m, nil
 	case "chart", "map":
 		return m.openGalacticChart()
 	case "saves", "thaw":
 		_ = m.SaveBrowser.Refresh()
 		m.ActiveModal = ModalSaveBrowser
+		m.CommandBar.Blur()
+		return m, nil
+	case "opts", "options", "settings":
+		if m.Game != nil {
+			m.optionsModal.SetRules(m.Game.Rules)
+		}
+		m.showOptions = true
 		m.CommandBar.Blur()
 		return m, nil
 	}
@@ -418,10 +497,18 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		case parsed.Special == "quit":
 			return m, tea.Quit
 
+		case parsed.Special == "options":
+			if m.Game != nil {
+				m.optionsModal.SetRules(m.Game.Rules)
+			}
+			m.showOptions = true
+			m.CommandBar.Blur()
+			return m, nil
+
 		case parsed.Special == "help":
-			m.CommandBar.AddMessage("COMMANDS: nav | tor | pha | she | doc | chart | saves | theme")
+			m.CommandBar.AddMessage("COMMANDS: nav | tor | pha | she | doc | chart | saves | theme | options")
 			m.CommandBar.AddMessage("Type 'help <command>' (e.g. 'help nav') for detailed guide.")
-			m.CommandBar.AddMessage("HOTKEYS: [Ctrl+P] Spock Palette | [Ctrl+M] Star Chart | [Ctrl+O] Saves | [T] Target Lock | [F2] Theme")
+			m.CommandBar.AddMessage("HOTKEYS: [Ctrl+P] Spock Palette | [Ctrl+M] Star Chart | [Ctrl+O] Saves | [O] Options | [T] Target Lock | [F2] Theme")
 			return m, nil
 
 		case parsed.Special == "help nav":
@@ -468,9 +555,14 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			m.CommandBar.AddMessage("       Direct load: thaw <filename> | Freeze/save: freeze <filename>")
 			return m, nil
 
+		case parsed.Special == "help options":
+			m.CommandBar.AddMessage("OPTIONS: Configure game difficulty & realism settings (hotkey [O] or 'options')")
+			m.CommandBar.AddMessage("         Adjust difficulty profile, surveillance mode, sensors, repair, and cloaking.")
+			return m, nil
+
 		case strings.HasPrefix(parsed.Special, "help "):
 			cmdName := strings.TrimPrefix(parsed.Special, "help ")
-			m.CommandBar.AddMessage(fmt.Sprintf("No detailed help for %q. Available: help nav, help tor, help pha, help she, help doc, help chart, help saves", cmdName))
+			m.CommandBar.AddMessage(fmt.Sprintf("No detailed help for %q. Available: help nav, help tor, help pha, help she, help doc, help chart, help saves, help options", cmdName))
 			return m, nil
 
 		case parsed.Special == "theme":
@@ -543,6 +635,15 @@ func formatEvent(ev engine.Event) string {
 	case engine.EventDocked:
 		return fmt.Sprintf("Docked with Starbase at [%d,%d]. Systems refueled.", e.Starbase[0], e.Starbase[1])
 
+	case engine.EventStarbaseSurveillance:
+		return fmt.Sprintf("Starbase at [%d,%d] downloaded surveillance. Updated %d quadrants.", e.StarbaseCoord[0], e.StarbaseCoord[1], e.UpdatedQuads)
+
+	case engine.EventLRScanCompleted:
+		if e.RelayedByBase {
+			return "Starbase relay: Long-range scan complete. Star chart updated."
+		}
+		return "Long-range scan complete. Star chart updated for 3x3 surrounding quadrants."
+
 	case engine.EventShipMoved:
 		return fmt.Sprintf("Ship arrived at Quadrant [%d,%d], Sector [%d,%d]", e.ToQuad[0], e.ToQuad[1], e.ToSector[0], e.ToSector[1])
 
@@ -554,6 +655,12 @@ func formatEvent(ev engine.Event) string {
 
 	case engine.EventKlingonCounterAttack:
 		return fmt.Sprintf("Klingon #%d returned fire: %.0f damage", e.EnemyID, e.Damage)
+
+	case engine.EventKlingonCloakState:
+		if e.Cloaked {
+			return fmt.Sprintf("Klingon #%d engaged cloaking device.", e.KlingonID)
+		}
+		return fmt.Sprintf("Klingon #%d decloaked!", e.KlingonID)
 
 	case engine.EventSubsystemDamaged:
 		return fmt.Sprintf("%s damaged! Repair time: %.1f stardates", deviceString(e.Device), e.RepairTime)
@@ -609,6 +716,29 @@ func deviceString(d engine.DeviceID) string {
 		return "Phasers"
 	case engine.DevicePhotonTubes:
 		return "Photon Tubes"
+	case engine.DeviceDamageControl:
+		return "Damage Control"
+	case engine.DeviceShields:
+		return "Shields"
+	case engine.DeviceComputer:
+		return "Computer"
+	default:
+		return "Subsystem"
+	}
+}
+
+func deviceShortString(d engine.DeviceID) string {
+	switch d {
+	case engine.DeviceWarp:
+		return "Warp"
+	case engine.DeviceSRSensors:
+		return "SRS"
+	case engine.DeviceLRSensors:
+		return "LRS"
+	case engine.DevicePhasers:
+		return "Phasers"
+	case engine.DevicePhotonTubes:
+		return "Tubes"
 	case engine.DeviceDamageControl:
 		return "Damage Control"
 	case engine.DeviceShields:

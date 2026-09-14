@@ -1217,6 +1217,219 @@ func TestModel_HelpMapCommand(t *testing.T) {
 	}
 }
 
+func TestModel_LRScanCommand(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Devices[engine.DeviceLRSensors] = 0
+	for r := 1; r <= 8; r++ {
+		for c := 1; c <= 8; c++ {
+			g.ChartDiscovered[r][c] = false
+		}
+	}
+	m := NewModel(g, theme.ModernTheme{})
 
+	updated, _ := m.handleCommand("lrscan")
+	mod := updated.(Model)
 
+	messages := mod.CommandBar.Messages()
+	if len(messages) == 0 || !strings.Contains(messages[len(messages)-1], "Long-range scan complete") {
+		t.Errorf("expected completion message for lrscan, got: %v", messages)
+	}
+	if !g.ChartDiscovered[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] {
+		t.Errorf("expected enterprise quad to be discovered after lrscan")
+	}
 
+	// Damaged LRS
+	g.Enterprise.Devices[engine.DeviceLRSensors] = 2.0
+	updatedDamaged, _ := mod.handleCommand("lrscan")
+	modDamaged := updatedDamaged.(Model)
+	messagesDamaged := modDamaged.CommandBar.Messages()
+	if len(messagesDamaged) == 0 || !strings.Contains(messagesDamaged[len(messagesDamaged)-1], "LONG-RANGE SENSORS DAMAGED") {
+		t.Errorf("expected damaged warning message for lrscan, got: %v", messagesDamaged)
+	}
+}
+
+func TestModel_DockSurveillance(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	sbCoord := engine.Coord{4, 4}
+	g.CurrentQuad.Starbase = &sbCoord
+	g.CurrentQuad.Grid[4][4] = engine.EntityStarbase
+	g.Enterprise.Sector = engine.Coord{4, 5}
+	g.Enterprise.Condition = engine.ConditionGreen
+
+	m := NewModel(g, theme.ModernTheme{})
+	updated, _ := m.handleCommand("dock")
+	mod := updated.(Model)
+
+	messages := mod.CommandBar.Messages()
+	foundSurveillance := false
+	for _, msg := range messages {
+		if strings.Contains(msg, "surveillance") {
+			foundSurveillance = true
+			break
+		}
+	}
+	if !foundSurveillance {
+		t.Errorf("expected docking to log starbase surveillance message, got: %v", messages)
+	}
+}
+
+func TestModel_DynamicDamageReport(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Devices[engine.DeviceLRSensors] = 3.2
+	g.Enterprise.Devices[engine.DeviceComputer] = 1.5
+
+	m := NewModel(g, theme.ModernTheme{})
+	updated, _ := m.handleCommand("dam")
+	mod := updated.(Model)
+
+	messages := mod.CommandBar.Messages()
+	lastMsg := messages[len(messages)-1]
+	if !strings.Contains(lastMsg, "LRS") || !strings.Contains(lastMsg, "Computer") {
+		t.Errorf("expected damage report to list damaged devices, got: %s", lastMsg)
+	}
+}
+
+func TestModel_GalacticChart_WarpBlocked(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Devices[engine.DeviceComputer] = 2.0 // Computer damaged!
+	m := NewModel(g, theme.ModernTheme{})
+
+	// Open chart
+	m, _ = m.openGalacticChart()
+	if m.ActiveModal != ModalGalacticChart {
+		t.Fatalf("expected ModalGalacticChart")
+	}
+
+	// Send WarpBlockedMsg
+	updated, _ := m.Update(galacticchart.WarpBlockedMsg{
+		Reason: "COMPUTER DAMAGED, USE A POCKET CALCULATOR.",
+	})
+	mod := updated.(Model)
+
+	if mod.ActiveModal != ModalNone {
+		t.Errorf("expected modal to close on WarpBlockedMsg")
+	}
+	messages := mod.CommandBar.Messages()
+	if len(messages) == 0 || !strings.Contains(messages[len(messages)-1], "COMPUTER DAMAGED") {
+		t.Errorf("expected pocket calculator warning message, got: %v", messages)
+	}
+}
+
+func TestModel_OptionsModal_Hotkey(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Press 'o' when command bar is empty
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
+	m = updated.(Model)
+	if !m.showOptions {
+		t.Fatalf("expected showOptions to be true after pressing 'o'")
+	}
+	if m.CommandBar.Focused() {
+		t.Fatalf("expected CommandBar to be blurred")
+	}
+	if m.optionsModal.Rules().Profile != g.Rules.Profile {
+		t.Fatalf("expected optionsModal rules synced to game rules")
+	}
+
+	// Close with esc
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m = updated.(Model)
+	if m.showOptions {
+		t.Fatalf("expected showOptions to be false after Esc")
+	}
+	if !m.CommandBar.Focused() {
+		t.Fatalf("expected CommandBar focused after closing options")
+	}
+
+	// Press 'O'
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'O'}})
+	m = updated.(Model)
+	if !m.showOptions {
+		t.Fatalf("expected showOptions to be true after pressing 'O'")
+	}
+}
+
+func TestModel_OptionsModal_Commands(t *testing.T) {
+	for _, cmdStr := range []string{"opts", "options", "settings"} {
+		t.Run(cmdStr, func(t *testing.T) {
+			g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+			m := NewModel(g, theme.DefaultTheme())
+
+			updated, _ := m.Update(commandbar.CommandSubmittedMsg{Text: cmdStr})
+			m = updated.(Model)
+			if !m.showOptions {
+				t.Fatalf("expected showOptions to be true after submitting %q", cmdStr)
+			}
+			if m.CommandBar.Focused() {
+				t.Fatalf("expected CommandBar to be blurred")
+			}
+		})
+	}
+}
+
+func TestModel_OptionsModal_CycleAndSyncRules(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Open options modal
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
+	m = updated.(Model)
+
+	// RowProfile is active. Press right arrow to cycle profile (normal -> hardcore)
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	m = updated.(Model)
+	if m.optionsModal.Rules().Profile != engine.ProfileHardcore {
+		t.Fatalf("expected optionsModal profile to be hardcore, got %v", m.optionsModal.Rules().Profile)
+	}
+
+	// Close with 'q'
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	m = updated.(Model)
+	if m.showOptions {
+		t.Fatalf("expected showOptions to be false after 'q'")
+	}
+	// Game rules must now reflect hardcore!
+	if m.Game.Rules.Profile != engine.ProfileHardcore {
+		t.Fatalf("expected Game.Rules to be synced to hardcore, got %v", m.Game.Rules.Profile)
+	}
+	if !m.CommandBar.Focused() {
+		t.Fatalf("expected CommandBar focused after close")
+	}
+	if m.optionsModal.Closed {
+		t.Fatalf("expected optionsModal.Closed to be reset to false")
+	}
+}
+
+func TestModel_OptionsModal_ViewRendering(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	m.showOptions = true
+	view := m.View()
+	if !strings.Contains(view, "STARFLEET CONFIGURATION & RULES") {
+		t.Fatalf("expected view to contain modal title, got:\n%s", view)
+	}
+	if !strings.Contains(view, "Difficulty Profile") {
+		t.Fatalf("expected view to contain 'Difficulty Profile', got:\n%s", view)
+	}
+	if !strings.Contains(view, "NORMAL") {
+		t.Fatalf("expected view to contain 'NORMAL', got:\n%s", view)
+	}
+}
+
+func TestModel_OptionsModal_ThemePropagation(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	m.showOptions = true
+	// F2 while showOptions is true cycles theme
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyF2})
+	m = updated.(Model)
+	if m.Theme.Name() != "lcars" {
+		t.Fatalf("expected theme lcars, got %s", m.Theme.Name())
+	}
+	if m.optionsModal.Theme.Name() != "lcars" {
+		t.Fatalf("expected optionsModal theme lcars, got %s", m.optionsModal.Theme.Name())
+	}
+}

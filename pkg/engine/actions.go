@@ -69,9 +69,76 @@ func (a ActionDock) Execute(g *GameState) ([]Event, error) {
 		g.Enterprise.Devices[i] = 0
 	}
 
+	// Starbase surveillance download
+	survMode := g.Rules.Surveillance
+	if survMode == "" {
+		survMode = SurveillanceClassic
+	}
+
+	updatedQuads := 0
+	switch survMode {
+	case SurveillanceFull:
+		for r := 1; r <= 8; r++ {
+			for c := 1; c <= 8; c++ {
+				if (g.GalaxyChart[r][c]%100)/10 > 0 {
+					g.ChartKnownBases[r][c] = true
+				}
+				if !g.ChartDiscovered[r][c] {
+					g.ChartDiscovered[r][c] = true
+					updatedQuads++
+				}
+			}
+		}
+	case SurveillanceLocal:
+		eq := g.Enterprise.Quad
+		g.ChartKnownBases[eq[0]][eq[1]] = true
+		for dr := -1; dr <= 1; dr++ {
+			for dc := -1; dc <= 1; dc++ {
+				nr, nc := eq[0]+dr, eq[1]+dc
+				if nr >= 1 && nr <= 8 && nc >= 1 && nc <= 8 {
+					if !g.ChartDiscovered[nr][nc] {
+						g.ChartDiscovered[nr][nc] = true
+						updatedQuads++
+					}
+				}
+			}
+		}
+	case SurveillanceBlackout:
+		eq := g.Enterprise.Quad
+		g.ChartKnownBases[eq[0]][eq[1]] = true
+		// Discovers no extra quadrants
+	case SurveillanceClassic:
+		fallthrough
+	default:
+		for r := 1; r <= 8; r++ {
+			for c := 1; c <= 8; c++ {
+				if (g.GalaxyChart[r][c]%100)/10 > 0 {
+					g.ChartKnownBases[r][c] = true
+					for dr := -1; dr <= 1; dr++ {
+						for dc := -1; dc <= 1; dc++ {
+							nr := r + dr
+							nc := c + dc
+							if nr >= 1 && nr <= 8 && nc >= 1 && nc <= 8 {
+								if !g.ChartDiscovered[nr][nc] {
+									g.ChartDiscovered[nr][nc] = true
+									updatedQuads++
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	return []Event{
 		EventDocked{
 			Starbase: sb,
+		},
+		EventStarbaseSurveillance{
+			StarbaseCoord: sb,
+			UpdatedQuads:  updatedQuads,
+			Mode:          survMode,
 		},
 	}, nil
 }
@@ -106,11 +173,19 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 
 	hitCoord, hitEntity, hit := TraceTorpedoPath(g.Enterprise.Sector, angle, &g.CurrentQuad)
 	if !hit {
+		if g.Rules.KlingonCloak {
+			for _, k := range g.CurrentQuad.Klingons {
+				if k != nil && k.IsCommander && !k.IsCloaked {
+					events = append(events, CloakKlingon(g, k)...)
+				}
+			}
+		}
 		return events, nil
 	}
 
 	damage := 500.0
 	destroyed := false
+	var hitCommander *Klingon
 
 	switch hitEntity {
 	case EntityKlingon, EntityCommander, EntitySuperCommander:
@@ -125,6 +200,10 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 		}
 
 		if targetKlingon != nil {
+			hitCommander = targetKlingon
+			if targetKlingon.IsCloaked {
+				events = append(events, DecloakKlingon(g, targetKlingon)...)
+			}
 			if damage >= targetKlingon.Energy {
 				destroyed = true
 				damage = targetKlingon.Energy
@@ -168,6 +247,14 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 		Damage:    damage,
 		Destroyed: destroyed,
 	})
+
+	if g.Rules.KlingonCloak {
+		for _, k := range g.CurrentQuad.Klingons {
+			if k != nil && k != hitCommander && k.IsCommander && !k.IsCloaked {
+				events = append(events, CloakKlingon(g, k)...)
+			}
+		}
+	}
 
 	return events, nil
 }
@@ -245,6 +332,17 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 				Damage:    damage,
 				Destroyed: destroyed,
 			})
+			if k.IsCloaked {
+				events = append(events, DecloakKlingon(g, k)...)
+			}
+		}
+		if g.Rules.KlingonCloak {
+			for _, k := range g.CurrentQuad.Klingons {
+				alloc, ok := a.ManualAllocation[k.ID]
+				if (!ok || alloc <= 0) && k.IsCommander && !k.IsCloaked && k.Energy > 0 {
+					events = append(events, CloakKlingon(g, k)...)
+				}
+			}
 		}
 	} else {
 		numEnemies := float64(len(g.CurrentQuad.Klingons))
@@ -270,6 +368,9 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 				Damage:    damage,
 				Destroyed: destroyed,
 			})
+			if k.IsCloaked {
+				events = append(events, DecloakKlingon(g, k)...)
+			}
 		}
 	}
 
@@ -441,5 +542,73 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 	}
 	events = append([]Event{shipMovedEvt}, events...)
 
+	if toQuad == fromQuad && g.Rules.KlingonCloak {
+		for _, k := range g.CurrentQuad.Klingons {
+			if k != nil && k.IsCommander && !k.IsCloaked {
+				events = append(events, CloakKlingon(g, k)...)
+			}
+		}
+	}
+
 	return events, nil
 }
+
+// ActionLRScan initiates a long-range sensor scan of the quadrants immediately surrounding the Enterprise.
+type ActionLRScan struct{}
+
+// Execute applies the long-range scan action to GameState.
+func (a ActionLRScan) Execute(g *GameState) ([]Event, error) {
+	if g.Enterprise.Condition != ConditionDocked && g.Enterprise.Devices[DeviceLRSensors] >= 2.0 {
+		return nil, errors.New("long-range sensors damaged")
+	}
+
+	relayed := (g.Enterprise.Condition == ConditionDocked && g.Enterprise.Devices[DeviceLRSensors] > 0)
+	degraded := g.Rules.SensorDegradation && g.Enterprise.Devices[DeviceLRSensors] > 0 && !relayed
+	center := g.Enterprise.Quad
+	var scanned []Coord
+
+	for dr := -1; dr <= 1; dr++ {
+		for dc := -1; dc <= 1; dc++ {
+			r := center[0] + dr
+			c := center[1] + dc
+			if r >= 1 && r <= 8 && c >= 1 && c <= 8 {
+				g.ChartDiscovered[r][c] = true
+				scanned = append(scanned, Coord{r, c})
+			}
+		}
+	}
+
+	return []Event{
+		EventLRScanCompleted{
+			CenterQuad:    center,
+			ScannedQuads:  scanned,
+			RelayedByBase: relayed,
+			Degraded:      degraded,
+		},
+	}, nil
+}
+
+// ActionKlingonCounterAttack simulates return fire from a Klingon vessel in the quadrant.
+type ActionKlingonCounterAttack struct {
+	EnemyID int
+	Damage  float64
+}
+
+// Execute applies Klingon counter-attack damage to the Enterprise, decloaking the attacker if cloaked.
+func (a ActionKlingonCounterAttack) Execute(g *GameState) ([]Event, error) {
+	if a.Damage <= 0 {
+		return nil, errors.New("counter attack damage must be positive")
+	}
+	var attacker *Klingon
+	for _, k := range g.CurrentQuad.Klingons {
+		if k.ID == a.EnemyID {
+			attacker = k
+			break
+		}
+	}
+	if attacker == nil {
+		return nil, errors.New("attacker not found in quadrant")
+	}
+	return KlingonCounterAttack(g, attacker, a.Damage), nil
+}
+
