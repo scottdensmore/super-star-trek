@@ -166,6 +166,21 @@ func TestTUIGolden_ModalGalacticChart(t *testing.T) {
 	compareOrUpdate(t, "modal_galactic_chart", m.View())
 }
 
+func TestTUIGolden_ModalDamageSchematic(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Devices[engine.DeviceComputer] = 2.1
+	g.Enterprise.Devices[engine.DevicePhotonTubes] = 1.4
+
+	m := tui.NewModel(g, theme.ModernTheme{})
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = updated.(tui.Model)
+
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")})
+	m = updated.(tui.Model)
+
+	compareOrUpdate(t, "modal_damage_schematic", m.View())
+}
+
 func TestTUIGolden_LrsDamagedDashboard(t *testing.T) {
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
 	g.Enterprise.Devices[engine.DeviceLRSensors] = 3.5 // Damaged!

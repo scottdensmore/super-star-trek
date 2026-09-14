@@ -72,6 +72,9 @@ type Enterprise struct {
 	LifeSupport float64
 }
 
+// EnterpriseState is a type alias for Enterprise.
+type EnterpriseState = Enterprise
+
 // Klingon represents an enemy vessel within the current quadrant.
 type Klingon struct {
 	ID          int
