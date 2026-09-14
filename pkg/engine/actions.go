@@ -221,6 +221,13 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 			if g.RemainingKlingons > 0 {
 				g.RemainingKlingons--
 			}
+			if hitEntity == EntitySuperCommander {
+				g.Metrics.SuperCommandersKilled++
+			} else if hitEntity == EntityCommander || (targetKlingon != nil && targetKlingon.IsCommander) {
+				g.Metrics.CommandersKilled++
+			} else {
+				g.Metrics.KlingonsKilled++
+			}
 		}
 
 	case EntityStar:
@@ -235,6 +242,11 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 		if g.RemainingStarbases > 0 {
 			g.RemainingStarbases--
 		}
+		g.Metrics.StarbasesDestroyed++
+
+	case EntityPlanet:
+		damage = 0
+		destroyed = false
 
 	default:
 		damage = 0
@@ -323,6 +335,11 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 				if g.RemainingKlingons > 0 {
 					g.RemainingKlingons--
 				}
+				if k.IsCommander {
+					g.Metrics.CommandersKilled++
+				} else {
+					g.Metrics.KlingonsKilled++
+				}
 			} else {
 				k.Energy -= damage
 			}
@@ -358,6 +375,11 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 				g.CurrentQuad.Grid[k.Sector[0]][k.Sector[1]] = EntityEmpty
 				if g.RemainingKlingons > 0 {
 					g.RemainingKlingons--
+				}
+				if k.IsCommander {
+					g.Metrics.CommandersKilled++
+				} else {
+					g.Metrics.KlingonsKilled++
 				}
 			} else {
 				k.Energy -= damage
@@ -611,4 +633,19 @@ func (a ActionKlingonCounterAttack) Execute(g *GameState) ([]Event, error) {
 	}
 	return KlingonCounterAttack(g, attacker, a.Damage), nil
 }
+
+// ActionCallHelp places a distress call to Starfleet Command, incurring a scoring penalty.
+type ActionCallHelp struct{}
+
+// Execute applies the help call action to GameState.
+func (a ActionCallHelp) Execute(g *GameState) ([]Event, error) {
+	if g == nil {
+		return nil, errors.New("game state is nil")
+	}
+	g.Metrics.HelpCalls++
+	return []Event{
+		EventHelpCalled{},
+	}, nil
+}
+
 

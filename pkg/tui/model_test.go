@@ -15,6 +15,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/galacticchart"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/halloffame"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
@@ -1467,7 +1468,10 @@ func TestModel_DamageSchematicModal_OpenAndDismiss(t *testing.T) {
 
 	// 3. Dismiss via Escape key
 	escMsg := tea.KeyMsg{Type: tea.KeyEsc}
-	updatedAfterEsc, _ := modDam.Update(escMsg)
+	updatedAfterEsc, cmd := modDam.Update(escMsg)
+	if cmd != nil {
+		updatedAfterEsc, _ = updatedAfterEsc.(Model).Update(cmd())
+	}
 	modClosed := updatedAfterEsc.(Model)
 	if modClosed.ActiveModal != ModalNone {
 		t.Errorf("expected ActiveModal = ModalNone after Esc, got %v", modClosed.ActiveModal)
@@ -1504,7 +1508,10 @@ func TestModel_DamageSchematicModal_Hotkey(t *testing.T) {
 	}
 
 	// Press 'd' to close
-	updatedClose, _ := modD.Update(dKey)
+	updatedClose, cmd := modD.Update(dKey)
+	if cmd != nil {
+		updatedClose, _ = updatedClose.(Model).Update(cmd())
+	}
 	modClosed := updatedClose.(Model)
 	if modClosed.ActiveModal != ModalNone {
 		t.Errorf("expected ActiveModal = ModalNone after 'd' dismiss, got %v", modClosed.ActiveModal)
@@ -1523,7 +1530,10 @@ func TestModel_DamageSchematicModal_Hotkey(t *testing.T) {
 
 	// Dismiss via 'q'
 	qKey := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")}
-	updatedClose, _ = modDUpper.Update(qKey)
+	updatedClose, cmd = modDUpper.Update(qKey)
+	if cmd != nil {
+		updatedClose, _ = updatedClose.(Model).Update(cmd())
+	}
 	modClosed = updatedClose.(Model)
 	if modClosed.ActiveModal != ModalNone {
 		t.Errorf("expected ActiveModal = ModalNone after 'q' dismiss, got %v", modClosed.ActiveModal)
@@ -1539,7 +1549,10 @@ func TestModel_DamageSchematicModal_Hotkey(t *testing.T) {
 
 	// Dismiss via enter
 	enterKey := tea.KeyMsg{Type: tea.KeyEnter}
-	updatedClose, _ = modCtrlD.Update(enterKey)
+	updatedClose, cmd = modCtrlD.Update(enterKey)
+	if cmd != nil {
+		updatedClose, _ = updatedClose.(Model).Update(cmd())
+	}
 	modClosed = updatedClose.(Model)
 	if modClosed.ActiveModal != ModalNone {
 		t.Errorf("expected ActiveModal = ModalNone after Enter dismiss, got %v", modClosed.ActiveModal)
@@ -1596,6 +1609,373 @@ func TestModel_DamageSchematicModal_ThemePropagation(t *testing.T) {
 	}
 	if modLcars.ActiveModal != ModalDamageSchematic {
 		t.Errorf("expected modal to remain open after F2, got %v", modLcars.ActiveModal)
+	}
+}
+
+func TestModel_HallOfFame_OpenAndDismiss(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// 1. Open via command "score"
+	updated, _ := mod.handleCommand("score")
+	modScore := updated.(Model)
+	if modScore.ActiveModal != ModalHallOfFame {
+		t.Fatalf("expected ActiveModal = ModalHallOfFame on 'score', got %v", modScore.ActiveModal)
+	}
+
+	// 2. Dimensions = 80x24
+	view := modScore.View()
+	lines := strings.Split(view, "\n")
+	if len(lines) != 24 {
+		t.Errorf("expected 24 lines, got %d", len(lines))
+	}
+	for i, l := range lines {
+		if w := ansi.StringWidth(l); w != 80 {
+			t.Errorf("line %d width = %d, expected 80", i, w)
+		}
+	}
+	if !strings.Contains(view, "MISSION DEBRIEF") {
+		t.Errorf("expected mission debrief title in view")
+	}
+
+	// 3. Dismiss via 'h' key
+	hKey := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("h")}
+	updatedAfterH, cmd := modScore.Update(hKey)
+	if cmd != nil {
+		updatedAfterH, _ = updatedAfterH.(Model).Update(cmd())
+	}
+	modClosed := updatedAfterH.(Model)
+	if modClosed.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after 'h' dismiss, got %v", modClosed.ActiveModal)
+	}
+	if !modClosed.CommandBar.Focused() {
+		t.Errorf("expected CommandBar focused after dismiss")
+	}
+}
+
+func TestModel_HallOfFame_Hotkeys(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// 'h' hotkey when command bar is empty
+	hKey := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("h")}
+	updated, _ := mod.Update(hKey)
+	modH := updated.(Model)
+	if modH.ActiveModal != ModalHallOfFame {
+		t.Fatalf("expected ActiveModal = ModalHallOfFame on 'h' hotkey, got %v", modH.ActiveModal)
+	}
+
+	// Dismiss via 'esc'
+	escKey := tea.KeyMsg{Type: tea.KeyEsc}
+	updatedClose, cmd := modH.Update(escKey)
+	if cmd != nil {
+		updatedClose, _ = updatedClose.(Model).Update(cmd())
+	}
+	modClosed := updatedClose.(Model)
+	if modClosed.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after esc, got %v", modClosed.ActiveModal)
+	}
+
+	// 'H' hotkey when command bar is empty
+	hUpperKey := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("H")}
+	updated, _ = mod.Update(hUpperKey)
+	modHUpper := updated.(Model)
+	if modHUpper.ActiveModal != ModalHallOfFame {
+		t.Fatalf("expected ActiveModal = ModalHallOfFame on 'H' hotkey, got %v", modHUpper.ActiveModal)
+	}
+
+	// Dismiss via 'q'
+	qKey := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")}
+	updatedClose, cmd = modHUpper.Update(qKey)
+	if cmd != nil {
+		updatedClose, _ = updatedClose.(Model).Update(cmd())
+	}
+	modClosed = updatedClose.(Model)
+	if modClosed.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after 'q', got %v", modClosed.ActiveModal)
+	}
+
+	// 'ctrl+h' hotkey when command bar is empty
+	ctrlHKey := tea.KeyMsg{Type: tea.KeyCtrlH}
+	updated, _ = mod.Update(ctrlHKey)
+	modCtrlH := updated.(Model)
+	if modCtrlH.ActiveModal != ModalHallOfFame {
+		t.Fatalf("expected ActiveModal = ModalHallOfFame on 'ctrl+h' hotkey, got %v", modCtrlH.ActiveModal)
+	}
+
+	// 'h' when command bar is not empty -> should NOT open modal, should append
+	modWithText := mod
+	modWithText.CommandBar.SetValue("nav")
+	updatedWithText, _ := modWithText.Update(hKey)
+	modAppended := updatedWithText.(Model)
+	if modAppended.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone when buffer not empty, got %v", modAppended.ActiveModal)
+	}
+	if modAppended.CommandBar.Value() != "navh" {
+		t.Errorf("expected 'navh', got %q", modAppended.CommandBar.Value())
+	}
+}
+
+func TestModel_HallOfFame_Commands(t *testing.T) {
+	cmds := []string{"score", "scores", "halloffame", "hof"}
+	for _, c := range cmds {
+		t.Run(c, func(t *testing.T) {
+			g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+			mod := NewModel(g, theme.DefaultTheme())
+			updated, _ := mod.handleCommand(c)
+			modCmd := updated.(Model)
+			if modCmd.ActiveModal != ModalHallOfFame {
+				t.Fatalf("expected ActiveModal = ModalHallOfFame on %q, got %v", c, modCmd.ActiveModal)
+			}
+		})
+	}
+}
+
+func TestModel_HallOfFame_DismissalKeys(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// Dismiss via CloseModalMsg
+	updated, _ := mod.handleCommand("score")
+	modScore := updated.(Model)
+	updatedClose, _ := modScore.Update(halloffame.CloseModalMsg{})
+	modClosed := updatedClose.(Model)
+	if modClosed.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after CloseModalMsg, got %v", modClosed.ActiveModal)
+	}
+	if !modClosed.CommandBar.Focused() {
+		t.Errorf("expected CommandBar focused after CloseModalMsg")
+	}
+
+	// Dismiss via 'q'
+	updated, _ = mod.handleCommand("score")
+	modScore = updated.(Model)
+	qKey := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")}
+	updatedClose, cmd := modScore.Update(qKey)
+	if cmd != nil {
+		updatedClose, _ = updatedClose.(Model).Update(cmd())
+	}
+	modClosed = updatedClose.(Model)
+	if modClosed.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after 'q', got %v", modClosed.ActiveModal)
+	}
+	if !modClosed.CommandBar.Focused() {
+		t.Errorf("expected CommandBar focused after 'q'")
+	}
+
+	// Dismiss via 'esc'
+	updated, _ = mod.handleCommand("score")
+	modScore = updated.(Model)
+	escKey := tea.KeyMsg{Type: tea.KeyEsc}
+	updatedClose, cmd = modScore.Update(escKey)
+	if cmd != nil {
+		updatedClose, _ = updatedClose.(Model).Update(cmd())
+	}
+	modClosed = updatedClose.(Model)
+	if modClosed.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after 'esc', got %v", modClosed.ActiveModal)
+	}
+	if !modClosed.CommandBar.Focused() {
+		t.Errorf("expected CommandBar focused after 'esc'")
+	}
+}
+
+func TestModel_HallOfFame_ThemePropagation(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	updated, _ := mod.handleCommand("score")
+	modScore := updated.(Model)
+	if modScore.ActiveModal != ModalHallOfFame {
+		t.Fatalf("expected ActiveModal = ModalHallOfFame, got %v", modScore.ActiveModal)
+	}
+
+	// F2 cycles theme while modal is open
+	updatedF2, _ := modScore.Update(tea.KeyMsg{Type: tea.KeyF2})
+	modLcars := updatedF2.(Model)
+	if modLcars.Theme.Name() != "lcars" {
+		t.Errorf("expected theme lcars, got %s", modLcars.Theme.Name())
+	}
+	if modLcars.ActiveModal != ModalHallOfFame {
+		t.Errorf("expected modal to remain open after F2, got %v", modLcars.ActiveModal)
+	}
+}
+
+func TestModel_HallOfFame_GameOverFlow(t *testing.T) {
+	// 1. Qualifying game-over event (Won with kills)
+	gWin := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	gWin.Metrics.KlingonsKilled = 10
+	gWin.GameWon = true
+	modWin := NewModel(gWin, theme.DefaultTheme())
+
+	updatedWin, _ := modWin.Update(engine.EventGameOver{Reason: engine.GameOverWon})
+	modWinEnd := updatedWin.(Model)
+	if modWinEnd.ActiveModal != ModalHallOfFame {
+		t.Fatalf("expected ActiveModal = ModalHallOfFame on game-over won, got %v", modWinEnd.ActiveModal)
+	}
+	viewWin := modWinEnd.View()
+	if !strings.Contains(viewWin, "ENTER CALLSIGN:") {
+		t.Errorf("expected callsign prompt for qualifying game-over score, got:\n%s", viewWin)
+	}
+
+	// 2. Non-qualifying game-over event (Destroyed with negative/zero score)
+	gLoss := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	gLoss.Metrics.Casualties = 1000
+	gLoss.Metrics.StarbasesDestroyed = 5
+	gLoss.GameWon = false
+	modLoss := NewModel(gLoss, theme.DefaultTheme())
+
+	updatedLoss, _ := modLoss.Update(engine.EventGameOver{Reason: engine.GameOverDestroyed})
+	modLossEnd := updatedLoss.(Model)
+	if modLossEnd.ActiveModal != ModalHallOfFame {
+		t.Fatalf("expected ActiveModal = ModalHallOfFame on game-over destroyed, got %v", modLossEnd.ActiveModal)
+	}
+	viewLoss := modLossEnd.View()
+	if strings.Contains(viewLoss, "ENTER CALLSIGN:") {
+		t.Errorf("expected no callsign prompt for non-qualifying score, got:\n%s", viewLoss)
+	}
+	if !strings.Contains(viewLoss, "MISSION DEBRIEF") {
+		t.Errorf("expected telemetry debrief view for non-qualifying score")
+	}
+}
+
+func TestModel_HallOfFame_ScoreRecordedMsg(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	entry := engine.ScoreEntry{
+		CaptainName: "Kirk",
+		Score:       1200,
+		Rank:        "[ADM]",
+	}
+	updated, _ := mod.Update(halloffame.ScoreRecordedMsg{Entry: entry})
+	modUpdated := updated.(Model)
+
+	msgs := modUpdated.CommandBar.Messages()
+	found := false
+	for _, m := range msgs {
+		if strings.Contains(m, "Score recorded") && strings.Contains(m, "Kirk") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected score recorded message in command bar, got %v", msgs)
+	}
+}
+
+func TestModel_HallOfFame_TextInputKeystrokesNoLag(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// Open with promptName = true
+	mod, _ = mod.openHallOfFame(true)
+	if mod.ActiveModal != ModalHallOfFame {
+		t.Fatalf("expected ActiveModal = ModalHallOfFame, got %v", mod.ActiveModal)
+	}
+
+	// Type callsign runes "Spock"
+	// Each keystroke must return immediately without blocking on textinput.BlinkCmd() (530ms)
+	callsign := "Spock"
+	start := time.Now()
+	for _, r := range callsign {
+		keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}}
+		updated, cmd := mod.Update(keyMsg)
+		mod = updated.(Model)
+		// cmd should be non-nil (the asynchronous cursor blink cmd from textinput),
+		// but Update must NOT invoke it synchronously.
+		if cmd == nil {
+			t.Errorf("expected non-nil tea.Cmd for cursor blink on rune %c", r)
+		}
+	}
+	elapsed := time.Since(start)
+
+	// If BlinkCmd() was invoked synchronously, 5 keystrokes would take >2.5s.
+	// Asynchronous return must take well under 100ms.
+	if elapsed > 100*time.Millisecond {
+		t.Errorf("typing keystrokes took %v, expected < 100ms (synchronous blink lag detected)", elapsed)
+	}
+
+	// Verify text input view contains "Spock"
+	view := mod.View()
+	if !strings.Contains(view, "Spock") {
+		t.Errorf("expected view to contain callsign %q, got:\n%s", callsign, view)
+	}
+
+	// Press Enter to record score
+	enterMsg := tea.KeyMsg{Type: tea.KeyEnter}
+	updatedAfterEnter, cmd := mod.Update(enterMsg)
+	mod = updatedAfterEnter.(Model)
+	if cmd == nil {
+		t.Fatalf("expected non-nil cmd from Enter key submitting score")
+	}
+
+	// Evaluate the command produced by Enter: should be ScoreRecordedMsg
+	msg := cmd()
+	scoreMsg, ok := msg.(halloffame.ScoreRecordedMsg)
+	if !ok {
+		t.Fatalf("expected halloffame.ScoreRecordedMsg on enter, got %T", msg)
+	}
+	if scoreMsg.Entry.CaptainName != "Spock" {
+		t.Errorf("expected CaptainName 'Spock', got %q", scoreMsg.Entry.CaptainName)
+	}
+
+	// Dispatch ScoreRecordedMsg back to Model
+	updatedAfterScore, _ := mod.Update(scoreMsg)
+	mod = updatedAfterScore.(Model)
+
+	// Verify logged confirmation in CommandBar
+	msgs := mod.CommandBar.Messages()
+	found := false
+	for _, m := range msgs {
+		if strings.Contains(m, "Score recorded") && strings.Contains(m, "Spock") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected ScoreRecordedMsg logged in command bar messages, got %v", msgs)
+	}
+}
+
+func TestModel_GameOverLoggingNoDuplicates(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Metrics.KlingonsKilled = 10
+	g.GameWon = true
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// Dispatch EventGameOver
+	updated, _ := mod.Update(engine.EventGameOver{Reason: engine.GameOverWon, Score: 1000})
+	modEnd := updated.(Model)
+
+	count := 0
+	for _, m := range modEnd.CommandBar.Messages() {
+		if strings.Contains(m, "MISSION ACCOMPLISHED") {
+			count++
+		}
+	}
+	if count != 1 {
+		t.Errorf("expected MISSION ACCOMPLISHED logged exactly once, got %d times in %v", count, modEnd.CommandBar.Messages())
+	}
+
+	// Test via action returning EventGameOver
+	// Create simulated event slice with EventGameOver
+	events := []engine.Event{
+		engine.EventTorpedoHit{Target: engine.Coord{3, 3}, Destroyed: true},
+		engine.EventGameOver{Reason: engine.GameOverWon, Score: 500},
+	}
+	mod2 := NewModel(g, theme.DefaultTheme())
+	mod2.logEvents(events)
+	updated2, _ := mod2.handleGameOver(engine.EventGameOver{Reason: engine.GameOverWon, Score: 500})
+	mod2End := updated2
+	count2 := 0
+	for _, m := range mod2End.CommandBar.Messages() {
+		if strings.Contains(m, "MISSION ACCOMPLISHED") {
+			count2++
+		}
+	}
+	if count2 != 1 {
+		t.Errorf("expected MISSION ACCOMPLISHED logged exactly once when processed via logEvents + handleGameOver, got %d times", count2)
 	}
 }
 

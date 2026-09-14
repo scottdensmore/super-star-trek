@@ -12,6 +12,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/galacticchart"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/halloffame"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
@@ -37,6 +38,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.CommandBar.AddMessage(err.Error())
 			} else {
 				m.logEvents(events)
+				for _, ev := range events {
+					if goEv, ok := ev.(engine.EventGameOver); ok {
+						return m.handleGameOver(goEv)
+					}
+				}
 			}
 		}
 		m.ActiveModal = ModalNone
@@ -52,6 +58,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.CommandBar.AddMessage(err.Error())
 			} else {
 				m.logEvents(events)
+				for _, ev := range events {
+					if goEv, ok := ev.(engine.EventGameOver); ok {
+						return m.handleGameOver(goEv)
+					}
+				}
 			}
 		}
 		m.ActiveModal = ModalNone
@@ -105,6 +116,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.CommandBar.AddMessage(err.Error())
 			} else {
 				m.logEvents(events)
+				for _, ev := range events {
+					if goEv, ok := ev.(engine.EventGameOver); ok {
+						return m.handleGameOver(goEv)
+					}
+				}
 			}
 		}
 		cmd := m.CommandBar.Focus()
@@ -125,6 +141,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ActiveModal = ModalNone
 		cmd := m.CommandBar.Focus()
 		return m, cmd
+
+	case halloffame.CloseModalMsg:
+		m.ActiveModal = ModalNone
+		cmd := m.CommandBar.Focus()
+		return m, cmd
+
+	case halloffame.ScoreRecordedMsg:
+		m.CommandBar.AddMessage(fmt.Sprintf("Score recorded for Captain %s: %d points (%s)", msg.Entry.CaptainName, msg.Entry.Score, msg.Entry.Rank))
+		return m, nil
+
+	case engine.EventGameOver:
+		return m.handleGameOver(msg)
 
 	case tea.KeyMsg:
 		if m.showOptions {
@@ -152,24 +180,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c" {
 				return m, tea.Quit
 			}
-			if msg.Type == tea.KeyEsc || msg.String() == "esc" {
-				m.ActiveModal = ModalNone
-				cmd := m.CommandBar.Focus()
-				return m, cmd
-			}
 			if msg.Type == tea.KeyF2 || msg.String() == "f2" {
 				m = m.applyTheme(m.Theme.Next())
 				return m, nil
 			}
+			if m.ActiveModal == ModalHallOfFame {
+				var cmd tea.Cmd
+				m.HallOfFame, cmd = m.HallOfFame.Update(msg)
+				return m, cmd
+			}
 			if m.ActiveModal == ModalDamageSchematic {
 				var cmd tea.Cmd
 				m.DamageSchematic, cmd = m.DamageSchematic.Update(msg)
-				if cmd != nil {
-					if _, ok := cmd().(damageschematic.CloseModalMsg); ok {
-						m.ActiveModal = ModalNone
-						return m, m.CommandBar.Focus()
-					}
-				}
+				return m, cmd
+			}
+			if msg.Type == tea.KeyEsc || msg.String() == "esc" {
+				m.ActiveModal = ModalNone
+				cmd := m.CommandBar.Focus()
 				return m, cmd
 			}
 
@@ -222,6 +249,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m.openDamageSchematic()
 			}
 
+		case msg.Type == tea.KeyCtrlH || msg.String() == "ctrl+h":
+			if strings.TrimSpace(m.CommandBar.Value()) == "" {
+				return m.openHallOfFame(false)
+			}
+
 		case strings.TrimSpace(m.CommandBar.Value()) == "":
 			switch {
 			case msg.String() == "t" || msg.String() == "T":
@@ -251,6 +283,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			case msg.String() == "d" || msg.String() == "D":
 				return m.openDamageSchematic()
+
+			case msg.String() == "h" || msg.String() == "H":
+				return m.openHallOfFame(false)
 
 			case msg.String() == "o" || msg.String() == "O":
 				if m.Game != nil {
@@ -305,6 +340,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.CommandBar.AddMessage(err.Error())
 					} else {
 						m.logEvents(events)
+						for _, ev := range events {
+							if goEv, ok := ev.(engine.EventGameOver); ok {
+								return m.handleGameOver(goEv)
+							}
+						}
 					}
 				}
 				return m, nil
@@ -317,6 +357,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.CommandBar.AddMessage(err.Error())
 					} else {
 						m.logEvents(events)
+						for _, ev := range events {
+							if goEv, ok := ev.(engine.EventGameOver); ok {
+								return m.handleGameOver(goEv)
+							}
+						}
 					}
 				}
 				return m, nil
@@ -395,6 +440,7 @@ func (m Model) applyTheme(th theme.Theme) Model {
 	m.SaveBrowser.SetTheme(th)
 	m.GalacticChart.SetTheme(th)
 	m.DamageSchematic.SetTheme(th)
+	m.HallOfFame.SetTheme(th)
 	m.optionsModal.SetTheme(th)
 	return m
 }
@@ -446,6 +492,45 @@ func (m Model) openDamageSchematic() (Model, tea.Cmd) {
 	m.ActiveModal = ModalDamageSchematic
 	m.CommandBar.Blur()
 	return m, nil
+}
+
+// openHallOfFame synchronizes score and leaderboard state and activates ModalHallOfFame.
+func (m Model) openHallOfFame(promptName bool) (Model, tea.Cmd) {
+	lb, err := engine.LoadLeaderboard(engine.DefaultLeaderboardPath())
+	if err != nil || lb == nil {
+		lb = engine.DefaultLeaderboard()
+	}
+	var gameWon bool
+	if m.Game != nil {
+		gameWon = m.Game.GameWon
+	}
+	score := engine.ComputeScore(m.Game, gameWon)
+	m.HallOfFame.SetState(score, lb, promptName)
+	m.ActiveModal = ModalHallOfFame
+	m.CommandBar.Blur()
+	return m, nil
+}
+
+// handleGameOver processes a game over event, logs the message, and opens the Hall of Fame modal.
+func (m Model) handleGameOver(ev engine.EventGameOver) (Model, tea.Cmd) {
+	formatted := formatEvent(ev)
+	if formatted != "" {
+		m.CommandBar.AddMessage(formatted)
+	}
+	if ev.Reason == engine.GameOverWon && m.Game != nil {
+		m.Game.GameWon = true
+	}
+	var gameWon bool
+	if m.Game != nil {
+		gameWon = m.Game.GameWon
+	}
+	score := engine.ComputeScore(m.Game, gameWon)
+	lb, err := engine.LoadLeaderboard(engine.DefaultLeaderboardPath())
+	if err != nil || lb == nil {
+		lb = engine.DefaultLeaderboard()
+	}
+	qualifies := lb.Qualifies(score.TotalScore)
+	return m.openHallOfFame(qualifies)
 }
 
 // handleCommand tokenizes, parses, and executes player commands.
@@ -502,6 +587,8 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		m.ActiveModal = ModalSaveBrowser
 		m.CommandBar.Blur()
 		return m, nil
+	case "score", "scores", "halloffame", "hof":
+		return m.openHallOfFame(false)
 	case "opts", "options", "settings":
 		if m.Game != nil {
 			m.optionsModal.SetRules(m.Game.Rules)
@@ -632,6 +719,11 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		}
 
 		m.logEvents(events)
+		for _, ev := range events {
+			if goEv, ok := ev.(engine.EventGameOver); ok {
+				return m.handleGameOver(goEv)
+			}
+		}
 		return m, nil
 	}
 
@@ -641,6 +733,9 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 // logEvents formats and appends engine events to the command bar log buffer.
 func (m *Model) logEvents(events []engine.Event) {
 	for _, ev := range events {
+		if _, ok := ev.(engine.EventGameOver); ok {
+			continue
+		}
 		formatted := formatEvent(ev)
 		if formatted != "" {
 			m.CommandBar.AddMessage(formatted)
