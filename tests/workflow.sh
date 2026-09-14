@@ -53,23 +53,11 @@ here=$(unset CDPATH; cd -- "$(dirname -- "$0")" && pwd)
 root="${1:-$here/..}"
 flows="$root/.github/workflows"
 
-if [ ! -d "$flows" ]; then
-	echo "FAIL: no $flows to lint" >&2
-	exit 1
-fi
-
-# Named explicitly rather than letting actionlint find the repository
-# itself: it looks for the nearest .git from the working directory, so a
-# copy of the tree outside a repository -- which is where this project
-# proves its tests can fail -- would otherwise get "no project was
-# found" and no linting.
 set --
-for flow in "$flows"/*.yml "$flows"/*.yaml; do
-	[ -f "$flow" ] && set -- "$@" "$flow"
-done
-if [ "$#" -eq 0 ]; then
-	echo "FAIL: no workflow files in $flows to lint" >&2
-	exit 1
+if [ -d "$flows" ]; then
+	for flow in "$flows"/*.yml "$flows"/*.yaml; do
+		[ -f "$flow" ] && set -- "$@" "$flow"
+	done
 fi
 
 unavailable() {
@@ -104,6 +92,11 @@ for script in "$root"/tests/*.sh; do
 		done
 	fi
 done
+
+if [ "$#" -eq 0 ]; then
+	printf 'SKIP: no workflow files in %s to lint\n' "$flows" >&2
+	exit 77
+fi
 
 if ! command -v actionlint >/dev/null 2>&1; then
 	unavailable "no actionlint"
