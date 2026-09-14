@@ -162,14 +162,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			if m.ActiveModal == ModalDamageSchematic {
-				switch msg.String() {
-				case "enter", "q", "Q", "d", "D", " ", "space":
-					m.ActiveModal = ModalNone
-					cmd := m.CommandBar.Focus()
-					return m, cmd
-				}
 				var cmd tea.Cmd
 				m.DamageSchematic, cmd = m.DamageSchematic.Update(msg)
+				if cmd != nil {
+					if _, ok := cmd().(damageschematic.CloseModalMsg); ok {
+						m.ActiveModal = ModalNone
+						return m, m.CommandBar.Focus()
+					}
+				}
 				return m, cmd
 			}
 
