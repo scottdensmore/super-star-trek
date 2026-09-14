@@ -1979,3 +1979,86 @@ func TestModel_GameOverLoggingNoDuplicates(t *testing.T) {
 	}
 }
 
+func TestModel_Manual_OpenAndDismiss(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// 1. Open via command "help"
+	updated, _ := mod.handleCommand("help")
+	modHelp := updated.(Model)
+	if modHelp.ActiveModal != ModalManual {
+		t.Fatalf("expected ActiveModal = ModalManual on 'help', got %v", modHelp.ActiveModal)
+	}
+
+	// 2. Full-screen dimensions = 80x24
+	view := modHelp.View()
+	lines := strings.Split(view, "\n")
+	if len(lines) != 24 {
+		t.Errorf("expected 24 lines, got %d", len(lines))
+	}
+	for i, l := range lines {
+		if w := ansi.StringWidth(l); w != 80 {
+			t.Errorf("line %d width = %d, expected 80", i, w)
+		}
+	}
+
+	// 3. Dismiss via 'esc' key
+	escKey := tea.KeyMsg{Type: tea.KeyEsc}
+	updatedAfterEsc, cmd := modHelp.Update(escKey)
+	if cmd != nil {
+		updatedAfterEsc, _ = updatedAfterEsc.(Model).Update(cmd())
+	}
+	modClosed := updatedAfterEsc.(Model)
+	if modClosed.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after 'esc' dismiss, got %v", modClosed.ActiveModal)
+	}
+}
+
+func TestModel_Manual_TopicJumps(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// Open directly to combat via "help tor"
+	updated, _ := mod.handleCommand("help tor")
+	modTor := updated.(Model)
+	if modTor.ActiveModal != ModalManual {
+		t.Fatalf("expected ActiveModal = ModalManual on 'help tor', got %v", modTor.ActiveModal)
+	}
+	viewTor := modTor.View()
+	if !strings.Contains(viewTor, "WEAPONS & COMBAT") {
+		t.Errorf("expected Weapons & Combat chapter open for 'help tor'")
+	}
+
+	// Open directly to navigation via "man nav"
+	updatedNav, _ := mod.handleCommand("man nav")
+	modNav := updatedNav.(Model)
+	viewNav := modNav.View()
+	if !strings.Contains(viewNav, "NAVIGATION") {
+		t.Errorf("expected Navigation chapter open for 'man nav'")
+	}
+}
+
+func TestModel_Manual_Hotkeys(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// Hotkey '?' when command line empty
+	qKey := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("?")}
+	updated, _ := mod.Update(qKey)
+	modQ := updated.(Model)
+	if modQ.ActiveModal != ModalManual {
+		t.Fatalf("expected ActiveModal = ModalManual on '?' hotkey, got %v", modQ.ActiveModal)
+	}
+
+	// Dismiss
+	modQ.ActiveModal = ModalNone
+
+	// Hotkey F1
+	f1Key := tea.KeyMsg{Type: tea.KeyF1}
+	updatedF1, _ := modQ.Update(f1Key)
+	modF1 := updatedF1.(Model)
+	if modF1.ActiveModal != ModalManual {
+		t.Fatalf("expected ActiveModal = ModalManual on F1 hotkey, got %v", modF1.ActiveModal)
+	}
+}
+

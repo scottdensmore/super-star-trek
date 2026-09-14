@@ -87,6 +87,8 @@ func (m Model) renderDashboard() string {
 		modalView = m.DamageSchematic.View()
 	case ModalHallOfFame:
 		modalView = m.HallOfFame.View()
+	case ModalManual:
+		modalView = m.Manual.View()
 	default:
 		return dashboard
 	}

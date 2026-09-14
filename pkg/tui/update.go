@@ -13,6 +13,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/galacticchart"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/halloffame"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/manual"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
@@ -147,6 +148,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.CommandBar.Focus()
 		return m, cmd
 
+	case manual.CloseModalMsg:
+		m.ActiveModal = ModalNone
+		cmd := m.CommandBar.Focus()
+		return m, cmd
+
 	case halloffame.ScoreRecordedMsg:
 		m.CommandBar.AddMessage(fmt.Sprintf("Score recorded for Captain %s: %d points (%s)", msg.Entry.CaptainName, msg.Entry.Score, msg.Entry.Rank))
 		return m, nil
@@ -194,6 +200,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.DamageSchematic, cmd = m.DamageSchematic.Update(msg)
 				return m, cmd
 			}
+			if m.ActiveModal == ModalManual {
+				var cmd tea.Cmd
+				m.Manual, cmd = m.Manual.Update(msg)
+				return m, cmd
+			}
 			if msg.Type == tea.KeyEsc || msg.String() == "esc" {
 				m.ActiveModal = ModalNone
 				cmd := m.CommandBar.Focus()
@@ -215,6 +226,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		switch {
+		case msg.Type == tea.KeyF1 || msg.String() == "f1":
+			return m.openManual("")
+
 		case msg.Type == tea.KeyF2 || msg.String() == "f2":
 			m = m.applyTheme(m.Theme.Next())
 			return m, nil
@@ -294,6 +308,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.showOptions = true
 				m.CommandBar.Blur()
 				return m, nil
+
+			case msg.String() == "?":
+				return m.openManual("")
 			}
 		}
 
@@ -441,6 +458,7 @@ func (m Model) applyTheme(th theme.Theme) Model {
 	m.GalacticChart.SetTheme(th)
 	m.DamageSchematic.SetTheme(th)
 	m.HallOfFame.SetTheme(th)
+	m.Manual.SetTheme(th)
 	m.optionsModal.SetTheme(th)
 	return m
 }
@@ -507,6 +525,20 @@ func (m Model) openHallOfFame(promptName bool) (Model, tea.Cmd) {
 	score := engine.ComputeScore(m.Game, gameWon)
 	m.HallOfFame.SetState(score, lb, promptName)
 	m.ActiveModal = ModalHallOfFame
+	m.CommandBar.Blur()
+	return m, nil
+}
+
+// openManual selects the requested topic/chapter and activates ModalManual.
+func (m Model) openManual(topic string) (Model, tea.Cmd) {
+	if topic != "" {
+		m.Manual.SelectChapter(topic)
+		fields := strings.Fields(topic)
+		if len(fields) > 1 {
+			m.Manual.SelectChapter(fields[0])
+		}
+	}
+	m.ActiveModal = ModalManual
 	m.CommandBar.Blur()
 	return m, nil
 }
@@ -596,6 +628,54 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		m.showOptions = true
 		m.CommandBar.Blur()
 		return m, nil
+	case "help", "man", "manual", "doc", "docs", "codex", "guide":
+		return m.openManual("")
+	}
+
+	for _, p := range []string{"help ", "man ", "manual ", "doc ", "docs ", "codex ", "guide "} {
+		if strings.HasPrefix(trimmed, p) {
+			topic := strings.TrimSpace(trimmed[len(p):])
+			switch topic {
+			case "nav", "move", "warp":
+				m.CommandBar.AddMessage("NAV: Direct Quad: nav q <r c> [warp] (e.g. 'nav q 3 5')")
+				m.CommandBar.AddMessage("     Direct Sector: nav s <r c> (or double-click sector grid)")
+				m.CommandBar.AddMessage("     Vector: nav <course> <warp> (0.0=East, 1.57=North, 3.14=West, 4.71=South)")
+				m.CommandBar.AddMessage("     Warp 1.0 = 1 Quad. Dist = sqrt(ΔR²+ΔC²). [Ctrl+M] map tool. Shields UP = 2x energy.")
+			case "tor", "torpedo", "torpedoes", "target", "reticle":
+				m.CommandBar.AddMessage("TOR: Target Sector: tor <r c> (e.g. 'tor 4 7')")
+				m.CommandBar.AddMessage("     Bearing Angle: tor <angle> (0.0=East, 1.57=North, 3.14=West, 4.71=South)")
+				m.CommandBar.AddMessage("     Tactical HUD: Press [T] for Target Lock auto-aiming & telemetry")
+				m.CommandBar.AddMessage("     Damaged launcher cannot fire; torpedoes do not pass obstacles.")
+			case "pha", "phaser", "phasers":
+				m.CommandBar.AddMessage("PHA: Fire phaser banks: pha <energy> (e.g. 'pha 300')")
+				m.CommandBar.AddMessage("     Energy is divided among all Klingons present in quadrant.")
+				m.CommandBar.AddMessage("     Damage drops with target distance. Damaged phasers cannot fire.")
+			case "she", "shield", "shields", "def":
+				m.CommandBar.AddMessage("SHE: Transfer shield energy: she <amount> (e.g. 'she 500', 'she -200')")
+				m.CommandBar.AddMessage("     Shields protect against incoming torpedo & phaser damage.")
+				m.CommandBar.AddMessage("     Shields UP doubles warp movement energy consumption!")
+			case "doc", "dock":
+				m.CommandBar.AddMessage("DOC: Starbase docking: doc (must be in adjacent sector)")
+				m.CommandBar.AddMessage("     Replenishes full energy & photon torpedo supply.")
+				m.CommandBar.AddMessage("     Repairs all damaged ship systems and lowers shields.")
+			case "chart", "map":
+				m.CommandBar.AddMessage("CHART: Interactive Galactic Star Chart & Warp Planner (Ctrl+M or 'chart')")
+				m.CommandBar.AddMessage("       Inspect 8x8 quadrant grid, telemetry vectors, and distance calculations.")
+				m.CommandBar.AddMessage("       [Arrows/HJKL] Move cursor  [Enter] Warp to quadrant  [Esc] Close")
+			case "saves", "thaw", "freeze":
+				m.CommandBar.AddMessage("SAVES: Open Save Browser: saves or bare thaw (hotkey Ctrl+O)")
+				m.CommandBar.AddMessage("       Inspects stardates, condition, and Klingons remaining.")
+				m.CommandBar.AddMessage("       Direct load: thaw <filename> | Freeze/save: freeze <filename>")
+			case "opts", "options", "settings":
+				m.CommandBar.AddMessage("OPTIONS: Configure game difficulty & realism settings (hotkey [O] or 'options')")
+				m.CommandBar.AddMessage("         Adjust difficulty profile, surveillance mode, sensors, repair, and cloaking.")
+			default:
+				if strings.HasPrefix(p, "help") {
+					m.CommandBar.AddMessage(fmt.Sprintf("No detailed help for %q. Available: help nav, help tor, help pha, help she, help doc, help chart, help saves, help options", topic))
+				}
+			}
+			return m.openManual(topic)
+		}
 	}
 
 	if strings.HasPrefix(trimmed, "thaw ") {
@@ -635,62 +715,62 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		case parsed.Special == "help":
 			m.CommandBar.AddMessage("COMMANDS: nav | tor | pha | she | doc | chart | saves | theme | options")
 			m.CommandBar.AddMessage("Type 'help <command>' (e.g. 'help nav') for detailed guide.")
-			m.CommandBar.AddMessage("HOTKEYS: [Ctrl+P] Spock Palette | [Ctrl+M] Star Chart | [Ctrl+O] Saves | [O] Options | [T] Target Lock | [F2] Theme")
-			return m, nil
+			m.CommandBar.AddMessage("HOTKEYS: [Ctrl+P] Spock Palette | [Ctrl+M] Star Chart | [Ctrl+O] Saves | [O] Options | [T] Target Lock | [F2] Theme | [F1/?] Manual")
+			return m.openManual("")
 
 		case parsed.Special == "help nav":
 			m.CommandBar.AddMessage("NAV: Direct Quad: nav q <r c> [warp] (e.g. 'nav q 3 5')")
 			m.CommandBar.AddMessage("     Direct Sector: nav s <r c> (or double-click sector grid)")
 			m.CommandBar.AddMessage("     Vector: nav <course> <warp> (0.0=East, 1.57=North, 3.14=West, 4.71=South)")
 			m.CommandBar.AddMessage("     Warp 1.0 = 1 Quad. Dist = sqrt(ΔR²+ΔC²). [Ctrl+M] map tool. Shields UP = 2x energy.")
-			return m, nil
+			return m.openManual("nav")
 
 		case parsed.Special == "help tor":
 			m.CommandBar.AddMessage("TOR: Target Sector: tor <r c> (e.g. 'tor 4 7')")
 			m.CommandBar.AddMessage("     Bearing Angle: tor <angle> (0.0=East, 1.57=North, 3.14=West, 4.71=South)")
 			m.CommandBar.AddMessage("     Tactical HUD: Press [T] for Target Lock auto-aiming & telemetry")
 			m.CommandBar.AddMessage("     Damaged launcher cannot fire; torpedoes do not pass obstacles.")
-			return m, nil
+			return m.openManual("tor")
 
 		case parsed.Special == "help pha":
 			m.CommandBar.AddMessage("PHA: Fire phaser banks: pha <energy> (e.g. 'pha 300')")
 			m.CommandBar.AddMessage("     Energy is divided among all Klingons present in quadrant.")
 			m.CommandBar.AddMessage("     Damage drops with target distance. Damaged phasers cannot fire.")
-			return m, nil
+			return m.openManual("pha")
 
 		case parsed.Special == "help she":
 			m.CommandBar.AddMessage("SHE: Transfer shield energy: she <amount> (e.g. 'she 500', 'she -200')")
 			m.CommandBar.AddMessage("     Shields protect against incoming torpedo & phaser damage.")
 			m.CommandBar.AddMessage("     Shields UP doubles warp movement energy consumption!")
-			return m, nil
+			return m.openManual("she")
 
 		case parsed.Special == "help doc":
 			m.CommandBar.AddMessage("DOC: Starbase docking: doc (must be in adjacent sector)")
 			m.CommandBar.AddMessage("     Replenishes full energy & photon torpedo supply.")
 			m.CommandBar.AddMessage("     Repairs all damaged ship systems and lowers shields.")
-			return m, nil
+			return m.openManual("doc")
 
 		case parsed.Special == "help chart":
 			m.CommandBar.AddMessage("CHART: Interactive Galactic Star Chart & Warp Planner (Ctrl+M or 'chart')")
 			m.CommandBar.AddMessage("       Inspect 8x8 quadrant grid, telemetry vectors, and distance calculations.")
 			m.CommandBar.AddMessage("       [Arrows/HJKL] Move cursor  [Enter] Warp to quadrant  [Esc] Close")
-			return m, nil
+			return m.openManual("chart")
 
 		case parsed.Special == "help saves":
 			m.CommandBar.AddMessage("SAVES: Open Save Browser: saves or bare thaw (hotkey Ctrl+O)")
 			m.CommandBar.AddMessage("       Inspects stardates, condition, and Klingons remaining.")
 			m.CommandBar.AddMessage("       Direct load: thaw <filename> | Freeze/save: freeze <filename>")
-			return m, nil
+			return m.openManual("saves")
 
 		case parsed.Special == "help options":
 			m.CommandBar.AddMessage("OPTIONS: Configure game difficulty & realism settings (hotkey [O] or 'options')")
 			m.CommandBar.AddMessage("         Adjust difficulty profile, surveillance mode, sensors, repair, and cloaking.")
-			return m, nil
+			return m.openManual("options")
 
 		case strings.HasPrefix(parsed.Special, "help "):
 			cmdName := strings.TrimPrefix(parsed.Special, "help ")
 			m.CommandBar.AddMessage(fmt.Sprintf("No detailed help for %q. Available: help nav, help tor, help pha, help she, help doc, help chart, help saves, help options", cmdName))
-			return m, nil
+			return m.openManual(cmdName)
 
 		case parsed.Special == "theme":
 			m = m.applyTheme(m.Theme.Next())
