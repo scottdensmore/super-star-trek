@@ -9,9 +9,11 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/galacticchart"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
@@ -1282,10 +1284,12 @@ func TestModel_DynamicDamageReport(t *testing.T) {
 	updated, _ := m.handleCommand("dam")
 	mod := updated.(Model)
 
-	messages := mod.CommandBar.Messages()
-	lastMsg := messages[len(messages)-1]
-	if !strings.Contains(lastMsg, "LRS") || !strings.Contains(lastMsg, "Computer") {
-		t.Errorf("expected damage report to list damaged devices, got: %s", lastMsg)
+	if mod.ActiveModal != ModalDamageSchematic {
+		t.Fatalf("expected ActiveModal = ModalDamageSchematic on 'dam', got %v", mod.ActiveModal)
+	}
+	view := mod.DamageSchematic.View()
+	if !strings.Contains(view, "LRS") || !strings.Contains(view, "Computer") {
+		t.Errorf("expected damage report to list damaged devices, got: %s", view)
 	}
 }
 
@@ -1433,3 +1437,165 @@ func TestModel_OptionsModal_ThemePropagation(t *testing.T) {
 		t.Fatalf("expected optionsModal theme lcars, got %s", m.optionsModal.Theme.Name())
 	}
 }
+
+func TestModel_DamageSchematicModal_OpenAndDismiss(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// 1. Open via command "dam"
+	updated, _ := mod.handleCommand("dam")
+	modDam := updated.(Model)
+	if modDam.ActiveModal != ModalDamageSchematic {
+		t.Fatalf("expected ActiveModal = ModalDamageSchematic on 'dam', got %v", modDam.ActiveModal)
+	}
+
+	// 2. Overlay rendered within 80x24 budget
+	view := modDam.View()
+	lines := strings.Split(view, "\n")
+	if len(lines) != 24 {
+		t.Errorf("expected exactly 24 lines, got %d", len(lines))
+	}
+	for i, line := range lines {
+		w := ansi.StringWidth(line)
+		if w != 80 {
+			t.Errorf("line %d width = %d, expected 80", i, w)
+		}
+	}
+	if !strings.Contains(view, "DAMAGE CONTROL SCHEMATIC") {
+		t.Errorf("expected schematic title in overlay view")
+	}
+
+	// 3. Dismiss via Escape key
+	escMsg := tea.KeyMsg{Type: tea.KeyEsc}
+	updatedAfterEsc, _ := modDam.Update(escMsg)
+	modClosed := updatedAfterEsc.(Model)
+	if modClosed.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after Esc, got %v", modClosed.ActiveModal)
+	}
+	if !modClosed.CommandBar.Focused() {
+		t.Errorf("expected CommandBar focused after Esc")
+	}
+}
+
+func TestModel_DamageSchematicModal_Commands(t *testing.T) {
+	for _, cmd := range []string{"dam", "damage", "damages"} {
+		t.Run(cmd, func(t *testing.T) {
+			g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+			mod := NewModel(g, theme.DefaultTheme())
+			updated, _ := mod.handleCommand(cmd)
+			m := updated.(Model)
+			if m.ActiveModal != ModalDamageSchematic {
+				t.Fatalf("expected ActiveModal = ModalDamageSchematic on %q, got %v", cmd, m.ActiveModal)
+			}
+		})
+	}
+}
+
+func TestModel_DamageSchematicModal_Hotkey(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// Press 'd' when command buffer is empty
+	dKey := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")}
+	updated, _ := mod.Update(dKey)
+	modD := updated.(Model)
+	if modD.ActiveModal != ModalDamageSchematic {
+		t.Fatalf("expected ActiveModal = ModalDamageSchematic on 'd' hotkey, got %v", modD.ActiveModal)
+	}
+
+	// Press 'd' to close
+	updatedClose, _ := modD.Update(dKey)
+	modClosed := updatedClose.(Model)
+	if modClosed.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after 'd' dismiss, got %v", modClosed.ActiveModal)
+	}
+	if !modClosed.CommandBar.Focused() {
+		t.Errorf("expected CommandBar focused after dismiss")
+	}
+
+	// Press 'D' when command buffer is empty
+	dUpperKey := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("D")}
+	updated, _ = mod.Update(dUpperKey)
+	modDUpper := updated.(Model)
+	if modDUpper.ActiveModal != ModalDamageSchematic {
+		t.Fatalf("expected ActiveModal = ModalDamageSchematic on 'D' hotkey, got %v", modDUpper.ActiveModal)
+	}
+
+	// Dismiss via 'q'
+	qKey := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")}
+	updatedClose, _ = modDUpper.Update(qKey)
+	modClosed = updatedClose.(Model)
+	if modClosed.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after 'q' dismiss, got %v", modClosed.ActiveModal)
+	}
+
+	// Press 'ctrl+d' when command buffer is empty
+	ctrlDKey := tea.KeyMsg{Type: tea.KeyCtrlD}
+	updated, _ = mod.Update(ctrlDKey)
+	modCtrlD := updated.(Model)
+	if modCtrlD.ActiveModal != ModalDamageSchematic {
+		t.Fatalf("expected ActiveModal = ModalDamageSchematic on 'ctrl+d' hotkey, got %v", modCtrlD.ActiveModal)
+	}
+
+	// Dismiss via enter
+	enterKey := tea.KeyMsg{Type: tea.KeyEnter}
+	updatedClose, _ = modCtrlD.Update(enterKey)
+	modClosed = updatedClose.(Model)
+	if modClosed.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after Enter dismiss, got %v", modClosed.ActiveModal)
+	}
+
+	// Press 'd' when command bar is not empty -> should NOT open modal, should append to command bar
+	modWithText := mod
+	modWithText.CommandBar.SetValue("com")
+	updatedWithText, _ := modWithText.Update(dKey)
+	modAppended := updatedWithText.(Model)
+	if modAppended.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone when buffer not empty, got %v", modAppended.ActiveModal)
+	}
+	if modAppended.CommandBar.Value() != "comd" {
+		t.Errorf("expected 'comd', got %q", modAppended.CommandBar.Value())
+	}
+}
+
+func TestModel_DamageSchematicModal_CloseModalMsg(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	updated, _ := mod.handleCommand("dam")
+	modDam := updated.(Model)
+	if modDam.ActiveModal != ModalDamageSchematic {
+		t.Fatalf("expected ActiveModal = ModalDamageSchematic, got %v", modDam.ActiveModal)
+	}
+
+	updatedClose, _ := modDam.Update(damageschematic.CloseModalMsg{})
+	modClosed := updatedClose.(Model)
+	if modClosed.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after CloseModalMsg, got %v", modClosed.ActiveModal)
+	}
+	if !modClosed.CommandBar.Focused() {
+		t.Errorf("expected CommandBar focused after CloseModalMsg")
+	}
+}
+
+func TestModel_DamageSchematicModal_ThemePropagation(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	updated, _ := mod.handleCommand("dam")
+	modDam := updated.(Model)
+	if modDam.ActiveModal != ModalDamageSchematic {
+		t.Fatalf("expected ActiveModal = ModalDamageSchematic, got %v", modDam.ActiveModal)
+	}
+
+	// F2 cycles theme while schematic is open
+	updatedF2, _ := modDam.Update(tea.KeyMsg{Type: tea.KeyF2})
+	modLcars := updatedF2.(Model)
+	if modLcars.Theme.Name() != "lcars" {
+		t.Errorf("expected theme lcars, got %s", modLcars.Theme.Name())
+	}
+	if modLcars.ActiveModal != ModalDamageSchematic {
+		t.Errorf("expected modal to remain open after F2, got %v", modLcars.ActiveModal)
+	}
+}
+
