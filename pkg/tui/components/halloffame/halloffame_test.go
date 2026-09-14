@@ -288,3 +288,83 @@ func TestHallOfFame_EdgeCases(t *testing.T) {
 		t.Errorf("expected promptName to be false after submission")
 	}
 }
+
+func TestHallOfFame_ExtremeScoresLayoutIntegrity(t *testing.T) {
+	th := theme.DefaultTheme()
+	m := New(th, 66, 18, "")
+
+	extremeScore := engine.ScoreBreakdown{
+		KlingonsKilled:        50,
+		KlingonPoints:         5000,
+		CommandersKilled:      10,
+		CommanderPoints:       1000,
+		SuperCommandersKilled: 5,
+		SuperCommanderPoints:  1000,
+		RomulansKilled:        20,
+		RomulanPoints:         800,
+		RomulansSurrendered:   5,
+		SurrenderedPoints:     150,
+		Casualties:            150,
+		CasualtyPenalty:       1500,
+		StarbasesLost:         2,
+		StarbasePenalty:       200,
+		HelpCalls:             5,
+		HelpPenalty:           225,
+		PlanetsDestroyed:      3,
+		PlanetPenalty:         30,
+		StarsDestroyed:        4,
+		StarPenalty:           20,
+		StarshipsLost:         1,
+		StarshipPenalty:       100,
+		KillRate:              25.50,
+		KillRatePoints:        12750,
+		WinBonus:              2500,
+		TotalScore:            15000,
+		RankBadge:             "[FADM]",
+		RankTitle:             "Fleet Admiral",
+		ElapsedStardates:      123.4,
+		GameWon:               true,
+	}
+
+	m.SetState(extremeScore, engine.DefaultLeaderboard(), false)
+
+	view := m.View()
+	lines := strings.Split(view, "\n")
+	if len(lines) != 18 {
+		t.Fatalf("expected exactly 18 lines, got %d", len(lines))
+	}
+
+	for i, l := range lines {
+		w := ansi.StringWidth(l)
+		if w != 66 {
+			t.Errorf("line %d width = %d, expected 66; line content: %q", i, w, l)
+		}
+	}
+
+	// Verify all content rows have intact left and right borders without truncation
+	for i := 1; i <= 16; i++ {
+		line := lines[i]
+		if !strings.HasPrefix(line, "│") {
+			t.Errorf("line %d does not start with '│': %q", i, line)
+		}
+		if !strings.HasSuffix(line, "│") {
+			t.Errorf("line %d does not end with '│' (layout truncated): %q", i, line)
+		}
+	}
+
+	// Verify line 7 (Kill Rate & Starships Lost) preserves right column suffix
+	if !strings.HasSuffix(lines[7], "(- 100)│") {
+		t.Errorf("line 7 truncated: expected suffix '(- 100)│', got %q", lines[7])
+	}
+	if !strings.Contains(lines[7], "(+12750)") {
+		t.Errorf("line 7 missing kill rate points (+12750): %q", lines[7])
+	}
+
+	// Verify line 8 (Victory Bonus & Stardates Elapsed) preserves right column suffix
+	if !strings.HasSuffix(lines[8], " 123.4│") {
+		t.Errorf("line 8 truncated: expected suffix ' 123.4│', got %q", lines[8])
+	}
+	if !strings.Contains(lines[8], "(+2500)") {
+		t.Errorf("line 8 missing victory bonus (+2500): %q", lines[8])
+	}
+}

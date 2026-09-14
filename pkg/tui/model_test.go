@@ -1468,7 +1468,10 @@ func TestModel_DamageSchematicModal_OpenAndDismiss(t *testing.T) {
 
 	// 3. Dismiss via Escape key
 	escMsg := tea.KeyMsg{Type: tea.KeyEsc}
-	updatedAfterEsc, _ := modDam.Update(escMsg)
+	updatedAfterEsc, cmd := modDam.Update(escMsg)
+	if cmd != nil {
+		updatedAfterEsc, _ = updatedAfterEsc.(Model).Update(cmd())
+	}
 	modClosed := updatedAfterEsc.(Model)
 	if modClosed.ActiveModal != ModalNone {
 		t.Errorf("expected ActiveModal = ModalNone after Esc, got %v", modClosed.ActiveModal)
@@ -1505,7 +1508,10 @@ func TestModel_DamageSchematicModal_Hotkey(t *testing.T) {
 	}
 
 	// Press 'd' to close
-	updatedClose, _ := modD.Update(dKey)
+	updatedClose, cmd := modD.Update(dKey)
+	if cmd != nil {
+		updatedClose, _ = updatedClose.(Model).Update(cmd())
+	}
 	modClosed := updatedClose.(Model)
 	if modClosed.ActiveModal != ModalNone {
 		t.Errorf("expected ActiveModal = ModalNone after 'd' dismiss, got %v", modClosed.ActiveModal)
@@ -1524,7 +1530,10 @@ func TestModel_DamageSchematicModal_Hotkey(t *testing.T) {
 
 	// Dismiss via 'q'
 	qKey := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("q")}
-	updatedClose, _ = modDUpper.Update(qKey)
+	updatedClose, cmd = modDUpper.Update(qKey)
+	if cmd != nil {
+		updatedClose, _ = updatedClose.(Model).Update(cmd())
+	}
 	modClosed = updatedClose.(Model)
 	if modClosed.ActiveModal != ModalNone {
 		t.Errorf("expected ActiveModal = ModalNone after 'q' dismiss, got %v", modClosed.ActiveModal)
@@ -1540,7 +1549,10 @@ func TestModel_DamageSchematicModal_Hotkey(t *testing.T) {
 
 	// Dismiss via enter
 	enterKey := tea.KeyMsg{Type: tea.KeyEnter}
-	updatedClose, _ = modCtrlD.Update(enterKey)
+	updatedClose, cmd = modCtrlD.Update(enterKey)
+	if cmd != nil {
+		updatedClose, _ = updatedClose.(Model).Update(cmd())
+	}
 	modClosed = updatedClose.(Model)
 	if modClosed.ActiveModal != ModalNone {
 		t.Errorf("expected ActiveModal = ModalNone after Enter dismiss, got %v", modClosed.ActiveModal)

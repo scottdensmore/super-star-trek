@@ -233,9 +233,6 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 	case EntityStar:
 		damage = 0
 		destroyed = false
-		if destroyed {
-			g.Metrics.StarsDestroyed++
-		}
 
 	case EntityStarbase:
 		damage = 500.0
@@ -250,9 +247,6 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 	case EntityPlanet:
 		damage = 0
 		destroyed = false
-		if destroyed {
-			g.Metrics.PlanetsDestroyed++
-		}
 
 	default:
 		damage = 0

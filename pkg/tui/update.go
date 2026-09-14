@@ -189,20 +189,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.HallOfFame, cmd = m.HallOfFame.Update(msg)
 				return m, cmd
 			}
-			if msg.Type == tea.KeyEsc || msg.String() == "esc" {
-				m.ActiveModal = ModalNone
-				cmd := m.CommandBar.Focus()
-				return m, cmd
-			}
 			if m.ActiveModal == ModalDamageSchematic {
 				var cmd tea.Cmd
 				m.DamageSchematic, cmd = m.DamageSchematic.Update(msg)
-				if cmd != nil {
-					if _, ok := cmd().(damageschematic.CloseModalMsg); ok {
-						m.ActiveModal = ModalNone
-						return m, m.CommandBar.Focus()
-					}
-				}
+				return m, cmd
+			}
+			if msg.Type == tea.KeyEsc || msg.String() == "esc" {
+				m.ActiveModal = ModalNone
+				cmd := m.CommandBar.Focus()
 				return m, cmd
 			}
 

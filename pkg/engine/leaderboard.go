@@ -138,7 +138,7 @@ func DefaultLeaderboard() *Leaderboard {
 // DefaultLeaderboardPath resolves the storage path for the high scores file.
 // It checks $XDG_CONFIG_HOME/super-star-trek/highscores.json,
 // falls back to ~/.config/super-star-trek/highscores.json or os.UserConfigDir(),
-// and if not creatable/writable, falls back to ./.sst-scores.json.
+// and if neither is set, falls back to ./.sst-scores.json.
 func DefaultLeaderboardPath() string {
 	configDir := os.Getenv("XDG_CONFIG_HOME")
 	if configDir == "" {
@@ -149,10 +149,7 @@ func DefaultLeaderboardPath() string {
 		}
 	}
 	if configDir != "" {
-		appDir := filepath.Join(configDir, "super-star-trek")
-		if err := os.MkdirAll(appDir, 0755); err == nil {
-			return filepath.Join(appDir, "highscores.json")
-		}
+		return filepath.Join(configDir, "super-star-trek", "highscores.json")
 	}
 	return "./.sst-scores.json"
 }

@@ -276,22 +276,58 @@ func (m Model) View() string {
 }
 
 func (m Model) renderTelemetryRows(styles hofStyles, innerW int, formatRow func(string) string) []string {
+	combineCols := func(left, right string) string {
+		wL := ansi.StringWidth(left)
+		wR := ansi.StringWidth(right)
+		gap := innerW - wL - wR
+		if gap >= 0 {
+			return left + strings.Repeat(" ", gap) + right
+		}
+		// If overflow occurs, cap/truncate columns so they fit within innerW
+		budgetL := innerW / 2
+		budgetR := innerW - budgetL
+		if wL > budgetL && wR <= budgetR {
+			left = ansi.Truncate(left, innerW-wR, "")
+		} else if wR > budgetR && wL <= budgetL {
+			right = ansi.Truncate(right, innerW-wL, "")
+		} else {
+			left = ansi.Truncate(left, budgetL, "")
+			right = ansi.Truncate(right, innerW-ansi.StringWidth(left), "")
+		}
+		wL = ansi.StringWidth(left)
+		wR = ansi.StringWidth(right)
+		gap = innerW - wL - wR
+		if gap < 0 {
+			gap = 0
+		}
+		return left + strings.Repeat(" ", gap) + right
+	}
+
 	leftH := " COMBAT ACHIEVEMENTS"
 	rightH := "PENALTIES & LOSSES"
-	gapH := innerW - ansi.StringWidth(leftH) - ansi.StringWidth(rightH)
-	if gapH < 0 {
-		gapH = 0
-	}
-	row1 := styles.GaugeLabel.Render(leftH) + strings.Repeat(" ", gapH) + styles.GaugeLabel.Render(rightH)
+	row1 := combineCols(styles.GaugeLabel.Render(leftH), styles.GaugeLabel.Render(rightH))
 
 	formatCol := func(lLabel string, lVal, lPts int, rLabel string, rVal, rPts int) string {
 		lStr := fmt.Sprintf(" %-20s %2d (+%4d)", lLabel, lVal, lPts)
 		rStr := fmt.Sprintf(" %-19s %3d (-%4d)", rLabel, rVal, rPts)
 		gap := innerW - ansi.StringWidth(lStr) - ansi.StringWidth(rStr)
 		if gap < 0 {
-			gap = 0
+			lPtsStr := fmt.Sprintf("(+%d)", lPts)
+			rPtsStr := fmt.Sprintf("(-%d)", rPts)
+			lPrefix := fmt.Sprintf(" %-19s %2d", lLabel, lVal)
+			rPrefix := fmt.Sprintf(" %-18s %3d", rLabel, rVal)
+			lGap := 32 - ansi.StringWidth(lPrefix) - ansi.StringWidth(lPtsStr)
+			if lGap < 1 {
+				lGap = 1
+			}
+			rGap := 32 - ansi.StringWidth(rPrefix) - ansi.StringWidth(rPtsStr)
+			if rGap < 1 {
+				rGap = 1
+			}
+			lStr = lPrefix + strings.Repeat(" ", lGap) + lPtsStr
+			rStr = rPrefix + strings.Repeat(" ", rGap) + rPtsStr
 		}
-		return lStr + strings.Repeat(" ", gap) + rStr
+		return combineCols(lStr, rStr)
 	}
 
 	row2 := formatCol("Klingons Destroyed:", m.score.KlingonsKilled, m.score.KlingonPoints, "Casualties:", m.score.Casualties, m.score.CasualtyPenalty)
@@ -300,21 +336,42 @@ func (m Model) renderTelemetryRows(styles hofStyles, innerW int, formatRow func(
 	row5 := formatCol("Romulans Destroyed:", m.score.RomulansKilled, m.score.RomulanPoints, "Planets Destroyed:", m.score.PlanetsDestroyed, m.score.PlanetPenalty)
 	row6 := formatCol("Romulan Surrenders:", m.score.RomulansSurrendered, m.score.SurrenderedPoints, "Stars Destroyed:", m.score.StarsDestroyed, m.score.StarPenalty)
 
-	lRate := fmt.Sprintf(" Kill Rate (%4.2f/SD):    (+%4d)", m.score.KillRate, m.score.KillRatePoints)
-	rShips := fmt.Sprintf(" %-19s %3d (-%4d)", "Starships Lost:", m.score.StarshipsLost, m.score.StarshipPenalty)
-	gapRate := innerW - ansi.StringWidth(lRate) - ansi.StringWidth(rShips)
-	if gapRate < 0 {
-		gapRate = 0
+	rateStr := fmt.Sprintf(" Kill Rate (%4.2f/SD):", m.score.KillRate)
+	ptsStr := fmt.Sprintf("(+%d)", m.score.KillRatePoints)
+	if m.score.KillRatePoints < 10000 {
+		ptsStr = fmt.Sprintf("(+%4d)", m.score.KillRatePoints)
 	}
-	row7 := lRate + strings.Repeat(" ", gapRate) + rShips
+	lRateGap := 32 - ansi.StringWidth(rateStr) - ansi.StringWidth(ptsStr)
+	if lRateGap < 1 {
+		lRateGap = 1
+	}
+	lRate := rateStr + strings.Repeat(" ", lRateGap) + ptsStr
 
-	lBonus := fmt.Sprintf(" Mission Victory Bonus:   (+%4d)", m.score.WinBonus)
-	rElapsed := fmt.Sprintf(" Stardates Elapsed:       %5.1f", m.score.ElapsedStardates)
-	gapBonus := innerW - ansi.StringWidth(lBonus) - ansi.StringWidth(rElapsed)
-	if gapBonus < 0 {
-		gapBonus = 0
+	rShips := fmt.Sprintf(" %-19s %3d (-%4d)", "Starships Lost:", m.score.StarshipsLost, m.score.StarshipPenalty)
+	if m.score.StarshipPenalty >= 10000 {
+		rShips = fmt.Sprintf(" %-18s %3d (-%d)", "Starships Lost:", m.score.StarshipsLost, m.score.StarshipPenalty)
 	}
-	row8 := lBonus + strings.Repeat(" ", gapBonus) + rElapsed
+	row7 := combineCols(lRate, rShips)
+
+	bonusPrefix := " Mission Victory Bonus:"
+	bonusPts := fmt.Sprintf("(+%d)", m.score.WinBonus)
+	if m.score.WinBonus < 10000 {
+		bonusPts = fmt.Sprintf("(+%4d)", m.score.WinBonus)
+	}
+	lBonusGap := 33 - ansi.StringWidth(bonusPrefix) - ansi.StringWidth(bonusPts)
+	if lBonusGap < 1 {
+		lBonusGap = 1
+	}
+	lBonus := bonusPrefix + strings.Repeat(" ", lBonusGap) + bonusPts
+
+	rElapsedPrefix := " Stardates Elapsed:"
+	rElapsedVal := fmt.Sprintf("%5.1f", m.score.ElapsedStardates)
+	rElapsedGap := 31 - ansi.StringWidth(rElapsedPrefix) - ansi.StringWidth(rElapsedVal)
+	if rElapsedGap < 1 {
+		rElapsedGap = 1
+	}
+	rElapsed := rElapsedPrefix + strings.Repeat(" ", rElapsedGap) + rElapsedVal
+	row8 := combineCols(lBonus, rElapsed)
 
 	divider := styles.Border.Render(" " + strings.Repeat("─", innerW-2))
 	row9 := divider

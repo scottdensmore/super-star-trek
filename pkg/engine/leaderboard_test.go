@@ -105,7 +105,13 @@ func TestLeaderboard_DefaultLeaderboardPath(t *testing.T) {
 		t.Errorf("expected path %q, got %q", expected, path)
 	}
 
-	// Unset XDG_CONFIG_HOME to test fallback
+	// Verify path purity: DefaultLeaderboardPath must NOT create directories on disk
+	appDir := filepath.Join(tmpDir, "super-star-trek")
+	if _, err := os.Stat(appDir); !os.IsNotExist(err) {
+		t.Errorf("expected directory %q not to exist, but DefaultLeaderboardPath created it", appDir)
+	}
+
+	// Unset XDG_CONFIG_HOME to test fallback to HOME/.config
 	t.Setenv("XDG_CONFIG_HOME", "")
 	homeDir := t.TempDir()
 	t.Setenv("HOME", homeDir)
@@ -116,8 +122,8 @@ func TestLeaderboard_DefaultLeaderboardPath(t *testing.T) {
 		t.Errorf("expected fallback path %q, got %q", expectedFallback, fallbackPath)
 	}
 
-	// Invalid uncreatable directory should fallback to ./.sst-scores.json
-	t.Setenv("XDG_CONFIG_HOME", "/dev/null/impossible")
+	// When neither XDG_CONFIG_HOME nor HOME is set, fallback to ./.sst-scores.json
+	t.Setenv("XDG_CONFIG_HOME", "")
 	t.Setenv("HOME", "")
 	uncreatablePath := DefaultLeaderboardPath()
 	if uncreatablePath != "./.sst-scores.json" {
