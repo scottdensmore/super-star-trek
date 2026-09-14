@@ -9,6 +9,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/galacticchart"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/halloffame"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/optionsmodal"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/sectorgrid"
@@ -27,6 +28,7 @@ const (
 	ModalSaveBrowser
 	ModalGalacticChart
 	ModalDamageSchematic
+	ModalHallOfFame
 )
 
 // Ensure Model satisfies the Bubble Tea Model interface at compile time.
@@ -52,6 +54,7 @@ type Model struct {
 	SaveBrowser     savebrowser.Model
 	GalacticChart   galacticchart.Model
 	DamageSchematic damageschematic.Model
+	HallOfFame      halloffame.Model
 	optionsModal    optionsmodal.Model
 	showOptions     bool
 	LastClickTime   time.Time
@@ -90,6 +93,7 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 		SaveBrowser:     savebrowser.New(th, "."),
 		GalacticChart:   galacticchart.New(th, 64, 18),
 		DamageSchematic: damageschematic.New(th, 66, 18),
+		HallOfFame:      halloffame.New(th, 66, 18, engine.DefaultLeaderboardPath()),
 		optionsModal:    optionsmodal.New(th, rules),
 		showOptions:     false,
 	}
