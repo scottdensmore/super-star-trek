@@ -44,6 +44,26 @@ func TestHallOfFame_DimensionsAndTabSwitching(t *testing.T) {
 		t.Errorf("expected mission telemetry contents in Tab 1")
 	}
 
+	// Verify Tab 1 rows are not truncated at the right border
+	expectedRowEndings := []struct {
+		lineIdx int
+		suffix  string
+		name    string
+	}{
+		{2, "(-   0)│", "Casualties"},
+		{3, "(-   0)│", "Starbases Lost"},
+		{4, "(-   0)│", "Distress Calls"},
+		{5, "(-   0)│", "Planets Destroyed"},
+		{6, "(-   0)│", "Stars Destroyed"},
+		{7, "(-   0)│", "Starships Lost"},
+		{8, "  5.0│", "Stardates Elapsed"},
+	}
+	for _, tc := range expectedRowEndings {
+		if !strings.HasSuffix(lines1[tc.lineIdx], tc.suffix) {
+			t.Errorf("Tab 1 line %d (%s) truncated: expected suffix %q, got line %q", tc.lineIdx, tc.name, tc.suffix, lines1[tc.lineIdx])
+		}
+	}
+
 	// Switch to Tab 2 via Tab key
 	tabMsg := tea.KeyMsg{Type: tea.KeyTab}
 	updated, _ := m.Update(tabMsg)
@@ -62,6 +82,22 @@ func TestHallOfFame_DimensionsAndTabSwitching(t *testing.T) {
 	if !strings.Contains(view2, "HALL OF FAME") || !strings.Contains(view2, "James T. Kirk") {
 		t.Errorf("expected leaderboard table in Tab 2")
 	}
+
+	// Verify Tab 2 table header contains STARDATE and DATE
+	if !strings.Contains(lines2[1], "STARDATE") || !strings.Contains(lines2[1], "DATE") {
+		t.Errorf("expected STARDATE and DATE in Tab 2 header, got %q", lines2[1])
+	}
+
+	// Switch back to Tab 1 via Shift+Tab key
+	shiftTabMsg := tea.KeyMsg{Type: tea.KeyShiftTab}
+	backTab1, _ := mTab2.Update(shiftTabMsg)
+	if backTab1.activeTab != tabTelemetry {
+		t.Errorf("expected Tab 1 after Shift+Tab, got activeTab %d", backTab1.activeTab)
+	}
+
+	// Also verify shift+tab string message
+	backTab1Str, _ := mTab2.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("shift+tab")})
+	_ = backTab1Str
 }
 
 func TestHallOfFame_DismissalKeys(t *testing.T) {

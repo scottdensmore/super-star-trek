@@ -176,7 +176,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 
 		switch msg.Type {
-		case tea.KeyTab:
+		case tea.KeyTab, tea.KeyShiftTab:
 			if m.activeTab == tabTelemetry {
 				m.activeTab = tabLeaderboard
 			} else {
@@ -196,7 +196,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 
 		switch msg.String() {
-		case "tab":
+		case "tab", "shift+tab":
 			if m.activeTab == tabTelemetry {
 				m.activeTab = tabLeaderboard
 			} else {
@@ -285,7 +285,7 @@ func (m Model) renderTelemetryRows(styles hofStyles, innerW int, formatRow func(
 	row1 := styles.GaugeLabel.Render(leftH) + strings.Repeat(" ", gapH) + styles.GaugeLabel.Render(rightH)
 
 	formatCol := func(lLabel string, lVal, lPts int, rLabel string, rVal, rPts int) string {
-		lStr := fmt.Sprintf(" %-21s %2d (+%4d)", lLabel, lVal, lPts)
+		lStr := fmt.Sprintf(" %-20s %2d (+%4d)", lLabel, lVal, lPts)
 		rStr := fmt.Sprintf(" %-19s %3d (-%4d)", rLabel, rVal, rPts)
 		gap := innerW - ansi.StringWidth(lStr) - ansi.StringWidth(rStr)
 		if gap < 0 {
@@ -295,12 +295,12 @@ func (m Model) renderTelemetryRows(styles hofStyles, innerW int, formatRow func(
 	}
 
 	row2 := formatCol("Klingons Destroyed:", m.score.KlingonsKilled, m.score.KlingonPoints, "Casualties:", m.score.Casualties, m.score.CasualtyPenalty)
-	row3 := formatCol("Commanders Destroyed:", m.score.CommandersKilled, m.score.CommanderPoints, "Starbases Lost:", m.score.StarbasesLost, m.score.StarbasePenalty)
+	row3 := formatCol("Commanders Killed:", m.score.CommandersKilled, m.score.CommanderPoints, "Starbases Lost:", m.score.StarbasesLost, m.score.StarbasePenalty)
 	row4 := formatCol("Super-Cmdrs Killed:", m.score.SuperCommandersKilled, m.score.SuperCommanderPoints, "Distress Calls:", m.score.HelpCalls, m.score.HelpPenalty)
 	row5 := formatCol("Romulans Destroyed:", m.score.RomulansKilled, m.score.RomulanPoints, "Planets Destroyed:", m.score.PlanetsDestroyed, m.score.PlanetPenalty)
-	row6 := formatCol("Romulans Surrendered:", m.score.RomulansSurrendered, m.score.SurrenderedPoints, "Stars Destroyed:", m.score.StarsDestroyed, m.score.StarPenalty)
+	row6 := formatCol("Romulan Surrenders:", m.score.RomulansSurrendered, m.score.SurrenderedPoints, "Stars Destroyed:", m.score.StarsDestroyed, m.score.StarPenalty)
 
-	lRate := fmt.Sprintf(" Kill Rate (%4.2f/SD):      (+%4d)", m.score.KillRate, m.score.KillRatePoints)
+	lRate := fmt.Sprintf(" Kill Rate (%4.2f/SD):    (+%4d)", m.score.KillRate, m.score.KillRatePoints)
 	rShips := fmt.Sprintf(" %-19s %3d (-%4d)", "Starships Lost:", m.score.StarshipsLost, m.score.StarshipPenalty)
 	gapRate := innerW - ansi.StringWidth(lRate) - ansi.StringWidth(rShips)
 	if gapRate < 0 {
@@ -308,7 +308,7 @@ func (m Model) renderTelemetryRows(styles hofStyles, innerW int, formatRow func(
 	}
 	row7 := lRate + strings.Repeat(" ", gapRate) + rShips
 
-	lBonus := fmt.Sprintf(" Mission Victory Bonus:    (+%4d)", m.score.WinBonus)
+	lBonus := fmt.Sprintf(" Mission Victory Bonus:   (+%4d)", m.score.WinBonus)
 	rElapsed := fmt.Sprintf(" Stardates Elapsed:       %5.1f", m.score.ElapsedStardates)
 	gapBonus := innerW - ansi.StringWidth(lBonus) - ansi.StringWidth(rElapsed)
 	if gapBonus < 0 {
@@ -354,7 +354,7 @@ func (m Model) renderTelemetryRows(styles hofStyles, innerW int, formatRow func(
 }
 
 func (m Model) renderLeaderboardRows(styles hofStyles, innerW int, formatRow func(string) string) []string {
-	hStr := fmt.Sprintf(" %2s  %-20s %-9s %6s   %7s  %-10s", "#", "CAPTAIN", "RANK", "SCORE", "STARDATE", "DATE")
+	hStr := fmt.Sprintf(" %2s  %-20s %-9s %6s  %-8s  %-10s", "#", "CAPTAIN", "RANK", "SCORE", "STARDATE", "DATE")
 	row1 := styles.GaugeLabel.Render(hStr)
 	divider := styles.Border.Render(" " + strings.Repeat("─", innerW-2))
 	row2 := divider
