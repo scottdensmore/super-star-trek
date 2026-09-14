@@ -187,19 +187,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.ActiveModal == ModalHallOfFame {
 				var cmd tea.Cmd
 				m.HallOfFame, cmd = m.HallOfFame.Update(msg)
-				if cmd != nil {
-					res := cmd()
-					switch r := res.(type) {
-					case halloffame.CloseModalMsg:
-						m.ActiveModal = ModalNone
-						return m, m.CommandBar.Focus()
-					case halloffame.ScoreRecordedMsg:
-						m.CommandBar.AddMessage(fmt.Sprintf("Score recorded for Captain %s: %d points (%s)", r.Entry.CaptainName, r.Entry.Score, r.Entry.Rank))
-						return m, func() tea.Msg { return r }
-					default:
-						return m, func() tea.Msg { return res }
-					}
-				}
 				return m, cmd
 			}
 			if msg.Type == tea.KeyEsc || msg.String() == "esc" {
@@ -752,6 +739,9 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 // logEvents formats and appends engine events to the command bar log buffer.
 func (m *Model) logEvents(events []engine.Event) {
 	for _, ev := range events {
+		if _, ok := ev.(engine.EventGameOver); ok {
+			continue
+		}
 		formatted := formatEvent(ev)
 		if formatted != "" {
 			m.CommandBar.AddMessage(formatted)
