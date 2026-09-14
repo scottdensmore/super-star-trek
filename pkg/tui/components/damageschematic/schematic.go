@@ -122,11 +122,7 @@ func (m Model) formatPin(dev engine.DeviceID, tag string, styles schematicStyles
 	if dmg <= 0 {
 		return styles.SubsystemNormal.Render(fmt.Sprintf("[%s: OK]", tag))
 	}
-	repairMult := m.repairMult
-	if repairMult <= 0 {
-		repairMult = 1.0
-	}
-	scaled := dmg * repairMult
+	scaled := dmg * m.repairMult
 	if dmg >= 2.0 {
 		return styles.TextWarn.Render(fmt.Sprintf("[%s: %.1f]", tag, scaled))
 	}
