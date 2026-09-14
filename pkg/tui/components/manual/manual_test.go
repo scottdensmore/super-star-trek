@@ -97,3 +97,48 @@ func TestManual_SelectChapter(t *testing.T) {
 		t.Errorf("expected unchanged index on unknown chapter, got %d", m.selectedIdx)
 	}
 }
+
+func TestManual_SetTheme(t *testing.T) {
+	th1 := theme.DefaultTheme()
+	m := New(th1, 66, 18)
+
+	th2 := theme.LcarsTheme{}
+	m.SetTheme(th2)
+
+	if m.theme.Name() != "lcars" {
+		t.Errorf("expected theme name 'lcars', got %q", m.theme.Name())
+	}
+}
+
+func TestManual_NonStandardDimensionsConstraint(t *testing.T) {
+	th := theme.DefaultTheme()
+	// Non-standard terminal dimensions (e.g. 80x24) must still render exact 66x18 box
+	m := New(th, 80, 24)
+	view := m.View()
+	lines := strings.Split(view, "\n")
+
+	if len(lines) != 18 {
+		t.Fatalf("expected exactly 18 lines, got %d", len(lines))
+	}
+
+	for lineIdx, line := range lines {
+		width := ansi.StringWidth(line)
+		if width != 66 {
+			t.Errorf("line %d: expected width 66, got %d: %q", lineIdx, width, line)
+		}
+	}
+
+	if !strings.HasPrefix(lines[0], "┌") || !strings.HasSuffix(lines[0], "┐") {
+		t.Errorf("top border corrupted: %q", lines[0])
+	}
+	if !strings.HasPrefix(lines[17], "└") || !strings.HasSuffix(lines[17], "┘") {
+		t.Errorf("bottom border corrupted: %q", lines[17])
+	}
+
+	for i := 1; i <= 16; i++ {
+		if !strings.HasPrefix(lines[i], "│") || !strings.HasSuffix(lines[i], "│") {
+			t.Errorf("inner row %d missing side borders: %q", i, lines[i])
+		}
+	}
+}
+

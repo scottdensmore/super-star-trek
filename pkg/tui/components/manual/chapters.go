@@ -178,7 +178,7 @@ func defaultChapters() []Chapter {
 				"─────────────────────────────────────────",
 				"Damage repairs proceed in stardates (SD).",
 				"• In-flight repairs: 1.0x baseline pacing.",
-				"• Starbase drydock: 4.0x accelerated pacing",
+				"• Starbase drydock: 4x accelerated pacing",
 				"  (repairs proceed 4x faster at starbase).",
 				"• Docking instantly clears damaged status",
 				"  for devices given adequate stardates.",

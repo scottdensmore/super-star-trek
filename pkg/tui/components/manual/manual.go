@@ -184,12 +184,9 @@ func (m *Model) SelectChapter(topicOrNum string) {
 func (m Model) View() string {
 	styles := getStyles(m.theme)
 
-	w := m.width
-	if w <= 0 {
-		w = 66
-	}
-
+	// The manual modal adheres strictly to the 66-column x 18-line dimension budget.
 	const (
+		w        = 66
 		sidebarW = 20
 		readerW  = 43
 	)
@@ -208,8 +205,8 @@ func (m Model) View() string {
 	// Bottom Border (66 cols): └─ [Tab: Pane]  [↑/↓: Move]  [1-8: Jump]  [Esc/Q/F1: Close] ─────┘
 	footerStr := "[Tab: Pane]  [↑/↓: Move]  [1-8: Jump]  [Esc/Q/F1: Close]"
 	styledFooter := styles.LogText.Render(footerStr)
-	// Border prefix "└─ " (3) + footerStr (56) + " " (1) = 60 cols.
-	// Remaining: 66 - 60 - 1 ("┘") = 5 dashes.
+	// Border prefix "└─ " (3) + footerStr (55) + " " (1) = 59 cols.
+	// Remaining: 66 - 59 - 1 ("┘") = 6 dashes.
 	dashesBottom := w - 3 - ansi.StringWidth(footerStr) - 2
 	if dashesBottom < 0 {
 		dashesBottom = 0
