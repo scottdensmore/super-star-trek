@@ -395,5 +395,3 @@ func TestCLIModeFlag(t *testing.T) {
 		})
 	}
 }
-
-

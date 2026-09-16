@@ -396,4 +396,3 @@ func TestCommandBarTabCompletion(t *testing.T) {
 		t.Errorf("expected empty string to remain on tab with empty input, got %q", cb.Value())
 	}
 }
-

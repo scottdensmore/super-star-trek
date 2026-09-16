@@ -270,5 +270,3 @@ func TestColorModeOptionsModalKeyInteraction(t *testing.T) {
 		t.Fatalf("expected active Theme.ColorMode to be Dark after saving modal, got %s", updated3.Theme.ColorMode())
 	}
 }
-
-

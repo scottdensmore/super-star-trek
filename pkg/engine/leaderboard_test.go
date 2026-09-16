@@ -20,7 +20,7 @@ func TestLeaderboard_DefaultSeedAndQualifies(t *testing.T) {
 	if !lb.Qualifies(lowestScore + 10) {
 		t.Errorf("expected score %d to qualify against lowest %d", lowestScore+10, lowestScore)
 	}
-	if lb.Qualifies(lowestScore - 50) && len(lb.Entries) >= 10 {
+	if lb.Qualifies(lowestScore-50) && len(lb.Entries) >= 10 {
 		t.Errorf("expected score %d not to qualify when table is full", lowestScore-50)
 	}
 }

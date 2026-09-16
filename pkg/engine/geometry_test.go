@@ -200,4 +200,3 @@ func TestSaveRoundtripDiscoveryAndBases(t *testing.T) {
 		t.Errorf("ChartKnownBases mismatch after save/load")
 	}
 }
-

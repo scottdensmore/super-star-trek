@@ -647,5 +647,3 @@ func (a ActionCallHelp) Execute(g *GameState) ([]Event, error) {
 		EventHelpCalled{},
 	}, nil
 }
-
-

@@ -33,6 +33,7 @@ type Model struct {
 	chartDiscovered [9][9]bool
 	knownBases      [9][9]bool
 	computerDamaged bool
+	showHelp        bool
 	width           int
 	height          int
 }
@@ -91,6 +92,7 @@ func (m *Model) SetState(entQuad engine.Coord, chart [9][9]int, discovered [9][9
 	m.chartDiscovered = discovered
 	m.knownBases = knownBases
 	m.computerDamaged = computerDamaged
+	m.showHelp = false
 	m.cursor = m.enterpriseQuad
 	m.cursor[0] = clampCoord(m.cursor[0], 1, 8)
 	m.cursor[1] = clampCoord(m.cursor[1], 1, 8)
@@ -99,6 +101,16 @@ func (m *Model) SetState(entQuad engine.Coord, chart [9][9]int, discovered [9][9
 // Cursor returns the active cursor coordinates.
 func (m Model) Cursor() engine.Coord {
 	return m.cursor
+}
+
+// ShowingHelp returns whether the chart is currently displaying the help guide.
+func (m Model) ShowingHelp() bool {
+	return m.showHelp
+}
+
+// SetShowingHelp sets whether the chart displays the help guide.
+func (m *Model) SetShowingHelp(s bool) {
+	m.showHelp = s
 }
 
 // Update handles directional navigation, Enter warp dispatch, Esc close,
@@ -110,7 +122,35 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		if m.showHelp {
+			switch {
+			case msg.Type == tea.KeyEsc || msg.String() == "esc" || msg.String() == "?" || msg.String() == "q" || msg.String() == "Q":
+				m.showHelp = false
+				return m, nil
+			case msg.Type == tea.KeyEnter || msg.String() == "enter":
+				m.showHelp = false
+				if m.computerDamaged {
+					return m, func() tea.Msg {
+						return WarpBlockedMsg{
+							Reason: "COMPUTER DAMAGED, USE A POCKET CALCULATOR. Manual navigation required (nav q <r> <c> [warp]).",
+						}
+					}
+				}
+				dest := m.cursor
+				telem := CalculateTelemetry(m.enterpriseQuad, dest)
+				return m, func() tea.Msg {
+					return WarpToQuadrantMsg{DestQuad: dest, Warp: telem.RecommendedWarp}
+				}
+			default:
+				m.showHelp = false
+			}
+		}
+
 		switch {
+		case msg.String() == "?":
+			m.showHelp = true
+			return m, nil
+
 		case msg.Type == tea.KeyUp || msg.String() == "k" || msg.String() == "K" || msg.String() == "up":
 			if m.cursor[0] > 1 {
 				m.cursor[0]--
@@ -245,6 +285,10 @@ func (m Model) View() string {
 	widthNoBorders := targetWidth - borderH
 	heightNoBorders := targetHeight - borderV
 
+	if m.showHelp {
+		return m.renderHelpView(styles, panelStyle, innerWidth, widthNoBorders, heightNoBorders)
+	}
+
 	// Line 1: Centered title banner
 	title := styles.PanelTitle.Render("GALACTIC STAR CHART")
 	lineTitle := lipgloss.NewStyle().Width(innerWidth).Align(lipgloss.Center).Render(title)
@@ -312,15 +356,15 @@ func (m Model) View() string {
 	// Lines 13-14: Navigation telemetry
 	lineTelem1, lineTelem2 := m.renderFooter(styles)
 
-	// Line 15: Empty spacer
-	lineSpacer2 := ""
+	// Line 15: Notation legend
+	lineLegend := styles.TextMuted.Render("Legend: ··· Unexplored • .1. Base • KBS (Klingon/Base/Star)")
 
 	// Line 16: Action controls hint
 	var lineHint string
 	if m.computerDamaged {
-		lineHint = styles.TextMuted.Render("[Enter] Disabled (Comp Offline)  [Arrows/HJKL] Move  [Esc] Close")
+		lineHint = styles.TextMuted.Render("[Enter] Disabled (Comp Offline)  [?] Help  [Esc] Close")
 	} else {
-		lineHint = styles.LogText.Render("[Enter] Warp  [Arrows/HJKL] Move  [Esc] Close")
+		lineHint = styles.LogText.Render("[Enter] Warp  [?] Help  [Arrows/HJKL] Move  [Esc] Close")
 	}
 
 	contentLines := []string{
@@ -338,13 +382,40 @@ func (m Model) View() string {
 		lineDivider,
 		lineTelem1,
 		lineTelem2,
+		lineLegend,
+		lineHint,
 	}
-	if !m.computerDamaged {
-		contentLines = append(contentLines, lineSpacer2)
-	}
-	contentLines = append(contentLines, lineHint)
 
 	content := strings.Join(contentLines, "\n")
+	return panelStyle.Width(widthNoBorders).Height(heightNoBorders).Render(content)
+}
+
+// renderHelpView renders the 16-line in-modal help guide for the Galactic Star Chart.
+func (m Model) renderHelpView(styles chartStyles, panelStyle lipgloss.Style, innerWidth, widthNoBorders, heightNoBorders int) string {
+	title := styles.PanelTitle.Render("GALACTIC STAR CHART GUIDE")
+	lineTitle := lipgloss.NewStyle().Width(innerWidth).Align(lipgloss.Center).Render(title)
+	lineDivider := styles.GridHeader.Render(strings.Repeat("─", innerWidth))
+
+	helpLines := []string{
+		lineTitle,
+		"",
+		styles.LogText.Render("The 8x8 chart maps the 64 quadrants of the galaxy:"),
+		"",
+		styles.CommandText.Render("  ··· ") + styles.LogText.Render(" Unexplored quadrant (not yet scanned by sensors)"),
+		styles.CommandText.Render("  .1. ") + styles.LogText.Render(" Starbase detected via Starfleet Command report"),
+		styles.CommandText.Render("  KBS ") + styles.LogText.Render(" 3-digit quadrant sensor scan:"),
+		styles.LogText.Render("        • K (hundreds) = Klingon battlecruisers"),
+		styles.LogText.Render("        • B (tens)     = Federation starbases"),
+		styles.LogText.Render("        • S (units)    = Stars"),
+		"",
+		styles.Enterprise.Render("  <···>") + styles.LogText.Render(" Enterprise current position"),
+		styles.CommandText.Render("  [···]") + styles.LogText.Render(" Targeted destination reticle"),
+		lineDivider,
+		styles.GaugeLabel.Render("Telemetry displays course, distance, and recommended warp."),
+		styles.TextMuted.Render("[?] / [Esc] Return to chart  •  [Enter] Warp to target"),
+	}
+
+	content := strings.Join(helpLines, "\n")
 	return panelStyle.Width(widthNoBorders).Height(heightNoBorders).Render(content)
 }
 

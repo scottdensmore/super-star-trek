@@ -385,5 +385,3 @@ func TestRadarDegradation_TwoTier(t *testing.T) {
 		t.Errorf("expected [LRS OFFLINE] in heavy damage, got:\n%s", outHeavy)
 	}
 }
-
-

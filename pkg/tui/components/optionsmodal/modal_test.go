@@ -215,4 +215,3 @@ func TestOptionsModal_ColorModeRow(t *testing.T) {
 		t.Errorf("expected view to contain 'AUTO', got:\n%s", view)
 	}
 }
-

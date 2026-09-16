@@ -135,4 +135,3 @@ func GetTheme(name string) Theme {
 		return DefaultTheme()
 	}
 }
-

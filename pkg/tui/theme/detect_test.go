@@ -8,17 +8,17 @@ import (
 
 func TestParseAppleScriptRGB(t *testing.T) {
 	tests := []struct {
-		input       string
+		input        string
 		expectedDark bool
 		expectedOk   bool
 	}{
 		{"65535, 65535, 65535", false, true}, // Pure White
-		{"0, 0, 0", true, true},             // Pure Black
+		{"0, 0, 0", true, true},              // Pure Black
 		{"50000, 50000, 50000", false, true}, // Light gray
 		{"10000, 10000, 10000", true, true},  // Dark gray
 		{"65535, 65535", false, false},       // Too few parts
-		{"a, b, c", false, false},             // Non-numeric
-		{"", false, false},                    // Empty
+		{"a, b, c", false, false},            // Non-numeric
+		{"", false, false},                   // Empty
 	}
 
 	for _, tt := range tests {
@@ -46,12 +46,12 @@ func TestDetectDarkBackground_COLORFGBG(t *testing.T) {
 		colorfgbg string
 		expected  bool
 	}{
-		{"15;0", true},   // Black background
-		{"0;15", false},  // Bright white background
-		{"15;7", false},  // Light gray background
-		{"15;8", true},   // Dark gray (bright black) background
-		{"15;1", true},   // Red background
-		{"15;11", false}, // Bright yellow background
+		{"15;0", true},       // Black background
+		{"0;15", false},      // Bright white background
+		{"15;7", false},      // Light gray background
+		{"15;8", true},       // Dark gray (bright black) background
+		{"15;1", true},       // Red background
+		{"15;11", false},     // Bright yellow background
 		{"0;default", false}, // fallback to default
 	}
 

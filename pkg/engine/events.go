@@ -174,4 +174,3 @@ type EventHelpCalled struct{}
 
 // EventType returns the type name for EventHelpCalled.
 func (e EventHelpCalled) EventType() string { return "HelpCalled" }
-

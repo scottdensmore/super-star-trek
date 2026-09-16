@@ -394,3 +394,107 @@ func TestGalacticChart_ComputerDamagedDimensions(t *testing.T) {
 		}
 	}
 }
+
+func TestGalacticChart_LegendRendering(t *testing.T) {
+	th := theme.ModernTheme{}
+	m := New(th, 64, 18)
+	var chart [9][9]int
+	var disc [9][9]bool
+	var knownBases [9][9]bool
+
+	m.SetState(engine.Coord{3, 3}, chart, disc, knownBases, false)
+	view := m.View()
+
+	if !strings.Contains(view, "Legend:") || !strings.Contains(view, "··· Unexplored") {
+		t.Errorf("expected view to contain legend with '··· Unexplored', got:\n%s", view)
+	}
+	if !strings.Contains(view, ".1. Base") {
+		t.Errorf("expected view to contain '.1. Base', got:\n%s", view)
+	}
+	if !strings.Contains(view, "KBS (Klingon/Base/Star)") {
+		t.Errorf("expected view to contain 'KBS (Klingon/Base/Star)', got:\n%s", view)
+	}
+	if !strings.Contains(view, "[?] Help") {
+		t.Errorf("expected view to contain '[?] Help', got:\n%s", view)
+	}
+
+	lines := strings.Split(strings.TrimRight(view, "\n"), "\n")
+	if len(lines) != 18 {
+		t.Fatalf("expected height 18 rows, got %d", len(lines))
+	}
+	for i, line := range lines {
+		w := lipgloss.Width(line)
+		if w != 64 {
+			t.Fatalf("line %d width %d != 64: %q", i, w, line)
+		}
+	}
+}
+
+func TestGalacticChart_HelpToggle(t *testing.T) {
+	th := theme.ModernTheme{}
+	m := New(th, 64, 18)
+	var chart [9][9]int
+	var disc [9][9]bool
+	var knownBases [9][9]bool
+
+	m.SetState(engine.Coord{3, 3}, chart, disc, knownBases, false)
+	if m.ShowingHelp() {
+		t.Fatal("expected ShowingHelp() to be false initially")
+	}
+
+	// Press '?' to toggle help on
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'?'}})
+	if !m.ShowingHelp() {
+		t.Fatal("expected ShowingHelp() to be true after pressing '?'")
+	}
+
+	helpView := m.View()
+	if !strings.Contains(helpView, "GALACTIC STAR CHART GUIDE") {
+		t.Errorf("expected help view to contain title 'GALACTIC STAR CHART GUIDE', got:\n%s", helpView)
+	}
+	if !strings.Contains(helpView, "Unexplored quadrant") {
+		t.Errorf("expected help view to explain unexplored quadrant, got:\n%s", helpView)
+	}
+	if !strings.Contains(helpView, "K (hundreds) = Klingon battlecruisers") {
+		t.Errorf("expected help view to explain Klingon hundreds digit, got:\n%s", helpView)
+	}
+	if !strings.Contains(helpView, "B (tens)     = Federation starbases") {
+		t.Errorf("expected help view to explain Starbases tens digit, got:\n%s", helpView)
+	}
+	if !strings.Contains(helpView, "S (units)    = Stars") {
+		t.Errorf("expected help view to explain Stars units digit, got:\n%s", helpView)
+	}
+
+	lines := strings.Split(strings.TrimRight(helpView, "\n"), "\n")
+	if len(lines) != 18 {
+		t.Fatalf("expected help view height 18 rows, got %d", len(lines))
+	}
+	for i, line := range lines {
+		w := lipgloss.Width(line)
+		if w != 64 {
+			t.Fatalf("help line %d width %d != 64: %q", i, w, line)
+		}
+	}
+
+	// Press '?' again to toggle help off
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'?'}})
+	if m.ShowingHelp() {
+		t.Fatal("expected ShowingHelp() to be false after pressing '?' again")
+	}
+
+	// Toggle on and press Esc to toggle off
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'?'}})
+	if !m.ShowingHelp() {
+		t.Fatal("expected ShowingHelp() true")
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	if m.ShowingHelp() {
+		t.Fatal("expected ShowingHelp() false after Esc")
+	}
+
+	// SetShowingHelp programmatic control
+	m.SetShowingHelp(true)
+	if !m.ShowingHelp() {
+		t.Fatal("expected ShowingHelp() true after SetShowingHelp(true)")
+	}
+}
