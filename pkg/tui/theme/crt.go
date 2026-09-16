@@ -3,14 +3,32 @@ package theme
 import "github.com/charmbracelet/lipgloss"
 
 // CrtTheme implements the 1970s monochrome phosphor CRT green aesthetic.
-type CrtTheme struct{}
+type CrtTheme struct {
+	mode ColorMode
+}
 
 func (t CrtTheme) Name() string {
 	return "crt"
 }
 
+func (t CrtTheme) ColorMode() ColorMode {
+	if t.mode == "" {
+		return ColorModeAuto
+	}
+	return t.mode
+}
+
+func (t CrtTheme) WithColorMode(mode ColorMode) Theme {
+	t.mode = mode
+	return t
+}
+
 func (t CrtTheme) Next() Theme {
-	return ModernTheme{}
+	return ModernTheme{mode: t.ColorMode()}
+}
+
+func (t CrtTheme) PaletteStyles(isDark bool) Styles {
+	return t.Styles()
 }
 
 func (t CrtTheme) Styles() Styles {

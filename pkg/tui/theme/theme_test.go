@@ -86,3 +86,74 @@ func TestStylesNonNull(t *testing.T) {
 		}
 	}
 }
+
+func TestColorModeResolution(t *testing.T) {
+	tests := []struct {
+		mode         ColorMode
+		terminalDark bool
+		expectedDark bool
+	}{
+		{ColorModeAuto, true, true},
+		{ColorModeAuto, false, false},
+		{ColorModeDark, true, true},
+		{ColorModeDark, false, true},
+		{ColorModeLight, true, false},
+		{ColorModeLight, false, false},
+	}
+
+	for _, tt := range tests {
+		got := tt.mode.Resolve(tt.terminalDark)
+		if got != tt.expectedDark {
+			t.Errorf("%s.Resolve(%v) = %v, expected %v", tt.mode, tt.terminalDark, got, tt.expectedDark)
+		}
+	}
+}
+
+func TestColorModeNext(t *testing.T) {
+	if ColorModeAuto.Next() != ColorModeDark {
+		t.Errorf("expected Auto.Next() == Dark, got %s", ColorModeAuto.Next())
+	}
+	if ColorModeDark.Next() != ColorModeLight {
+		t.Errorf("expected Dark.Next() == Light, got %s", ColorModeDark.Next())
+	}
+	if ColorModeLight.Next() != ColorModeAuto {
+		t.Errorf("expected Light.Next() == Auto, got %s", ColorModeLight.Next())
+	}
+}
+
+func TestParseColorMode(t *testing.T) {
+	tests := []struct {
+		input       string
+		expected    ColorMode
+		expectError bool
+	}{
+		{"auto", ColorModeAuto, false},
+		{"AUTO", ColorModeAuto, false},
+		{"dark", ColorModeDark, false},
+		{"Dark", ColorModeDark, false},
+		{"light", ColorModeLight, false},
+		{"LIGHT", ColorModeLight, false},
+		{"invalid", ColorModeAuto, true},
+	}
+
+	for _, tt := range tests {
+		got, err := ParseColorMode(tt.input)
+		if tt.expectError && err == nil {
+			t.Errorf("expected error for input %q, got nil", tt.input)
+		}
+		if !tt.expectError && err != nil {
+			t.Errorf("unexpected error for input %q: %v", tt.input, err)
+		}
+		if got != tt.expected {
+			t.Errorf("ParseColorMode(%q) = %v, expected %v", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestDefaultThemeColorMode(t *testing.T) {
+	th := DefaultTheme()
+	if th.ColorMode() != ColorModeAuto {
+		t.Errorf("expected DefaultTheme().ColorMode() == %v, got %v", ColorModeAuto, th.ColorMode())
+	}
+}
+

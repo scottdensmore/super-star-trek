@@ -3,14 +3,32 @@ package theme
 import "github.com/charmbracelet/lipgloss"
 
 // ModernTheme implements the Starfleet Modern high-contrast 24-bit TrueColor theme.
-type ModernTheme struct{}
+type ModernTheme struct {
+	mode ColorMode
+}
 
 func (t ModernTheme) Name() string {
 	return "modern"
 }
 
+func (t ModernTheme) ColorMode() ColorMode {
+	if t.mode == "" {
+		return ColorModeAuto
+	}
+	return t.mode
+}
+
+func (t ModernTheme) WithColorMode(mode ColorMode) Theme {
+	t.mode = mode
+	return t
+}
+
 func (t ModernTheme) Next() Theme {
-	return LcarsTheme{}
+	return LcarsTheme{mode: t.ColorMode()}
+}
+
+func (t ModernTheme) PaletteStyles(isDark bool) Styles {
+	return t.Styles()
 }
 
 func (t ModernTheme) Styles() Styles {

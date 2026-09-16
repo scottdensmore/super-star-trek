@@ -3,14 +3,32 @@ package theme
 import "github.com/charmbracelet/lipgloss"
 
 // LcarsTheme implements the 24th-century LCARS aesthetic palette.
-type LcarsTheme struct{}
+type LcarsTheme struct {
+	mode ColorMode
+}
 
 func (t LcarsTheme) Name() string {
 	return "lcars"
 }
 
+func (t LcarsTheme) ColorMode() ColorMode {
+	if t.mode == "" {
+		return ColorModeAuto
+	}
+	return t.mode
+}
+
+func (t LcarsTheme) WithColorMode(mode ColorMode) Theme {
+	t.mode = mode
+	return t
+}
+
 func (t LcarsTheme) Next() Theme {
-	return CrtTheme{}
+	return CrtTheme{mode: t.ColorMode()}
+}
+
+func (t LcarsTheme) PaletteStyles(isDark bool) Styles {
+	return t.Styles()
 }
 
 func (t LcarsTheme) Styles() Styles {
