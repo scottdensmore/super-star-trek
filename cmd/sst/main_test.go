@@ -10,6 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
 
 func TestIsClassic(t *testing.T) {
@@ -279,4 +280,120 @@ func TestCLIFlags_Overrides(t *testing.T) {
 		t.Errorf("expected SensorDegradation=false, got %v", model.Game.Rules.SensorDegradation)
 	}
 }
+
+func TestCLIModeFlag(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	tests := []struct {
+		name         string
+		args         []string
+		expectedErr  bool
+		expectedMode theme.ColorMode
+		errSubstring string
+	}{
+		{
+			name:         "flag mode light",
+			args:         []string{"-mode", "light"},
+			expectedErr:  false,
+			expectedMode: theme.ColorModeLight,
+		},
+		{
+			name:         "flag mode dark",
+			args:         []string{"-mode", "dark"},
+			expectedErr:  false,
+			expectedMode: theme.ColorModeDark,
+		},
+		{
+			name:         "flag mode auto",
+			args:         []string{"-mode", "auto"},
+			expectedErr:  false,
+			expectedMode: theme.ColorModeAuto,
+		},
+		{
+			name:         "long flag with equals light",
+			args:         []string{"--mode=light"},
+			expectedErr:  false,
+			expectedMode: theme.ColorModeLight,
+		},
+		{
+			name:         "long flag with equals dark",
+			args:         []string{"--mode=dark"},
+			expectedErr:  false,
+			expectedMode: theme.ColorModeDark,
+		},
+		{
+			name:         "flag mode case insensitive",
+			args:         []string{"-mode", "DARK"},
+			expectedErr:  false,
+			expectedMode: theme.ColorModeDark,
+		},
+		{
+			name:         "default without mode flag defaults to auto",
+			args:         []string{},
+			expectedErr:  false,
+			expectedMode: theme.ColorModeAuto,
+		},
+		{
+			name:         "combined theme and mode",
+			args:         []string{"-theme", "lcars", "-mode", "light"},
+			expectedErr:  false,
+			expectedMode: theme.ColorModeLight,
+		},
+		{
+			name:         "invalid mode",
+			args:         []string{"-mode", "invalid"},
+			expectedErr:  true,
+			errSubstring: "invalid color mode",
+		},
+		{
+			name:         "invalid mode unknown",
+			args:         []string{"--mode=solar"},
+			expectedErr:  true,
+			errSubstring: "invalid color mode",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedModel tea.Model
+			called := false
+			runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+				called = true
+				capturedModel = m
+				return nil
+			}
+
+			var stdout, stderr bytes.Buffer
+			exitCode := run(tt.args, strings.NewReader(""), &stdout, &stderr)
+
+			if tt.expectedErr {
+				if exitCode == 0 {
+					t.Fatalf("expected non-zero exit code for args %v, got 0", tt.args)
+				}
+				if called {
+					t.Fatalf("expected runProgram NOT to be called when mode is invalid")
+				}
+				if tt.errSubstring != "" && !strings.Contains(stderr.String(), tt.errSubstring) {
+					t.Errorf("expected stderr to contain %q, got %q", tt.errSubstring, stderr.String())
+				}
+			} else {
+				if exitCode != 0 {
+					t.Fatalf("expected exit code 0 for args %v, got %d: %s", tt.args, exitCode, stderr.String())
+				}
+				if !called {
+					t.Fatalf("expected runProgram to be called for args %v", tt.args)
+				}
+				model, ok := capturedModel.(tui.Model)
+				if !ok {
+					t.Fatalf("captured model is not tui.Model: %T", capturedModel)
+				}
+				if model.Theme.ColorMode() != tt.expectedMode {
+					t.Errorf("expected ColorMode %v, got %v", tt.expectedMode, model.Theme.ColorMode())
+				}
+			}
+		})
+	}
+}
+
 
