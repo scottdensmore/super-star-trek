@@ -190,6 +190,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.Game != nil {
 					m.Game.Rules = m.optionsModal.Rules()
 				}
+				if m.Theme != nil {
+					m = m.applyTheme(m.Theme.WithColorMode(m.optionsModal.ColorMode()))
+				}
 				m.optionsModal.Closed = false
 				return m, m.CommandBar.Focus()
 			}
@@ -330,6 +333,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case msg.String() == "o" || msg.String() == "O":
 				if m.Game != nil {
 					m.optionsModal.SetRules(m.Game.Rules)
+				}
+				if m.Theme != nil {
+					m.optionsModal.SetColorMode(m.Theme.ColorMode())
 				}
 				m.showOptions = true
 				m.CommandBar.Blur()
@@ -686,6 +692,9 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		if m.Game != nil {
 			m.optionsModal.SetRules(m.Game.Rules)
 		}
+		if m.Theme != nil {
+			m.optionsModal.SetColorMode(m.Theme.ColorMode())
+		}
 		m.showOptions = true
 		m.CommandBar.Blur()
 		return m, nil
@@ -769,6 +778,9 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			if m.Game != nil {
 				m.optionsModal.SetRules(m.Game.Rules)
 			}
+			if m.Theme != nil {
+				m.optionsModal.SetColorMode(m.Theme.ColorMode())
+			}
 			m.showOptions = true
 			m.CommandBar.Blur()
 			return m, nil
@@ -841,6 +853,9 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		case strings.HasPrefix(parsed.Special, "theme "):
 			name := strings.TrimSpace(strings.TrimPrefix(parsed.Special, "theme "))
 			th := theme.GetTheme(name)
+			if m.Theme != nil {
+				th = th.WithColorMode(m.Theme.ColorMode())
+			}
 			m = m.applyTheme(th)
 			m.CommandBar.AddMessage(fmt.Sprintf("Theme switched to %s", m.Theme.Name()))
 			return m, nil

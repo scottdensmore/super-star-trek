@@ -189,3 +189,87 @@ func TestColorModeCommandPaletteSelection(t *testing.T) {
 		t.Fatalf("expected mode Auto, got %s", updated3.Theme.ColorMode())
 	}
 }
+
+func TestColorModeOptionsModalIntegration(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	th := theme.ModernTheme{}.WithColorMode(theme.ColorModeLight)
+	m := NewModel(g, th)
+
+	// Open options modal with 'o'
+	newM, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
+	updated := newM.(Model)
+	if !updated.showOptions {
+		t.Fatalf("expected showOptions to be true after pressing 'o'")
+	}
+	if updated.optionsModal.ColorMode() != theme.ColorModeLight {
+		t.Fatalf("expected optionsModal color mode to be initialized to Light, got %s", updated.optionsModal.ColorMode())
+	}
+
+	// Change color mode in modal to Auto
+	updated.optionsModal.SetColorMode(theme.ColorModeAuto)
+
+	// Close modal by pressing 'q'
+	newM2, _ := updated.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	updated2 := newM2.(Model)
+	if updated2.showOptions {
+		t.Fatalf("expected showOptions to be false after closing")
+	}
+	if updated2.Theme.ColorMode() != theme.ColorModeAuto {
+		t.Fatalf("expected Model.Theme.ColorMode to be Auto after modal close, got %s", updated2.Theme.ColorMode())
+	}
+}
+
+func TestThemeNameCommandPreservesColorMode(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	th := theme.ModernTheme{}.WithColorMode(theme.ColorModeLight)
+	m := NewModel(g, th)
+
+	resModel, _ := m.handleCommand("theme lcars")
+	updated := resModel.(Model)
+	if updated.Theme.Name() != "lcars" {
+		t.Fatalf("expected theme lcars, got %s", updated.Theme.Name())
+	}
+	if updated.Theme.ColorMode() != theme.ColorModeLight {
+		t.Fatalf("expected ColorMode Light to be preserved, got %s", updated.Theme.ColorMode())
+	}
+}
+
+func TestColorModeOptionsModalKeyInteraction(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	th := theme.ModernTheme{}.WithColorMode(theme.ColorModeAuto)
+	m := NewModel(g, th)
+
+	// Open options modal
+	newM, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
+	updated := newM.(Model)
+
+	// Navigate directly or set to RowColorMode (optionsmodal.RowColorMode is 6)
+	// From RowProfile (0), down arrow 6 times reaches RowColorMode
+	for i := 0; i < 6; i++ {
+		stepM, _ := updated.Update(tea.KeyMsg{Type: tea.KeyDown})
+		updated = stepM.(Model)
+	}
+
+	// Press Right to cycle from Auto to Dark
+	newM2, _ := updated.Update(tea.KeyMsg{Type: tea.KeyRight})
+	updated2 := newM2.(Model)
+	if updated2.optionsModal.ColorMode() != theme.ColorModeDark {
+		t.Fatalf("expected modal ColorMode to be Dark, got %s", updated2.optionsModal.ColorMode())
+	}
+
+	// Down arrow once more to RowDone
+	newMDone, _ := updated2.Update(tea.KeyMsg{Type: tea.KeyDown})
+	updatedDone := newMDone.(Model)
+
+	// Press Enter to confirm and close
+	newM3, _ := updatedDone.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	updated3 := newM3.(Model)
+	if updated3.showOptions {
+		t.Fatalf("expected modal to close after Enter on RowDone")
+	}
+	if updated3.Theme.ColorMode() != theme.ColorModeDark {
+		t.Fatalf("expected active Theme.ColorMode to be Dark after saving modal, got %s", updated3.Theme.ColorMode())
+	}
+}
+
+
