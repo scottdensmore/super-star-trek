@@ -4,6 +4,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
@@ -62,6 +63,7 @@ type Model struct {
 	showOptions     bool
 	LastClickTime   time.Time
 	LastClickCoord  engine.Coord
+	lastDarkBg      bool
 }
 
 // NewModel initializes and returns a new root TUI Model for the provided GameState and Theme.
@@ -100,6 +102,7 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 		Manual:          manual.New(th, 66, 18),
 		optionsModal:    optionsmodal.New(th, rules),
 		showOptions:     false,
+		lastDarkBg:      lipgloss.HasDarkBackground(),
 	}
 }
 

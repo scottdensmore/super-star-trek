@@ -7,6 +7,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
@@ -27,6 +28,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Width = msg.Width
 		m.Height = msg.Height
 		m.CommandBar.SetWidth(msg.Width)
+		if m.Theme != nil && m.Theme.ColorMode() == theme.ColorModeAuto {
+			hasDark := lipgloss.HasDarkBackground()
+			if hasDark != m.lastDarkBg {
+				m.lastDarkBg = hasDark
+				m = m.applyTheme(m.Theme)
+			}
+		}
 		return m, nil
 
 	case targetlock.FireTorpedoMsg:
@@ -169,6 +177,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m = m.applyTheme(m.Theme.Next())
 				return m, nil
 			}
+			if msg.Type == tea.KeyCtrlT || msg.String() == "ctrl+t" || msg.String() == "shift+f2" {
+				newMode := m.Theme.ColorMode().Next()
+				m = m.applyTheme(m.Theme.WithColorMode(newMode))
+				m.CommandBar.AddMessage(fmt.Sprintf("Color mode set to %s (%s)", newMode, m.Theme.Name()))
+				return m, nil
+			}
 			var cmd tea.Cmd
 			m.optionsModal, cmd = m.optionsModal.Update(msg)
 			if m.optionsModal.Closed {
@@ -188,6 +202,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			if msg.Type == tea.KeyF2 || msg.String() == "f2" {
 				m = m.applyTheme(m.Theme.Next())
+				return m, nil
+			}
+			if msg.Type == tea.KeyCtrlT || msg.String() == "ctrl+t" || msg.String() == "shift+f2" {
+				newMode := m.Theme.ColorMode().Next()
+				m = m.applyTheme(m.Theme.WithColorMode(newMode))
+				m.CommandBar.AddMessage(fmt.Sprintf("Color mode set to %s (%s)", newMode, m.Theme.Name()))
 				return m, nil
 			}
 			if m.ActiveModal == ModalHallOfFame {
@@ -231,6 +251,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case msg.Type == tea.KeyF2 || msg.String() == "f2":
 			m = m.applyTheme(m.Theme.Next())
+			return m, nil
+
+		case msg.Type == tea.KeyCtrlT || msg.String() == "ctrl+t" || msg.String() == "shift+f2":
+			newMode := m.Theme.ColorMode().Next()
+			m = m.applyTheme(m.Theme.WithColorMode(newMode))
+			m.CommandBar.AddMessage(fmt.Sprintf("Color mode set to %s (%s)", newMode, m.Theme.Name()))
 			return m, nil
 
 		case msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c":
@@ -449,6 +475,7 @@ func (m Model) applyTheme(th theme.Theme) Model {
 		th = theme.DefaultTheme()
 	}
 	m.Theme = th
+	m.lastDarkBg = lipgloss.HasDarkBackground()
 	m.Grid.SetTheme(th)
 	m.Status.SetTheme(th)
 	m.CommandBar.SetTheme(th)
@@ -568,6 +595,40 @@ func (m Model) handleGameOver(ev engine.EventGameOver) (Model, tea.Cmd) {
 // handleCommand tokenizes, parses, and executes player commands.
 func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 	trimmed := strings.ToLower(strings.TrimSpace(text))
+	fields := strings.Fields(trimmed)
+	if len(fields) == 3 && fields[0] == "theme" && fields[1] == "mode" {
+		switch fields[2] {
+		case "auto", "dark", "light":
+			newMode, _ := theme.ParseColorMode(fields[2])
+			m = m.applyTheme(m.Theme.WithColorMode(newMode))
+			m.CommandBar.AddMessage(fmt.Sprintf("Color mode set to %s (%s)", newMode, m.Theme.Name()))
+			return m, nil
+		default:
+			m.CommandBar.AddMessage(fmt.Sprintf("Invalid color mode: %q (expected auto, dark, or light)", fields[2]))
+			return m, nil
+		}
+	}
+	if len(fields) == 2 && fields[0] == "color" {
+		switch fields[1] {
+		case "auto", "dark", "light":
+			newMode, _ := theme.ParseColorMode(fields[1])
+			m = m.applyTheme(m.Theme.WithColorMode(newMode))
+			m.CommandBar.AddMessage(fmt.Sprintf("Color mode set to %s (%s)", newMode, m.Theme.Name()))
+			return m, nil
+		default:
+			m.CommandBar.AddMessage(fmt.Sprintf("Invalid color mode: %q (expected auto, dark, or light)", fields[1]))
+			return m, nil
+		}
+	}
+	if len(fields) == 2 && fields[0] == "theme" && fields[1] == "mode" {
+		m.CommandBar.AddMessage("Usage: theme mode <auto|dark|light>")
+		return m, nil
+	}
+	if len(fields) == 1 && fields[0] == "color" {
+		m.CommandBar.AddMessage("Usage: color <auto|dark|light>")
+		return m, nil
+	}
+
 	switch trimmed {
 	case "target":
 		if m.Game == nil || len(m.Game.CurrentQuad.Klingons) == 0 {

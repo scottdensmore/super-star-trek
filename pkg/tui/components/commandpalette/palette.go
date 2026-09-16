@@ -160,6 +160,24 @@ func defaultCatalog() []PaletteItem {
 			parameterized: false,
 		},
 		{
+			title:         "THEME MODE AUTO",
+			desc:          "Set theme adaptation to automatic terminal background detection",
+			prefix:        "theme mode auto",
+			parameterized: false,
+		},
+		{
+			title:         "THEME MODE DARK",
+			desc:          "Force dark theme palette",
+			prefix:        "theme mode dark",
+			parameterized: false,
+		},
+		{
+			title:         "THEME MODE LIGHT",
+			desc:          "Force light theme palette",
+			prefix:        "theme mode light",
+			parameterized: false,
+		},
+		{
 			title:         "HELP",
 			desc:          "Display tactical command reference summary",
 			prefix:        "help",
