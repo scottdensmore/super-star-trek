@@ -233,3 +233,6 @@ build-*/
 # Superpowers workflow scratch artifacts
 .superpowers/
 
+# Git worktrees
+.worktrees/
+
