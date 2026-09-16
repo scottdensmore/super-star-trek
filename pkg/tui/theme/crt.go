@@ -28,7 +28,7 @@ func (t CrtTheme) Next() Theme {
 }
 
 func (t CrtTheme) Styles() Styles {
-	return t.PaletteStyles(t.ColorMode().Resolve(lipgloss.HasDarkBackground()))
+	return t.PaletteStyles(t.ColorMode().Resolve(DetectDarkBackground()))
 }
 
 func (t CrtTheme) PaletteStyles(isDark bool) Styles {
@@ -56,7 +56,8 @@ func (t CrtTheme) PaletteStyles(isDark bool) Styles {
 
 			Grid: lipgloss.NewStyle().
 				BorderStyle(border).
-				BorderForeground(lipgloss.Color("#116611")),
+				BorderForeground(lipgloss.Color("#116611")).
+				Background(lipgloss.Color("#050B05")),
 
 			GridHeader: lipgloss.NewStyle().
 				Bold(true).
@@ -160,7 +161,8 @@ func (t CrtTheme) PaletteStyles(isDark bool) Styles {
 
 		Grid: lipgloss.NewStyle().
 			BorderStyle(border).
-			BorderForeground(lipgloss.Color("#86EFAC")),
+			BorderForeground(lipgloss.Color("#86EFAC")).
+			Background(lipgloss.Color("#F0FDF4")),
 
 		GridHeader: lipgloss.NewStyle().
 			Bold(true).

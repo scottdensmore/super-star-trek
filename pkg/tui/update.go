@@ -7,7 +7,6 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
@@ -29,7 +28,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Height = msg.Height
 		m.CommandBar.SetWidth(msg.Width)
 		if m.Theme != nil && m.Theme.ColorMode() == theme.ColorModeAuto {
-			hasDark := lipgloss.HasDarkBackground()
+			hasDark := theme.DetectDarkBackground()
 			if hasDark != m.lastDarkBg {
 				m.lastDarkBg = hasDark
 				m = m.applyTheme(m.Theme)
@@ -481,7 +480,7 @@ func (m Model) applyTheme(th theme.Theme) Model {
 		th = theme.DefaultTheme()
 	}
 	m.Theme = th
-	m.lastDarkBg = lipgloss.HasDarkBackground()
+	m.lastDarkBg = theme.DetectDarkBackground()
 	m.Grid.SetTheme(th)
 	m.Status.SetTheme(th)
 	m.CommandBar.SetTheme(th)

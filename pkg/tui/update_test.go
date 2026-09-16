@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
@@ -125,7 +124,7 @@ func TestDynamicBackgroundAdaptationOnWindowSize(t *testing.T) {
 	th := theme.ModernTheme{}.WithColorMode(theme.ColorModeAuto)
 	m := NewModel(g, th)
 
-	currentBg := lipgloss.HasDarkBackground()
+	currentBg := theme.DetectDarkBackground()
 	// Artificially simulate that last cached background was the opposite of current
 	m.lastDarkBg = !currentBg
 

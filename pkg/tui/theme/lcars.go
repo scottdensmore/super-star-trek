@@ -28,7 +28,7 @@ func (t LcarsTheme) Next() Theme {
 }
 
 func (t LcarsTheme) Styles() Styles {
-	return t.PaletteStyles(t.ColorMode().Resolve(lipgloss.HasDarkBackground()))
+	return t.PaletteStyles(t.ColorMode().Resolve(DetectDarkBackground()))
 }
 
 func (t LcarsTheme) PaletteStyles(isDark bool) Styles {
@@ -56,7 +56,8 @@ func (t LcarsTheme) PaletteStyles(isDark bool) Styles {
 
 			Grid: lipgloss.NewStyle().
 				BorderStyle(border).
-				BorderForeground(lipgloss.Color("#3399CC")),
+				BorderForeground(lipgloss.Color("#3399CC")).
+				Background(lipgloss.Color("#000000")),
 
 			GridHeader: lipgloss.NewStyle().
 				Bold(true).
@@ -155,7 +156,8 @@ func (t LcarsTheme) PaletteStyles(isDark bool) Styles {
 
 		Grid: lipgloss.NewStyle().
 			BorderStyle(border).
-			BorderForeground(lipgloss.Color("#0E7490")),
+			BorderForeground(lipgloss.Color("#0E7490")).
+			Background(lipgloss.Color("#FEF9EF")),
 
 		GridHeader: lipgloss.NewStyle().
 			Bold(true).

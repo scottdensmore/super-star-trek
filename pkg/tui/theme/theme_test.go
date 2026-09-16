@@ -443,4 +443,29 @@ func TestCrtThemePaletteColors(t *testing.T) {
 	}
 }
 
+func TestThemeGridBackgrounds(t *testing.T) {
+	themes := []Theme{
+		ModernTheme{},
+		LcarsTheme{},
+		CrtTheme{},
+	}
 
+	for _, th := range themes {
+		for _, isDark := range []bool{true, false} {
+			modeStr := "light"
+			if isDark {
+				modeStr = "dark"
+			}
+			styles := th.PaletteStyles(isDark)
+			panelBg := styles.Panel.GetBackground()
+			gridBg := styles.Grid.GetBackground()
+
+			if gridBg == (lipgloss.NoColor{}) || gridBg == nil {
+				t.Errorf("theme %s (%s mode): Grid has empty background", th.Name(), modeStr)
+			}
+			if gridBg != panelBg {
+				t.Errorf("theme %s (%s mode): Grid background (%v) does not match Panel background (%v)", th.Name(), modeStr, gridBg, panelBg)
+			}
+		}
+	}
+}
