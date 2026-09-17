@@ -39,6 +39,7 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	fs.SetOutput(errOut)
 	_ = fs.Bool("classic", false, "run in teletype plain mode")
 	themeName := fs.String("theme", "modern", "initial theme name (modern, lcars, crt)")
+	modeFlag := fs.String("mode", "auto", "theme color mode (auto, dark, light)")
 	seed := fs.Int64("seed", 0, "PRNG seed (0 for random)")
 	difficulty := fs.String("difficulty", "normal", "difficulty profile (casual, normal, hardcore, nightmare)")
 	surveillance := fs.String("surveillance", "", "surveillance extent (full, classic, local, blackout)")
@@ -50,6 +51,12 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 		if err == flag.ErrHelp {
 			return 0
 		}
+		return 1
+	}
+
+	parsedMode, err := theme.ParseColorMode(*modeFlag)
+	if err != nil {
+		fmt.Fprintf(errOut, "Error: %v\n", err)
 		return 1
 	}
 
@@ -83,6 +90,7 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 
 	game := engine.NewGameWithOptions(s, engine.SkillGood, engine.LengthMedium, rules)
 	selectedTheme := theme.GetTheme(*themeName)
+	selectedTheme = selectedTheme.WithColorMode(parsedMode)
 
 	p := tui.NewModel(game, selectedTheme)
 	if err := runProgram(p, tea.WithAltScreen(), tea.WithMouseCellMotion()); err != nil {
@@ -99,5 +107,3 @@ func main() {
 
 	os.Exit(run(os.Args[1:], os.Stdin, os.Stdout, os.Stderr))
 }
-
-

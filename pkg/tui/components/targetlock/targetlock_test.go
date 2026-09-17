@@ -440,4 +440,3 @@ func TestTargetLock_SetTheme(t *testing.T) {
 		t.Errorf("expected non-empty views across themes")
 	}
 }
-

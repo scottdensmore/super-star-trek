@@ -205,4 +205,3 @@ func TestSchematic_DamageControlSubsystemImpact(t *testing.T) {
 		}
 	}
 }
-

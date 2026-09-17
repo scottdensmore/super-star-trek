@@ -321,4 +321,3 @@ func TestSaveBrowserKeyDeleteToggle(t *testing.T) {
 		t.Errorf("expected deleting to be false after second KeyDelete")
 	}
 }
-

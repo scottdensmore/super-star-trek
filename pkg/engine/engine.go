@@ -37,4 +37,3 @@ func (g *GameState) AdvanceTurn(elapsed float64) {
 		}
 	}
 }
-

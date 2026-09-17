@@ -404,4 +404,3 @@ func radarRowHeader(r int) string {
 	}
 	return fmt.Sprintf("%d", r)
 }
-

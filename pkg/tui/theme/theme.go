@@ -1,15 +1,73 @@
 package theme
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 )
 
+// ColorMode represents the luminance mode for TUI themes.
+type ColorMode string
+
+const (
+	// ColorModeAuto dynamically detects terminal background darkness.
+	ColorModeAuto ColorMode = "auto"
+	// ColorModeDark forces dark mode palettes regardless of terminal query.
+	ColorModeDark ColorMode = "dark"
+	// ColorModeLight forces light mode palettes regardless of terminal query.
+	ColorModeLight ColorMode = "light"
+)
+
+// Resolve returns true if the active mode resolves to dark, false for light.
+func (m ColorMode) Resolve(hasDarkBg bool) bool {
+	switch m {
+	case ColorModeDark:
+		return true
+	case ColorModeLight:
+		return false
+	case ColorModeAuto:
+		return hasDarkBg
+	default:
+		return hasDarkBg
+	}
+}
+
+// Next cycles through Auto -> Dark -> Light -> Auto.
+func (m ColorMode) Next() ColorMode {
+	switch m {
+	case ColorModeAuto:
+		return ColorModeDark
+	case ColorModeDark:
+		return ColorModeLight
+	case ColorModeLight:
+		return ColorModeAuto
+	default:
+		return ColorModeAuto
+	}
+}
+
+// ParseColorMode converts a string to a valid ColorMode, returning an error if invalid.
+func ParseColorMode(val string) (ColorMode, error) {
+	switch strings.ToLower(strings.TrimSpace(val)) {
+	case "auto":
+		return ColorModeAuto, nil
+	case "dark":
+		return ColorModeDark, nil
+	case "light":
+		return ColorModeLight, nil
+	default:
+		return ColorModeAuto, fmt.Errorf("invalid color mode: %q", val)
+	}
+}
+
 // Theme defines the interface for TUI styling palettes and cycling.
 type Theme interface {
 	Name() string
 	Styles() Styles
+	PaletteStyles(isDark bool) Styles
+	ColorMode() ColorMode
+	WithColorMode(mode ColorMode) Theme
 	Next() Theme
 }
 
@@ -59,20 +117,20 @@ type Styles struct {
 	LogText     lipgloss.Style
 }
 
-// DefaultTheme returns the default theme (Starfleet Modern).
+// DefaultTheme returns the default theme (Starfleet Modern) with ColorModeAuto.
 func DefaultTheme() Theme {
-	return ModernTheme{}
+	return ModernTheme{mode: ColorModeAuto}
 }
 
 // GetTheme returns the Theme matching the given name, falling back to DefaultTheme.
 func GetTheme(name string) Theme {
 	switch strings.ToLower(strings.TrimSpace(name)) {
 	case "modern":
-		return ModernTheme{}
+		return ModernTheme{mode: ColorModeAuto}
 	case "lcars":
-		return LcarsTheme{}
+		return LcarsTheme{mode: ColorModeAuto}
 	case "crt":
-		return CrtTheme{}
+		return CrtTheme{mode: ColorModeAuto}
 	default:
 		return DefaultTheme()
 	}

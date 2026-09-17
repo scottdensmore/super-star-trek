@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
@@ -68,35 +69,85 @@ func compareOrUpdate(t *testing.T, name string, actual string) {
 	}
 }
 
-func TestTUIGolden_ModernDashboard80x24(t *testing.T) {
+func assertStrict80x24(t *testing.T, name string, view string) {
+	t.Helper()
+	lines := strings.Split(view, "\n")
+	if len(lines) != 24 {
+		t.Fatalf("%s: expected exact height of 24 lines, got %d lines", name, len(lines))
+	}
+	for i, line := range lines {
+		w := lipgloss.Width(line)
+		if w > 80 {
+			t.Errorf("%s: line %d exceeds maximum width of 80 (got %d)", name, i+1, w)
+		}
+	}
+}
+
+func newTestModelWithGame(width, height int, g *engine.GameState, themes ...theme.Theme) tui.Model {
+	var th theme.Theme
+	if len(themes) > 0 && themes[0] != nil {
+		th = themes[0]
+		if th.ColorMode() == theme.ColorModeAuto {
+			th = th.WithColorMode(theme.ColorModeDark)
+		}
+	} else {
+		th = theme.GetTheme("modern").WithColorMode(theme.ColorModeDark)
+	}
+
+	m := tui.NewModel(g, th)
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: width, Height: height})
+	return updated.(tui.Model)
+}
+
+func newTestModel(width, height int, themes ...theme.Theme) tui.Model {
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
-	m := tui.NewModel(g, theme.ModernTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	m = updated.(tui.Model)
-	compareOrUpdate(t, "modern_dashboard_80x24", m.View())
+	return newTestModelWithGame(width, height, g, themes...)
+}
+
+func TestTUIGolden_ModernDashboard80x24(t *testing.T) {
+	m := newTestModel(80, 24, theme.GetTheme("modern").WithColorMode(theme.ColorModeDark))
+	view := m.View()
+	assertStrict80x24(t, "modern_dashboard_80x24", view)
+	compareOrUpdate(t, "modern_dashboard_80x24", view)
 }
 
 func TestTUIGolden_LcarsDashboard80x24(t *testing.T) {
-	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
-	m := tui.NewModel(g, theme.LcarsTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	m = updated.(tui.Model)
-	compareOrUpdate(t, "lcars_dashboard_80x24", m.View())
+	m := newTestModel(80, 24, theme.GetTheme("lcars").WithColorMode(theme.ColorModeDark))
+	view := m.View()
+	assertStrict80x24(t, "lcars_dashboard_80x24", view)
+	compareOrUpdate(t, "lcars_dashboard_80x24", view)
 }
 
 func TestTUIGolden_CrtDashboard80x24(t *testing.T) {
-	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
-	m := tui.NewModel(g, theme.CrtTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	m = updated.(tui.Model)
-	compareOrUpdate(t, "crt_dashboard_80x24", m.View())
+	m := newTestModel(80, 24, theme.GetTheme("crt").WithColorMode(theme.ColorModeDark))
+	view := m.View()
+	assertStrict80x24(t, "crt_dashboard_80x24", view)
+	compareOrUpdate(t, "crt_dashboard_80x24", view)
+}
+
+func TestTUIGolden_ModernDashboard80x24_Light(t *testing.T) {
+	m := newTestModel(80, 24, theme.GetTheme("modern").WithColorMode(theme.ColorModeLight))
+	view := m.View()
+	assertStrict80x24(t, "modern_dashboard_80x24_light", view)
+	compareOrUpdate(t, "modern_dashboard_80x24_light", view)
+}
+
+func TestTUIGolden_LcarsDashboard80x24_Light(t *testing.T) {
+	m := newTestModel(80, 24, theme.GetTheme("lcars").WithColorMode(theme.ColorModeLight))
+	view := m.View()
+	assertStrict80x24(t, "lcars_dashboard_80x24_light", view)
+	compareOrUpdate(t, "lcars_dashboard_80x24_light", view)
+}
+
+func TestTUIGolden_CrtDashboard80x24_Light(t *testing.T) {
+	m := newTestModel(80, 24, theme.GetTheme("crt").WithColorMode(theme.ColorModeLight))
+	view := m.View()
+	assertStrict80x24(t, "crt_dashboard_80x24_light", view)
+	compareOrUpdate(t, "crt_dashboard_80x24_light", view)
 }
 
 func TestTUIGolden_ModernDashboard100x30(t *testing.T) {
-	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
-	m := tui.NewModel(g, theme.ModernTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
-	m = updated.(tui.Model)
+	m := newTestModel(100, 30, theme.GetTheme("modern").WithColorMode(theme.ColorModeDark))
 	compareOrUpdate(t, "modern_dashboard_100x30", m.View())
 }
 
@@ -108,9 +159,7 @@ func TestTUIGolden_ModalTargetLock(t *testing.T) {
 	g.CurrentQuad.Grid[4][7] = engine.EntityKlingon
 	g.CurrentQuad.Grid[6][2] = engine.EntityKlingon
 
-	m := tui.NewModel(g, theme.ModernTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	m = updated.(tui.Model)
+	m := newTestModelWithGame(80, 24, g)
 
 	m.TargetLock.SetState(
 		g.Enterprise.Sector,
@@ -125,9 +174,7 @@ func TestTUIGolden_ModalTargetLock(t *testing.T) {
 
 func TestTUIGolden_ModalCommandPalette(t *testing.T) {
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
-	m := tui.NewModel(g, theme.ModernTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	m = updated.(tui.Model)
+	m := newTestModelWithGame(80, 24, g)
 
 	m.CommandPalette.Reset()
 	m.ActiveModal = tui.ModalCommandPalette
@@ -138,11 +185,9 @@ func TestTUIGolden_ModalSaveBrowser(t *testing.T) {
 	tempDir := t.TempDir()
 
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
-	m := tui.NewModel(g, theme.ModernTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	m = updated.(tui.Model)
+	m := newTestModelWithGame(80, 24, g)
 
-	m.SaveBrowser = savebrowser.New(theme.ModernTheme{}, tempDir)
+	m.SaveBrowser = savebrowser.New(theme.GetTheme("modern").WithColorMode(theme.ColorModeDark), tempDir)
 	m.ActiveModal = tui.ModalSaveBrowser
 	compareOrUpdate(t, "modal_save_browser", m.View())
 }
@@ -157,9 +202,7 @@ func TestTUIGolden_ModalGalacticChart(t *testing.T) {
 	g.GalaxyChart[3][4] = 12
 	g.ChartDiscovered[3][4] = true
 
-	m := tui.NewModel(g, theme.ModernTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	m = updated.(tui.Model)
+	m := newTestModelWithGame(80, 24, g)
 
 	m.GalacticChart.SetState(g.Enterprise.Quad, g.GalaxyChart, g.ChartDiscovered, g.ChartKnownBases, false)
 	m.ActiveModal = tui.ModalGalacticChart
@@ -171,11 +214,9 @@ func TestTUIGolden_ModalDamageSchematic(t *testing.T) {
 	g.Enterprise.Devices[engine.DeviceComputer] = 2.1
 	g.Enterprise.Devices[engine.DevicePhotonTubes] = 1.4
 
-	m := tui.NewModel(g, theme.ModernTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	m = updated.(tui.Model)
+	m := newTestModelWithGame(80, 24, g)
 
-	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")})
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("d")})
 	m = updated.(tui.Model)
 
 	compareOrUpdate(t, "modal_damage_schematic", m.View())
@@ -184,17 +225,13 @@ func TestTUIGolden_ModalDamageSchematic(t *testing.T) {
 func TestTUIGolden_LrsDamagedDashboard(t *testing.T) {
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
 	g.Enterprise.Devices[engine.DeviceLRSensors] = 3.5 // Damaged!
-	m := tui.NewModel(g, theme.ModernTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	m = updated.(tui.Model)
+	m := newTestModelWithGame(80, 24, g)
 	compareOrUpdate(t, "lrs_damaged_dashboard_80x24", m.View())
 }
 
 func TestTUIGolden_SectorReticleSelected(t *testing.T) {
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
-	m := tui.NewModel(g, theme.ModernTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	m = updated.(tui.Model)
+	m := newTestModelWithGame(80, 24, g)
 	m.SelectedSector = engine.Coord{4, 5}
 	compareOrUpdate(t, "sector_reticle_selected", m.View())
 }
@@ -206,17 +243,13 @@ func TestTUIGolden_ConditionRedAlert(t *testing.T) {
 	g.CurrentQuad.Klingons = []*engine.Klingon{klingon}
 	g.CurrentQuad.Grid[3][4] = engine.EntityKlingon
 
-	m := tui.NewModel(g, theme.ModernTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	m = updated.(tui.Model)
+	m := newTestModelWithGame(80, 24, g)
 	compareOrUpdate(t, "condition_red_alert", m.View())
 }
 
 func TestTUIGolden_SizeWarningDialog(t *testing.T) {
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
-	m := tui.NewModel(g, theme.ModernTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 70, Height: 20})
-	m = updated.(tui.Model)
+	m := newTestModelWithGame(70, 20, g)
 	compareOrUpdate(t, "size_warning_dialog", m.View())
 }
 
@@ -228,9 +261,7 @@ func TestTUIGolden_ModalHallOfFame(t *testing.T) {
 	g.Metrics.CommandersKilled = 2
 	g.Metrics.Casualties = 12
 
-	m := tui.NewModel(g, theme.ModernTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	m = updated.(tui.Model)
+	m := newTestModelWithGame(80, 24, g)
 
 	// Tab 1: Telemetry
 	updatedModal, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("h")})
@@ -245,9 +276,7 @@ func TestTUIGolden_ModalHallOfFame(t *testing.T) {
 
 func TestTUIGolden_ModalManual(t *testing.T) {
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
-	m := tui.NewModel(g, theme.ModernTheme{})
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
-	m = updated.(tui.Model)
+	m := newTestModelWithGame(80, 24, g)
 
 	// Chapter 1: Systems (default)
 	updatedModal, _ := m.Update(tea.KeyMsg{Type: tea.KeyF1})

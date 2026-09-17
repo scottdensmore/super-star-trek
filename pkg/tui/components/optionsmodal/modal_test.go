@@ -58,6 +58,7 @@ func TestOptionsModal_RenderLayout(t *testing.T) {
 		"Sensor Degradation",
 		"Repair Multiplier",
 		"Klingon Cloaking",
+		"Color Mode",
 	}
 	for _, exp := range expectedStrings {
 		if !strings.Contains(view, exp) {
@@ -162,5 +163,55 @@ func TestOptionsModal_NavigationWrapping(t *testing.T) {
 	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
 	if m.SelectedRow != RowProfile {
 		t.Errorf("expected RowProfile after wrapping down from RowDone, got %d", m.SelectedRow)
+	}
+}
+
+func TestOptionsModal_ColorModeRow(t *testing.T) {
+	th := theme.DefaultTheme().WithColorMode(theme.ColorModeAuto)
+	m := New(th, engine.DefaultRulesForProfile(engine.ProfileNormal))
+
+	// Set selected row to RowColorMode
+	m.SelectedRow = RowColorMode
+	if m.ColorMode() != theme.ColorModeAuto {
+		t.Fatalf("expected initial ColorMode to be Auto, got %s", m.ColorMode())
+	}
+
+	// Press Right arrow to cycle to Dark
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.ColorMode() != theme.ColorModeDark {
+		t.Fatalf("expected ColorMode to be Dark after Right arrow, got %s", m.ColorMode())
+	}
+
+	// Press Right arrow again to cycle to Light
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.ColorMode() != theme.ColorModeLight {
+		t.Fatalf("expected ColorMode to be Light after Right arrow, got %s", m.ColorMode())
+	}
+
+	// Press Left arrow to cycle back to Dark
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	if m.ColorMode() != theme.ColorModeDark {
+		t.Fatalf("expected ColorMode to be Dark after Left arrow, got %s", m.ColorMode())
+	}
+
+	// Space key cycles forward to Light
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace})
+	if m.ColorMode() != theme.ColorModeLight {
+		t.Fatalf("expected ColorMode to be Light after Space, got %s", m.ColorMode())
+	}
+
+	// SetColorMode
+	m.SetColorMode(theme.ColorModeAuto)
+	if m.ColorMode() != theme.ColorModeAuto {
+		t.Fatalf("expected ColorMode to be Auto after SetColorMode, got %s", m.ColorMode())
+	}
+
+	// View rendering contains Color Mode and AUTO
+	view := m.View()
+	if !strings.Contains(view, "Color Mode") {
+		t.Errorf("expected view to contain 'Color Mode', got:\n%s", view)
+	}
+	if !strings.Contains(view, "AUTO") {
+		t.Errorf("expected view to contain 'AUTO', got:\n%s", view)
 	}
 }

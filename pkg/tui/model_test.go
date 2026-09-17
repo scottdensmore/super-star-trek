@@ -2061,4 +2061,3 @@ func TestModel_Manual_Hotkeys(t *testing.T) {
 		t.Fatalf("expected ActiveModal = ModalManual on F1 hotkey, got %v", modF1.ActiveModal)
 	}
 }
-

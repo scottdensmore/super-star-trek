@@ -20,6 +20,7 @@ const (
 	RowRepairMultiplier
 	RowKlingonCloak
 	RowTimeMargin
+	RowColorMode
 	RowDone
 	NumRows
 )
@@ -28,6 +29,7 @@ const (
 type Model struct {
 	Theme       theme.Theme
 	rules       engine.GameRules
+	colorMode   theme.ColorMode
 	SelectedRow Row
 	Closed      bool
 }
@@ -40,6 +42,7 @@ func New(th theme.Theme, rules engine.GameRules) Model {
 	return Model{
 		Theme:       th,
 		rules:       rules,
+		colorMode:   th.ColorMode(),
 		SelectedRow: RowProfile,
 		Closed:      false,
 	}
@@ -55,12 +58,23 @@ func (m *Model) SetRules(r engine.GameRules) {
 	m.rules = r
 }
 
-// SetTheme updates the active styling theme.
+// ColorMode returns the configured color mode in the modal.
+func (m Model) ColorMode() theme.ColorMode {
+	return m.colorMode
+}
+
+// SetColorMode updates the color mode inside the modal.
+func (m *Model) SetColorMode(mode theme.ColorMode) {
+	m.colorMode = mode
+}
+
+// SetTheme updates the active styling theme and syncs color mode.
 func (m *Model) SetTheme(th theme.Theme) {
 	if th == nil {
 		th = theme.DefaultTheme()
 	}
 	m.Theme = th
+	m.colorMode = th.ColorMode()
 }
 
 // Active reports whether the modal is currently open and accepting input.
@@ -159,6 +173,16 @@ func (m *Model) cycleOption(dir int) {
 		}
 		m.rules.TimeMargin = timeMargins[(idx+dir+len(timeMargins))%len(timeMargins)]
 		m.rules.Profile = engine.ProfileCustom
+	case RowColorMode:
+		colorModes := []theme.ColorMode{theme.ColorModeAuto, theme.ColorModeDark, theme.ColorModeLight}
+		idx := 0
+		for i, cm := range colorModes {
+			if cm == m.colorMode {
+				idx = i
+				break
+			}
+		}
+		m.colorMode = colorModes[(idx+dir+len(colorModes))%len(colorModes)]
 	}
 }
 
@@ -205,6 +229,7 @@ func (m Model) View() string {
 	}
 	rows = append(rows, renderRow(RowKlingonCloak, "Klingon Cloaking", cloakStr))
 	rows = append(rows, renderRow(RowTimeMargin, "Stardate Time Margin", fmt.Sprintf("%.0f%%", m.rules.TimeMargin*100)))
+	rows = append(rows, renderRow(RowColorMode, "Color Mode", strings.ToUpper(string(m.colorMode))))
 
 	doneStyle := styles.LogText
 	prefix := "  "
