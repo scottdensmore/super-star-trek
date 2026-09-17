@@ -123,6 +123,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				m.CommandBar.AddMessage(err.Error())
 			} else {
+				m.SelectedSector = engine.Coord{}
 				m.logEvents(events)
 				for _, ev := range events {
 					if goEv, ok := ev.(engine.EventGameOver); ok {
@@ -875,6 +876,9 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 
 		m.logEvents(events)
 		for _, ev := range events {
+			if moveEv, ok := ev.(engine.EventShipMoved); ok && moveEv.FromQuad != moveEv.ToQuad {
+				m.SelectedSector = engine.Coord{}
+			}
 			if goEv, ok := ev.(engine.EventGameOver); ok {
 				return m.handleGameOver(goEv)
 			}

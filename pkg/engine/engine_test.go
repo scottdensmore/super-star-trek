@@ -662,9 +662,12 @@ func TestDispatchMove_InterQuadrant(t *testing.T) {
 	if game.Enterprise.Sector != (Coord{4, 4}) {
 		t.Fatalf("expected destination sector {4, 4}, got %v", game.Enterprise.Sector)
 	}
-	// Verify fromSector cleared in CurrentQuad.Grid
-	if game.CurrentQuad.Grid[4][4] != EntityEmpty {
-		t.Fatalf("expected fromSector cleared in old quad grid, got %v", game.CurrentQuad.Grid[4][4])
+	// Verify Enterprise is placed in the destination quadrant grid
+	if game.CurrentQuad.Grid[4][4] != EntityEnterprise {
+		t.Fatalf("expected EntityEnterprise in destination quad grid, got %v", game.CurrentQuad.Grid[4][4])
+	}
+	if !game.ChartDiscovered[2][4] {
+		t.Fatalf("expected destination quad {2, 4} marked discovered")
 	}
 	if len(events) == 0 || events[0].EventType() != "ShipMoved" {
 		t.Fatalf("expected ShipMoved event, got %v", events)
@@ -989,5 +992,121 @@ func TestActionDock_Surveillance(t *testing.T) {
 				t.Errorf("perimeter quad [%d,%d] of starbase [5,5] not marked discovered", 5+dr, 5+dc)
 			}
 		}
+	}
+}
+
+func TestDispatchMove_InterQuadrantPopulatesGrid(t *testing.T) {
+	g := NewGame(12345, SkillGood, LengthMedium)
+	g.Enterprise.Quad = Coord{1, 1}
+	g.Enterprise.Sector = Coord{2, 2}
+	g.CurrentQuad.Grid[2][2] = EntityEnterprise
+	g.Enterprise.Energy = 5000
+
+	// Configure destination quadrant [3, 5]: 2 Klingons, 1 Starbase, 4 Stars = 214
+	destQuad := Coord{3, 5}
+	destSector := Coord{4, 4}
+	g.GalaxyChart[destQuad[0]][destQuad[1]] = 214
+
+	events, err := g.Dispatch(ActionMove{
+		DestQuad:   destQuad,
+		DestSector: destSector,
+		Warp:       1.0,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error on inter-quadrant jump: %v", err)
+	}
+
+	if g.Enterprise.Quad != destQuad {
+		t.Fatalf("expected Quad %v, got %v", destQuad, g.Enterprise.Quad)
+	}
+	if g.Enterprise.Sector != destSector {
+		t.Fatalf("expected Sector %v, got %v", destSector, g.Enterprise.Sector)
+	}
+	if g.CurrentQuad.Grid[destSector[0]][destSector[1]] != EntityEnterprise {
+		t.Fatalf("expected EntityEnterprise at %v, got %v", destSector, g.CurrentQuad.Grid[destSector[0]][destSector[1]])
+	}
+
+	// Verify starbase
+	if g.CurrentQuad.Starbase == nil {
+		t.Fatalf("expected starbase in quadrant, got nil")
+	}
+	sb := *g.CurrentQuad.Starbase
+	if g.CurrentQuad.Grid[sb[0]][sb[1]] != EntityStarbase {
+		t.Fatalf("expected EntityStarbase at %v, got %v", sb, g.CurrentQuad.Grid[sb[0]][sb[1]])
+	}
+
+	// Verify Klingons
+	if len(g.CurrentQuad.Klingons) != 2 {
+		t.Fatalf("expected 2 Klingons, got %d", len(g.CurrentQuad.Klingons))
+	}
+	for _, k := range g.CurrentQuad.Klingons {
+		ent := g.CurrentQuad.Grid[k.Sector[0]][k.Sector[1]]
+		if ent != EntityKlingon && ent != EntityCommander {
+			t.Fatalf("expected EntityKlingon or EntityCommander at %v, got %v", k.Sector, ent)
+		}
+	}
+
+	// Verify stars
+	if len(g.CurrentQuad.Stars) != 4 {
+		t.Fatalf("expected 4 stars, got %d", len(g.CurrentQuad.Stars))
+	}
+	for _, s := range g.CurrentQuad.Stars {
+		if g.CurrentQuad.Grid[s[0]][s[1]] != EntityStar {
+			t.Fatalf("expected EntityStar at %v, got %v", s, g.CurrentQuad.Grid[s[0]][s[1]])
+		}
+	}
+
+	// Verify Condition Red and discovery
+	if g.Enterprise.Condition != ConditionRed {
+		t.Fatalf("expected ConditionRed, got %v", g.Enterprise.Condition)
+	}
+	if !g.ChartDiscovered[destQuad[0]][destQuad[1]] {
+		t.Fatalf("expected quadrant %v marked discovered", destQuad)
+	}
+
+	// Verify events
+	if len(events) == 0 || events[0].EventType() != "ShipMoved" {
+		t.Fatalf("expected ShipMoved event, got %v", events)
+	}
+	moveEvt := events[0].(EventShipMoved)
+	if moveEvt.FromQuad != (Coord{1, 1}) || moveEvt.ToQuad != destQuad {
+		t.Fatalf("unexpected move event: %+v", moveEvt)
+	}
+
+	// Destroy 1 Klingon with phasers
+	kID := g.CurrentQuad.Klingons[0].ID
+	phaEvents, err := g.Dispatch(ActionFirePhasers{ManualAllocation: map[int]float64{kID: 2000.0}})
+	if err != nil {
+		t.Fatalf("unexpected error firing phasers: %v", err)
+	}
+	foundHit := false
+	for _, ev := range phaEvents {
+		if h, ok := ev.(EventPhaserHit); ok && h.Destroyed {
+			foundHit = true
+			break
+		}
+	}
+	if !foundHit {
+		t.Fatalf("expected phasers to destroy target Klingon, got events %v", phaEvents)
+	}
+
+	// Verify GalaxyChart decremented by 100 (from 214 to 114)
+	if g.GalaxyChart[destQuad[0]][destQuad[1]] != 114 {
+		t.Fatalf("expected GalaxyChart to be 114, got %d", g.GalaxyChart[destQuad[0]][destQuad[1]])
+	}
+
+	// Jump to [1, 1] then back to [3, 5]
+	_, err = g.Dispatch(ActionMove{DestQuad: Coord{1, 1}, DestSector: Coord{2, 2}, Warp: 1.0})
+	if err != nil {
+		t.Fatalf("unexpected error moving to [1, 1]: %v", err)
+	}
+	_, err = g.Dispatch(ActionMove{DestQuad: destQuad, DestSector: destSector, Warp: 1.0})
+	if err != nil {
+		t.Fatalf("unexpected error returning to %v: %v", destQuad, err)
+	}
+
+	// New population of [3, 5] should now have 1 Klingon
+	if len(g.CurrentQuad.Klingons) != 1 {
+		t.Fatalf("expected 1 Klingon upon re-entry, got %d", len(g.CurrentQuad.Klingons))
 	}
 }

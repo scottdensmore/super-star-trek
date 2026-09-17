@@ -89,6 +89,7 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	}
 
 	game := engine.NewGameWithOptions(s, engine.SkillGood, engine.LengthMedium, rules)
+	game.PopulateQuadrant(game.Enterprise.Quad, game.Enterprise.Sector)
 	selectedTheme := theme.GetTheme(*themeName)
 	selectedTheme = selectedTheme.WithColorMode(parsedMode)
 

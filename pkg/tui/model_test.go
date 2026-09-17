@@ -1062,6 +1062,60 @@ func TestModel_NavQuadrantCommand(t *testing.T) {
 	}
 }
 
+func TestModel_MoveQuadrantUpdatesSectorGrid(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	// Destination quadrant [3, 5]: 2 Klingons, 1 Starbase, 4 Stars = 214
+	g.GalaxyChart[3][5] = 214
+
+	m := NewModel(g, theme.ModernTheme{})
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = updated.(Model)
+
+	// Select a sector in old quadrant
+	m.SelectedSector = engine.Coord{7, 7}
+
+	// Move to Quadrant [3, 5]
+	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "nav q 3 5"})
+
+	if m.Game.Enterprise.Quad != (engine.Coord{3, 5}) {
+		t.Fatalf("expected enterprise in quad [3, 5], got %v", m.Game.Enterprise.Quad)
+	}
+
+	// Verify SelectedSector was reset to prevent stale reticle
+	if m.SelectedSector != (engine.Coord{}) {
+		t.Fatalf("expected SelectedSector reset upon quadrant change, got %v", m.SelectedSector)
+	}
+
+	// Verify CurrentQuad populated
+	if len(m.Game.CurrentQuad.Klingons) != 2 {
+		t.Fatalf("expected 2 Klingons in CurrentQuad, got %d", len(m.Game.CurrentQuad.Klingons))
+	}
+	if len(m.Game.CurrentQuad.Stars) != 4 {
+		t.Fatalf("expected 4 stars in CurrentQuad, got %d", len(m.Game.CurrentQuad.Stars))
+	}
+	if m.Game.CurrentQuad.Starbase == nil {
+		t.Fatalf("expected starbase in CurrentQuad, got nil")
+	}
+
+	// Verify View renders the entities and Red alert
+	view := m.View()
+	if !strings.Contains(view, "CONDITION RED") {
+		t.Errorf("expected CONDITION RED in view, got:\n%s", view)
+	}
+	if !strings.Contains(view, "<E>") {
+		t.Errorf("expected <E> in view, got:\n%s", view)
+	}
+	if !strings.Contains(view, ">B<") {
+		t.Errorf("expected starbase >B< in view, got:\n%s", view)
+	}
+	if !strings.Contains(view, "+K+") {
+		t.Errorf("expected Klingon glyph +K+ in view, got:\n%s", view)
+	}
+	if !strings.Contains(view, " * ") {
+		t.Errorf("expected star glyph ' * ' in view, got:\n%s", view)
+	}
+}
+
 func TestModel_GalacticChart_HotkeyAndCommand(t *testing.T) {
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
 	m := NewModel(g, theme.DefaultTheme())
