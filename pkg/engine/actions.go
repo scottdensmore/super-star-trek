@@ -221,6 +221,10 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 			if g.RemainingKlingons > 0 {
 				g.RemainingKlingons--
 			}
+			qr, qc := g.Enterprise.Quad[0], g.Enterprise.Quad[1]
+			if qr >= 1 && qr <= 8 && qc >= 1 && qc <= 8 && g.GalaxyChart[qr][qc] >= 100 {
+				g.GalaxyChart[qr][qc] -= 100
+			}
 			if hitEntity == EntitySuperCommander {
 				g.Metrics.SuperCommandersKilled++
 			} else if hitEntity == EntityCommander || (targetKlingon != nil && targetKlingon.IsCommander) {
@@ -241,6 +245,10 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 		g.CurrentQuad.Grid[hitCoord[0]][hitCoord[1]] = EntityEmpty
 		if g.RemainingStarbases > 0 {
 			g.RemainingStarbases--
+		}
+		qr, qc := g.Enterprise.Quad[0], g.Enterprise.Quad[1]
+		if qr >= 1 && qr <= 8 && qc >= 1 && qc <= 8 && (g.GalaxyChart[qr][qc]%100)/10 > 0 {
+			g.GalaxyChart[qr][qc] -= 10
 		}
 		g.Metrics.StarbasesDestroyed++
 
@@ -335,6 +343,10 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 				if g.RemainingKlingons > 0 {
 					g.RemainingKlingons--
 				}
+				qr, qc := g.Enterprise.Quad[0], g.Enterprise.Quad[1]
+				if qr >= 1 && qr <= 8 && qc >= 1 && qc <= 8 && g.GalaxyChart[qr][qc] >= 100 {
+					g.GalaxyChart[qr][qc] -= 100
+				}
 				if k.IsCommander {
 					g.Metrics.CommandersKilled++
 				} else {
@@ -375,6 +387,10 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 				g.CurrentQuad.Grid[k.Sector[0]][k.Sector[1]] = EntityEmpty
 				if g.RemainingKlingons > 0 {
 					g.RemainingKlingons--
+				}
+				qr, qc := g.Enterprise.Quad[0], g.Enterprise.Quad[1]
+				if qr >= 1 && qr <= 8 && qc >= 1 && qc <= 8 && g.GalaxyChart[qr][qc] >= 100 {
+					g.GalaxyChart[qr][qc] -= 100
 				}
 				if k.IsCommander {
 					g.Metrics.CommandersKilled++
@@ -546,12 +562,14 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 		g.Enterprise.Condition = ConditionGreen
 	}
 
-	g.CurrentQuad.Grid[fromSector[0]][fromSector[1]] = EntityEmpty
-	if toQuad == fromQuad {
+	if toQuad != fromQuad {
+		g.PopulateQuadrant(toQuad, toSector)
+	} else {
+		g.CurrentQuad.Grid[fromSector[0]][fromSector[1]] = EntityEmpty
 		g.CurrentQuad.Grid[toSector[0]][toSector[1]] = EntityEnterprise
+		g.Enterprise.Sector = toSector
+		g.Enterprise.Quad = toQuad
 	}
-	g.Enterprise.Sector = toSector
-	g.Enterprise.Quad = toQuad
 
 	shipMovedEvt := EventShipMoved{
 		FromQuad:   fromQuad,

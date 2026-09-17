@@ -201,3 +201,91 @@ func NewGameWithOptions(seed int64, skill SkillLevel, length GameLength, rules G
 
 	return g
 }
+
+// PopulateQuadrant populates CurrentQuad with the entities (stars, starbases, Klingons)
+// specified in GalaxyChart for the given quadrant coordinates, and places the Enterprise at entSector.
+func (g *GameState) PopulateQuadrant(quad Coord, entSector Coord) {
+	if g == nil {
+		return
+	}
+	if quad[0] < 1 || quad[0] > 8 || quad[1] < 1 || quad[1] > 8 {
+		return
+	}
+	if entSector[0] < 1 || entSector[0] > 8 || entSector[1] < 1 || entSector[1] > 8 {
+		entSector = Coord{4, 4}
+	}
+	if g.RNG == nil {
+		g.RNG = NewPRNG(12345)
+	}
+
+	g.CurrentQuad = QuadrantState{}
+	g.CurrentQuad.Grid[entSector[0]][entSector[1]] = EntityEnterprise
+	g.Enterprise.Quad = quad
+	g.Enterprise.Sector = entSector
+
+	val := g.GalaxyChart[quad[0]][quad[1]]
+	numK := val / 100
+	numB := (val % 100) / 10
+	numS := val % 10
+
+	findEmptySector := func() Coord {
+		for {
+			r := g.RNG.Intn(8) + 1
+			c := g.RNG.Intn(8) + 1
+			if g.CurrentQuad.Grid[r][c] == EntityEmpty {
+				return Coord{r, c}
+			}
+		}
+	}
+
+	if numB > 0 {
+		sb := findEmptySector()
+		g.CurrentQuad.Starbase = &sb
+		g.CurrentQuad.Grid[sb[0]][sb[1]] = EntityStarbase
+	}
+
+	if numK > 0 {
+		g.CurrentQuad.Klingons = make([]*Klingon, 0, numK)
+		for i := 0; i < numK; i++ {
+			kCoord := findEmptySector()
+			isCommander := false
+			if g.Rules.KlingonCloak && i == 0 {
+				isCommander = true
+			}
+			entType := EntityKlingon
+			if isCommander {
+				entType = EntityCommander
+			}
+			g.CurrentQuad.Grid[kCoord[0]][kCoord[1]] = entType
+			energy := 300.0 + g.RNG.Float64()*150.0 + 25.0*float64(g.Skill)
+			if isCommander {
+				energy = 950.0 + 400.0*g.RNG.Float64() + 50.0*float64(g.Skill)
+			}
+			k := &Klingon{
+				ID:          i + 1,
+				Sector:      kCoord,
+				Energy:      energy,
+				IsCommander: isCommander,
+				IsCloaked:   false,
+			}
+			g.CurrentQuad.Klingons = append(g.CurrentQuad.Klingons, k)
+		}
+	}
+
+	if numS > 0 {
+		g.CurrentQuad.Stars = make([]Coord, 0, numS)
+		for i := 0; i < numS; i++ {
+			sCoord := findEmptySector()
+			g.CurrentQuad.Stars = append(g.CurrentQuad.Stars, sCoord)
+			g.CurrentQuad.Grid[sCoord[0]][sCoord[1]] = EntityStar
+		}
+	}
+
+	g.ChartDiscovered[quad[0]][quad[1]] = true
+
+	if numK > 0 {
+		g.Enterprise.Condition = ConditionRed
+	} else {
+		g.Enterprise.Condition = ConditionGreen
+	}
+}
