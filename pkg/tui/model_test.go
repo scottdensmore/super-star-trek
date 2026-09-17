@@ -523,10 +523,11 @@ func TestModel_MouseClickSelectSector(t *testing.T) {
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
 	m := NewModel(g, theme.DefaultTheme())
 
-	// Row 3, Col 4: relY = 3 => msg.Y = 4, c = 4 => relX = 2 + 4*3 = 14 => msg.X = 14
+	// Row 3, Col 4: header is line 0, grid top border line 1, col header line 2, rows start line 3.
+	// Row 3 is line 5. Col 4 starts at col 15, center is col 16.
 	mouseMsg := tea.MouseMsg{
-		X:      14,
-		Y:      4,
+		X:      16,
+		Y:      5,
 		Button: tea.MouseButtonLeft,
 		Action: tea.MouseActionPress,
 	}
@@ -557,8 +558,8 @@ func TestModel_MouseClickKlingonOpensHUD(t *testing.T) {
 
 	m := NewModel(g, theme.DefaultTheme())
 	mouseMsg := tea.MouseMsg{
-		X:      14,
-		Y:      4,
+		X:      16,
+		Y:      5,
 		Button: tea.MouseButtonLeft,
 		Action: tea.MouseActionPress,
 	}
@@ -581,10 +582,10 @@ func TestModel_MouseDoubleClickImpulseMove(t *testing.T) {
 
 	m := NewModel(g, theme.DefaultTheme())
 
-	// Cell [5, 5]: relY = 5 => msg.Y = 6, c = 5 => relX = 2 + 4*4 = 18 => msg.X = 18
+	// Cell [5, 5]: Row 5 is line 7. Col 5 center is col 20.
 	mouseMsg := tea.MouseMsg{
-		X:      18,
-		Y:      6,
+		X:      20,
+		Y:      7,
 		Button: tea.MouseButtonLeft,
 		Action: tea.MouseActionPress,
 	}
@@ -615,10 +616,10 @@ func TestModel_MouseDoubleClickDock(t *testing.T) {
 
 	m := NewModel(g, theme.DefaultTheme())
 
-	// Starbase [4, 5]: relY = 4 => msg.Y = 5, c = 5 => relX = 18 => msg.X = 18
+	// Starbase [4, 5]: Row 4 is line 6, Col 5 center is col 20.
 	mouseMsg := tea.MouseMsg{
-		X:      18,
-		Y:      5,
+		X:      20,
+		Y:      6,
 		Button: tea.MouseButtonLeft,
 		Action: tea.MouseActionPress,
 	}
@@ -724,10 +725,10 @@ func TestModel_MouseClicksSeparatedByTimeDoNotDoubleClick(t *testing.T) {
 
 	m := NewModel(g, theme.DefaultTheme())
 
-	// Cell [5, 5]: relY = 5 => msg.Y = 6, c = 5 => relX = 18 => msg.X = 18
+	// Cell [5, 5]: Row 5 is line 7, Col 5 center is col 20.
 	mouseMsg := tea.MouseMsg{
-		X:      18,
-		Y:      6,
+		X:      20,
+		Y:      7,
 		Button: tea.MouseButtonLeft,
 		Action: tea.MouseActionPress,
 	}
@@ -811,10 +812,10 @@ func TestModel_MouseDoubleClickThirdClickDoesNotDoubleClick(t *testing.T) {
 
 	m := NewModel(g, theme.DefaultTheme())
 
-	// Cell [5, 5]: relY = 5 => msg.Y = 6, c = 5 => relX = 18 => msg.X = 18
+	// Cell [5, 5]: Row 5 is line 7, Col 5 center is col 20.
 	mouseMsg := tea.MouseMsg{
-		X:      18,
-		Y:      6,
+		X:      20,
+		Y:      7,
 		Button: tea.MouseButtonLeft,
 		Action: tea.MouseActionPress,
 	}
@@ -1371,6 +1372,51 @@ func TestModel_GalacticChart_WarpBlocked(t *testing.T) {
 	messages := mod.CommandBar.Messages()
 	if len(messages) == 0 || !strings.Contains(messages[len(messages)-1], "COMPUTER DAMAGED") {
 		t.Errorf("expected pocket calculator warning message, got: %v", messages)
+	}
+}
+
+func TestModel_GalacticChart_MouseClick(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Quad = engine.Coord{3, 3}
+	m := NewModel(g, theme.DefaultTheme())
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = updated.(Model)
+
+	// Open galactic chart modal
+	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "chart"})
+	if m.ActiveModal != ModalGalacticChart {
+		t.Fatalf("expected ActiveModal == ModalGalacticChart, got %v", m.ActiveModal)
+	}
+
+	// Quadrant [2, 3]:
+	// Chart overlay is 64x18 centered in 80x24: startX = 8, startY = 3.
+	// Row 2 is line 5 in chart: screen Y = 3 + 5 = 8.
+	// Col 3 center is col 23 in chart (7 + 7*2 + 2 = 23): screen X = 8 + 23 = 31.
+	clickMsg := tea.MouseMsg{
+		X:      31,
+		Y:      8,
+		Button: tea.MouseButtonLeft,
+		Action: tea.MouseActionPress,
+	}
+
+	// Single click moves cursor
+	updated, _ = m.Update(clickMsg)
+	m = updated.(Model)
+	if m.GalacticChart.Cursor() != (engine.Coord{2, 3}) {
+		t.Fatalf("expected GalacticChart cursor [2, 3] after single click, got %v", m.GalacticChart.Cursor())
+	}
+	if m.ActiveModal != ModalGalacticChart {
+		t.Fatalf("expected modal to remain open on single click")
+	}
+
+	// Double click warps to [2, 3]
+	updated, _ = m.Update(clickMsg)
+	m = updated.(Model)
+	if m.ActiveModal != ModalNone {
+		t.Fatalf("expected modal closed after double click warp, got %v", m.ActiveModal)
+	}
+	if m.Game.Enterprise.Quad != (engine.Coord{2, 3}) {
+		t.Fatalf("expected Enterprise in quad [2, 3] after double click warp, got %v", m.Game.Enterprise.Quad)
 	}
 }
 

@@ -38,25 +38,30 @@ func (m Model) Theme() theme.Theme {
 }
 
 // HitTest maps relative (x, y) coordinates within the grid's bounding box
-// to a 1-indexed engine.Coord [Row, Col].
+// (including its outer border) to a 1-indexed engine.Coord [Row, Col].
 func (m Model) HitTest(relX, relY int) (engine.Coord, bool) {
-	// relY: row 0 is header, row 1..8 are lines relY = r
-	// In View: line 0 is col header.
-	// Lines 1..8 are the 8 row lines (relY = 1..8).
-	if relY < 1 || relY > 8 {
+	// In the rendered View:
+	// Line 0 is top border (┌──────...┐).
+	// Line 1 is column header (│  1   2   3   4   5   6   7   8  │).
+	// Lines 2..9 are the 8 sector row lines (relY = r + 1, where r = 1..8).
+	// Line 10 is bottom border (└──────...┘).
+	if relY < 2 || relY > 9 {
 		return engine.Coord{}, false
 	}
-	r := relY
+	r := relY - 1
 
-	// Each row starts with "r " (2 chars).
+	// In the rendered View:
+	// Col 0 is left border (│).
+	// Cols 1..2 are row label ("r ").
 	// Then for c = 1..8:
-	// c=1: chars 2..4 (width 3), char 5 space
-	// c=2: chars 6..8, char 9 space
-	// c=k: chars 2 + 4*(k-1) .. 4 + 4*(k-1)
-	if relX < 2 {
+	// c=1: cols 3..5 (width 3), col 6 space
+	// c=2: cols 7..9 (width 3), col 10 space
+	// c=k: cols 3 + 4*(k-1) .. 5 + 4*(k-1)
+	// Col 34 is right border (│).
+	if relX < 3 {
 		return engine.Coord{}, false
 	}
-	offset := relX - 2
+	offset := relX - 3
 	c := (offset / 4) + 1
 	charWithinCell := offset % 4
 	if c < 1 || c > 8 || charWithinCell >= 3 {
