@@ -351,11 +351,77 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case tea.MouseMsg:
-		if m.ActiveModal != ModalNone || m.showOptions {
+		if m.showOptions {
 			return m, nil
 		}
 		isLeftClick := msg.Button == tea.MouseButtonLeft || msg.Type == tea.MouseLeft
 		if !isLeftClick || msg.Action == tea.MouseActionRelease || msg.Action == tea.MouseActionMotion {
+			return m, nil
+		}
+
+		if m.ActiveModal == ModalGalacticChart {
+			if m.GalacticChart.ShowingHelp() {
+				m.GalacticChart.SetShowingHelp(false)
+				return m, nil
+			}
+			chartW := m.GalacticChart.Width()
+			if chartW <= 0 {
+				chartW = 64
+			}
+			chartH := m.GalacticChart.Height()
+			if chartH <= 0 {
+				chartH = 18
+			}
+			startX := (m.Width - chartW) / 2
+			startY := (m.Height - chartH) / 2
+			relX := msg.X - startX
+			relY := msg.Y - startY
+			coord, ok := m.GalacticChart.HitTest(relX, relY)
+			if !ok {
+				return m, nil
+			}
+
+			now := time.Now()
+			isDoubleClick := coord == m.LastClickCoord && !m.LastClickTime.IsZero() && time.Since(m.LastClickTime) < 400*time.Millisecond
+
+			if isDoubleClick {
+				m.LastClickTime = time.Time{}
+				m.LastClickCoord = coord
+				if m.GalacticChart.ComputerDamaged() {
+					m.CommandBar.AddMessage("COMPUTER DAMAGED, USE A POCKET CALCULATOR. Manual navigation required (nav q <r> <c> [warp]).")
+					return m, nil
+				}
+				dest := coord
+				var curQuad engine.Coord
+				if m.Game != nil {
+					curQuad = m.Game.Enterprise.Quad
+				}
+				telem := galacticchart.CalculateTelemetry(curQuad, dest)
+				m.ActiveModal = ModalNone
+				if m.Game != nil {
+					events, err := m.Game.Dispatch(engine.ActionMove{DestQuad: dest, Warp: telem.RecommendedWarp})
+					if err != nil {
+						m.CommandBar.AddMessage(err.Error())
+					} else {
+						m.SelectedSector = engine.Coord{}
+						m.logEvents(events)
+						for _, ev := range events {
+							if goEv, ok := ev.(engine.EventGameOver); ok {
+								return m.handleGameOver(goEv)
+							}
+						}
+					}
+				}
+				return m, nil
+			}
+
+			m.LastClickTime = now
+			m.LastClickCoord = coord
+			m.GalacticChart.SetCursor(coord)
+			return m, nil
+		}
+
+		if m.ActiveModal != ModalNone {
 			return m, nil
 		}
 

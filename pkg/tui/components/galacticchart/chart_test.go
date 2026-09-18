@@ -498,3 +498,62 @@ func TestGalacticChart_HelpToggle(t *testing.T) {
 		t.Fatal("expected ShowingHelp() true after SetShowingHelp(true)")
 	}
 }
+
+func TestGalacticChart_HitTest(t *testing.T) {
+	th := theme.DefaultTheme()
+	m := New(th, 64, 18)
+
+	// Valid quadrant cells from (1,1) to (8,8)
+	// Quadrant rows occupy lines 4..11 (relY = r + 3)
+	// Quadrant cols start at col 7 with 7-char stride (5-char cell + 2-space separator)
+	for r := 1; r <= 8; r++ {
+		for c := 1; c <= 8; c++ {
+			startX := 7 + 7*(c-1)
+			for dx := 0; dx < 5; dx++ {
+				relX := startX + dx
+				relY := r + 3
+				coord, ok := m.HitTest(relX, relY)
+				if !ok {
+					t.Fatalf("expected HitTest(%d, %d) = ok for quad [%d, %d]", relX, relY, r, c)
+				}
+				if coord != (engine.Coord{r, c}) {
+					t.Fatalf("HitTest(%d, %d) = %v, expected [%d, %d]", relX, relY, coord, r, c)
+				}
+			}
+		}
+	}
+
+	// Out of bounds / separators / headers
+	cases := []struct {
+		name string
+		relX int
+		relY int
+	}{
+		{"top border", 10, 0},
+		{"title line", 10, 1},
+		{"spacer line 2", 10, 2},
+		{"col header line 3", 10, 3},
+		{"bottom spacer line 12", 10, 12},
+		{"left border col 0", 0, 5},
+		{"row label col 3", 3, 5},
+		{"separator between c1 and c2 col 12", 12, 5},
+		{"separator between c1 and c2 col 13", 13, 5},
+		{"right border col 63", 63, 5},
+		{"outside right col 64", 64, 5},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			coord, ok := m.HitTest(tc.relX, tc.relY)
+			if ok {
+				t.Fatalf("expected HitTest(%d, %d) to return false, got true with %v", tc.relX, tc.relY, coord)
+			}
+		})
+	}
+
+	// When showing help, hit testing should return false
+	m.SetShowingHelp(true)
+	if _, ok := m.HitTest(8, 4); ok {
+		t.Fatal("expected HitTest to return false when ShowingHelp is true")
+	}
+}

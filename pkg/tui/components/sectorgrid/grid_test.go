@@ -153,13 +153,20 @@ func TestHitTest_ValidCells(t *testing.T) {
 	m := New(nil)
 
 	// Every sector cell from (1,1) to (8,8)
+	// In the rendered view:
+	// Line 0 is top border (┌──────...┐)
+	// Line 1 is column header (│  1   2   3   4   5   6   7   8  │)
+	// Lines 2..9 are the 8 sector row lines (relY = r + 1, where r = 1..8)
+	// Line 10 is bottom border (└──────...┘)
+	// Col 0 is left border (│)
+	// Cols 1..2 are row label ("r ")
+	// Each cell c occupies 3 cols: 3 + 4*(c-1), 3 + 4*(c-1) + 1, 3 + 4*(c-1) + 2
 	for r := 1; r <= 8; r++ {
 		for c := 1; c <= 8; c++ {
-			// Cell c occupies relX: 2 + 4*(c-1), 2 + 4*(c-1) + 1, 2 + 4*(c-1) + 2
-			startX := 2 + 4*(c-1)
+			startX := 3 + 4*(c-1)
 			for dx := 0; dx < 3; dx++ {
 				relX := startX + dx
-				relY := r
+				relY := r + 1
 				coord, ok := m.HitTest(relX, relY)
 				if !ok {
 					t.Fatalf("expected HitTest(%d, %d) to return ok=true for cell [%d, %d]", relX, relY, r, c)
@@ -182,28 +189,31 @@ func TestHitTest_OutOfBoundsAndBorders(t *testing.T) {
 		relY int
 	}{
 		// Vertical bounds
-		{"header line 0", 2, 0},
-		{"negative Y", 2, -1},
-		{"below grid row 9", 2, 9},
-		{"below grid row 20", 5, 20},
+		{"top border line 0", 4, 0},
+		{"header line 1", 4, 1},
+		{"negative Y", 4, -1},
+		{"bottom border line 10", 4, 10},
+		{"below grid line 11", 4, 11},
+		{"far below grid row 20", 5, 20},
 
 		// Horizontal bounds (left)
-		{"row header col 0", 0, 1},
-		{"row header col 1", 1, 1},
-		{"negative X", -1, 1},
+		{"left border col 0", 0, 2},
+		{"row header col 1", 1, 2},
+		{"row header space col 2", 2, 2},
+		{"negative X", -1, 2},
 
-		// Separator spaces between cells: relX = 5, 9, 13, 17, 21, 25, 29
-		{"separator between c1 and c2", 5, 1},
-		{"separator between c2 and c3", 9, 2},
-		{"separator between c3 and c4", 13, 3},
-		{"separator between c4 and c5", 17, 4},
-		{"separator between c5 and c6", 21, 5},
-		{"separator between c6 and c7", 25, 6},
-		{"separator between c7 and c8", 29, 7},
+		// Separator spaces between cells: relX = 6, 10, 14, 18, 22, 26, 30
+		{"separator between c1 and c2", 6, 2},
+		{"separator between c2 and c3", 10, 3},
+		{"separator between c3 and c4", 14, 4},
+		{"separator between c4 and c5", 18, 5},
+		{"separator between c5 and c6", 22, 6},
+		{"separator between c6 and c7", 26, 7},
+		{"separator between c7 and c8", 30, 8},
 
 		// Horizontal bounds (right)
-		{"trailing space after c8", 33, 8},
-		{"beyond grid col 34", 34, 1},
+		{"right border col 34", 34, 2},
+		{"beyond grid col 35", 35, 2},
 		{"far right col 50", 50, 4},
 	}
 

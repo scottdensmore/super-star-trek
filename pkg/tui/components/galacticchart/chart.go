@@ -108,6 +108,53 @@ func (m Model) ShowingHelp() bool {
 	return m.showHelp
 }
 
+// SetCursor sets the active cursor coordinates (clamped between 1 and 8).
+func (m *Model) SetCursor(c engine.Coord) {
+	m.cursor[0] = clampCoord(c[0], 1, 8)
+	m.cursor[1] = clampCoord(c[1], 1, 8)
+}
+
+// Width returns the modal width.
+func (m Model) Width() int {
+	return m.width
+}
+
+// Height returns the modal height.
+func (m Model) Height() int {
+	return m.height
+}
+
+// ComputerDamaged returns whether the ship's library computer is damaged.
+func (m Model) ComputerDamaged() bool {
+	return m.computerDamaged
+}
+
+// HitTest maps relative (x, y) coordinates within the modal's bounding box
+// to a 1-indexed engine.Coord [Row, Col] representing a quadrant.
+func (m Model) HitTest(relX, relY int) (engine.Coord, bool) {
+	if m.showHelp {
+		return engine.Coord{}, false
+	}
+	// Quadrant rows 1..8 occupy lines 4..11
+	if relY < 4 || relY > 11 {
+		return engine.Coord{}, false
+	}
+	r := relY - 3
+
+	// Col 0 is border, col 1 is padding, cols 2..6 are row label.
+	// Quadrant columns start at col 7 with 7-char stride (5 chars cell + 2 chars separator).
+	if relX < 7 {
+		return engine.Coord{}, false
+	}
+	offset := relX - 7
+	c := (offset / 7) + 1
+	charWithinCell := offset % 7
+	if c < 1 || c > 8 || charWithinCell >= 5 {
+		return engine.Coord{}, false
+	}
+	return engine.Coord{r, c}, true
+}
+
 // SetShowingHelp sets whether the chart displays the help guide.
 func (m *Model) SetShowingHelp(s bool) {
 	m.showHelp = s
