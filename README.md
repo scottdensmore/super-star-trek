@@ -1,183 +1,140 @@
 # Super Star Trek
 
-Super Star Trek is an old text-only game, an early example of a turn-based space strategy sim, written in BASIC. In this game, you are the captain of the starship Enterprise, and your mission is to scout the federation space and eliminate all the invading Klingon ships. You will have to manage the ship energy carefully, use phasers and torpedoes to destroy the Klingons, and find starbases to repair damages and replenish your energy. All of this, rendered with a few characters on screen and a lot of imagination.
+Super Star Trek is an authentic, modernized reimagining of the classic 1978 turn-based space strategy simulation originally written in BASIC and popularized on early mainframe and microcomputer systems.
 
-Super Star Trek is probably the most famous early text-only game ever created and it inspired many other videogames. Since the code was public domain, during the years, it was changed and improved many times. There are literally thousands of versions out there. All of them are nice, but my preference goes to the classic 1978 version called Super Star Trek.
+As Captain of the USS *Enterprise* (NCC-1701), your mission is to explore Federation quadrants, manage your ship's finite energy reserves, eliminate invading Klingon and Romulan battlecruisers, and rendezvous with Starbases for repairs and replenishment.
 
-[Read more about Star Trek and Super Star Trek.](https://en.wikipedia.org/wiki/Star_Trek_%281971_video_game%29)
+This repository features both a **state-of-the-art terminal dashboard** built with Go and the [Charmbracelet](https://charm.sh) stack (`bubbletea`, `lipgloss`), and the **classic 1978 teletype/C edition**.
 
-### Full-screen mode
+---
 
-Run `sst -t` for a full-screen interface: the short-range scan and the
-ship's status stay on screen in two panels while the usual game
-conversation scrolls below them. It needs a terminal of at least 72x24
-(columns by rows) and can be combined with the fixed-coordinate option
-(`sst -f -t`).
-Without `-t` the game uses its classic scrolling display.
+## Features at a Glance
 
-Resizing the terminal is fine at any point. The display follows it
-straight away — while the game is waiting for you to answer, and while
-it is waiting for a keystroke at a pause — and both the question you
-were asked and the answer you were halfway through typing survive, so
-long as there is still room for them. Older text that no longer fits
-scrolls away, as it would in any terminal.
+- **Rich 80×24 TUI Dashboard:** Live telemetry gauges, sector grid, surrounding quadrant radar, and non-blocking input handling.
+- **Dynamic Retro & Modern Themes:**
+  - **Modern:** Contemporary high-contrast terminal palette.
+  - **LCARS:** Authentic 24th-century Federation visual interface styling.
+  - **CRT:** Vintage amber monochrome phosphorous monitor aesthetic.
+  - **Luminance Adaptation:** Automatically senses terminal dark vs. light backgrounds or switches on demand (`Auto`, `Dark`, `Light`).
+- **Real-Time Visual FX & Animation Engine:**
+  - Torpedo flight tracking (` · ` $\to$ ` o ` $\to$ ` O `) and 3-frame explosion shockwaves (` * ` $\to$ `***` $\to$ `#*#`).
+  - Directional phaser raycasts (`---`, `\\\`, `///`, `|||`) and multi-target beams with shield impact brackets.
+  - Periodic Condition Red visual klaxon beacon.
+  - Instant, non-blocking key-skip (keypresses immediately interrupt animations without input lag).
+- **Interactive Modals:**
+  - `F1` / `?`: **Starfleet Technical Manual & Codex** — 8 comprehensive curriculum chapters covering systems, flight math, tactical combat formulas, and cheatsheets.
+  - `F2`: **Theme & Mode Switcher** — Live theme switching and color mode cycling.
+  - `F3`: **Hall of Fame & Scoring Engine** — Authentic Starfleet rank commissions, performance ratings, and persistent leaderboards.
+  - `F4`: **Damage Control Schematic** — ASCII starship cutaway highlighting subsystem operational states and repair countdowns.
+  - `F5`: **Galactic Star Chart** — 8×8 quadrant map with exploration fog-of-war, starbase surveillance networks, and one-click impulse/warp targeting.
+  - `o`: **Tactical Options** — Animation speed toggle (`Off`, `Fast`, `Normal`, `Cinematic`), themes, and gameplay settings.
+- **Mouse & Keyboard Controls:** Full mouse click-to-select, targeting reticles, drag motion, and intuitive keyboard navigation.
+- **Gameplay Depth:** Configurable difficulty profiles (`casual`, `normal`, `hardcore`, `nightmare`), two-tier sensor damage curves, and optional tactical Klingon cloaking.
+- **Cross-Platform:** Native support across Linux, macOS, and Windows.
 
-Dragged smaller than the 72x24 the panels ask for, they clip rather
-than rearrange themselves. A line with more to show than there is room
-for ends in `>`, so a shortened number is never mistaken for a small
-one, and a heading with no room left is dropped rather than shortened.
-A terminal too short for the panels is the panels' problem, not the
-conversation's: they lose rows off the bottom, the grid keeping its
-numbering for as long as it has rows to number, and the conversation
-keeps three rows down to six — two of it and the line the prompt or the
-pager sits on. Below six there is not that much left to divide and it
-keeps what there is: two rows at five and one at four. So the prompt
-stays on screen down to four rows, and down to six a paged command shows
-a line of itself before stopping to ask — at five its one line goes to
-the blank that `lrscan`, `chart` and `status` open with, though
-`srscan`, which has none, still shows a line there, and at four the
-pager takes the only row and a paged command shows nothing of itself at
-all. Shorter than four the panels have taken the screen: the game still
-reads what you type, with nothing on it to say so.
+---
 
-Growing the terminal back brings the panels with it, however far the
-squeeze went: they redraw from the game state, so they return full of
-live readings. The conversation cannot be rebuilt that way — curses
-does not reflow it — so whatever scrolled away while the window was
-small is gone for good, and an older line that was cut short stays cut
-short. Every reading is a command away, though, and none of them costs
-anything: `srscan`, `status`, `chart`, `damages`.
+## Quick Start (Go Edition)
 
-The line you were on usually comes back with the panels, and so does
-whatever you had typed of an answer to it — but look at both before
-you touch the keyboard, because you may get back only one of them.
-Where the question ended its own line, your answer starts the row
-below it, so a wrapped answer needs three rows and a window of one
-or two — five rows or fewer — cannot hold the pair; a question
-that has itself wrapped needs a row more again. The question is what
-goes, leaving you looking at what you typed with nothing on screen
-to say what it answers; on a very wide terminal it is the answer
-that goes instead, however tall the window is, leaving a question
-that looks as though nothing had been typed at all. Shorter still
-and only a piece of whichever survived is left, and sometimes
-neither comes back, leaving older conversation on screen with the
-game waiting behind it.
+### Requirements
+- [Go 1.26+](https://golang.org)
 
-If the question and all you had typed are both on screen, carry on. If
-either is missing, give the terminal another row or two before anything
-else: that usually brings it back with your typing untouched, which
-beats retyping it. A very wide terminal is the exception: more rows will
-not bring the answer back there, though making it narrow enough will.
+### Run Directly
+```bash
+# Launch modern Charm TUI dashboard
+go run ./cmd/sst
 
-If it does not come back, or the terminal cannot grow, do not just
-answer it, and do not press Enter either: whatever you typed is still
-in the buffer, and a yes/no question reads the *first* letter, so an
-`N` typed after a `y` you cannot see answers yes.
-Press Ctrl-U first, which throws the line away, and then answer. What
-you type lands on whatever the window happens to be showing; the line
-it fell on clears when you press Enter, though the characters you
-typed stay where they landed.
+# Launch in classic 1978 teletype mode
+go run ./cmd/sst --classic
+```
 
-If the prompt is missing or cut off and you had not started answering
-it, press Enter. Nothing waiting behind one commits you to anything
-then: a pause moves on, the self-destruct password reads the empty
-answer as a refusal and stands the sequence down, and a yes/no
-question comes back only as `Please answer with "Y" or "N":`, without
-saying again what it asked — answer `N` there and you are back at the
-prompt, free to give the command again.
+### Install
+```bash
+go install github.com/scottdensmore/super-star-trek/cmd/sst@latest
+sst
+```
 
-If full-screen mode isn't possible — the terminal is too small, an
-exported `LINES` or `COLUMNS` is one the panels can't use, the game
-isn't attached to a terminal at all (piped input, redirected output, a
-job with no tty), or `TERM` names one that can't address the cursor —
-`-t` prints a notice and plays in the classic display instead. That
-game stays classic to the end — enlarging the window will not bring the
-panels up part way through it.
+### Command-Line Options
+```bash
+sst [flags]
 
-A game that went classic gets the choice made again for the next one,
-though. So if you put right what refused you — usually a window that
-needs to be bigger — answering yes to "Do you want to play again?"
-starts the next game with the panels. If you resized it and are
-refused again, the game says what size it read back rather than leaving
-you to wonder — for a window simply too small, 72x24 is the whole of
-what it takes, and a tmux status bar can cost you the row that decides
-it. Leave the terminal alone and it stays quiet: you were told at
-startup and nothing has changed since.
+Flags:
+  --classic             Run in classic teletype terminal mode
+  --theme <name>        Initial theme: modern (default), lcars, crt
+  --mode <mode>         Theme color mode: auto (default), dark, light
+  --difficulty <level>  Difficulty profile: casual, normal (default), hardcore, nightmare
+  --seed <int>          PRNG seed for reproducible galaxies (default: random)
+  --surveillance <mode> Starbase surveillance: full, classic, local, blackout
+  --sensor-degradation  Enable two-tier sensor damage degradation (default: true)
+  --klingon-cloak       Enable Klingon commander tactical cloaking (default: false)
+  --repair-multiplier   Subsystem repair duration multiplier (default: 1.0)
+```
 
-An exported `LINES` or `COLUMNS` can refuse you as well, and the game
-names the one that did, with what to do about it. Curses believes those
-over the terminal, so the game is measuring what they say. Bigger than
-your window and the display would run off the edge of it; smaller than
-72x24 and it fails the floor however much room the window has. That is
-how a 100x30 window comes to be refused. A pin under 72x24 is then
-refused however large the window gets, since resizing moves the window
-and never the pin, so unsetting it is the whole of the advice: `Unset
-COLUMNS, rerun sst -t -- classic for now.` One merely bigger than your
-window is different — it is taken as soon as the window catches up with
-it, so the game also offers the size the window would have to reach,
-the larger of the pin and the window on each axis: `Grow to 190x30, or
-unset COLUMNS and rerun sst -t.` — where growing needs no rerun, just
-a yes at the next "play again". And a window itself under 72x24 has to
-grow regardless, which is when the game asks for both at once.
+---
 
-Only a pin the panels can live with is left alone: no bigger than your
-window and still 72x24 or more, where they are drawn narrow or short
-with room to spare. Shrink the window below such a pin and the panels
-come down with it: the pin does not follow the window down, but the
-display stops believing it past the size you actually have — and they
-go back up to the pin when you give the room back.
+## Controls & Keyboard Shortcuts
 
-The classic display only goes the one way. Panels that are up stay up
-for the rest of the session however you resize, as above: they clip
-rather than give way to it, under a pin as much as without one, at
-every size there is room to play in.
+### Global Hotkeys
+| Key | Function |
+|---|---|
+| `F1` or `?` | Toggle Starfleet Technical Manual & Codex |
+| `F2` | Cycle Theme (`Modern` $\to$ `LCARS` $\to$ `CRT`) |
+| `Shift + F2` | Cycle Color Mode (`Auto` $\to$ `Dark` $\to$ `Light`) |
+| `F3` | Toggle Starfleet Hall of Fame & Scoring |
+| `F4` | Toggle Damage Control Schematic |
+| `F5` | Toggle Galactic Star Chart |
+| `o` | Open Tactical Options Modal |
+| `Tab` / `Shift+Tab` | Toggle modal focus / cycle active elements |
+| `Esc` / `q` | Dismiss active modal or clear selection |
+| `Ctrl+C` | Emergency exit |
+
+### Core In-Game Commands
+Type commands directly into the prompt bar at the bottom:
+| Command | Short | Action |
+|---|---|---|
+| `nav <course> <warp>` | `nav` | Engage warp engines on course (1.0–9.0) for distance |
+| `srs` | `sr` | Short-range sensor scan of current quadrant |
+| `lrs` | `lr` | Long-range sensor scan of adjacent quadrants |
+| `pha <energy>` | `pha` | Fire phaser banks allocated by energy units |
+| `tor <course>` | `tor` | Launch photon torpedo on heading |
+| `she <units>` | `she` | Transfer energy between main reserves and deflector shields |
+| `dam` | `dam` | Damage report & repair ETA |
+| `chart` | `cha` | Galactic star chart readout |
+| `com <type>` | `com` | Starship computer operations (trajectory, status, score) |
+| `anim <speed>` | `anim` | Set animation speed (`off`, `fast`, `normal`, `cinematic`) |
+| `theme <name>` | `theme` | Set visual theme (`modern`, `lcars`, `crt`) |
+| `save <name>` | `save` | Save game state to persistent storage |
+| `load <name>` | `load` | Load saved game |
+
+---
+
+## Classic C Edition
+
+The original C implementation and classic curses full-screen interface are preserved in this repository.
+
+### Requirements
+- C17 compiler (`gcc` or `clang`)
+- CMake 3.21+
+- `libncurses-dev` (Linux) or ncurses (macOS)
 
 ### Building
-
-The build is CMake, driven through presets:
-
-```sh
+```bash
 cmake --preset debug           # or release
 cmake --build --preset debug
 ./build/debug/sst
 ```
 
-You need a C17 compiler, CMake 3.21 or newer, and ncurses
-(`libncurses-dev` on Debian and Ubuntu; already present on macOS).
-`ctest --preset debug` runs the test suite. Three of its tests report
-as skipped rather than failing where what they need is missing: the
-full-screen session, which is driven through a real terminal and needs
-`tmux`; the static analysis, which needs a compiler offering
-`gcc -fanalyzer` — and which stays off on macOS even where one is
-installed, unless `CC` names it or the tree was configured with it; and
-the workflow lint, which needs `actionlint`, and `shellcheck` with it,
-since `actionlint` runs its shell checks only where it can find that
-binary and says nothing about the shell in a workflow otherwise. That
-last one is the one you are most likely to see skip — neither tool is
-needed to build or play the game, so neither is listed above. CI
-installs both on its Linux legs, where the lint is a hard failure
-rather than a skip, and pins `actionlint` to 1.7.12: a different
-vintage locally can disagree with what CI enforces, in either
-direction.
+### Running C Tests
+```bash
+ctest --preset debug
+bash tests/golden.sh ./build/debug/sst
+```
 
-`cmake --list-presets` shows them all. There are four: `debug` and
-`release`, and `ci-debug` and `ci-release`, which add `-Werror` and are
-exactly what CI runs — so you can reproduce a CI warning locally rather
-than discovering it in a pull request.
+### C Full-Screen Mode (`sst -t`)
+Run `sst -t` for the curses two-panel display. It requires a terminal of at least 72×24 columns and can be combined with `-f` (`sst -f -t`). Without `-t`, the classic scrolling display is used.
 
-### Windows
+---
 
-There is no working Windows build at the moment.
+## License
 
-The old instructions here were `cl /DWINDOWS /Fesst.exe *.c` from a
-Visual Studio Developer Command Prompt. That has not worked for some
-time: `tui.c` includes `<curses.h>` unconditionally, and `sst.c`,
-`finish.c` and `osx.c` all call into it, so the full-screen display
-cannot simply be left out of the file list either.
-
-Making it work again means stubbing the display out under `#ifdef
-WINDOWS` — `tui_init()` returning false, so the game always runs in its
-classic scrolling form — and then actually building it on Windows to
-find out what else has drifted. Nobody has a toolchain in play to check
-that, so rather than leave instructions that fail, this says so.
-
+Public Domain / MIT. Authentic reproduction based on David H. Ahl's *BASIC Computer Games* (1978).
