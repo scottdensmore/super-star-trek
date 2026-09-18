@@ -1,0 +1,80 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #0b0c10;
+    color: #c5c6c7;
+    font-family: monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+header {
+    width: 100%;
+    max-width: 900px;
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #1f2833;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid #45a29e;
+    border-bottom: none;
+}
+
+h1 {
+    font-size: 1.1rem;
+    color: #66fcf1;
+    letter-spacing: 2px;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+}
+
+select, button {
+    background: #0b0c10;
+    color: #66fcf1;
+    border: 1px solid #45a29e;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+select:hover, button:hover {
+    background: #45a29e;
+    color: #0b0c10;
+}
+
+#terminal-container {
+    width: 100%;
+    max-width: 900px;
+    height: 520px;
+    background: #000;
+    border: 1px solid #45a29e;
+    border-radius: 0 0 8px 8px;
+    padding: 8px;
+    box-shadow: 0 0 20px rgba(102, 252, 241, 0.15);
+    position: relative;
+}
+
+/* CRT scanlines effect */
+.crt::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+}
