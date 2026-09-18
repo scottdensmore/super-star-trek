@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
-	"github.com/scottdensmore/super-star-trek/pkg/tui"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/parser"
 )
 
 // Session manages a single player's game session.
@@ -56,29 +56,21 @@ func (s *Session) Execute(input string) string {
 		return FormatChart(s.game)
 	case "dam", "damages":
 		return FormatDamages(s.game)
+	case "quit", "exit", "q":
+		return "Session terminated.\r\n"
 	}
 
-	parsed := tui.ParseCommand(trimmed)
+	parsed := parser.ParseCommand(trimmed)
 	if parsed.Error != nil {
 		return fmt.Sprintf("Error: %v\r\n", parsed.Error)
 	}
 
 	if parsed.Special != "" {
 		switch strings.ToLower(parsed.Special) {
-		case "help", "?":
-			return "COMMANDS: nav, srs, lrs, pha, tor, she, dam, chart, com, help, quit\r\n"
-		case "srs", "srscan":
-			return FormatSRS(s.game)
-		case "lrs", "lrscan":
-			return FormatLRS(s.game)
-		case "chart":
-			return FormatChart(s.game)
-		case "dam", "damages":
-			return FormatDamages(s.game)
-		case "status":
-			return FormatSRS(s.game)
+		case "quit":
+			return "Session terminated.\r\n"
 		default:
-			return fmt.Sprintf("Unknown command: %s\r\nType 'help' for command reference.\r\n", parsed.Special)
+			return fmt.Sprintf("Special command: %s\r\n", parsed.Special)
 		}
 	}
 

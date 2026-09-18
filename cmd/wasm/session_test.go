@@ -113,3 +113,14 @@ func TestSession_LoadCorruptedData(t *testing.T) {
 		t.Errorf("expected error loading invalid JSON, got nil")
 	}
 }
+
+func TestSession_QuitAndExit(t *testing.T) {
+	s := NewSession(12345, engine.ProfileNormal)
+
+	for _, cmd := range []string{"quit", "exit", "q", "QUIT", "EXIT"} {
+		out := s.Execute(cmd)
+		if !strings.Contains(out, "Session terminated") {
+			t.Errorf("command %q: expected session termination message, got: %q", cmd, out)
+		}
+	}
+}
