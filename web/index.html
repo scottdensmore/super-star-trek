@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Star Trek - WebAssembly Edition</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css" />
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
+    <script src="wasm_exec.js"></script>
+</head>
+<body>
+    <header>
+        <h1>★ SUPER STAR TREK ★ (WASM)</h1>
+        <div class="controls">
+            <select id="palette-select">
+                <option value="color">Full ANSI Color</option>
+                <option value="green">Classic Green Phosphor</option>
+                <option value="amber">Amber Phosphor</option>
+            </select>
+            <button id="restart-btn">Restart Game</button>
+        </div>
+    </header>
+    <div id="terminal-container" class="crt"></div>
+    <script src="app.js"></script>
+</body>
+</html>

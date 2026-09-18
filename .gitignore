@@ -236,3 +236,7 @@ build-*/
 # Git worktrees
 .worktrees/
 
+# WebAssembly build artifacts
+web/sst.wasm
+web/wasm_exec.js
+

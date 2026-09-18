@@ -1,0 +1,110 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+
+	"github.com/scottdensmore/super-star-trek/pkg/engine"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/parser"
+)
+
+// Session manages a single player's game session.
+type Session struct {
+	game    *engine.GameState
+	history []string
+}
+
+// NewSession creates and initializes a new Session with the specified seed and difficulty.
+func NewSession(seed int64, difficulty engine.DifficultyProfile) *Session {
+	if seed == 0 {
+		seed = 12345
+	}
+	rules := engine.DefaultRulesForProfile(difficulty)
+	game := engine.NewGameWithOptions(seed, engine.SkillGood, engine.LengthMedium, rules)
+	game.PopulateQuadrant(game.Enterprise.Quad, game.Enterprise.Sector)
+	return &Session{
+		game:    game,
+		history: make([]string, 0),
+	}
+}
+
+// Game returns the underlying GameState.
+func (s *Session) Game() *engine.GameState {
+	return s.game
+}
+
+// Execute processes a user input string and returns formatted teletype output.
+func (s *Session) Execute(input string) string {
+	trimmed := strings.TrimSpace(input)
+	if trimmed == "" {
+		return ""
+	}
+	s.history = append(s.history, trimmed)
+
+	tokens := strings.Fields(trimmed)
+	cmd := strings.ToLower(tokens[0])
+
+	switch cmd {
+	case "help", "?":
+		return "COMMANDS: nav, srs, lrs, pha, tor, she, dam, chart, com, save [slot], load [slot], help, quit\r\n"
+	case "srs", "srscan", "status":
+		return FormatSRS(s.game)
+	case "lrs", "lrscan":
+		return FormatLRS(s.game)
+	case "chart":
+		return FormatChart(s.game)
+	case "dam", "damages":
+		return FormatDamages(s.game)
+	case "quit", "exit", "q":
+		return "Session terminated.\r\n"
+	}
+
+	parsed := parser.ParseCommand(trimmed)
+	if parsed.Error != nil {
+		return fmt.Sprintf("Error: %v\r\n", parsed.Error)
+	}
+
+	if parsed.Special != "" {
+		switch strings.ToLower(parsed.Special) {
+		case "quit":
+			return "Session terminated.\r\n"
+		default:
+			return fmt.Sprintf("Special command: %s\r\n", parsed.Special)
+		}
+	}
+
+	if parsed.Action != nil {
+		events, err := s.game.Dispatch(parsed.Action)
+		if err != nil {
+			return fmt.Sprintf("Cannot execute: %v\r\n", err)
+		}
+		var out strings.Builder
+		out.WriteString(FormatCombatEvents(events))
+		if _, ok := parsed.Action.(engine.ActionMove); ok {
+			out.WriteString(FormatSRS(s.game))
+		}
+		return out.String()
+	}
+
+	return "Invalid command.\r\n"
+}
+
+// Save serializes the game state to a JSON string.
+func (s *Session) Save() (string, error) {
+	data, err := json.Marshal(s.game)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// Load restores the game state from a JSON string.
+func (s *Session) Load(data string) error {
+	var g engine.GameState
+	if err := json.Unmarshal([]byte(data), &g); err != nil {
+		return err
+	}
+	s.game = &g
+	return nil
+}
