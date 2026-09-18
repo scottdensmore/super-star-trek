@@ -29,12 +29,53 @@ term.onData(e => {
     switch (e) {
         case '\r': // Enter
             term.write('\r\n');
-            if (lineBuffer.trim().length > 0) {
+            const trimmed = lineBuffer.trim();
+            if (trimmed.length > 0) {
                 history.push(lineBuffer);
                 historyIndex = history.length;
-                if (typeof window.sstCommand === 'function') {
+
+                const tokens = trimmed.split(/\s+/);
+                const cmd = tokens[0].toLowerCase();
+                const slot = tokens[1] || '1';
+
+                if (cmd === 'save') {
+                    const state = typeof window.sstSave === 'function' ? window.sstSave() : null;
+                    if (!state) {
+                        term.write('\x1b[31m[SYSTEM] Error: unable to save game state.\x1b[0m\r\n');
+                    } else {
+                        try {
+                            localStorage.setItem('sst_slot_' + slot, state);
+                            term.write(`\x1b[32m[SYSTEM] Game state saved to browser storage (Slot: ${slot})\x1b[0m\r\n`);
+                        } catch (err) {
+                            term.write('\x1b[31m[SYSTEM] Error: unable to save game state.\x1b[0m\r\n');
+                        }
+                    }
+                } else if (cmd === 'load') {
+                    let saved = null;
+                    try {
+                        saved = localStorage.getItem('sst_slot_' + slot);
+                    } catch (err) {
+                        saved = null;
+                    }
+                    if (!saved) {
+                        term.write(`\x1b[31m[SYSTEM] No saved game found in Slot: ${slot}\x1b[0m\r\n`);
+                    } else {
+                        const ok = typeof window.sstLoad === 'function' ? window.sstLoad(saved) : false;
+                        if (ok) {
+                            term.write(`\x1b[32m[SYSTEM] Game restored from browser storage (Slot: ${slot})\x1b[0m\r\n`);
+                            if (typeof window.sstCommand === 'function') {
+                                term.write(window.sstCommand('srs'));
+                            }
+                        } else {
+                            term.write('\x1b[31m[SYSTEM] Error: saved game corrupted or incompatible.\x1b[0m\r\n');
+                        }
+                    }
+                } else if (typeof window.sstCommand === 'function') {
                     const output = window.sstCommand(lineBuffer);
                     term.write(output);
+                    if (output && output.includes('Session terminated')) {
+                        term.write('\x1b[33m[SYSTEM] Session terminated. Click "Restart Game" or type "srs" to resume.\x1b[0m\r\n');
+                    }
                 }
             }
             lineBuffer = '';

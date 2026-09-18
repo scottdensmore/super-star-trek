@@ -47,7 +47,7 @@ func (s *Session) Execute(input string) string {
 
 	switch cmd {
 	case "help", "?":
-		return "COMMANDS: nav, srs, lrs, pha, tor, she, dam, chart, com, help, quit\r\n"
+		return "COMMANDS: nav, srs, lrs, pha, tor, she, dam, chart, com, save [slot], load [slot], help, quit\r\n"
 	case "srs", "srscan", "status":
 		return FormatSRS(s.game)
 	case "lrs", "lrscan":

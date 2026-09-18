@@ -18,6 +18,9 @@ func TestSession_NewAndExecute(t *testing.T) {
 	if !strings.Contains(helpOut, "COMMANDS:") {
 		t.Errorf("expected help output to list commands, got: %s", helpOut)
 	}
+	if !strings.Contains(helpOut, "save [slot], load [slot]") {
+		t.Errorf("expected help output to list save and load commands, got: %s", helpOut)
+	}
 
 	// Test status command
 	statusOut := s.Execute("srs")
