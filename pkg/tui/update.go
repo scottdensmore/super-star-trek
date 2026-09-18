@@ -2,12 +2,14 @@ package tui
 
 import (
 	"fmt"
+	"math"
 	"path/filepath"
 	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/anim"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
@@ -37,11 +39,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case targetlock.FireTorpedoMsg:
+		var animCmd tea.Cmd
 		if m.Game != nil {
-			events, err := m.Game.Dispatch(engine.ActionFireTorpedo{
+			action := engine.ActionFireTorpedo{
 				Target: msg.Target,
 				Angle:  msg.Bearing,
-			})
+			}
+			events, err := m.Game.Dispatch(action)
 			if err != nil {
 				m.CommandBar.AddMessage(err.Error())
 			} else {
@@ -51,17 +55,24 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m.handleGameOver(goEv)
 					}
 				}
+				if m.Game.Rules.AnimSpeed > 0 {
+					if a := m.createCombatAnimation(action, events); a != nil {
+						m, animCmd = m.startCombatAnimation(a)
+					}
+				}
 			}
 		}
 		m.ActiveModal = ModalNone
 		cmd := m.CommandBar.Focus()
-		return m, cmd
+		return m, tea.Batch(cmd, animCmd)
 
 	case targetlock.FirePhasersMsg:
+		var animCmd tea.Cmd
 		if m.Game != nil {
-			events, err := m.Game.Dispatch(engine.ActionFirePhasers{
+			action := engine.ActionFirePhasers{
 				Energy: msg.Energy,
-			})
+			}
+			events, err := m.Game.Dispatch(action)
 			if err != nil {
 				m.CommandBar.AddMessage(err.Error())
 			} else {
@@ -71,11 +82,16 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m.handleGameOver(goEv)
 					}
 				}
+				if m.Game.Rules.AnimSpeed > 0 {
+					if a := m.createCombatAnimation(action, events); a != nil {
+						m, animCmd = m.startCombatAnimation(a)
+					}
+				}
 			}
 		}
 		m.ActiveModal = ModalNone
 		cmd := m.CommandBar.Focus()
-		return m, cmd
+		return m, tea.Batch(cmd, animCmd)
 
 	case targetlock.CloseHUDMsg:
 		m.ActiveModal = ModalNone
@@ -168,7 +184,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case engine.EventGameOver:
 		return m.handleGameOver(msg)
 
+	case anim.TickMsg:
+		if msg.AnimID == m.animID && m.activeAnim != nil {
+			if m.activeAnim.IsFinished() {
+				m.activeAnim = nil
+				m.Grid.ClearAnimOverrides()
+				return m, nil
+			}
+			f := m.activeAnim.Step()
+			m.Grid.SetAnimOverrides(f.Overrides)
+			return m, anim.TickCmd(m.animID, msg.Step+1, f.Duration)
+		}
+		return m, nil
+
 	case tea.KeyMsg:
+		if m.activeAnim != nil {
+			m.activeAnim.Skip()
+			m.activeAnim = nil
+			m.Grid.ClearAnimOverrides()
+		}
+
 		if m.showOptions {
 			if msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c" {
 				return m, tea.Quit
@@ -701,6 +736,47 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	if len(fields) > 0 && fields[0] == "anim" {
+		if len(fields) == 1 {
+			if m.Game != nil {
+				m.Game.Rules.AnimSpeed = (m.Game.Rules.AnimSpeed + 1) % 4
+				m.optionsModal.SetRules(m.Game.Rules)
+				speedNames := []string{"OFF", "FAST", "NORMAL", "CINEMATIC"}
+				m.CommandBar.AddMessage(fmt.Sprintf("Combat animation speed set to %s", speedNames[m.Game.Rules.AnimSpeed]))
+			} else {
+				m.CommandBar.AddMessage("Usage: anim <off|fast|normal|cinematic>")
+			}
+			return m, nil
+		}
+
+		if len(fields) == 2 {
+			speedNames := []string{"OFF", "FAST", "NORMAL", "CINEMATIC"}
+			var newSpeed int
+			switch fields[1] {
+			case "off", "0":
+				newSpeed = 0
+			case "fast", "1":
+				newSpeed = 1
+			case "normal", "2":
+				newSpeed = 2
+			case "cinematic", "3":
+				newSpeed = 3
+			default:
+				m.CommandBar.AddMessage(fmt.Sprintf("Invalid animation speed: %q (expected off, fast, normal, or cinematic)", fields[1]))
+				return m, nil
+			}
+			if m.Game != nil {
+				m.Game.Rules.AnimSpeed = newSpeed
+				m.optionsModal.SetRules(m.Game.Rules)
+			}
+			m.CommandBar.AddMessage(fmt.Sprintf("Combat animation speed set to %s", speedNames[newSpeed]))
+			return m, nil
+		}
+
+		m.CommandBar.AddMessage("Usage: anim <off|fast|normal|cinematic>")
+		return m, nil
+	}
+
 	switch trimmed {
 	case "target":
 		if m.Game == nil || len(m.Game.CurrentQuad.Klingons) == 0 {
@@ -949,7 +1025,14 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 				return m.handleGameOver(goEv)
 			}
 		}
-		return m, nil
+
+		var animCmd tea.Cmd
+		if m.Game.Rules.AnimSpeed > 0 {
+			if a := m.createCombatAnimation(parsed.Action, events); a != nil {
+				m, animCmd = m.startCombatAnimation(a)
+			}
+		}
+		return m, animCmd
 	}
 
 	return m, nil
@@ -1109,3 +1192,88 @@ func deviceShortString(d engine.DeviceID) string {
 		return "Subsystem"
 	}
 }
+
+// startCombatAnimation initializes and begins playback of an interactive combat animation sequence.
+func (m Model) startCombatAnimation(a anim.Animation) (Model, tea.Cmd) {
+	m.animID++
+	m.activeAnim = a
+	f := a.Step()
+	m.Grid.SetAnimOverrides(f.Overrides)
+	return m, anim.TickCmd(m.animID, 1, f.Duration)
+}
+
+func (m Model) createCombatAnimation(action engine.Action, events []engine.Event) anim.Animation {
+	if m.Game == nil {
+		return nil
+	}
+	switch act := action.(type) {
+	case engine.ActionFireTorpedo:
+		start := m.Game.Enterprise.Sector
+		var hitEv *engine.EventTorpedoHit
+		firedAngle := act.Angle
+		hasFiredAngle := act.Angle != 0
+
+		for _, ev := range events {
+			switch e := ev.(type) {
+			case engine.EventTorpedoFired:
+				start = e.Origin
+				firedAngle = e.Angle
+				hasFiredAngle = true
+			case engine.EventTorpedoHit:
+				hitCopy := e
+				hitEv = &hitCopy
+			}
+		}
+
+		var end engine.Coord
+		hit := hitEv != nil
+		if hit {
+			end = hitEv.Target
+		} else if act.Target != (engine.Coord{}) {
+			end = act.Target
+		} else if hasFiredAngle {
+			end = traceTorpedoBoundary(start, firedAngle)
+		} else {
+			end = start
+		}
+
+		return anim.NewTorpedoAnimation(start, end, hit, m.Game.Rules.AnimSpeed)
+
+	case engine.ActionFirePhasers:
+		start := m.Game.Enterprise.Sector
+		var firstHit *engine.EventPhaserHit
+		for _, ev := range events {
+			if h, ok := ev.(engine.EventPhaserHit); ok {
+				hitCopy := h
+				firstHit = &hitCopy
+				break
+			}
+		}
+		if firstHit == nil {
+			return nil
+		}
+		return anim.NewPhaserAnimation(start, firstHit.Target, true, m.Game.Rules.AnimSpeed)
+	}
+	return nil
+}
+
+func traceTorpedoBoundary(start engine.Coord, angle float64) engine.Coord {
+	r := float64(start.Row())
+	c := float64(start.Col())
+	dr := -math.Sin(angle) * 0.25
+	dc := math.Cos(angle) * 0.25
+
+	last := start
+	for step := 0; step < 40; step++ {
+		r += dr
+		c += dc
+		ir := int(math.Round(r))
+		ic := int(math.Round(c))
+		if ir < 1 || ir > 8 || ic < 1 || ic > 8 {
+			break
+		}
+		last = engine.Coord{ir, ic}
+	}
+	return last
+}
+

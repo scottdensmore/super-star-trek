@@ -5,6 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/anim"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
@@ -60,6 +61,8 @@ type Model struct {
 	Manual          manual.Model
 	optionsModal    optionsmodal.Model
 	showOptions     bool
+	activeAnim      anim.Animation
+	animID          int
 	LastClickTime   time.Time
 	LastClickCoord  engine.Coord
 	lastDarkBg      bool

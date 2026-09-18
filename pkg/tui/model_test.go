@@ -11,6 +11,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/anim"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
@@ -2161,3 +2162,210 @@ func TestModel_Manual_Hotkeys(t *testing.T) {
 		t.Fatalf("expected ActiveModal = ModalManual on F1 hotkey, got %v", modF1.ActiveModal)
 	}
 }
+
+func TestModel_CombatAnimation_KeySkip(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// Fire torpedo initiates animation
+	updated, cmd := mod.handleCommand("tor 1 1")
+	m := updated.(Model)
+	if m.activeAnim == nil {
+		t.Fatalf("expected activeAnim to be populated on torpedo fire")
+	}
+	if cmd == nil {
+		t.Fatalf("expected TickCmd on active animation")
+	}
+
+	// Pressing any key immediately skips animation to completion
+	keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(" ")}
+	updatedAfterKey, _ := m.Update(keyMsg)
+	mSkipped := updatedAfterKey.(Model)
+
+	if mSkipped.activeAnim != nil {
+		t.Errorf("expected activeAnim cleared after keypress")
+	}
+}
+
+func TestModel_CombatAnimation_SpeedOption(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// Disable animation via command: anim off
+	updated, _ := mod.handleCommand("anim off")
+	m := updated.(Model)
+	if m.Game.Rules.AnimSpeed != 0 {
+		t.Fatalf("expected AnimSpeed 0 on 'anim off', got %d", m.Game.Rules.AnimSpeed)
+	}
+
+	// Torpedo when speed is off does not start activeAnim
+	updatedNoAnim, _ := m.handleCommand("tor 1 1")
+	mNoAnim := updatedNoAnim.(Model)
+	if mNoAnim.activeAnim != nil {
+		t.Errorf("expected activeAnim to remain nil when AnimSpeed is off")
+	}
+}
+
+func TestModel_CombatAnimation_TickMsg(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// Start animation
+	updated, cmd := mod.handleCommand("tor 1 1")
+	m := updated.(Model)
+	if m.activeAnim == nil {
+		t.Fatalf("expected activeAnim populated")
+	}
+	if cmd == nil {
+		t.Fatalf("expected TickCmd")
+	}
+
+	animID := m.animID
+
+	// Step ticks until finished
+	step := 1
+	for m.activeAnim != nil {
+		tickMsg := anim.TickMsg{AnimID: animID, Step: step}
+		resModel, nextCmd := m.Update(tickMsg)
+		m = resModel.(Model)
+		step++
+		if m.activeAnim == nil {
+			if nextCmd != nil {
+				t.Errorf("expected nil cmd after animation finished")
+			}
+			break
+		}
+		if nextCmd == nil {
+			t.Fatalf("expected non-nil nextCmd while animation in progress")
+		}
+		if step > 50 {
+			t.Fatalf("animation did not terminate within 50 steps")
+		}
+	}
+
+	if m.activeAnim != nil {
+		t.Errorf("expected activeAnim to be nil upon completion")
+	}
+}
+
+func TestModel_CombatAnimation_Phaser(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	// Place a Klingon in quadrant so phasers have a target
+	g.CurrentQuad.Klingons = []*engine.Klingon{
+		{ID: 1, Sector: engine.Coord{2, 2}, Energy: 200},
+	}
+	g.CurrentQuad.Grid[2][2] = engine.EntityKlingon
+	g.Enterprise.Sector = engine.Coord{5, 5}
+	g.Enterprise.Energy = 3000
+
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// Fire phaser
+	updated, cmd := mod.handleCommand("pha 200")
+	m := updated.(Model)
+	if m.activeAnim == nil {
+		t.Fatalf("expected activeAnim to be populated on phaser fire")
+	}
+	if cmd == nil {
+		t.Fatalf("expected TickCmd on active phaser animation")
+	}
+
+	// Key skip clears phaser animation
+	keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("x")}
+	updatedAfterKey, _ := m.Update(keyMsg)
+	mSkipped := updatedAfterKey.(Model)
+	if mSkipped.activeAnim != nil {
+		t.Errorf("expected activeAnim cleared after keypress on phasers")
+	}
+}
+
+func TestModel_CombatAnimation_AnimCommands(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// anim fast
+	updated, _ := mod.handleCommand("anim fast")
+	m := updated.(Model)
+	if m.Game.Rules.AnimSpeed != 1 {
+		t.Errorf("expected speed 1, got %d", m.Game.Rules.AnimSpeed)
+	}
+
+	// anim cinematic
+	updated, _ = m.handleCommand("anim cinematic")
+	m = updated.(Model)
+	if m.Game.Rules.AnimSpeed != 3 {
+		t.Errorf("expected speed 3, got %d", m.Game.Rules.AnimSpeed)
+	}
+
+	// anim normal
+	updated, _ = m.handleCommand("anim normal")
+	m = updated.(Model)
+	if m.Game.Rules.AnimSpeed != 2 {
+		t.Errorf("expected speed 2, got %d", m.Game.Rules.AnimSpeed)
+	}
+
+	// bare anim cycles: 2 -> 3
+	updated, _ = m.handleCommand("anim")
+	m = updated.(Model)
+	if m.Game.Rules.AnimSpeed != 3 {
+		t.Errorf("expected speed 3 after bare anim, got %d", m.Game.Rules.AnimSpeed)
+	}
+
+	// bare anim cycles: 3 -> 0
+	updated, _ = m.handleCommand("anim")
+	m = updated.(Model)
+	if m.Game.Rules.AnimSpeed != 0 {
+		t.Errorf("expected speed 0 after bare anim, got %d", m.Game.Rules.AnimSpeed)
+	}
+
+	// bare anim cycles: 0 -> 1
+	updated, _ = m.handleCommand("anim")
+	m = updated.(Model)
+	if m.Game.Rules.AnimSpeed != 1 {
+		t.Errorf("expected speed 1 after bare anim, got %d", m.Game.Rules.AnimSpeed)
+	}
+}
+
+func TestModel_CombatAnimation_TargetLockMsg(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.CurrentQuad.Klingons = []*engine.Klingon{
+		{ID: 1, Sector: engine.Coord{2, 2}, Energy: 2000},
+	}
+	g.CurrentQuad.Grid[2][2] = engine.EntityKlingon
+	g.Enterprise.Sector = engine.Coord{5, 5}
+	g.Enterprise.Energy = 3000
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// Target lock torpedo msg
+	torpMsg := targetlock.FireTorpedoMsg{
+		Target:  engine.Coord{2, 2},
+		Bearing: 0.0,
+	}
+	updated, cmd := mod.Update(torpMsg)
+	m := updated.(Model)
+	if m.activeAnim == nil {
+		t.Fatalf("expected activeAnim on targetlock.FireTorpedoMsg")
+	}
+	if cmd == nil {
+		t.Fatalf("expected non-nil cmd on targetlock.FireTorpedoMsg")
+	}
+
+	// Clear animation
+	m.activeAnim = nil
+	m.Grid.ClearAnimOverrides()
+
+	// Target lock phasers msg
+	phaMsg := targetlock.FirePhasersMsg{
+		Energy: 200,
+	}
+	updated, cmd = m.Update(phaMsg)
+	m = updated.(Model)
+	if m.activeAnim == nil {
+		t.Fatalf("expected activeAnim on targetlock.FirePhasersMsg")
+	}
+	if cmd == nil {
+		t.Fatalf("expected non-nil cmd on targetlock.FirePhasersMsg")
+	}
+}
+
+
