@@ -208,18 +208,22 @@ func FormatCombatEvents(events []engine.Event) string {
 			b.WriteString(fmt.Sprintf("%s[RETURN FIRE]%s Klingon returns fire: %.0f units damage\r\n", ansiRed, ansiReset, e.Damage))
 		case engine.EventSubsystemDamaged:
 			name := "Subsystem"
-			if int(e.Device) < len(deviceNames) {
+			if e.Device >= 0 && int(e.Device) < len(deviceNames) {
 				name = deviceNames[e.Device]
 			}
 			b.WriteString(fmt.Sprintf("%s[DAMAGE]%s %s damaged! Repair in %.1f stardates\r\n", ansiRed, ansiReset, name, e.RepairTime))
 		case engine.EventSubsystemRepaired:
 			name := "Subsystem"
-			if int(e.Device) < len(deviceNames) {
+			if e.Device >= 0 && int(e.Device) < len(deviceNames) {
 				name = deviceNames[e.Device]
 			}
 			b.WriteString(fmt.Sprintf("%s[REPAIR]%s %s has been repaired.\r\n", ansiGreen, ansiReset, name))
 		case engine.EventGameOver:
-			b.WriteString(fmt.Sprintf("%s*** MISSION TERMINATED ***%s (Score: %.0f)\r\n", ansiRed, ansiReset, e.Score))
+			if e.Reason == engine.GameOverWon {
+				b.WriteString(fmt.Sprintf("%s*** FEDERATION MISSION ACCOMPLISHED ***%s (Score: %.0f)\r\n", ansiGreen, ansiReset, e.Score))
+			} else {
+				b.WriteString(fmt.Sprintf("%s*** MISSION TERMINATED ***%s (Score: %.0f)\r\n", ansiRed, ansiReset, e.Score))
+			}
 		}
 	}
 	return b.String()

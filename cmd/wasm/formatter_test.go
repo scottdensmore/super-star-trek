@@ -160,8 +160,11 @@ func TestFormatCombatEvents_AllTypes(t *testing.T) {
 		engine.EventDocked{Starbase: engine.Coord{3, 3}},
 		engine.EventKlingonCounterAttack{EnemyID: 1, Damage: 120},
 		engine.EventSubsystemDamaged{Device: engine.DeviceShields, RepairTime: 2.4},
+		engine.EventSubsystemDamaged{Device: -1, RepairTime: 1.0},
 		engine.EventSubsystemRepaired{Device: engine.DeviceShields},
+		engine.EventSubsystemRepaired{Device: 99},
 		engine.EventGameOver{Reason: engine.GameOverWon, Score: 1250},
+		engine.EventGameOver{Reason: engine.GameOverDestroyed, Score: 450},
 	}
 
 	out := FormatCombatEvents(events)
@@ -178,8 +181,11 @@ func TestFormatCombatEvents_AllTypes(t *testing.T) {
 		"[RETURN FIRE]",
 		"[DAMAGE]",
 		"Shield Control damaged! Repair in 2.4 stardates",
+		"Subsystem damaged! Repair in 1.0 stardates",
 		"[REPAIR]",
 		"Shield Control has been repaired",
+		"Subsystem has been repaired",
+		"*** FEDERATION MISSION ACCOMPLISHED ***",
 		"*** MISSION TERMINATED ***",
 	}
 
