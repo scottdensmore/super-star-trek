@@ -20,6 +20,7 @@ const (
 	RowRepairMultiplier
 	RowKlingonCloak
 	RowTimeMargin
+	RowAnimSpeed
 	RowColorMode
 	RowDone
 	NumRows
@@ -173,6 +174,8 @@ func (m *Model) cycleOption(dir int) {
 		}
 		m.rules.TimeMargin = timeMargins[(idx+dir+len(timeMargins))%len(timeMargins)]
 		m.rules.Profile = engine.ProfileCustom
+	case RowAnimSpeed:
+		m.rules.AnimSpeed = (m.rules.AnimSpeed + dir + 4) % 4
 	case RowColorMode:
 		colorModes := []theme.ColorMode{theme.ColorModeAuto, theme.ColorModeDark, theme.ColorModeLight}
 		idx := 0
@@ -229,6 +232,18 @@ func (m Model) View() string {
 	}
 	rows = append(rows, renderRow(RowKlingonCloak, "Klingon Cloaking", cloakStr))
 	rows = append(rows, renderRow(RowTimeMargin, "Stardate Time Margin", fmt.Sprintf("%.0f%%", m.rules.TimeMargin*100)))
+	animSpeedStr := "NORMAL"
+	switch m.rules.AnimSpeed {
+	case 0:
+		animSpeedStr = "OFF"
+	case 1:
+		animSpeedStr = "FAST"
+	case 2:
+		animSpeedStr = "NORMAL"
+	case 3:
+		animSpeedStr = "CINEMATIC"
+	}
+	rows = append(rows, renderRow(RowAnimSpeed, "Combat Animations", animSpeedStr))
 	rows = append(rows, renderRow(RowColorMode, "Color Mode", strings.ToUpper(string(m.colorMode))))
 
 	doneStyle := styles.LogText

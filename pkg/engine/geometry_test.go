@@ -21,6 +21,16 @@ func TestCoordinateGeometry(t *testing.T) {
 	}
 }
 
+func TestCoordAccessors(t *testing.T) {
+	c := Coord{3, 7}
+	if c.Row() != 3 {
+		t.Errorf("expected Row() == 3, got %d", c.Row())
+	}
+	if c.Col() != 7 {
+		t.Errorf("expected Col() == 7, got %d", c.Col())
+	}
+}
+
 func TestDistanceCalculations(t *testing.T) {
 	tests := []struct {
 		name     string

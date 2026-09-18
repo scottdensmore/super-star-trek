@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/optionsmodal"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
 
@@ -242,9 +243,8 @@ func TestColorModeOptionsModalKeyInteraction(t *testing.T) {
 	newM, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
 	updated := newM.(Model)
 
-	// Navigate directly or set to RowColorMode (optionsmodal.RowColorMode is 6)
-	// From RowProfile (0), down arrow 6 times reaches RowColorMode
-	for i := 0; i < 6; i++ {
+	// Navigate directly or set to RowColorMode
+	for i := 0; i < int(optionsmodal.RowColorMode); i++ {
 		stepM, _ := updated.Update(tea.KeyMsg{Type: tea.KeyDown})
 		updated = stepM.(Model)
 	}

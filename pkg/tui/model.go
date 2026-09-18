@@ -5,6 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/anim"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
@@ -60,9 +61,18 @@ type Model struct {
 	Manual          manual.Model
 	optionsModal    optionsmodal.Model
 	showOptions     bool
+	activeAnim      anim.Animation
+	animID          int
 	LastClickTime   time.Time
 	LastClickCoord  engine.Coord
 	lastDarkBg      bool
+	redAlertCycle   int
+	redAlertActive  bool
+}
+
+// syncChildComponents synchronizes telemetry sub-component state such as red alert pulse oscillation.
+func (m *Model) syncChildComponents() {
+	m.Status.SetRedAlertCycle(m.redAlertCycle)
 }
 
 // NewModel initializes and returns a new root TUI Model for the provided GameState and Theme.
@@ -83,7 +93,7 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 		rules = engine.DefaultRulesForProfile(engine.ProfileNormal)
 	}
 
-	return Model{
+	m := Model{
 		Game:            g,
 		Theme:           th,
 		Width:           80,
@@ -103,10 +113,17 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 		showOptions:     false,
 		lastDarkBg:      theme.DetectDarkBackground(),
 	}
+	m.syncChildComponents()
+	return m
 }
 
 // Init initializes the Bubble Tea program lifecycle, activating keyboard focus
-// and starting cursor blinking on the command bar.
+// and starting cursor blinking on the command bar, along with starting red alert pulse if in Condition RED.
 func (m Model) Init() tea.Cmd {
-	return m.CommandBar.Focus()
+	cmd := m.CommandBar.Focus()
+	if m.Game != nil && m.Game.Enterprise.Condition == engine.ConditionRed && m.Game.Rules.AnimSpeed != engine.AnimSpeedOff {
+		return tea.Batch(cmd, redAlertPulseCmd())
+	}
+	return cmd
 }
+

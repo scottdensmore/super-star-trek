@@ -58,6 +58,7 @@ func TestOptionsModal_RenderLayout(t *testing.T) {
 		"Sensor Degradation",
 		"Repair Multiplier",
 		"Klingon Cloaking",
+		"Combat Animations",
 		"Color Mode",
 	}
 	for _, exp := range expectedStrings {
@@ -215,3 +216,56 @@ func TestOptionsModal_ColorModeRow(t *testing.T) {
 		t.Errorf("expected view to contain 'AUTO', got:\n%s", view)
 	}
 }
+
+func TestOptionsModal_AnimSpeedRow(t *testing.T) {
+	th := theme.DefaultTheme()
+	rules := engine.DefaultRulesForProfile(engine.ProfileNormal)
+	m := New(th, rules)
+
+	// Default AnimSpeed is Normal (2)
+	if m.Rules().AnimSpeed != 2 {
+		t.Fatalf("expected initial AnimSpeed to be 2 (Normal), got %d", m.Rules().AnimSpeed)
+	}
+
+	m.SelectedRow = RowAnimSpeed
+
+	// Right arrow cycles 2 -> 3 (Cinematic)
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.Rules().AnimSpeed != 3 {
+		t.Fatalf("expected AnimSpeed 3 after right arrow, got %d", m.Rules().AnimSpeed)
+	}
+
+	// Right arrow cycles 3 -> 0 (Off)
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.Rules().AnimSpeed != 0 {
+		t.Fatalf("expected AnimSpeed 0 after right arrow, got %d", m.Rules().AnimSpeed)
+	}
+
+	// Space cycles 0 -> 1 (Fast)
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace})
+	if m.Rules().AnimSpeed != 1 {
+		t.Fatalf("expected AnimSpeed 1 after space, got %d", m.Rules().AnimSpeed)
+	}
+
+	// Left arrow cycles 1 -> 0 (Off)
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	if m.Rules().AnimSpeed != 0 {
+		t.Fatalf("expected AnimSpeed 0 after left arrow, got %d", m.Rules().AnimSpeed)
+	}
+
+	// Left arrow wraps 0 -> 3 (Cinematic)
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	if m.Rules().AnimSpeed != 3 {
+		t.Fatalf("expected AnimSpeed 3 after left wrap, got %d", m.Rules().AnimSpeed)
+	}
+
+	// View rendering checks
+	view := m.View()
+	if !strings.Contains(view, "Combat Animations") {
+		t.Errorf("expected view to contain 'Combat Animations', got:\n%s", view)
+	}
+	if !strings.Contains(view, "CINEMATIC") {
+		t.Errorf("expected view to contain 'CINEMATIC', got:\n%s", view)
+	}
+}
+

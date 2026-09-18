@@ -2,12 +2,14 @@ package tui
 
 import (
 	"fmt"
+	"math"
 	"path/filepath"
 	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/anim"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
@@ -18,6 +20,25 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
+
+// RedAlertPulseMsg is dispatched periodically to animate the Condition Red klaxon visual oscillation.
+type RedAlertPulseMsg struct{}
+
+func redAlertPulseCmd() tea.Cmd {
+	return tea.Tick(600*time.Millisecond, func(time.Time) tea.Msg {
+		return RedAlertPulseMsg{}
+	})
+}
+
+func (m *Model) checkRedAlertCmd(prevCond engine.ConditionType) tea.Cmd {
+	if m.Game != nil && m.Game.Enterprise.Condition == engine.ConditionRed && m.Game.Rules.AnimSpeed != engine.AnimSpeedOff {
+		if prevCond != engine.ConditionRed || !m.redAlertActive {
+			m.redAlertActive = true
+			return redAlertPulseCmd()
+		}
+	}
+	return nil
+}
 
 // Update processes incoming Bubble Tea events, updating internal state
 // and delegating to sub-components as needed.
@@ -37,11 +58,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case targetlock.FireTorpedoMsg:
+		var animCmd tea.Cmd
+		var pulseCmd tea.Cmd
 		if m.Game != nil {
-			events, err := m.Game.Dispatch(engine.ActionFireTorpedo{
+			prevCond := m.Game.Enterprise.Condition
+			action := engine.ActionFireTorpedo{
 				Target: msg.Target,
 				Angle:  msg.Bearing,
-			})
+			}
+			events, err := m.Game.Dispatch(action)
 			if err != nil {
 				m.CommandBar.AddMessage(err.Error())
 			} else {
@@ -51,17 +76,27 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m.handleGameOver(goEv)
 					}
 				}
+				if m.Game.Rules.AnimSpeed > 0 {
+					if a := m.createCombatAnimation(action, events); a != nil {
+						m, animCmd = m.startCombatAnimation(a)
+					}
+				}
+				pulseCmd = m.checkRedAlertCmd(prevCond)
 			}
 		}
 		m.ActiveModal = ModalNone
 		cmd := m.CommandBar.Focus()
-		return m, cmd
+		return m, tea.Batch(cmd, animCmd, pulseCmd)
 
 	case targetlock.FirePhasersMsg:
+		var animCmd tea.Cmd
+		var pulseCmd tea.Cmd
 		if m.Game != nil {
-			events, err := m.Game.Dispatch(engine.ActionFirePhasers{
+			prevCond := m.Game.Enterprise.Condition
+			action := engine.ActionFirePhasers{
 				Energy: msg.Energy,
-			})
+			}
+			events, err := m.Game.Dispatch(action)
 			if err != nil {
 				m.CommandBar.AddMessage(err.Error())
 			} else {
@@ -71,11 +106,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m.handleGameOver(goEv)
 					}
 				}
+				if m.Game.Rules.AnimSpeed > 0 {
+					if a := m.createCombatAnimation(action, events); a != nil {
+						m, animCmd = m.startCombatAnimation(a)
+					}
+				}
+				pulseCmd = m.checkRedAlertCmd(prevCond)
 			}
 		}
 		m.ActiveModal = ModalNone
 		cmd := m.CommandBar.Focus()
-		return m, cmd
+		return m, tea.Batch(cmd, animCmd, pulseCmd)
 
 	case targetlock.CloseHUDMsg:
 		m.ActiveModal = ModalNone
@@ -109,7 +150,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.ActiveModal = ModalNone
 		cmd := m.CommandBar.Focus()
-		return m, cmd
+		pulseCmd := m.checkRedAlertCmd(engine.ConditionGreen)
+		return m, tea.Batch(cmd, pulseCmd)
 
 	case savebrowser.CloseBrowserMsg:
 		m.ActiveModal = ModalNone
@@ -118,7 +160,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case galacticchart.WarpToQuadrantMsg:
 		m.ActiveModal = ModalNone
+		var pulseCmd tea.Cmd
 		if m.Game != nil {
+			prevCond := m.Game.Enterprise.Condition
 			events, err := m.Game.Dispatch(engine.ActionMove{DestQuad: msg.DestQuad, Warp: msg.Warp})
 			if err != nil {
 				m.CommandBar.AddMessage(err.Error())
@@ -130,10 +174,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m.handleGameOver(goEv)
 					}
 				}
+				pulseCmd = m.checkRedAlertCmd(prevCond)
 			}
 		}
 		cmd := m.CommandBar.Focus()
-		return m, cmd
+		return m, tea.Batch(cmd, pulseCmd)
 
 	case galacticchart.WarpBlockedMsg:
 		m.ActiveModal = ModalNone
@@ -168,7 +213,36 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case engine.EventGameOver:
 		return m.handleGameOver(msg)
 
+	case RedAlertPulseMsg:
+		if m.Game != nil && m.Game.Enterprise.Condition == engine.ConditionRed && m.Game.Rules.AnimSpeed != engine.AnimSpeedOff {
+			m.redAlertCycle++
+			m.syncChildComponents()
+			m.redAlertActive = true
+			return m, redAlertPulseCmd()
+		}
+		m.redAlertActive = false
+		return m, nil
+
+	case anim.TickMsg:
+		if msg.AnimID == m.animID && m.activeAnim != nil {
+			if m.activeAnim.IsFinished() {
+				m.activeAnim = nil
+				m.Grid.ClearAnimOverrides()
+				return m, nil
+			}
+			f := m.activeAnim.Step()
+			m.Grid.SetAnimOverrides(f.Overrides)
+			return m, anim.TickCmd(m.animID, msg.Step+1, f.Duration)
+		}
+		return m, nil
+
 	case tea.KeyMsg:
+		if m.activeAnim != nil {
+			m.activeAnim.Skip()
+			m.activeAnim = nil
+			m.Grid.ClearAnimOverrides()
+		}
+
 		if m.showOptions {
 			if msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c" {
 				return m, tea.Quit
@@ -399,6 +473,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				telem := galacticchart.CalculateTelemetry(curQuad, dest)
 				m.ActiveModal = ModalNone
 				if m.Game != nil {
+					prevCond := m.Game.Enterprise.Condition
 					events, err := m.Game.Dispatch(engine.ActionMove{DestQuad: dest, Warp: telem.RecommendedWarp})
 					if err != nil {
 						m.CommandBar.AddMessage(err.Error())
@@ -410,6 +485,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 								return m.handleGameOver(goEv)
 							}
 						}
+						pulseCmd := m.checkRedAlertCmd(prevCond)
+						return m, pulseCmd
 					}
 				}
 				return m, nil
@@ -450,6 +527,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if ent == engine.EntityEmpty {
 				if m.Game != nil {
+					prevCond := m.Game.Enterprise.Condition
 					events, err := m.Game.Dispatch(engine.ActionMove{DestSector: coord, Warp: 1.0})
 					if err != nil {
 						m.CommandBar.AddMessage(err.Error())
@@ -460,6 +538,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 								return m.handleGameOver(goEv)
 							}
 						}
+						pulseCmd := m.checkRedAlertCmd(prevCond)
+						return m, pulseCmd
 					}
 				}
 				return m, nil
@@ -467,6 +547,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 			if ent == engine.EntityStarbase || (m.Game != nil && m.Game.CurrentQuad.Starbase != nil && *m.Game.CurrentQuad.Starbase == coord) {
 				if m.Game != nil {
+					prevCond := m.Game.Enterprise.Condition
 					events, err := m.Game.Dispatch(engine.ActionDock{})
 					if err != nil {
 						m.CommandBar.AddMessage(err.Error())
@@ -477,6 +558,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 								return m.handleGameOver(goEv)
 							}
 						}
+						pulseCmd := m.checkRedAlertCmd(prevCond)
+						return m, pulseCmd
 					}
 				}
 				return m, nil
@@ -559,6 +642,7 @@ func (m Model) applyTheme(th theme.Theme) Model {
 	m.HallOfFame.SetTheme(th)
 	m.Manual.SetTheme(th)
 	m.optionsModal.SetTheme(th)
+	m.syncChildComponents()
 	return m
 }
 
@@ -698,6 +782,47 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 	}
 	if len(fields) == 1 && fields[0] == "color" {
 		m.CommandBar.AddMessage("Usage: color <auto|dark|light>")
+		return m, nil
+	}
+
+	if len(fields) > 0 && fields[0] == "anim" {
+		if len(fields) == 1 {
+			if m.Game != nil {
+				m.Game.Rules.AnimSpeed = (m.Game.Rules.AnimSpeed + 1) % 4
+				m.optionsModal.SetRules(m.Game.Rules)
+				speedNames := []string{"OFF", "FAST", "NORMAL", "CINEMATIC"}
+				m.CommandBar.AddMessage(fmt.Sprintf("Combat animation speed set to %s", speedNames[m.Game.Rules.AnimSpeed]))
+			} else {
+				m.CommandBar.AddMessage("Usage: anim <off|fast|normal|cinematic>")
+			}
+			return m, nil
+		}
+
+		if len(fields) == 2 {
+			speedNames := []string{"OFF", "FAST", "NORMAL", "CINEMATIC"}
+			var newSpeed int
+			switch fields[1] {
+			case "off", "0":
+				newSpeed = 0
+			case "fast", "1":
+				newSpeed = 1
+			case "normal", "2":
+				newSpeed = 2
+			case "cinematic", "3":
+				newSpeed = 3
+			default:
+				m.CommandBar.AddMessage(fmt.Sprintf("Invalid animation speed: %q (expected off, fast, normal, or cinematic)", fields[1]))
+				return m, nil
+			}
+			if m.Game != nil {
+				m.Game.Rules.AnimSpeed = newSpeed
+				m.optionsModal.SetRules(m.Game.Rules)
+			}
+			m.CommandBar.AddMessage(fmt.Sprintf("Combat animation speed set to %s", speedNames[newSpeed]))
+			return m, nil
+		}
+
+		m.CommandBar.AddMessage("Usage: anim <off|fast|normal|cinematic>")
 		return m, nil
 	}
 
@@ -934,6 +1059,7 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+		prevCond := m.Game.Enterprise.Condition
 		events, err := m.Game.Dispatch(parsed.Action)
 		if err != nil {
 			m.CommandBar.AddMessage(err.Error())
@@ -949,7 +1075,15 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 				return m.handleGameOver(goEv)
 			}
 		}
-		return m, nil
+
+		var animCmd tea.Cmd
+		if m.Game.Rules.AnimSpeed > 0 {
+			if a := m.createCombatAnimation(parsed.Action, events); a != nil {
+				m, animCmd = m.startCombatAnimation(a)
+			}
+		}
+		pulseCmd := m.checkRedAlertCmd(prevCond)
+		return m, tea.Batch(animCmd, pulseCmd)
 	}
 
 	return m, nil
@@ -1109,3 +1243,88 @@ func deviceShortString(d engine.DeviceID) string {
 		return "Subsystem"
 	}
 }
+
+// startCombatAnimation initializes and begins playback of an interactive combat animation sequence.
+func (m Model) startCombatAnimation(a anim.Animation) (Model, tea.Cmd) {
+	m.animID++
+	m.activeAnim = a
+	f := a.Step()
+	m.Grid.SetAnimOverrides(f.Overrides)
+	return m, anim.TickCmd(m.animID, 1, f.Duration)
+}
+
+func (m Model) createCombatAnimation(action engine.Action, events []engine.Event) anim.Animation {
+	if m.Game == nil {
+		return nil
+	}
+	switch act := action.(type) {
+	case engine.ActionFireTorpedo:
+		start := m.Game.Enterprise.Sector
+		var hitEv *engine.EventTorpedoHit
+		firedAngle := act.Angle
+		hasFiredAngle := act.Angle != 0
+
+		for _, ev := range events {
+			switch e := ev.(type) {
+			case engine.EventTorpedoFired:
+				start = e.Origin
+				firedAngle = e.Angle
+				hasFiredAngle = true
+			case engine.EventTorpedoHit:
+				hitCopy := e
+				hitEv = &hitCopy
+			}
+		}
+
+		var end engine.Coord
+		hit := hitEv != nil
+		if hit {
+			end = hitEv.Target
+		} else if act.Target != (engine.Coord{}) {
+			end = act.Target
+		} else if hasFiredAngle {
+			end = traceTorpedoBoundary(start, firedAngle)
+		} else {
+			end = start
+		}
+
+		return anim.NewTorpedoAnimation(start, end, hit, m.Game.Rules.AnimSpeed)
+
+	case engine.ActionFirePhasers:
+		start := m.Game.Enterprise.Sector
+		var targets []engine.Coord
+		var hits []bool
+		for _, ev := range events {
+			if h, ok := ev.(engine.EventPhaserHit); ok {
+				targets = append(targets, h.Target)
+				hits = append(hits, true)
+			}
+		}
+		if len(targets) == 0 {
+			return nil
+		}
+		return anim.NewMultiPhaserAnimation(start, targets, hits, m.Game.Rules.AnimSpeed)
+	}
+	return nil
+}
+
+func traceTorpedoBoundary(start engine.Coord, angle float64) engine.Coord {
+	r := float64(start.Row())
+	c := float64(start.Col())
+	dr := -math.Sin(angle) * 0.25
+	dc := math.Cos(angle) * 0.25
+
+	last := start
+	for step := 0; step < 40; step++ {
+		r += dr
+		c += dc
+		ir := int(math.Round(r))
+		ic := int(math.Round(c))
+		if ir < 1 || ir > 8 || ic < 1 || ic > 8 {
+			break
+		}
+		last = engine.Coord{ir, ic}
+	}
+	return last
+}
+
