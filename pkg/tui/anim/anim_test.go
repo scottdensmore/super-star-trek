@@ -255,3 +255,29 @@ func TestCellOverride_Properties(t *testing.T) {
 		t.Errorf("expected ' · ', got %q", co.Glyph)
 	}
 }
+
+func TestFrameDuration(t *testing.T) {
+	tests := []struct {
+		name     string
+		speed    int
+		expected time.Duration
+	}{
+		{"AnimSpeedOff", engine.AnimSpeedOff, 0},
+		{"AnimSpeedFast", engine.AnimSpeedFast, 40 * time.Millisecond},
+		{"AnimSpeedNormal", engine.AnimSpeedNormal, 80 * time.Millisecond},
+		{"AnimSpeedCinematic", engine.AnimSpeedCinematic, 160 * time.Millisecond},
+		{"Unexpected negative", -1, 80 * time.Millisecond},
+		{"Unexpected 4", 4, 80 * time.Millisecond},
+		{"Unexpected large", 999, 80 * time.Millisecond},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := FrameDuration(tc.speed)
+			if got != tc.expected {
+				t.Errorf("FrameDuration(%d) = %v; want %v", tc.speed, got, tc.expected)
+			}
+		})
+	}
+}
+

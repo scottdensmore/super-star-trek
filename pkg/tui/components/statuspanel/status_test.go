@@ -385,3 +385,65 @@ func TestRadarDegradation_TwoTier(t *testing.T) {
 		t.Errorf("expected [LRS OFFLINE] in heavy damage, got:\n%s", outHeavy)
 	}
 }
+
+func TestRedAlertBadgePulse(t *testing.T) {
+	lipgloss.SetColorProfile(termenv.TrueColor)
+	defer lipgloss.SetColorProfile(termenv.Ascii)
+
+	th := theme.ModernTheme{}
+	m := New(th)
+
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Condition = engine.ConditionRed
+	g.Rules.AnimSpeed = engine.AnimSpeedNormal
+
+	// Cycle 0: high-intensity crimson
+	m.SetRedAlertCycle(0)
+	viewCycle0 := m.View(g)
+
+	// Cycle 1: dimmed red
+	m.SetRedAlertCycle(1)
+	viewCycle1 := m.View(g)
+
+	if !strings.Contains(viewCycle0, "CONDITION RED") {
+		t.Fatalf("expected viewCycle0 to contain CONDITION RED")
+	}
+	if !strings.Contains(viewCycle1, "CONDITION RED") {
+		t.Fatalf("expected viewCycle1 to contain CONDITION RED")
+	}
+
+	// ANSI rendering should differ between high intensity and dimmed red
+	if viewCycle0 == viewCycle1 {
+		t.Errorf("expected different rendered styles between cycle 0 and cycle 1 for Condition Red")
+	}
+
+	// Cycle 2 should match cycle 0
+	m.SetRedAlertCycle(2)
+	viewCycle2 := m.View(g)
+	if viewCycle0 != viewCycle2 {
+		t.Errorf("expected cycle 2 to match cycle 0")
+	}
+}
+
+func TestRedAlertBadgeAnimSpeedOff(t *testing.T) {
+	lipgloss.SetColorProfile(termenv.TrueColor)
+	defer lipgloss.SetColorProfile(termenv.Ascii)
+
+	th := theme.ModernTheme{}
+	m := New(th)
+
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Condition = engine.ConditionRed
+	g.Rules.AnimSpeed = engine.AnimSpeedOff
+
+	// Cycle 0 vs Cycle 1 should produce identical output when AnimSpeed is off
+	m.SetRedAlertCycle(0)
+	viewCycle0 := m.View(g)
+
+	m.SetRedAlertCycle(1)
+	viewCycle1 := m.View(g)
+
+	if viewCycle0 != viewCycle1 {
+		t.Errorf("expected identical rendered styles regardless of cycle when AnimSpeed is off")
+	}
+}

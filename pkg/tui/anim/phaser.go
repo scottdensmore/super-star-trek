@@ -35,29 +35,33 @@ func beamGlyph(dr, dc int) string {
 	return " / "
 }
 
-// NewPhaserAnimation creates a new phaser visual raycast and shield flash animation.
-func NewPhaserAnimation(start, target engine.Coord, hit bool, speed int) Animation {
+// NewMultiPhaserAnimation creates a multi-target phaser visual raycast and shield flash animation.
+func NewMultiPhaserAnimation(start engine.Coord, targets []engine.Coord, hits []bool, speed int) Animation {
 	d := FrameDuration(speed)
-	line := BresenhamLine(start, target)
-
-	dr := target.Row() - start.Row()
-	dc := target.Col() - start.Col()
-	glyph := beamGlyph(dr, dc)
-
 	beamStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("11")).Bold(true)
 	targetStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("14")).Bold(true)
 
-	var intermediates []engine.Coord
-	if len(line) > 2 {
-		intermediates = line[1 : len(line)-1]
-	}
-
 	overrides := make(map[engine.Coord]CellOverride)
-	for _, c := range intermediates {
-		overrides[c] = CellOverride{Glyph: glyph, Style: beamStyle}
-	}
-	if hit {
-		overrides[target] = CellOverride{Glyph: "<K>", Style: targetStyle}
+
+	for i, target := range targets {
+		hit := false
+		if i < len(hits) {
+			hit = hits[i]
+		}
+
+		line := BresenhamLine(start, target)
+		dr := target.Row() - start.Row()
+		dc := target.Col() - start.Col()
+		glyph := beamGlyph(dr, dc)
+
+		if len(line) > 2 {
+			for _, c := range line[1 : len(line)-1] {
+				overrides[c] = CellOverride{Glyph: glyph, Style: beamStyle}
+			}
+		}
+		if hit {
+			overrides[target] = CellOverride{Glyph: "<K>", Style: targetStyle}
+		}
 	}
 
 	// 2 frames of beam discharge
@@ -79,6 +83,12 @@ func NewPhaserAnimation(start, target engine.Coord, hit bool, speed int) Animati
 		frames: frames,
 	}
 }
+
+// NewPhaserAnimation creates a new phaser visual raycast and shield flash animation.
+func NewPhaserAnimation(start, target engine.Coord, hit bool, speed int) Animation {
+	return NewMultiPhaserAnimation(start, []engine.Coord{target}, []bool{hit}, speed)
+}
+
 
 func (a *phaserAnimation) TotalDuration() time.Duration {
 	var total time.Duration

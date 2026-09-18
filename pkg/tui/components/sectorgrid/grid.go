@@ -99,10 +99,7 @@ func (m Model) View(quad *engine.QuadrantState, entSector engine.Coord, selected
 		for c := 1; c <= 8; c++ {
 			coord := engine.Coord{r, c}
 			if ov, ok := m.animOverrides[coord]; ok {
-				glyph := ov.Glyph
-				if len([]rune(glyph)) != 3 {
-					glyph = padCell(glyph)
-				}
+				glyph := padCell(ov.Glyph)
 				b.WriteString(ov.Style.Render(glyph))
 				if c < 8 {
 					b.WriteByte(' ')

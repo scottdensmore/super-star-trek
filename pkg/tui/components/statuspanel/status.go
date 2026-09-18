@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/anim"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
 
@@ -53,6 +54,12 @@ type Model struct {
 	stardate      float64
 	rules         engine.GameRules
 	hasState      bool
+	redAlertCycle int
+}
+
+// SetRedAlertCycle updates the active cycle index for Condition Red klaxon pulse oscillation.
+func (m *Model) SetRedAlertCycle(cycle int) {
+	m.redAlertCycle = cycle
 }
 
 type panelStyles struct {
@@ -279,7 +286,11 @@ func (m Model) render() string {
 		condStyle = styles.ConditionYellow
 	case engine.ConditionRed:
 		condStr = "CONDITION RED"
-		condStyle = styles.ConditionRed
+		if m.rules.AnimSpeed != engine.AnimSpeedOff {
+			condStyle = anim.RedAlertBadgeStyle(m.redAlertCycle)
+		} else {
+			condStyle = styles.ConditionRed
+		}
 	case engine.ConditionDocked:
 		condStr = "CONDITION DOCKED"
 		condStyle = styles.ConditionDocked
