@@ -12,6 +12,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/anim"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
@@ -288,3 +289,29 @@ func TestTUIGolden_ModalManual(t *testing.T) {
 	m = updatedCombat.(tui.Model)
 	compareOrUpdate(t, "modal_manual_combat", m.View())
 }
+
+func TestTUIGolden_CombatAnimations(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := newTestModelWithGame(80, 24, g)
+
+	// Inject torpedo flight frame override at (3, 3)
+	torpedoOverrides := map[engine.Coord]anim.CellOverride{
+		engine.Coord{3, 3}: {
+			Glyph: " O ",
+			Style: lipgloss.NewStyle().Foreground(lipgloss.Color("9")),
+		},
+	}
+	m.Grid.SetAnimOverrides(torpedoOverrides)
+	assertStrict80x24(t, "anim_torpedo_flight", m.View())
+	compareOrUpdate(t, "anim_torpedo_flight", m.View())
+
+	// Inject phaser beam line override between (1, 1) and (1, 4)
+	phaserOverrides := map[engine.Coord]anim.CellOverride{
+		engine.Coord{1, 2}: {Glyph: "---", Style: lipgloss.NewStyle().Foreground(lipgloss.Color("11"))},
+		engine.Coord{1, 3}: {Glyph: "---", Style: lipgloss.NewStyle().Foreground(lipgloss.Color("11"))},
+	}
+	m.Grid.SetAnimOverrides(phaserOverrides)
+	assertStrict80x24(t, "anim_phaser_beam", m.View())
+	compareOrUpdate(t, "anim_phaser_beam", m.View())
+}
+
