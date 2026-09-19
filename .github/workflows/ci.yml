@@ -53,9 +53,9 @@ jobs:
           cache: true
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v9
         with:
-          version: v1.64.6
+          version: latest
 
   wasm-verify:
     name: wasm-verify
