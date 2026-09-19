@@ -13,6 +13,16 @@ const (
 	EntityStar
 	EntityPlanet
 	EntityBlackHole
+	EntityWormhole
+)
+
+// EnvironmentType defines the ambient phenomenon within a galactic quadrant.
+type EnvironmentType int
+
+const (
+	EnvNormal EnvironmentType = iota
+	EnvNebula
+	EnvIonStorm
 )
 
 // ConditionType represents the alert status of the Enterprise.
@@ -80,6 +90,7 @@ type Klingon struct {
 	ID          int
 	Sector      Coord
 	Energy      float64
+	Shields     float64
 	IsCommander bool
 	IsCloaked   bool
 }
@@ -118,6 +129,7 @@ type GameState struct {
 	GalaxyChart        [9][9]int // Klingons*100 + Starbases*10 + Stars
 	ChartDiscovered    [9][9]bool
 	ChartKnownBases    [9][9]bool
+	QuadrantEnv        [9][9]EnvironmentType `json:"quadrant_env"`
 	RemainingKlingons  int
 	RemainingStarbases int
 	Stardate           float64
@@ -198,6 +210,9 @@ func NewGameWithOptions(seed int64, skill SkillLevel, length GameLength, rules G
 
 	// 4. Starting quadrant discovered
 	g.ChartDiscovered[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] = true
+
+	// 5. Seed spatial anomalies if enabled
+	SeedAnomalies(g)
 
 	return g
 }

@@ -21,6 +21,9 @@ type ActionTransferShields = ActionShields
 
 // Execute applies the shield transfer action to GameState.
 func (a ActionShields) Execute(g *GameState) ([]Event, error) {
+	if a.Amount > 0 && g.QuadrantEnv[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] == EnvNebula {
+		return nil, errors.New("sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula")
+	}
 	if a.Amount > 0 && g.Enterprise.Energy < a.Amount {
 		return nil, errors.New("insufficient energy for shield transfer")
 	}
@@ -145,8 +148,9 @@ func (a ActionDock) Execute(g *GameState) ([]Event, error) {
 
 // ActionFireTorpedo launches a photon torpedo along a given angle or bearing to target.
 type ActionFireTorpedo struct {
-	Target Coord
-	Angle  float64
+	Target    Coord
+	Angle     float64
+	Direction float64
 }
 
 // Execute applies the photon torpedo firing action to GameState.
@@ -160,7 +164,9 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 	}
 
 	angle := a.Angle
-	if angle == 0 && a.Target != (Coord{}) {
+	if a.Direction != 0 {
+		angle = (a.Direction - 1.0) * math.Pi / 4.0
+	} else if angle == 0 && a.Target != (Coord{}) {
 		angle = Bearing(g.Enterprise.Sector, a.Target)
 	}
 
@@ -188,6 +194,21 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 	var hitCommander *Klingon
 
 	switch hitEntity {
+	case EntityBlackHole:
+		events = append(events, EventSingularityAbsorption{
+			Sector: hitCoord,
+			Target: EntityBlackHole,
+			Weapon: "torpedo",
+		})
+		if g.Rules.KlingonCloak {
+			for _, k := range g.CurrentQuad.Klingons {
+				if k != nil && k.IsCommander && !k.IsCloaked {
+					events = append(events, CloakKlingon(g, k)...)
+				}
+			}
+		}
+		return events, nil
+
 	case EntityKlingon, EntityCommander, EntitySuperCommander:
 		var targetKlingon *Klingon
 		var targetIndex = -1
@@ -204,13 +225,26 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 			if targetKlingon.IsCloaked {
 				events = append(events, DecloakKlingon(g, targetKlingon)...)
 			}
-			if damage >= targetKlingon.Energy {
+			if g.QuadrantEnv[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] == EnvNebula {
+				targetKlingon.Shields = 0
+			}
+			effectiveDamage := damage
+			if targetKlingon.Shields > 0 {
+				if targetKlingon.Shields >= damage {
+					targetKlingon.Shields -= damage
+					effectiveDamage = 0
+				} else {
+					effectiveDamage = damage - targetKlingon.Shields
+					targetKlingon.Shields = 0
+				}
+			}
+			if effectiveDamage >= targetKlingon.Energy {
 				destroyed = true
 				damage = targetKlingon.Energy
 				targetKlingon.Energy = 0
 				g.CurrentQuad.Klingons = append(g.CurrentQuad.Klingons[:targetIndex], g.CurrentQuad.Klingons[targetIndex+1:]...)
 			} else {
-				targetKlingon.Energy -= damage
+				targetKlingon.Energy -= effectiveDamage
 			}
 		} else {
 			destroyed = true
@@ -332,10 +366,23 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 			if !ok || alloc <= 0 {
 				continue
 			}
+			if g.QuadrantEnv[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] == EnvNebula {
+				k.Shields = 0
+			}
 			dist := Distance(g.Enterprise.Sector, k.Sector)
 			damage := ComputePhaserDamage(alloc, dist)
+			effectiveDamage := damage
+			if k.Shields > 0 {
+				if k.Shields >= damage {
+					k.Shields -= damage
+					effectiveDamage = 0
+				} else {
+					effectiveDamage = damage - k.Shields
+					k.Shields = 0
+				}
+			}
 			destroyed := false
-			if damage >= k.Energy {
+			if effectiveDamage >= k.Energy {
 				destroyed = true
 				damage = k.Energy
 				k.Energy = 0
@@ -353,7 +400,7 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 					g.Metrics.KlingonsKilled++
 				}
 			} else {
-				k.Energy -= damage
+				k.Energy -= effectiveDamage
 			}
 			events = append(events, EventPhaserHit{
 				Target:    k.Sector,
@@ -377,10 +424,23 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 		numEnemies := float64(len(g.CurrentQuad.Klingons))
 		energyPerTarget := totalEnergy / numEnemies
 		for _, k := range g.CurrentQuad.Klingons {
+			if g.QuadrantEnv[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] == EnvNebula {
+				k.Shields = 0
+			}
 			dist := Distance(g.Enterprise.Sector, k.Sector)
 			damage := ComputePhaserDamage(energyPerTarget, dist)
+			effectiveDamage := damage
+			if k.Shields > 0 {
+				if k.Shields >= damage {
+					k.Shields -= damage
+					effectiveDamage = 0
+				} else {
+					effectiveDamage = damage - k.Shields
+					k.Shields = 0
+				}
+			}
 			destroyed := false
-			if damage >= k.Energy {
+			if effectiveDamage >= k.Energy {
 				destroyed = true
 				damage = k.Energy
 				k.Energy = 0
@@ -398,7 +458,7 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 					g.Metrics.KlingonsKilled++
 				}
 			} else {
-				k.Energy -= damage
+				k.Energy -= effectiveDamage
 			}
 			events = append(events, EventPhaserHit{
 				Target:    k.Sector,
@@ -436,6 +496,9 @@ type ActionMove struct {
 
 // Execute applies the movement action to GameState.
 func (a ActionMove) Execute(g *GameState) ([]Event, error) {
+	if g == nil {
+		return nil, errors.New("game state is nil")
+	}
 	if a.Warp <= 0 {
 		return nil, errors.New("warp factor must be positive")
 	}
@@ -455,17 +518,30 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 	if g.Enterprise.Shields > 0 {
 		shieldsMultiplier = 2.0
 	}
-	energyNeeded := quadrants * factor * factor * factor * shieldsMultiplier
-	if g.Enterprise.Energy < energyNeeded {
-		return nil, errors.New("insufficient energy for warp movement")
-	}
-
-	timeUsed := 10.0 * quadrants / (factor * factor)
 
 	fromQuad := g.Enterprise.Quad
 	fromSector := g.Enterprise.Sector
 	toQuad := fromQuad
 	toSector := fromSector
+
+	inGravityWell := isNearBlackHole(g.CurrentQuad.Grid, fromSector)
+	if !inGravityWell && a.DestSector != (Coord{}) && (a.DestQuad == (Coord{}) || a.DestQuad == fromQuad) {
+		if isNearBlackHole(g.CurrentQuad.Grid, a.DestSector) {
+			inGravityWell = true
+		}
+	}
+
+	gravityMultiplier := 1.0
+	if inGravityWell {
+		gravityMultiplier = 2.0
+	}
+
+	energyNeeded := quadrants * factor * factor * factor * shieldsMultiplier * gravityMultiplier
+	if g.Enterprise.Energy < energyNeeded {
+		return nil, errors.New("insufficient energy for warp movement")
+	}
+
+	timeUsed := 10.0 * quadrants / (factor * factor)
 
 	var events []Event
 
@@ -478,8 +554,34 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 			if a.DestSector[0] < 1 || a.DestSector[0] > 8 || a.DestSector[1] < 1 || a.DestSector[1] > 8 {
 				return nil, errors.New("destination sector out of bounds")
 			}
-			if toQuad == fromQuad && g.CurrentQuad.Grid[a.DestSector[0]][a.DestSector[1]] != EntityEmpty && a.DestSector != fromSector {
-				return nil, errors.New("destination sector is occupied")
+			if toQuad == fromQuad {
+				cell := g.CurrentQuad.Grid[a.DestSector[0]][a.DestSector[1]]
+				if cell == EntityBlackHole {
+					g.Enterprise.Energy -= energyNeeded
+					if g.Enterprise.Energy < 0 {
+						g.Enterprise.Energy = 0
+					}
+					g.Stardate += timeUsed
+					g.TimeRemaining -= timeUsed
+					g.CurrentQuad.Grid[fromSector[0]][fromSector[1]] = EntityEmpty
+					g.Enterprise.Sector = a.DestSector
+					return []Event{
+						EventSingularityAbsorption{
+							Sector: a.DestSector,
+							Target: EntityEnterprise,
+							Weapon: "ship",
+						},
+						EventGameOver{
+							Reason: GameOverLost,
+						},
+					}, nil
+				}
+				if cell == EntityWormhole {
+					return handleWormholeJump(g, a, fromQuad, fromSector, a.DestSector, energyNeeded, timeUsed, events)
+				}
+				if cell != EntityEmpty && a.DestSector != fromSector {
+					return nil, errors.New("destination sector is occupied")
+				}
 			}
 			toSector = a.DestSector
 		} else {
@@ -492,7 +594,31 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 		if a.DestSector[0] < 1 || a.DestSector[0] > 8 || a.DestSector[1] < 1 || a.DestSector[1] > 8 {
 			return nil, errors.New("destination sector out of bounds")
 		}
-		if g.CurrentQuad.Grid[a.DestSector[0]][a.DestSector[1]] != EntityEmpty {
+		cell := g.CurrentQuad.Grid[a.DestSector[0]][a.DestSector[1]]
+		if cell == EntityBlackHole {
+			g.Enterprise.Energy -= energyNeeded
+			if g.Enterprise.Energy < 0 {
+				g.Enterprise.Energy = 0
+			}
+			g.Stardate += timeUsed
+			g.TimeRemaining -= timeUsed
+			g.CurrentQuad.Grid[fromSector[0]][fromSector[1]] = EntityEmpty
+			g.Enterprise.Sector = a.DestSector
+			return []Event{
+				EventSingularityAbsorption{
+					Sector: a.DestSector,
+					Target: EntityEnterprise,
+					Weapon: "ship",
+				},
+				EventGameOver{
+					Reason: GameOverLost,
+				},
+			}, nil
+		}
+		if cell == EntityWormhole {
+			return handleWormholeJump(g, a, fromQuad, fromSector, a.DestSector, energyNeeded, timeUsed, events)
+		}
+		if cell != EntityEmpty {
 			return nil, errors.New("destination sector is occupied")
 		}
 		toSector = a.DestSector
@@ -510,9 +636,30 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 		hitObstacle := false
 		exitedQuad := false
 
+		var driftR, driftC int
 		for step := 1; step <= numSteps; step++ {
-			nextR := int(math.Round(currentR + float64(step)*dr))
-			nextC := int(math.Round(currentC + float64(step)*dc))
+			nextR := int(math.Round(currentR + float64(step)*dr)) + driftR
+			nextC := int(math.Round(currentC + float64(step)*dc)) + driftC
+
+			if g.QuadrantEnv[fromQuad[0]][fromQuad[1]] == EnvIonStorm {
+				if g.RNG != nil && g.RNG.Float64() < 0.25 {
+					delta := 1
+					if g.RNG.Float64() < 0.5 {
+						delta = -1
+					}
+					if math.Abs(dc) >= math.Abs(dr) {
+						nextR += delta
+						driftR += delta
+					} else {
+						nextC += delta
+						driftC += delta
+					}
+					events = append(events, EventHazardTriggered{
+						HazardType:  "ion_storm_drift",
+						Description: "Ion storm turbulence deflected course",
+					})
+				}
+			}
 
 			if nextR < 1 || nextR > 8 || nextC < 1 || nextC > 8 {
 				// Quadrant transition or edge of quadrant
@@ -520,8 +667,42 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 				break
 			}
 
-			// Check obstacle in current quadrant
+			// Check cell in current quadrant
 			cell := g.CurrentQuad.Grid[nextR][nextC]
+			if cell == EntityBlackHole {
+				g.Enterprise.Energy -= energyNeeded
+				if g.Enterprise.Energy < 0 {
+					g.Enterprise.Energy = 0
+				}
+				g.Stardate += timeUsed
+				g.TimeRemaining -= timeUsed
+				g.CurrentQuad.Grid[fromSector[0]][fromSector[1]] = EntityEmpty
+				g.Enterprise.Sector = Coord{nextR, nextC}
+				events = append(events,
+					EventSingularityAbsorption{
+						Sector: Coord{nextR, nextC},
+						Target: EntityEnterprise,
+						Weapon: "ship",
+					},
+					EventGameOver{
+						Reason: GameOverLost,
+					},
+				)
+				return events, nil
+			}
+
+			if cell == EntityWormhole {
+				return handleWormholeJump(g, a, fromQuad, fromSector, Coord{nextR, nextC}, energyNeeded, timeUsed, events)
+			}
+
+			if isNearBlackHole(g.CurrentQuad.Grid, Coord{nextR, nextC}) {
+				if !inGravityWell {
+					inGravityWell = true
+					gravityMultiplier = 2.0
+					energyNeeded = quadrants * factor * factor * factor * shieldsMultiplier * gravityMultiplier
+				}
+			}
+
 			if cell != EntityEmpty && cell != EntityEnterprise {
 				events = append(events, EventObstacleEncountered{
 					Sector: Coord{nextR, nextC},
@@ -555,6 +736,12 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 
 	// Apply movement mutations
 	g.Enterprise.Energy -= energyNeeded
+	if g.Enterprise.Energy <= 0 {
+		g.Enterprise.Energy = 0
+		events = append(events, EventGameOver{
+			Reason: GameOverEnergy,
+		})
+	}
 	g.Stardate += timeUsed
 	g.TimeRemaining -= timeUsed
 
@@ -563,6 +750,19 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 	}
 
 	if toQuad != fromQuad {
+		if g.QuadrantEnv[toQuad[0]][toQuad[1]] == EnvNebula {
+			if g.Enterprise.Energy > 0 {
+				g.Enterprise.Energy += g.Enterprise.Shields
+				if g.Enterprise.Energy > 5000 {
+					g.Enterprise.Energy = 5000
+				}
+			}
+			g.Enterprise.Shields = 0
+			events = append(events, EventAnomalyDiscovered{
+				Quad: toQuad,
+				Env:  EnvNebula,
+			})
+		}
 		g.PopulateQuadrant(toQuad, toSector)
 	} else {
 		g.CurrentQuad.Grid[fromSector[0]][fromSector[1]] = EntityEmpty
@@ -593,6 +793,109 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 	return events, nil
 }
 
+// isNearBlackHole checks if sector is within Chebyshev distance 1 of any EntityBlackHole in grid.
+func isNearBlackHole(grid [9][9]EntityType, sector Coord) bool {
+	for dr := -1; dr <= 1; dr++ {
+		for dc := -1; dc <= 1; dc++ {
+			r := sector[0] + dr
+			c := sector[1] + dc
+			if r >= 1 && r <= 8 && c >= 1 && c <= 8 {
+				if grid[r][c] == EntityBlackHole {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func handleWormholeJump(g *GameState, a ActionMove, fromQuad, fromSector, wormholeSector Coord, energyNeeded, timeUsed float64, events []Event) ([]Event, error) {
+	if g == nil || g.RNG == nil {
+		return nil, errors.New("cannot execute wormhole jump: RNG is not initialized")
+	}
+
+	targetQuad := Coord{g.RNG.Intn(8) + 1, g.RNG.Intn(8) + 1}
+	targetSector := Coord{g.RNG.Intn(8) + 1, g.RNG.Intn(8) + 1}
+	for targetQuad == fromQuad && targetSector == wormholeSector {
+		targetQuad = Coord{g.RNG.Intn(8) + 1, g.RNG.Intn(8) + 1}
+		targetSector = Coord{g.RNG.Intn(8) + 1, g.RNG.Intn(8) + 1}
+	}
+
+	// Apply movement mutations
+	g.Enterprise.Energy -= energyNeeded
+	if g.Enterprise.Energy <= 0 {
+		g.Enterprise.Energy = 0
+		events = append(events, EventGameOver{
+			Reason: GameOverEnergy,
+		})
+	}
+	g.Stardate += timeUsed + 0.2
+	g.TimeRemaining -= (timeUsed + 0.2)
+
+	if g.Enterprise.Condition == ConditionDocked {
+		g.Enterprise.Condition = ConditionGreen
+	}
+
+	jumpEvt := EventWormholeJump{
+		FromQuad:   fromQuad,
+		FromSector: fromSector,
+		ToQuad:     targetQuad,
+		ToSector:   targetSector,
+		TimeDelta:  0.2,
+	}
+	events = append(events, jumpEvt)
+
+	if targetQuad != fromQuad {
+		if g.QuadrantEnv[targetQuad[0]][targetQuad[1]] == EnvNebula {
+			if g.Enterprise.Energy > 0 {
+				g.Enterprise.Energy += g.Enterprise.Shields
+				if g.Enterprise.Energy > 5000 {
+					g.Enterprise.Energy = 5000
+				}
+			}
+			g.Enterprise.Shields = 0
+			events = append(events, EventAnomalyDiscovered{
+				Quad: targetQuad,
+				Env:  EnvNebula,
+			})
+		}
+		g.PopulateQuadrant(targetQuad, targetSector)
+	} else {
+		// Ensure target sector is empty if staying in same quadrant
+		for (g.CurrentQuad.Grid[targetSector[0]][targetSector[1]] != EntityEmpty && g.CurrentQuad.Grid[targetSector[0]][targetSector[1]] != EntityEnterprise) || targetSector == wormholeSector {
+			targetSector = Coord{g.RNG.Intn(8) + 1, g.RNG.Intn(8) + 1}
+		}
+		jumpEvt.ToSector = targetSector
+		events[len(events)-1] = jumpEvt
+
+		g.CurrentQuad.Grid[fromSector[0]][fromSector[1]] = EntityEmpty
+		g.CurrentQuad.Grid[targetSector[0]][targetSector[1]] = EntityEnterprise
+		g.Enterprise.Sector = targetSector
+		g.Enterprise.Quad = targetQuad
+	}
+
+	shipMovedEvt := EventShipMoved{
+		FromQuad:   fromQuad,
+		ToQuad:     targetQuad,
+		FromSector: fromSector,
+		ToSector:   targetSector,
+		Warp:       a.Warp,
+		EnergyUsed: energyNeeded,
+		TimeUsed:   timeUsed + 0.2,
+	}
+	events = append([]Event{shipMovedEvt}, events...)
+
+	if targetQuad == fromQuad && g.Rules.KlingonCloak {
+		for _, k := range g.CurrentQuad.Klingons {
+			if k != nil && k.IsCommander && !k.IsCloaked {
+				events = append(events, CloakKlingon(g, k)...)
+			}
+		}
+	}
+
+	return events, nil
+}
+
 // ActionLRScan initiates a long-range sensor scan of the quadrants immediately surrounding the Enterprise.
 type ActionLRScan struct{}
 
@@ -606,6 +909,8 @@ func (a ActionLRScan) Execute(g *GameState) ([]Event, error) {
 	degraded := g.Rules.SensorDegradation && g.Enterprise.Devices[DeviceLRSensors] > 0 && !relayed
 	center := g.Enterprise.Quad
 	var scanned []Coord
+	var readings [3][3]int
+	readingsMap := make(map[Coord]int)
 
 	for dr := -1; dr <= 1; dr++ {
 		for dc := -1; dc <= 1; dc++ {
@@ -614,6 +919,16 @@ func (a ActionLRScan) Execute(g *GameState) ([]Event, error) {
 			if r >= 1 && r <= 8 && c >= 1 && c <= 8 {
 				g.ChartDiscovered[r][c] = true
 				scanned = append(scanned, Coord{r, c})
+				if g.QuadrantEnv[r][c] == EnvNebula {
+					readings[dr+1][dc+1] = -1
+					readingsMap[Coord{r, c}] = -1
+				} else {
+					readings[dr+1][dc+1] = g.GalaxyChart[r][c]
+					readingsMap[Coord{r, c}] = g.GalaxyChart[r][c]
+				}
+			} else {
+				readings[dr+1][dc+1] = -1
+				readingsMap[Coord{r, c}] = -1
 			}
 		}
 	}
@@ -624,9 +939,31 @@ func (a ActionLRScan) Execute(g *GameState) ([]Event, error) {
 			ScannedQuads:  scanned,
 			RelayedByBase: relayed,
 			Degraded:      degraded,
+			Readings:      readings,
+			ReadingsMap:   readingsMap,
 		},
 	}, nil
 }
+
+// ReadQuadrant returns the long-range sensor scan value for quadrant (qr, qc), or -1 if the quadrant is in a nebula or out of bounds.
+func (a ActionLRScan) ReadQuadrant(g *GameState, qr, qc int) int {
+	return ScanQuadrant(g, qr, qc)
+}
+
+// ScanQuadrant returns the long-range sensor scan value for quadrant (qr, qc), or -1 if the quadrant is in a nebula or out of bounds.
+func ScanQuadrant(g *GameState, qr, qc int) int {
+	if g == nil {
+		return -1
+	}
+	if qr < 1 || qr > 8 || qc < 1 || qc > 8 {
+		return -1
+	}
+	if g.QuadrantEnv[qr][qc] == EnvNebula {
+		return -1
+	}
+	return g.GalaxyChart[qr][qc]
+}
+
 
 // ActionKlingonCounterAttack simulates return fire from a Klingon vessel in the quadrant.
 type ActionKlingonCounterAttack struct {

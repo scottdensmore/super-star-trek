@@ -92,6 +92,10 @@ func (t CrtTheme) PaletteStyles(isDark bool) Styles {
 			BlackHole: lipgloss.NewStyle().
 				Foreground(lipgloss.Color("#116611")),
 
+			Wormhole: lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("#33FF33")),
+
 			Empty: lipgloss.NewStyle().
 				Foreground(lipgloss.Color("#0D3B0D")),
 
@@ -196,6 +200,10 @@ func (t CrtTheme) PaletteStyles(isDark bool) Styles {
 
 		BlackHole: lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#86EFAC")),
+
+		Wormhole: lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#166534")),
 
 		Empty: lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#86EFAC")),

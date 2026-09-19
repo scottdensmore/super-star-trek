@@ -281,6 +281,105 @@ func TestCLIFlags_Overrides(t *testing.T) {
 	}
 }
 
+func TestCLIFlags_SpatialAnomalies(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	var capturedModel tea.Model
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		capturedModel = m
+		return nil
+	}
+
+	tests := []struct {
+		name          string
+		args          []string
+		wantAnomalies bool
+		wantProfile   engine.DifficultyProfile
+	}{
+		{
+			name:          "default normal difficulty has anomalies disabled",
+			args:          []string{"-seed", "42"},
+			wantAnomalies: false,
+			wantProfile:   engine.ProfileNormal,
+		},
+		{
+			name:          "enable anomalies with --anomalies",
+			args:          []string{"--anomalies", "-seed", "42"},
+			wantAnomalies: true,
+			wantProfile:   engine.ProfileCustom,
+		},
+		{
+			name:          "enable anomalies with -anomalies",
+			args:          []string{"-anomalies", "-seed", "42"},
+			wantAnomalies: true,
+			wantProfile:   engine.ProfileCustom,
+		},
+		{
+			name:          "disable anomalies with --no-anomalies on nightmare",
+			args:          []string{"--difficulty=nightmare", "--no-anomalies", "-seed", "42"},
+			wantAnomalies: false,
+			wantProfile:   engine.ProfileCustom,
+		},
+		{
+			name:          "disable anomalies with -no-anomalies",
+			args:          []string{"-difficulty=nightmare", "-no-anomalies", "-seed", "42"},
+			wantAnomalies: false,
+			wantProfile:   engine.ProfileCustom,
+		},
+		{
+			name:          "anomalies flag set to false",
+			args:          []string{"--difficulty=nightmare", "--anomalies=false", "-seed", "42"},
+			wantAnomalies: false,
+			wantProfile:   engine.ProfileCustom,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			code := run(tc.args, strings.NewReader(""), &stdout, &stderr)
+			if code != 0 {
+				t.Fatalf("run failed with code %d: %s", code, stderr.String())
+			}
+			model, ok := capturedModel.(tui.Model)
+			if !ok {
+				t.Fatalf("captured model is not tui.Model: %T", capturedModel)
+			}
+			if model.Game.Rules.SpatialAnomalies != tc.wantAnomalies {
+				t.Errorf("expected SpatialAnomalies=%v, got %v", tc.wantAnomalies, model.Game.Rules.SpatialAnomalies)
+			}
+			if model.Game.Rules.Profile != tc.wantProfile {
+				t.Errorf("expected Profile=%v, got %v", tc.wantProfile, model.Game.Rules.Profile)
+			}
+		})
+	}
+}
+
+func TestCLIFlags_SpatialAnomalies_MutualExclusion(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	called := false
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		called = true
+		return nil
+	}
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--anomalies", "--no-anomalies"}, strings.NewReader(""), &stdout, &stderr)
+	if code != 1 {
+		t.Fatalf("expected exit code 1 when specifying both flags, got %d", code)
+	}
+	if called {
+		t.Fatalf("expected runProgram NOT to be called")
+	}
+	expectedErr := "Error: cannot specify both --anomalies and --no-anomalies"
+	if !strings.Contains(stderr.String(), expectedErr) {
+		t.Errorf("expected stderr to contain %q, got %q", expectedErr, stderr.String())
+	}
+}
+
 func TestCLIModeFlag(t *testing.T) {
 	origRunProgram := runProgram
 	t.Cleanup(func() { runProgram = origRunProgram })

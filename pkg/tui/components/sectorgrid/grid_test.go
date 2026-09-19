@@ -56,7 +56,8 @@ func TestAllEntityGlyphs(t *testing.T) {
 	quad.Grid[1][6] = engine.EntityStar
 	quad.Grid[1][7] = engine.EntityPlanet
 	quad.Grid[1][8] = engine.EntityBlackHole
-	// row 2 is empty
+	quad.Grid[2][1] = engine.EntityWormhole
+	// rest of row 2 is empty
 
 	view := m.View(&quad, engine.Coord{1, 1}, engine.Coord{})
 
@@ -70,6 +71,7 @@ func TestAllEntityGlyphs(t *testing.T) {
 		{"Star", " * "},
 		{"Planet", " O "},
 		{"BlackHole", " @ "},
+		{"Wormhole", ">W<"},
 		{"Empty", " . "},
 	}
 
@@ -77,6 +79,24 @@ func TestAllEntityGlyphs(t *testing.T) {
 		if !strings.Contains(view, eg.glyph) {
 			t.Errorf("grid view missing %s glyph %q:\n%s", eg.name, eg.glyph, view)
 		}
+	}
+}
+
+func TestGridRender_EntityWormhole(t *testing.T) {
+	var quad engine.QuadrantState
+	quad.Grid[3][3] = engine.EntityWormhole
+	rendered := RenderCell(3, 3, &quad, false)
+	if !strings.Contains(rendered, ">W<") {
+		t.Errorf("expected wormhole symbol '>W<', got %q", rendered)
+	}
+}
+
+func TestGridRender_EntityBlackHole(t *testing.T) {
+	var quad engine.QuadrantState
+	quad.Grid[3][3] = engine.EntityBlackHole
+	rendered := RenderCell(3, 3, &quad, false)
+	if !strings.Contains(rendered, "@") {
+		t.Errorf("expected black hole symbol '@', got %q", rendered)
 	}
 }
 

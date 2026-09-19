@@ -13,8 +13,9 @@ const (
 	ansiYellow = "\x1b[33m"
 	ansiRed    = "\x1b[31;1m"
 	ansiCyan   = "\x1b[36m"
-	ansiBold   = "\x1b[1m"
-	ansiDim    = "\x1b[2m"
+	ansiBold    = "\x1b[1m"
+	ansiDim     = "\x1b[2m"
+	ansiMagenta = "\x1b[35m"
 )
 
 var deviceNames = [engine.NumDevices]string{
@@ -56,6 +57,8 @@ func FormatSRS(g *engine.GameState) string {
 					b.WriteString(fmt.Sprintf("%s O %s ", ansiGreen, ansiReset))
 				case engine.EntityBlackHole:
 					b.WriteString(fmt.Sprintf("%s @ %s ", ansiCyan, ansiReset))
+				case engine.EntityWormhole:
+					b.WriteString(fmt.Sprintf("%s>W<%s ", ansiCyan, ansiReset))
 				default:
 					b.WriteString(" .  ")
 				}
@@ -218,6 +221,21 @@ func FormatCombatEvents(events []engine.Event) string {
 				name = deviceNames[e.Device]
 			}
 			b.WriteString(fmt.Sprintf("%s[REPAIR]%s %s has been repaired.\r\n", ansiGreen, ansiReset, name))
+		case engine.EventHazardTriggered:
+			b.WriteString(fmt.Sprintf("%s*** HAZARD: %s ***%s\r\n", ansiYellow, e.Description, ansiReset))
+		case engine.EventSingularityAbsorption:
+			b.WriteString(fmt.Sprintf("%s*** GRAVITATIONAL SINGULARITY: Photon torpedo absorbed into event horizon! ***%s\r\n", ansiMagenta, ansiReset))
+		case engine.EventWormholeJump:
+			b.WriteString(fmt.Sprintf("%s*** SUBSPACE RIFT: Wormhole transit completed to Quadrant [%d, %d] Sector [%d, %d]! ***%s\r\n", ansiCyan, e.ToQuad[0], e.ToQuad[1], e.ToSector[0], e.ToSector[1], ansiReset))
+		case engine.EventAnomalyDiscovered:
+			switch e.Env {
+			case engine.EnvNebula:
+				b.WriteString(fmt.Sprintf("%s*** ENVIRONMENT ALERT: Entering Mutara Nebula. Electromagnetic dispersion drops shields to 0! ***%s\r\n", ansiMagenta, ansiReset))
+			case engine.EnvIonStorm:
+				b.WriteString(fmt.Sprintf("%s*** ENVIRONMENT ALERT: Entering Ion Storm! High energy particle flux detected. ***%s\r\n", ansiYellow, ansiReset))
+			default:
+				b.WriteString(fmt.Sprintf("%s*** ENVIRONMENT ALERT: Spatial anomaly detected! ***%s\r\n", ansiMagenta, ansiReset))
+			}
 		case engine.EventGameOver:
 			if e.Reason == engine.GameOverWon {
 				b.WriteString(fmt.Sprintf("%s*** FEDERATION MISSION ACCOMPLISHED ***%s (Score: %.0f)\r\n", ansiGreen, ansiReset, e.Score))

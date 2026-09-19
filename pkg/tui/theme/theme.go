@@ -93,6 +93,7 @@ type Styles struct {
 	Star       lipgloss.Style
 	Planet     lipgloss.Style
 	BlackHole  lipgloss.Style
+	Wormhole   lipgloss.Style
 	Empty      lipgloss.Style
 
 	// Condition alert badges

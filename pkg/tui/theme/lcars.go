@@ -91,6 +91,10 @@ func (t LcarsTheme) PaletteStyles(isDark bool) Styles {
 			BlackHole: lipgloss.NewStyle().
 				Foreground(lipgloss.Color("#9966CC")),
 
+			Wormhole: lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("#00CCCC")),
+
 			Empty: lipgloss.NewStyle().
 				Foreground(lipgloss.Color("#443322")),
 
@@ -190,6 +194,10 @@ func (t LcarsTheme) PaletteStyles(isDark bool) Styles {
 
 		BlackHole: lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#6B21A8")),
+
+		Wormhole: lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#008888")),
 
 		Empty: lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#A8A29E")),

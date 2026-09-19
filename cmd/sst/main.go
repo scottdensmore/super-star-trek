@@ -46,6 +46,8 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	sensorDegradation := fs.Bool("sensor-degradation", true, "enable two-tier sensor degradation curve")
 	repairMult := fs.Float64("repair-multiplier", 1.0, "subsystem repair duration multiplier")
 	klingonCloak := fs.Bool("klingon-cloak", false, "enable Klingon commander tactical cloaking")
+	anomalies := fs.Bool("anomalies", false, "enable spatial anomalies & environmental hazards")
+	noAnomalies := fs.Bool("no-anomalies", false, "disable spatial anomalies & environmental hazards")
 
 	if err := fs.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -65,6 +67,11 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 		visited[f.Name] = true
 	})
 
+	if visited["anomalies"] && visited["no-anomalies"] {
+		fmt.Fprintln(errOut, "Error: cannot specify both --anomalies and --no-anomalies")
+		return 1
+	}
+
 	rules := engine.DefaultRulesForProfile(engine.DifficultyProfile(*difficulty))
 	if visited["surveillance"] {
 		rules.Surveillance = engine.SurveillanceMode(*surveillance)
@@ -80,6 +87,14 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	}
 	if visited["klingon-cloak"] {
 		rules.KlingonCloak = *klingonCloak
+		rules.Profile = engine.ProfileCustom
+	}
+	if visited["anomalies"] {
+		rules.SpatialAnomalies = *anomalies
+		rules.Profile = engine.ProfileCustom
+	}
+	if visited["no-anomalies"] {
+		rules.SpatialAnomalies = !*noAnomalies
 		rules.Profile = engine.ProfileCustom
 	}
 

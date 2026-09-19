@@ -148,6 +148,64 @@ func TestFormatCombatEvents(t *testing.T) {
 	}
 }
 
+func TestFormatCombatEvents_AnomalyEvents(t *testing.T) {
+	events := []engine.Event{
+		engine.EventHazardTriggered{
+			HazardType:  "ion_storm_drift",
+			Description: "Ion storm turbulence deflected course",
+		},
+		engine.EventSingularityAbsorption{
+			Sector: engine.Coord{4, 4},
+			Weapon: "torpedo",
+		},
+		engine.EventWormholeJump{
+			FromQuad: engine.Coord{1, 1},
+			ToQuad:   engine.Coord{5, 6},
+			ToSector: engine.Coord{3, 3},
+		},
+	}
+	output := FormatCombatEvents(events)
+	if !strings.Contains(output, "turbulence deflected course") {
+		t.Errorf("expected ion storm message, got: %s", output)
+	}
+	if !strings.Contains(output, "absorbed into event horizon") {
+		t.Errorf("expected singularity absorption message, got: %s", output)
+	}
+	if !strings.Contains(output, "Wormhole transit completed") {
+		t.Errorf("expected wormhole transit message, got: %s", output)
+	}
+}
+
+func TestFormatCombatEvents_AnomalyDiscovered(t *testing.T) {
+	events := []engine.Event{
+		engine.EventAnomalyDiscovered{
+			Quad: engine.Coord{2, 3},
+			Env:  engine.EnvNebula,
+		},
+		engine.EventAnomalyDiscovered{
+			Quad: engine.Coord{4, 5},
+			Env:  engine.EnvIonStorm,
+		},
+	}
+	output := FormatCombatEvents(events)
+	if !strings.Contains(output, "Entering Mutara Nebula") {
+		t.Errorf("expected nebula discovery message, got: %s", output)
+	}
+	if !strings.Contains(output, "Entering Ion Storm") {
+		t.Errorf("expected ion storm discovery message, got: %s", output)
+	}
+}
+
+func TestFormatSRS_Wormhole(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.PopulateQuadrant(g.Enterprise.Quad, g.Enterprise.Sector)
+	g.CurrentQuad.Grid[3][3] = engine.EntityWormhole
+	out := FormatSRS(g)
+	if !strings.Contains(out, ">W<") {
+		t.Errorf("expected Wormhole glyph '>W<' in SRS, got:\n%s", out)
+	}
+}
+
 func TestFormatCombatEvents_AllTypes(t *testing.T) {
 	events := []engine.Event{
 		engine.EventPhaserFired{Energy: 400},

@@ -410,3 +410,170 @@ func TestKlingonCounterAttack_DecloaksAttacker(t *testing.T) {
 		t.Errorf("expected EventKlingonCounterAttack, got %+v", events2[0])
 	}
 }
+
+func TestKlingonCombat_ZeroShieldsInNebula(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.QuadrantEnv[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] = EnvNebula
+	klingon := &Klingon{ID: 1, Sector: Coord{4, 5}, Energy: 400, Shields: 100}
+	g.CurrentQuad.Klingons = []*Klingon{klingon}
+	g.CurrentQuad.Grid[4][5] = EntityKlingon
+
+	// Symmetrical damage: in nebula, 100 energy phaser hit does full direct damage with no shield mitigation
+	act := ActionFirePhasers{Energy: 200}
+	_, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if klingon.Energy >= 400 {
+		t.Errorf("expected Klingon to take full damage in nebula, remaining: %f", klingon.Energy)
+	}
+	if klingon.Shields != 0 {
+		t.Errorf("expected Klingon shields to collapse to 0 in nebula, got %f", klingon.Shields)
+	}
+}
+
+func TestKlingonCombat_AbsorbedByBlackHole(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.CurrentQuad.Grid[4][4] = EntityBlackHole
+	klingon := &Klingon{ID: 1, Sector: Coord{4, 3}, Energy: 400}
+	g.CurrentQuad.Klingons = []*Klingon{klingon}
+	g.CurrentQuad.Grid[4][3] = EntityKlingon
+
+	// Move/push Klingon into black hole at [4, 4]
+	events := MoveKlingon(g, klingon, Coord{4, 4})
+
+	foundAbsorption := false
+	for _, e := range events {
+		if sa, ok := e.(EventSingularityAbsorption); ok {
+			foundAbsorption = true
+			if sa.Target != EntityKlingon {
+				t.Errorf("expected target EntityKlingon, got %v", sa.Target)
+			}
+			if sa.Sector != (Coord{4, 4}) {
+				t.Errorf("expected sector [4, 4], got %v", sa.Sector)
+			}
+		}
+	}
+	if !foundAbsorption {
+		t.Errorf("expected EventSingularityAbsorption when Klingon enters black hole")
+	}
+	if len(g.CurrentQuad.Klingons) != 0 {
+		t.Errorf("expected Klingon to be eliminated from quadrant, remaining: %d", len(g.CurrentQuad.Klingons))
+	}
+	if g.CurrentQuad.Grid[4][3] != EntityEmpty {
+		t.Errorf("expected origin cell [4, 3] to be empty, got %v", g.CurrentQuad.Grid[4][3])
+	}
+}
+
+func TestKlingonTurn_SymmetryAndBlackHole(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.QuadrantEnv[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] = EnvNebula
+	klingon := &Klingon{ID: 1, Sector: Coord{4, 3}, Energy: 400, Shields: 200}
+	g.CurrentQuad.Klingons = []*Klingon{klingon}
+	g.CurrentQuad.Grid[4][3] = EntityKlingon
+
+	KlingonTurn(g)
+
+	if klingon.Shields != 0 {
+		t.Errorf("expected Klingon shields to collapse to 0 in nebula, got %f", klingon.Shields)
+	}
+}
+
+func TestKlingonCombat_CommanderAbsorbedByBlackHole(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.CurrentQuad.Grid[5][5] = EntityBlackHole
+	cmd := &Klingon{ID: 1, Sector: Coord{5, 4}, Energy: 600, IsCommander: true}
+	g.CurrentQuad.Klingons = []*Klingon{cmd}
+	g.CurrentQuad.Grid[5][4] = EntityCommander
+
+	events := MoveKlingon(g, cmd, Coord{5, 5})
+	if len(events) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(events))
+	}
+	sa, ok := events[0].(EventSingularityAbsorption)
+	if !ok {
+		t.Fatalf("expected EventSingularityAbsorption, got %T", events[0])
+	}
+	if sa.Target != EntityCommander {
+		t.Errorf("expected target EntityCommander, got %v", sa.Target)
+	}
+	if g.Metrics.CommandersKilled != 1 {
+		t.Errorf("expected CommandersKilled 1, got %d", g.Metrics.CommandersKilled)
+	}
+	if len(g.CurrentQuad.Klingons) != 0 {
+		t.Errorf("expected Commander eliminated from CurrentQuad.Klingons")
+	}
+}
+
+func TestKlingonTurn_BlackHoleAbsorption(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.CurrentQuad.Grid[4][4] = EntityBlackHole
+	klingon := &Klingon{ID: 1, Sector: Coord{4, 4}, Energy: 400}
+	g.CurrentQuad.Klingons = []*Klingon{klingon}
+
+	events := KlingonTurn(g)
+	if len(events) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(events))
+	}
+	if sa, ok := events[0].(EventSingularityAbsorption); !ok || sa.Sector != (Coord{4, 4}) {
+		t.Errorf("unexpected event: %+v", events[0])
+	}
+	if len(g.CurrentQuad.Klingons) != 0 {
+		t.Errorf("expected Klingon absorbed and removed")
+	}
+}
+
+func TestMoveKlingon_RejectsOccupiedSector(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	k := &Klingon{ID: 1, Sector: Coord{4, 3}, Energy: 400}
+	g.CurrentQuad.Klingons = []*Klingon{k}
+	g.CurrentQuad.Grid[4][3] = EntityKlingon
+	g.CurrentQuad.Grid[4][4] = EntityStar // Destination occupied by star
+
+	events := MoveKlingon(g, k, Coord{4, 4})
+	if events != nil {
+		t.Errorf("expected MoveKlingon to return nil when moving into occupied cell, got %v", events)
+	}
+	if k.Sector != (Coord{4, 3}) {
+		t.Errorf("expected Klingon sector unchanged at [4, 3], got %v", k.Sector)
+	}
+	if g.CurrentQuad.Grid[4][4] != EntityStar {
+		t.Errorf("expected destination cell [4, 4] to remain EntityStar, got %v", g.CurrentQuad.Grid[4][4])
+	}
+}
+
+func TestMoveKlingon_PreservesSuperCommander(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	sc := &Klingon{ID: 1, Sector: Coord{3, 3}, Energy: 1500, IsCommander: true}
+	g.CurrentQuad.Klingons = []*Klingon{sc}
+	g.CurrentQuad.Grid[3][3] = EntitySuperCommander
+
+	// Move to empty cell [3, 4]
+	events := MoveKlingon(g, sc, Coord{3, 4})
+	if events != nil {
+		t.Errorf("expected no events on empty move, got %v", events)
+	}
+	if g.CurrentQuad.Grid[3][4] != EntitySuperCommander {
+		t.Errorf("expected destination cell [3, 4] to be EntitySuperCommander, got %v", g.CurrentQuad.Grid[3][4])
+	}
+	if g.CurrentQuad.Grid[3][3] != EntityEmpty {
+		t.Errorf("expected origin cell [3, 3] to be EntityEmpty, got %v", g.CurrentQuad.Grid[3][3])
+	}
+
+	// Move into black hole at [3, 5]
+	g.CurrentQuad.Grid[3][5] = EntityBlackHole
+	events2 := MoveKlingon(g, sc, Coord{3, 5})
+	if len(events2) != 1 {
+		t.Fatalf("expected 1 event on black hole move, got %d", len(events2))
+	}
+	sa, ok := events2[0].(EventSingularityAbsorption)
+	if !ok || sa.Target != EntitySuperCommander {
+		t.Errorf("expected absorption target EntitySuperCommander, got %v", events2[0])
+	}
+	if g.Metrics.SuperCommandersKilled != 1 {
+		t.Errorf("expected SuperCommandersKilled 1, got %d", g.Metrics.SuperCommandersKilled)
+	}
+}
+
+
+
