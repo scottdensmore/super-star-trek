@@ -28,7 +28,14 @@ func (t ModernTheme) Next() Theme {
 }
 
 func (t ModernTheme) Styles() Styles {
-	return t.PaletteStyles(t.ColorMode().Resolve(DetectDarkBackground()))
+	switch t.ColorMode() {
+	case ColorModeDark:
+		return t.PaletteStyles(true)
+	case ColorModeLight:
+		return t.PaletteStyles(false)
+	default:
+		return t.PaletteStyles(DetectDarkBackground())
+	}
 }
 
 func (t ModernTheme) PaletteStyles(isDark bool) Styles {

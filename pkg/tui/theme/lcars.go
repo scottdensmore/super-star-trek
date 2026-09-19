@@ -28,7 +28,14 @@ func (t LcarsTheme) Next() Theme {
 }
 
 func (t LcarsTheme) Styles() Styles {
-	return t.PaletteStyles(t.ColorMode().Resolve(DetectDarkBackground()))
+	switch t.ColorMode() {
+	case ColorModeDark:
+		return t.PaletteStyles(true)
+	case ColorModeLight:
+		return t.PaletteStyles(false)
+	default:
+		return t.PaletteStyles(DetectDarkBackground())
+	}
 }
 
 func (t LcarsTheme) PaletteStyles(isDark bool) Styles {

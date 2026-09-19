@@ -111,7 +111,15 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 		Manual:          manual.New(th, 66, 18),
 		optionsModal:    optionsmodal.New(th, rules),
 		showOptions:     false,
-		lastDarkBg:      theme.DetectDarkBackground(),
+		lastDarkBg: func() bool {
+			if th.ColorMode() == theme.ColorModeLight {
+				return false
+			}
+			if th.ColorMode() == theme.ColorModeDark {
+				return true
+			}
+			return theme.DetectDarkBackground()
+		}(),
 	}
 	m.syncChildComponents()
 	return m
