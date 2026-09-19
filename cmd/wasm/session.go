@@ -13,19 +13,25 @@ import (
 type Session struct {
 	game    *engine.GameState
 	history []string
+	seed    int64
 }
 
 // NewSession creates and initializes a new Session with the specified seed and difficulty.
-func NewSession(seed int64, difficulty engine.DifficultyProfile) *Session {
+func NewSession(seed int64, difficulty ...engine.DifficultyProfile) *Session {
 	if seed == 0 {
 		seed = 12345
 	}
-	rules := engine.DefaultRulesForProfile(difficulty)
+	diff := engine.ProfileNormal
+	if len(difficulty) > 0 {
+		diff = difficulty[0]
+	}
+	rules := engine.DefaultRulesForProfile(diff)
 	game := engine.NewGameWithOptions(seed, engine.SkillGood, engine.LengthMedium, rules)
 	game.PopulateQuadrant(game.Enterprise.Quad, game.Enterprise.Sector)
 	return &Session{
 		game:    game,
 		history: make([]string, 0),
+		seed:    seed,
 	}
 }
 
@@ -47,7 +53,7 @@ func (s *Session) Execute(input string) string {
 
 	switch cmd {
 	case "help", "?":
-		return "COMMANDS: nav, srs, lrs, pha, tor, she, dam, chart, com, save [slot], load [slot], help, quit\r\n"
+		return "COMMANDS: nav, srs, lrs, pha, tor, she, dam, chart, com, scenario [list|<id>], save [slot], load [slot], help, quit\r\n"
 	case "srs", "srscan", "status":
 		return FormatSRS(s.game)
 	case "lrs", "lrscan":
@@ -56,6 +62,23 @@ func (s *Session) Execute(input string) string {
 		return FormatChart(s.game)
 	case "dam", "damages":
 		return FormatDamages(s.game)
+	case "scenario":
+		if len(tokens) == 1 || strings.ToLower(tokens[1]) == "list" {
+			return FormatScenarios()
+		}
+		id := tokens[1]
+		if len(tokens) > 2 {
+			id = strings.Join(tokens[1:], "-")
+		}
+		sc, ok := engine.GetScenario(engine.ScenarioID(id))
+		if !ok {
+			sc, ok = engine.GetScenario(engine.ScenarioID(tokens[1]))
+		}
+		if !ok {
+			return fmt.Sprintf("Unknown scenario: %s\r\n", tokens[1])
+		}
+		s.game = sc.Build(s.seed)
+		return FormatScenarioBriefing(sc)
 	case "quit", "exit", "q":
 		return "Session terminated.\r\n"
 	}

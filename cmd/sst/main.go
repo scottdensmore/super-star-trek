@@ -48,12 +48,33 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	klingonCloak := fs.Bool("klingon-cloak", false, "enable Klingon commander tactical cloaking")
 	anomalies := fs.Bool("anomalies", false, "enable spatial anomalies & environmental hazards")
 	noAnomalies := fs.Bool("no-anomalies", false, "disable spatial anomalies & environmental hazards")
+	scenarioFlag := fs.String("scenario", "", "launch specific tactical scenario")
+	fs.StringVar(scenarioFlag, "s", "", "shorthand for --scenario")
+	listScenariosFlag := fs.Bool("list-scenarios", false, "display available tactical scenarios")
 
 	if err := fs.Parse(args); err != nil {
 		if err == flag.ErrHelp {
 			return 0
 		}
 		return 1
+	}
+
+	if *listScenariosFlag {
+		fmt.Fprintln(out, "Available Tactical Scenarios:")
+		for _, sc := range engine.ListScenarios() {
+			fmt.Fprintf(out, "  %-16s [%s] %s - %s\n", sc.ID, sc.Difficulty, sc.Name, sc.Description)
+		}
+		return 0
+	}
+
+	var sc *engine.Scenario
+	if *scenarioFlag != "" {
+		var ok bool
+		sc, ok = engine.GetScenario(engine.ScenarioID(*scenarioFlag))
+		if !ok {
+			fmt.Fprintf(errOut, "Error: unknown scenario %q\n", *scenarioFlag)
+			return 1
+		}
 	}
 
 	parsedMode, err := theme.ParseColorMode(*modeFlag)
@@ -103,8 +124,13 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 		s = time.Now().UnixNano()
 	}
 
-	game := engine.NewGameWithOptions(s, engine.SkillGood, engine.LengthMedium, rules)
-	game.PopulateQuadrant(game.Enterprise.Quad, game.Enterprise.Sector)
+	var game *engine.GameState
+	if sc != nil {
+		game = sc.Build(s)
+	} else {
+		game = engine.NewGameWithOptions(s, engine.SkillGood, engine.LengthMedium, rules)
+		game.PopulateQuadrant(game.Enterprise.Quad, game.Enterprise.Sector)
+	}
 	selectedTheme := theme.GetTheme(*themeName)
 	selectedTheme = selectedTheme.WithColorMode(parsedMode)
 

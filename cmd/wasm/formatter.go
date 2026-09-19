@@ -246,3 +246,33 @@ func FormatCombatEvents(events []engine.Event) string {
 	}
 	return b.String()
 }
+
+// FormatScenarios formats the catalog of available tactical scenarios.
+func FormatScenarios() string {
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("%s=== TACTICAL SCENARIOS ===%s\r\n", ansiCyan, ansiReset))
+	for _, sc := range engine.ListScenarios() {
+		b.WriteString(fmt.Sprintf("  %s%-16s%s [%s] - %s\r\n", ansiYellow, sc.ID, ansiReset, sc.Difficulty, sc.Name))
+		b.WriteString(fmt.Sprintf("    %s%s%s\r\n", ansiDim, sc.Description, ansiReset))
+	}
+	b.WriteString("\r\nType 'scenario <id>' to launch.\r\n")
+	return b.String()
+}
+
+// FormatScenarioBriefing formats a tactical mission briefing for terminal output.
+func FormatScenarioBriefing(sc *engine.Scenario) string {
+	if sc == nil {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("%s=== MISSION BRIEFING: %s ===%s\r\n", ansiCyan, strings.ToUpper(sc.Name), ansiReset))
+	if sc.Subtitle != "" {
+		b.WriteString(fmt.Sprintf("%s%s%s\r\n\r\n", ansiYellow, sc.Subtitle, ansiReset))
+	}
+	for _, line := range sc.Briefing {
+		b.WriteString(fmt.Sprintf("%s\r\n", line))
+	}
+	b.WriteString("\r\n")
+	return b.String()
+}
+
