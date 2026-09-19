@@ -16,11 +16,12 @@ func BuildMutaraNebula(seed int64) *GameState {
 	g.Enterprise.Condition = ConditionRed
 	g.QuadrantEnv[5][5] = EnvNebula
 
-	// No starbases in nebula duel
+	// No starbases and no other Klingons outside [5, 5] in nebula duel
 	g.RemainingStarbases = 0
 	for r := 1; r <= 8; r++ {
 		for c := 1; c <= 8; c++ {
-			g.GalaxyChart[r][c] = (g.GalaxyChart[r][c] / 100) * 100 + (g.GalaxyChart[r][c] % 10)
+			stars := g.GalaxyChart[r][c] % 10
+			g.GalaxyChart[r][c] = stars
 			g.ChartKnownBases[r][c] = false
 		}
 	}
@@ -67,20 +68,25 @@ func BuildMutaraNebula(seed int64) *GameState {
 	return g
 }
 
-// EvaluateMutaraNebula checks for Super-Commander elimination or Enterprise destruction.
+// EvaluateMutaraNebula checks for Super-Commander elimination, fleeing, or Enterprise destruction.
 func EvaluateMutaraNebula(g *GameState) (done bool, won bool, reason GameOverReason) {
 	if g == nil {
+		return true, false, GameOverLost
+	}
+
+	// Victory condition: Super-Commander destroyed
+	if g.Metrics.SuperCommandersKilled >= 1 || g.Metrics.CommandersKilled >= 1 || g.Metrics.KlingonsKilled >= 1 {
+		return true, true, GameOverWon
+	}
+
+	// Abandonment condition: fleeing the Mutara Nebula quadrant
+	if g.Enterprise.Quad != (Coord{5, 5}) {
 		return true, false, GameOverLost
 	}
 
 	// Loss condition: Enterprise destroyed or energy/time depleted
 	if g.Enterprise.Energy <= 0 || g.TimeRemaining <= 0 {
 		return true, false, GameOverLost
-	}
-
-	// Victory condition: Super-Commander destroyed
-	if g.Metrics.SuperCommandersKilled >= 1 || g.Metrics.CommandersKilled >= 1 || g.Metrics.KlingonsKilled >= 1 || len(g.CurrentQuad.Klingons) == 0 {
-		return true, true, GameOverWon
 	}
 
 	return false, false, GameOverLost

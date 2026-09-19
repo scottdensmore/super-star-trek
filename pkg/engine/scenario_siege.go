@@ -57,7 +57,8 @@ func EvaluateStarbaseSiege(g *GameState) (done bool, won bool, reason GameOverRe
 	}
 
 	// Victory if all 3 siege cruisers eliminated
-	if g.Metrics.KlingonsKilled >= 3 || (g.RemainingKlingons == 0 && (g.Enterprise.Quad != (Coord{4, 4}) || len(g.CurrentQuad.Klingons) == 0)) {
+	totalKills := g.Metrics.KlingonsKilled + g.Metrics.CommandersKilled + g.Metrics.SuperCommandersKilled
+	if totalKills >= 3 || (g.RemainingKlingons == 0 && (g.Enterprise.Quad != (Coord{4, 4}) || len(g.CurrentQuad.Klingons) == 0)) {
 		return true, true, GameOverWon
 	}
 

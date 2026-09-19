@@ -296,3 +296,45 @@ func TestScenario_ActionMove_TurnHook(t *testing.T) {
 		t.Errorf("expected game.GameWon to be true")
 	}
 }
+
+func TestScenario_MutaraNebula_FleeingDoesNotWin(t *testing.T) {
+	s, ok := GetScenario(ScenarioMutaraNebula)
+	if !ok {
+		t.Fatalf("failed to find Mutara Nebula scenario")
+	}
+
+	game := s.Build(42)
+	// Enterprise warps to adjacent quadrant without killing commander
+	game.Enterprise.Quad = Coord{5, 6}
+	game.CurrentQuad = QuadrantState{} // empty quadrant
+
+	done, won, reason := s.Evaluate(game)
+	if won {
+		t.Errorf("fleeing Mutara Nebula should not award victory")
+	}
+	if reason == GameOverWon {
+		t.Errorf("reason should not be GameOverWon when fleeing")
+	}
+	if !done || reason != GameOverLost {
+		t.Errorf("expected abandonment loss when fleeing Mutara Nebula, got done=%v reason=%v", done, reason)
+	}
+}
+
+func TestScenario_MutaraNebula_GalaxyChartOnlyOneKlingon(t *testing.T) {
+	s, ok := GetScenario(ScenarioMutaraNebula)
+	if !ok {
+		t.Fatalf("failed to find Mutara Nebula scenario")
+	}
+
+	game := s.Build(42)
+	totalKlingonsInChart := 0
+	for r := 1; r <= 8; r++ {
+		for c := 1; c <= 8; c++ {
+			totalKlingonsInChart += game.GalaxyChart[r][c] / 100
+		}
+	}
+	if totalKlingonsInChart != 1 {
+		t.Errorf("expected exactly 1 Klingon in galaxy chart, got %d", totalKlingonsInChart)
+	}
+}
+
