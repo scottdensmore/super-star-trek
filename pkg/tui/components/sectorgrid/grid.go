@@ -157,6 +157,8 @@ func entityGlyph(ent engine.EntityType, styles theme.Styles, selected bool, cloa
 			return styles.Planet.Reverse(true).Render("[O]")
 		case engine.EntityBlackHole:
 			return styles.BlackHole.Reverse(true).Render("[@]")
+		case engine.EntityWormhole:
+			return styles.Wormhole.Reverse(true).Render("[W]")
 		case engine.EntityEmpty:
 			return styles.Empty.Reverse(true).Render("[.]")
 		default:
@@ -177,12 +179,34 @@ func entityGlyph(ent engine.EntityType, styles theme.Styles, selected bool, cloa
 		return styles.Planet.Render(" O ")
 	case engine.EntityBlackHole:
 		return styles.BlackHole.Render(" @ ")
+	case engine.EntityWormhole:
+		return styles.Wormhole.Render(">W<")
 	case engine.EntityEmpty:
 		return styles.Empty.Render(" . ")
 	default:
 		return styles.Empty.Render(" . ")
 	}
 }
+
+// RenderCell renders a single sector grid cell at (r, c) using default theme styling.
+func RenderCell(r, c int, quad *engine.QuadrantState, selected bool) string {
+	styles := theme.DefaultTheme().Styles()
+	ent := engine.EntityEmpty
+	if quad != nil && r >= 1 && r <= 8 && c >= 1 && c <= 8 {
+		ent = quad.Grid[r][c]
+	}
+	isCloaked := false
+	if quad != nil {
+		for _, k := range quad.Klingons {
+			if k != nil && k.Sector[0] == r && k.Sector[1] == c && k.IsCloaked {
+				isCloaked = true
+				break
+			}
+		}
+	}
+	return entityGlyph(ent, styles, selected, isCloaked)
+}
+
 
 // padCell ensures a cell override glyph is strictly clamped and padded to exactly 3 runes.
 func padCell(s string) string {

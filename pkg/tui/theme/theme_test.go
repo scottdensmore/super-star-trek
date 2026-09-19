@@ -236,6 +236,9 @@ func TestModernThemePaletteColors(t *testing.T) {
 	if dark.BlackHole.GetForeground() != lipgloss.Color("#A855F7") {
 		t.Errorf("expected dark black hole fg #A855F7, got %v", dark.BlackHole.GetForeground())
 	}
+	if dark.Wormhole.GetForeground() != lipgloss.Color("#04D9FF") {
+		t.Errorf("expected dark wormhole fg #04D9FF, got %v", dark.Wormhole.GetForeground())
+	}
 	if dark.Empty.GetForeground() != lipgloss.Color("#334155") {
 		t.Errorf("expected dark empty fg #334155, got %v", dark.Empty.GetForeground())
 	}
@@ -267,6 +270,9 @@ func TestModernThemePaletteColors(t *testing.T) {
 	}
 	if light.BlackHole.GetForeground() != lipgloss.Color("#7C3AED") {
 		t.Errorf("expected light black hole fg #7C3AED, got %v", light.BlackHole.GetForeground())
+	}
+	if light.Wormhole.GetForeground() != lipgloss.Color("#0284C7") {
+		t.Errorf("expected light wormhole fg #0284C7, got %v", light.Wormhole.GetForeground())
 	}
 	if light.Empty.GetForeground() != lipgloss.Color("#94A3B8") {
 		t.Errorf("expected light empty fg #94A3B8, got %v", light.Empty.GetForeground())
