@@ -101,6 +101,53 @@ func TestGameSaveAndLoadRoundtrip(t *testing.T) {
 	}
 }
 
+func TestScenarioSaveAndLoadRoundtrip(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// 1. Scenario roundtrip with ScenarioMutaraNebula
+	savePath := filepath.Join(tmpDir, "SCENMUT.TRK")
+	orig := NewGame(1234, SkillExpert, LengthShort)
+	orig.Scenario = ScenarioMutaraNebula
+
+	if err := orig.Save(savePath); err != nil {
+		t.Fatalf("failed to save game with scenario: %v", err)
+	}
+
+	loaded, err := LoadGame(savePath)
+	if err != nil {
+		t.Fatalf("failed to load game with scenario: %v", err)
+	}
+
+	if loaded.Scenario != ScenarioMutaraNebula {
+		t.Errorf("expected loaded scenario %q, got %q", ScenarioMutaraNebula, loaded.Scenario)
+	}
+
+	// 2. ScenarioNone omitempty verification
+	nonePath := filepath.Join(tmpDir, "SCENNONE.TRK")
+	origNone := NewGame(5678, SkillGood, LengthMedium)
+	origNone.Scenario = ScenarioNone
+
+	if err := origNone.Save(nonePath); err != nil {
+		t.Fatalf("failed to save game with ScenarioNone: %v", err)
+	}
+
+	data, err := os.ReadFile(nonePath)
+	if err != nil {
+		t.Fatalf("failed to read raw save file: %v", err)
+	}
+	if strings.Contains(string(data), `"scenario"`) {
+		t.Errorf("expected 'scenario' field to be omitted for ScenarioNone in JSON, got: %s", string(data))
+	}
+
+	loadedNone, err := LoadGame(nonePath)
+	if err != nil {
+		t.Fatalf("failed to load game with ScenarioNone: %v", err)
+	}
+	if loadedNone.Scenario != ScenarioNone {
+		t.Errorf("expected loaded scenario %q, got %q", ScenarioNone, loadedNone.Scenario)
+	}
+}
+
 func TestGameSaveAutoAppendExtension(t *testing.T) {
 	tmpDir := t.TempDir()
 	savePathWithoutExt := filepath.Join(tmpDir, "AUTOSAVE")

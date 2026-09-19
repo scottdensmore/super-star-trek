@@ -121,6 +121,7 @@ type GameMetrics struct {
 // GameState holds all mutable state for an active game session.
 type GameState struct {
 	RNG                *PRNG
+	Scenario           ScenarioID `json:"scenario,omitempty"`
 	Rules              GameRules `json:"rules"`
 	Skill              SkillLevel
 	Length             GameLength
