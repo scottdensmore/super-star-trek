@@ -48,6 +48,8 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	klingonCloak := fs.Bool("klingon-cloak", false, "enable Klingon commander tactical cloaking")
 	anomalies := fs.Bool("anomalies", false, "enable spatial anomalies & environmental hazards")
 	noAnomalies := fs.Bool("no-anomalies", false, "disable spatial anomalies & environmental hazards")
+	sound := fs.Bool("sound", true, "enable retro procedural audio and sound FX")
+	noSound := fs.Bool("no-sound", false, "disable retro procedural audio and sound FX")
 	scenarioFlag := fs.String("scenario", "", "launch specific tactical scenario")
 	fs.StringVar(scenarioFlag, "s", "", "shorthand for --scenario")
 	listScenariosFlag := fs.Bool("list-scenarios", false, "display available tactical scenarios")
@@ -93,6 +95,19 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 		return 1
 	}
 
+	if visited["sound"] && visited["no-sound"] {
+		_, _ = fmt.Fprintln(errOut, "Error: cannot specify both --sound and --no-sound")
+		return 1
+	}
+
+	soundEnabled := true
+	if visited["sound"] {
+		soundEnabled = *sound
+	}
+	if visited["no-sound"] {
+		soundEnabled = !*noSound
+	}
+
 	rules := engine.DefaultRulesForProfile(engine.DifficultyProfile(*difficulty))
 	if visited["surveillance"] {
 		rules.Surveillance = engine.SurveillanceMode(*surveillance)
@@ -135,6 +150,7 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	selectedTheme = selectedTheme.WithColorMode(parsedMode)
 
 	p := tui.NewModel(game, selectedTheme)
+	p.SetSoundEnabled(soundEnabled)
 	if err := runProgram(p, tea.WithAltScreen(), tea.WithMouseCellMotion()); err != nil {
 		_, _ = fmt.Fprintf(errOut, "Error running game: %v\n", err)
 		return 1

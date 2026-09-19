@@ -288,6 +288,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.Theme != nil {
 					m = m.applyTheme(m.Theme.WithColorMode(m.optionsModal.ColorMode()))
 				}
+				m.SetSoundEnabled(m.optionsModal.AudioEnabled())
 				m.optionsModal.Closed = false
 				return m, m.CommandBar.Focus()
 			}
@@ -365,6 +366,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c":
 			return m, tea.Quit
 
+		case msg.Type == tea.KeyCtrlS || msg.String() == "ctrl+s":
+			return m.toggleSound()
+
 		case msg.Type == tea.KeyEsc || msg.String() == "esc":
 			if strings.TrimSpace(m.CommandBar.Value()) == "" {
 				return m, tea.Quit
@@ -421,8 +425,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.CommandBar.Blur()
 				return m, nil
 
-			case msg.String() == "c" || msg.String() == "C" || msg.String() == "m" || msg.String() == "M":
+			case msg.String() == "c" || msg.String() == "C":
 				return m.openGalacticChart()
+
+			case msg.String() == "m" || msg.String() == "M":
+				return m.toggleSound()
 
 			case msg.String() == "d" || msg.String() == "D":
 				return m.openDamageSchematic()
@@ -437,6 +444,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.Theme != nil {
 					m.optionsModal.SetColorMode(m.Theme.ColorMode())
 				}
+				m.optionsModal.SetAudioEnabled(m.SoundEnabled())
 				m.showOptions = true
 				m.CommandBar.Blur()
 				return m, nil
@@ -913,6 +921,7 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		if m.Theme != nil {
 			m.optionsModal.SetColorMode(m.Theme.ColorMode())
 		}
+		m.optionsModal.SetAudioEnabled(m.SoundEnabled())
 		m.showOptions = true
 		m.CommandBar.Blur()
 		return m, nil
@@ -999,6 +1008,7 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			if m.Theme != nil {
 				m.optionsModal.SetColorMode(m.Theme.ColorMode())
 			}
+			m.optionsModal.SetAudioEnabled(m.SoundEnabled())
 			m.showOptions = true
 			m.CommandBar.Blur()
 			return m, nil
@@ -1122,8 +1132,25 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// logEvents formats and appends engine events to the command bar log buffer.
+// toggleSound inverts the current sound enabled state, synchronizing the player,
+// status panel, and options modal, and displaying a tactical notification.
+func (m *Model) toggleSound() (Model, tea.Cmd) {
+	enabled := !m.SoundEnabled()
+	m.SetSoundEnabled(enabled)
+	if enabled {
+		m.CommandBar.AddMessage("*** Audio: Enabled ***")
+	} else {
+		m.CommandBar.AddMessage("*** Audio: Muted ***")
+	}
+	return *m, nil
+}
+
+// logEvents formats and appends engine events to the command bar log buffer,
+// and dispatches them to the audio engine.
 func (m *Model) logEvents(events []engine.Event) {
+	if m.AudioDispatcher != nil && len(events) > 0 {
+		m.AudioDispatcher.DispatchEvents(events)
+	}
 	for _, ev := range events {
 		if _, ok := ev.(engine.EventGameOver); ok {
 			continue

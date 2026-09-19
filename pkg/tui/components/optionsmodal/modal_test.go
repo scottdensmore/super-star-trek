@@ -60,6 +60,7 @@ func TestOptionsModal_RenderLayout(t *testing.T) {
 		"Klingon Cloaking",
 		"Combat Animations",
 		"Color Mode",
+		"Sound FX",
 	}
 	for _, exp := range expectedStrings {
 		if !strings.Contains(view, exp) {
@@ -268,4 +269,87 @@ func TestOptionsModal_AnimSpeedRow(t *testing.T) {
 		t.Errorf("expected view to contain 'CINEMATIC', got:\n%s", view)
 	}
 }
+
+func TestOptionsModal_AudioRow(t *testing.T) {
+	th := theme.DefaultTheme()
+	rules := engine.DefaultRulesForProfile(engine.ProfileNormal)
+	m := New(th, rules)
+
+	// Default state is AudioEnabled() == true
+	if !m.AudioEnabled() {
+		t.Fatalf("expected initial AudioEnabled to be true, got %v", m.AudioEnabled())
+	}
+
+	m.SelectedRow = RowAudio
+
+	// Toggle with Right arrow: true -> false
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.AudioEnabled() {
+		t.Fatalf("expected AudioEnabled to be false after Right arrow, got %v", m.AudioEnabled())
+	}
+
+	// Toggle with Left arrow: false -> true
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	if !m.AudioEnabled() {
+		t.Fatalf("expected AudioEnabled to be true after Left arrow, got %v", m.AudioEnabled())
+	}
+
+	// Toggle with Space: true -> false
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeySpace})
+	if m.AudioEnabled() {
+		t.Fatalf("expected AudioEnabled to be false after Space, got %v", m.AudioEnabled())
+	}
+
+	// Toggle with Enter: false -> true
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if !m.AudioEnabled() {
+		t.Fatalf("expected AudioEnabled to be true after Enter, got %v", m.AudioEnabled())
+	}
+
+	// View rendering when ENABLED
+	viewEnabled := m.View()
+	if !strings.Contains(viewEnabled, "Sound FX") {
+		t.Errorf("expected view to contain 'Sound FX', got:\n%s", viewEnabled)
+	}
+	if !strings.Contains(viewEnabled, "[ENABLED]") {
+		t.Errorf("expected view to contain '[ENABLED]', got:\n%s", viewEnabled)
+	}
+
+	// View rendering when DISABLED
+	m.SetAudioEnabled(false)
+	if m.AudioEnabled() {
+		t.Fatalf("expected AudioEnabled to be false after SetAudioEnabled(false)")
+	}
+	viewDisabled := m.View()
+	if !strings.Contains(viewDisabled, "[DISABLED]") {
+		t.Errorf("expected view to contain '[DISABLED]', got:\n%s", viewDisabled)
+	}
+
+	// Navigation: Up from RowDone should be RowAudio
+	m.SelectedRow = RowDone
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if m.SelectedRow != RowAudio {
+		t.Errorf("expected SelectedRow to be RowAudio after Up from RowDone, got %v", m.SelectedRow)
+	}
+
+	// Down from RowAudio should be RowDone
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if m.SelectedRow != RowDone {
+		t.Errorf("expected SelectedRow to be RowDone after Down from RowAudio, got %v", m.SelectedRow)
+	}
+
+	// Up from RowAudio should be RowColorMode
+	m.SelectedRow = RowAudio
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if m.SelectedRow != RowColorMode {
+		t.Errorf("expected SelectedRow to be RowColorMode after Up from RowAudio, got %v", m.SelectedRow)
+	}
+
+	// Down from RowColorMode should be RowAudio
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if m.SelectedRow != RowAudio {
+		t.Errorf("expected SelectedRow to be RowAudio after Down from RowColorMode, got %v", m.SelectedRow)
+	}
+}
+
 

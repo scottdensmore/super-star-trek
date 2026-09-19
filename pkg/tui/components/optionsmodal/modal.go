@@ -22,17 +22,19 @@ const (
 	RowTimeMargin
 	RowAnimSpeed
 	RowColorMode
+	RowAudio
 	RowDone
 	NumRows
 )
 
 // Model represents the interactive options modal overlay component.
 type Model struct {
-	Theme       theme.Theme
-	rules       engine.GameRules
-	colorMode   theme.ColorMode
-	SelectedRow Row
-	Closed      bool
+	Theme        theme.Theme
+	rules        engine.GameRules
+	colorMode    theme.ColorMode
+	audioEnabled bool
+	SelectedRow  Row
+	Closed       bool
 }
 
 // New creates a new options modal initialized with the given theme and rules.
@@ -41,12 +43,23 @@ func New(th theme.Theme, rules engine.GameRules) Model {
 		th = theme.DefaultTheme()
 	}
 	return Model{
-		Theme:       th,
-		rules:       rules,
-		colorMode:   th.ColorMode(),
-		SelectedRow: RowProfile,
-		Closed:      false,
+		Theme:        th,
+		rules:        rules,
+		colorMode:    th.ColorMode(),
+		audioEnabled: true,
+		SelectedRow:  RowProfile,
+		Closed:       false,
 	}
+}
+
+// AudioEnabled returns whether audio sound FX are enabled in the modal.
+func (m Model) AudioEnabled() bool {
+	return m.audioEnabled
+}
+
+// SetAudioEnabled updates the audio enabled state inside the modal.
+func (m *Model) SetAudioEnabled(enabled bool) {
+	m.audioEnabled = enabled
 }
 
 // Rules returns the current game rules configured in the modal.
@@ -186,6 +199,8 @@ func (m *Model) cycleOption(dir int) {
 			}
 		}
 		m.colorMode = colorModes[(idx+dir+len(colorModes))%len(colorModes)]
+	case RowAudio:
+		m.audioEnabled = !m.audioEnabled
 	}
 }
 
@@ -245,6 +260,11 @@ func (m Model) View() string {
 	}
 	rows = append(rows, renderRow(RowAnimSpeed, "Combat Animations", animSpeedStr))
 	rows = append(rows, renderRow(RowColorMode, "Color Mode", strings.ToUpper(string(m.colorMode))))
+	audioStr := "[DISABLED]"
+	if m.audioEnabled {
+		audioStr = "[ENABLED]"
+	}
+	rows = append(rows, renderRow(RowAudio, "Sound FX", audioStr))
 
 	doneStyle := styles.LogText
 	prefix := "  "

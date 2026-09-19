@@ -256,9 +256,12 @@ func TestColorModeOptionsModalKeyInteraction(t *testing.T) {
 		t.Fatalf("expected modal ColorMode to be Dark, got %s", updated2.optionsModal.ColorMode())
 	}
 
-	// Down arrow once more to RowDone
-	newMDone, _ := updated2.Update(tea.KeyMsg{Type: tea.KeyDown})
-	updatedDone := newMDone.(Model)
+	// Navigate to RowDone
+	for updated2.optionsModal.SelectedRow != optionsmodal.RowDone {
+		newMDone, _ := updated2.Update(tea.KeyMsg{Type: tea.KeyDown})
+		updated2 = newMDone.(Model)
+	}
+	updatedDone := updated2
 
 	// Press Enter to confirm and close
 	newM3, _ := updatedDone.Update(tea.KeyMsg{Type: tea.KeyEnter})
