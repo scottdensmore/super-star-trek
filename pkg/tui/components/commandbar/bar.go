@@ -287,9 +287,6 @@ func (m Model) View() string {
 	panelStyle := styles.Panel
 	if m.visualBell {
 		bellColor := styles.ConditionRed.GetForeground()
-		if styles.ConditionRed.GetBackground() != nil {
-			bellColor = styles.ConditionRed.GetBackground()
-		}
 		panelStyle = panelStyle.BorderForeground(bellColor)
 	}
 	if m.width > 0 {
