@@ -454,7 +454,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.showOptions {
 			return m, nil
 		}
-		isLeftClick := msg.Button == tea.MouseButtonLeft || msg.Type == tea.MouseLeft
+		isLeftClick := msg.Button == tea.MouseButtonLeft
 		if !isLeftClick || msg.Action == tea.MouseActionRelease || msg.Action == tea.MouseActionMotion {
 			return m, nil
 		}
@@ -543,7 +543,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.LastClickTime = time.Time{}
 			m.LastClickCoord = coord
 
-			var ent engine.EntityType = engine.EntityEmpty
+			ent := engine.EntityEmpty
 			if m.Game != nil && coord[0] >= 1 && coord[0] <= 8 && coord[1] >= 1 && coord[1] <= 8 {
 				ent = m.Game.CurrentQuad.Grid[coord[0]][coord[1]]
 			}
@@ -675,7 +675,7 @@ func (m Model) applyTheme(th theme.Theme) Model {
 
 // openGalacticChart updates star chart state from the active game and activates ModalGalacticChart.
 func (m Model) openGalacticChart() (Model, tea.Cmd) {
-	var entQuad engine.Coord = engine.Coord{1, 1}
+	entQuad := engine.Coord{1, 1}
 	var chart [9][9]int
 	var discovered [9][9]bool
 	var knownBases [9][9]bool
@@ -1243,29 +1243,6 @@ func deviceString(d engine.DeviceID) string {
 		return "Phasers"
 	case engine.DevicePhotonTubes:
 		return "Photon Tubes"
-	case engine.DeviceDamageControl:
-		return "Damage Control"
-	case engine.DeviceShields:
-		return "Shields"
-	case engine.DeviceComputer:
-		return "Computer"
-	default:
-		return "Subsystem"
-	}
-}
-
-func deviceShortString(d engine.DeviceID) string {
-	switch d {
-	case engine.DeviceWarp:
-		return "Warp"
-	case engine.DeviceSRSensors:
-		return "SRS"
-	case engine.DeviceLRSensors:
-		return "LRS"
-	case engine.DevicePhasers:
-		return "Phasers"
-	case engine.DevicePhotonTubes:
-		return "Tubes"
 	case engine.DeviceDamageControl:
 		return "Damage Control"
 	case engine.DeviceShields:

@@ -408,7 +408,7 @@ func TestDispatchFirePhasers_ManualAndErrors(t *testing.T) {
 	}
 
 	// Manual allocation with energy omitted (auto-inferred from allocation map)
-	events, err = game.Dispatch(ActionFirePhasers{
+	_, err = game.Dispatch(ActionFirePhasers{
 		ManualAllocation: map[int]float64{
 			1:  200,
 			99: 100, // ID 99 does not exist, should be ignored
@@ -706,7 +706,7 @@ func TestDispatchMove_InterQuadrant(t *testing.T) {
 	game.CurrentQuad.Grid[4][3] = EntityStar // obstacle at sector 3
 	game.Enterprise.Energy = 5000
 
-	events, err = game.Dispatch(ActionMove{
+	_, err = game.Dispatch(ActionMove{
 		Course: 0.0, // East, attempting Warp 2.0 (16 steps)
 		Warp:   2.0,
 	})

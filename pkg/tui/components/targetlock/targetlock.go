@@ -287,15 +287,9 @@ func (m Model) View() string {
 	if borderV == 0 {
 		borderV = 2
 	}
-	paddingV := panelStyle.GetVerticalPadding()
-
 	innerWidth := targetWidth - borderH - paddingH
 	if innerWidth < 10 {
 		innerWidth = 10
-	}
-	innerHeight := targetHeight - borderV - paddingV
-	if innerHeight < 1 {
-		innerHeight = 1
 	}
 
 	widthNoBorders := targetWidth - borderH

@@ -40,10 +40,7 @@ func getStyles(th theme.Theme) modalStyles {
 	}
 	base := th.Styles()
 	borderFg := base.Panel.GetBorderTopForeground()
-	bStyle := lipgloss.NewStyle()
-	if borderFg != nil {
-		bStyle = bStyle.Foreground(borderFg)
-	}
+	bStyle := lipgloss.NewStyle().Foreground(borderFg)
 	return modalStyles{
 		Styles:   base,
 		borderFg: bStyle,

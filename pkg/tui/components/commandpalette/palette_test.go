@@ -203,7 +203,7 @@ func TestCommandPalette_Close(t *testing.T) {
 	th := theme.DefaultTheme()
 	m := New(th, 56, 16)
 
-	m, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	if cmd == nil {
 		t.Fatalf("expected tea.Cmd on Esc, got nil")
 	}

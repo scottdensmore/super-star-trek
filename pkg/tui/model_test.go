@@ -631,8 +631,7 @@ func TestModel_MouseDoubleClickDock(t *testing.T) {
 	m = updated.(Model)
 
 	// Second click
-	updated, _ = m.Update(mouseMsg)
-	m = updated.(Model)
+	_, _ = m.Update(mouseMsg)
 
 	if g.Enterprise.Condition != engine.ConditionDocked {
 		t.Fatalf("expected Enterprise ConditionDocked after double-clicking Starbase, got %v", g.Enterprise.Condition)

@@ -29,8 +29,8 @@ func ValidateSaveFilename(filename string) error {
 		return errors.New("file name cannot exceed 9 characters")
 	}
 	firstByte := stem[0]
-	if !((firstByte >= 'A' && firstByte <= 'Z') || (firstByte >= 'a' && firstByte <= 'z')) {
-		return fmt.Errorf("Spock- \"Captain, file names must begin with an alphabetic letter (A-Z).\"")
+	if (firstByte < 'A' || firstByte > 'Z') && (firstByte < 'a' || firstByte > 'z') {
+		return fmt.Errorf("spock- \"Captain, file names must begin with an alphabetic letter (A-Z).\"")
 	}
 	return nil
 }

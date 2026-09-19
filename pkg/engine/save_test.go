@@ -29,7 +29,7 @@ func TestSpockFilenameValidation(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error for '1bad', got nil")
 	}
-	expectedMsg := `Spock- "Captain, file names must begin with an alphabetic letter (A-Z)."`
+	expectedMsg := `spock- "Captain, file names must begin with an alphabetic letter (A-Z)."`
 	if err.Error() != expectedMsg {
 		t.Errorf("expected error %q, got %q", expectedMsg, err.Error())
 	}

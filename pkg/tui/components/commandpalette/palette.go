@@ -319,9 +319,6 @@ func (m *Model) updateStyles() {
 	d.Styles.NormalDesc = styles.GaugeLabel.Padding(0, 0, 0, 2)
 
 	accentColor := styles.Prompt.GetForeground()
-	if accentColor == nil {
-		accentColor = lipgloss.Color("6")
-	}
 
 	d.Styles.SelectedTitle = styles.Prompt.
 		Border(lipgloss.NormalBorder(), false, false, false, true).

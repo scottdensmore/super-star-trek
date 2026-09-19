@@ -258,10 +258,7 @@ func (m Model) View() string {
 	}
 
 	borderFg := styles.Panel.GetBorderTopForeground()
-	dividerStyle := lipgloss.NewStyle()
-	if borderFg != nil {
-		dividerStyle = dividerStyle.Foreground(borderFg)
-	}
+	dividerStyle := lipgloss.NewStyle().Foreground(borderFg)
 	dividerStr := ""
 	if dialogWidth > 0 {
 		dividerStr = strings.Repeat("─", dialogWidth)

@@ -170,7 +170,7 @@ func MoveKlingon(g *GameState, k *Klingon, dest Coord) []Event {
 	}
 
 	origSector := k.Sector
-	var origEntity EntityType = EntityKlingon
+	origEntity := EntityKlingon
 	if origSector[0] >= 1 && origSector[0] <= 8 && origSector[1] >= 1 && origSector[1] <= 8 {
 		gridEnt := g.CurrentQuad.Grid[origSector[0]][origSector[1]]
 		if gridEnt == EntityKlingon || gridEnt == EntityCommander || gridEnt == EntitySuperCommander {

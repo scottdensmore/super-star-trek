@@ -21,14 +21,14 @@ func NewTeletypeSubscriber(w io.Writer) *TeletypeSubscriber {
 func (s *TeletypeSubscriber) HandleEvent(e engine.Event) {
 	switch evt := e.(type) {
 	case engine.EventShieldTransfer:
-		fmt.Fprintf(s.w, "Energy: %.0f  Shields: %.0f\n", evt.NewEnergy, evt.NewShields)
+		_, _ = fmt.Fprintf(s.w, "Energy: %.0f  Shields: %.0f\n", evt.NewEnergy, evt.NewShields)
 	case engine.EventTorpedoFired:
-		fmt.Fprintf(s.w, "Track: course %.2f\n", evt.Angle)
+		_, _ = fmt.Fprintf(s.w, "Track: course %.2f\n", evt.Angle)
 	case engine.EventTorpedoHit:
 		if evt.Destroyed {
-			fmt.Fprintf(s.w, "*** Klingon destroyed ***\n")
+			_, _ = fmt.Fprintf(s.w, "*** Klingon destroyed ***\n")
 		} else {
-			fmt.Fprintf(s.w, "Hit: %.0f units\n", evt.Damage)
+			_, _ = fmt.Fprintf(s.w, "Hit: %.0f units\n", evt.Damage)
 		}
 	}
 }
