@@ -149,6 +149,41 @@ document.getElementById('restart-btn').addEventListener('click', () => {
     }
 });
 
+// Sound toggle button
+const soundBtn = document.getElementById('sound-btn');
+if (soundBtn) {
+    function updateSoundButtonUI(muted) {
+        soundBtn.textContent = muted ? '🔇 Sound: OFF' : '🔊 Sound: ON';
+    }
+
+    let initialMuted = false;
+    try {
+        const saved = localStorage.getItem('sst_sound_muted');
+        if (saved !== null) {
+            initialMuted = (saved === 'true');
+        } else if (typeof window.sstIsMuted === 'function') {
+            initialMuted = window.sstIsMuted();
+        }
+    } catch (e) {
+        if (typeof window.sstIsMuted === 'function') {
+            initialMuted = window.sstIsMuted();
+        }
+    }
+    updateSoundButtonUI(initialMuted);
+    if (typeof window.sstSetMuted === 'function') {
+        window.sstSetMuted(initialMuted);
+    }
+
+    soundBtn.addEventListener('click', () => {
+        const currentMuted = typeof window.sstIsMuted === 'function' ? window.sstIsMuted() : false;
+        const newMuted = !currentMuted;
+        if (typeof window.sstSetMuted === 'function') {
+            window.sstSetMuted(newMuted);
+        }
+        updateSoundButtonUI(newMuted);
+    });
+}
+
 // Initialize Go WASM runtime
 async function initWasm() {
     term.write('\x1b[33mInitializing Starfleet Computer Interface (WASM)...\x1b[0m\r\n');

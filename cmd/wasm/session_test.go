@@ -2,8 +2,10 @@ package main
 
 import (
 	"strings"
+	"sync"
 	"testing"
 
+	"github.com/scottdensmore/super-star-trek/pkg/audio"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 )
 
@@ -156,4 +158,130 @@ func TestSession_ScenarioCommands_Unknown(t *testing.T) {
 		t.Errorf("expected multi-word unknown scenario error, got: %s", multiOut)
 	}
 }
+
+type mockAudioPlayer struct {
+	mu     sync.Mutex
+	sounds []audio.SoundID
+	muted  bool
+}
+
+func (m *mockAudioPlayer) Play(sound audio.SoundID) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.sounds = append(m.sounds, sound)
+}
+
+func (m *mockAudioPlayer) SetMuted(muted bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.muted = muted
+}
+
+func (m *mockAudioPlayer) IsMuted() bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.muted
+}
+
+func (m *mockAudioPlayer) Sounds() []audio.SoundID {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := make([]audio.SoundID, len(m.sounds))
+	copy(out, m.sounds)
+	return out
+}
+
+func (m *mockAudioPlayer) HasSound(target audio.SoundID) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, s := range m.sounds {
+		if s == target {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *mockAudioPlayer) Clear() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.sounds = nil
+}
+
+func TestSession_AudioEventDispatch(t *testing.T) {
+	s := NewSession(12345, engine.ProfileNormal)
+	mock := &mockAudioPlayer{}
+	s.SetAudioPlayer(mock)
+
+	// 1. Shields command triggers SoundShields
+	mock.Clear()
+	shieldOut := s.Execute("she 200")
+	if !strings.Contains(shieldOut, "Shields") {
+		t.Fatalf("expected shield transfer output, got: %s", shieldOut)
+	}
+	if !mock.HasSound(audio.SoundShields) {
+		t.Errorf("expected SoundShields, got: %v", mock.Sounds())
+	}
+
+	// 2. Torpedo command triggers SoundTorpedoLaunch
+	mock.Clear()
+	s.Execute("tor 1")
+	if !mock.HasSound(audio.SoundTorpedoLaunch) {
+		t.Errorf("expected SoundTorpedoLaunch, got: %v", mock.Sounds())
+	}
+
+	// 3. Phaser command triggers SoundPhaser (requires Klingon in quadrant)
+	mock.Clear()
+	kSector := engine.Coord{3, 3}
+	if s.Game().Enterprise.Sector == kSector {
+		kSector = engine.Coord{4, 4}
+	}
+	s.Game().CurrentQuad.Klingons = []*engine.Klingon{
+		{
+			ID:     1,
+			Sector: kSector,
+			Energy: 200,
+		},
+	}
+	s.Game().CurrentQuad.Grid[kSector[0]][kSector[1]] = engine.EntityKlingon
+	phaOut := s.Execute("pha 100")
+	if !strings.Contains(phaOut, "PHASERS") && !strings.Contains(phaOut, "Phaser") {
+		t.Fatalf("expected phasers output, got: %s", phaOut)
+	}
+	if !mock.HasSound(audio.SoundPhaser) {
+		t.Errorf("expected SoundPhaser, got: %v", mock.Sounds())
+	}
+
+	// 4. Warp/Navigation command triggers SoundWarp
+	mock.Clear()
+	s.Execute("nav 1 1")
+	if !mock.HasSound(audio.SoundWarp) {
+		t.Errorf("expected SoundWarp, got: %v", mock.Sounds())
+	}
+
+	// 5. Docking command triggers SoundDock when adjacent to a starbase
+	mock.Clear()
+	ent := s.Game().Enterprise.Sector
+	sbR := ent[0] + 1
+	if sbR > 8 {
+		sbR = ent[0] - 1
+	}
+	s.Game().CurrentQuad.Starbase = &engine.Coord{sbR, ent[1]}
+	s.Game().CurrentQuad.Grid[sbR][ent[1]] = engine.EntityStarbase
+	s.Game().Enterprise.Condition = engine.ConditionGreen
+	dockOut := s.Execute("doc")
+	if !strings.Contains(dockOut, "Docked") {
+		t.Fatalf("expected docked output, got: %s", dockOut)
+	}
+	if !mock.HasSound(audio.SoundDock) {
+		t.Errorf("expected SoundDock, got: %v", mock.Sounds())
+	}
+
+	// 6. Test that default session without explicit audio player executes without panic
+	sDefault := NewSession(12345, engine.ProfileNormal)
+	sDefault.Execute("she 100")
+	sDefault.Execute("pha 50")
+	sDefault.Execute("tor 2")
+}
+
 

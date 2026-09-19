@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/scottdensmore/super-star-trek/pkg/audio"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/parser"
 )
 
 // Session manages a single player's game session.
 type Session struct {
-	game    *engine.GameState
-	history []string
-	seed    int64
+	game       *engine.GameState
+	history    []string
+	seed       int64
+	dispatcher *audio.Dispatcher
 }
 
 // NewSession creates and initializes a new Session with the specified seed and difficulty.
@@ -29,15 +31,26 @@ func NewSession(seed int64, difficulty ...engine.DifficultyProfile) *Session {
 	game := engine.NewGameWithOptions(seed, engine.SkillGood, engine.LengthMedium, rules)
 	game.PopulateQuadrant(game.Enterprise.Quad, game.Enterprise.Sector)
 	return &Session{
-		game:    game,
-		history: make([]string, 0),
-		seed:    seed,
+		game:       game,
+		history:    make([]string, 0),
+		seed:       seed,
+		dispatcher: audio.NewDispatcher(audio.NewNullPlayer()),
 	}
 }
 
 // Game returns the underlying GameState.
 func (s *Session) Game() *engine.GameState {
 	return s.game
+}
+
+// SetAudioPlayer configures the audio player for the session.
+func (s *Session) SetAudioPlayer(player audio.Player) {
+	s.dispatcher = audio.NewDispatcher(player)
+}
+
+// AudioDispatcher returns the session's audio event dispatcher.
+func (s *Session) AudioDispatcher() *audio.Dispatcher {
+	return s.dispatcher
 }
 
 // Execute processes a user input string and returns formatted teletype output.
@@ -98,6 +111,9 @@ func (s *Session) Execute(input string) string {
 		events, err := s.game.Dispatch(parsed.Action)
 		if err != nil {
 			return fmt.Sprintf("Cannot execute: %v\r\n", err)
+		}
+		if s.dispatcher != nil {
+			s.dispatcher.DispatchEvents(events)
 		}
 		var out strings.Builder
 		out.WriteString(FormatCombatEvents(events))
