@@ -496,6 +496,9 @@ type ActionMove struct {
 
 // Execute applies the movement action to GameState.
 func (a ActionMove) Execute(g *GameState) ([]Event, error) {
+	if g == nil {
+		return nil, errors.New("game state is nil")
+	}
 	if a.Warp <= 0 {
 		return nil, errors.New("warp factor must be positive")
 	}
@@ -639,10 +642,7 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 			nextC := int(math.Round(currentC + float64(step)*dc)) + driftC
 
 			if g.QuadrantEnv[fromQuad[0]][fromQuad[1]] == EnvIonStorm {
-				if g.RNG == nil {
-					g.RNG = NewPRNG(12345)
-				}
-				if g.RNG.Float64() < 0.25 {
+				if g.RNG != nil && g.RNG.Float64() < 0.25 {
 					delta := 1
 					if g.RNG.Float64() < 0.5 {
 						delta = -1
@@ -810,8 +810,8 @@ func isNearBlackHole(grid [9][9]EntityType, sector Coord) bool {
 }
 
 func handleWormholeJump(g *GameState, a ActionMove, fromQuad, fromSector, wormholeSector Coord, energyNeeded, timeUsed float64, events []Event) ([]Event, error) {
-	if g.RNG == nil {
-		g.RNG = NewPRNG(12345)
+	if g == nil || g.RNG == nil {
+		return nil, errors.New("cannot execute wormhole jump: RNG is not initialized")
 	}
 
 	targetQuad := Coord{g.RNG.Intn(8) + 1, g.RNG.Intn(8) + 1}
@@ -952,6 +952,9 @@ func (a ActionLRScan) ReadQuadrant(g *GameState, qr, qc int) int {
 
 // ScanQuadrant returns the long-range sensor scan value for quadrant (qr, qc), or -1 if the quadrant is in a nebula or out of bounds.
 func ScanQuadrant(g *GameState, qr, qc int) int {
+	if g == nil {
+		return -1
+	}
 	if qr < 1 || qr > 8 || qc < 1 || qc > 8 {
 		return -1
 	}

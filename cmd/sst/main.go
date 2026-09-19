@@ -67,6 +67,11 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 		visited[f.Name] = true
 	})
 
+	if visited["anomalies"] && visited["no-anomalies"] {
+		fmt.Fprintln(errOut, "Error: cannot specify both --anomalies and --no-anomalies")
+		return 1
+	}
+
 	rules := engine.DefaultRulesForProfile(engine.DifficultyProfile(*difficulty))
 	if visited["surveillance"] {
 		rules.Surveillance = engine.SurveillanceMode(*surveillance)

@@ -1,6 +1,6 @@
 package engine
 
-// SeedAnomalies proceduralizes nebulae, ion storms, black holes, and wormholes across the galaxy.
+// SeedAnomalies proceduralizes environmental phenomena (nebulae and ion storms) across the galaxy quadrants.
 func SeedAnomalies(g *GameState) {
 	if g == nil || !g.Rules.SpatialAnomalies || g.RNG == nil {
 		return

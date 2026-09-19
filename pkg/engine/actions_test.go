@@ -674,9 +674,59 @@ func TestScanQuadrant_Helper(t *testing.T) {
 	if val := act.ReadQuadrant(g, 2, 3); val != -1 {
 		t.Errorf("expected -1 for ActionLRScan.ReadQuadrant, got %d", val)
 	}
+	if val := ScanQuadrant(nil, 2, 4); val != -1 {
+		t.Errorf("expected -1 for nil GameState in ScanQuadrant, got %d", val)
+	}
+	if val := act.ReadQuadrant(nil, 2, 4); val != -1 {
+		t.Errorf("expected -1 for nil GameState in ActionLRScan.ReadQuadrant, got %d", val)
+	}
 }
 
+func TestActionMove_NilGameState(t *testing.T) {
+	act := ActionMove{Warp: 1.0}
+	_, err := act.Execute(nil)
+	if err == nil {
+		t.Fatalf("expected error for nil GameState in ActionMove.Execute")
+	}
+}
 
+func TestActionMove_WormholeJump_NilRNG(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.Enterprise.Sector = Coord{4, 4}
+	g.CurrentQuad.Grid[4][4] = EntityEnterprise
+	g.CurrentQuad.Grid[4][5] = EntityWormhole
+	g.RNG = nil
 
+	act := ActionMove{DestSector: Coord{4, 5}, Warp: 0.1}
+	_, err := act.Execute(g)
+	if err == nil {
+		t.Fatalf("expected error when wormhole jump executed with nil RNG")
+	}
+}
 
+func TestActionMove_IonStorm_NilRNG(t *testing.T) {
+	rules := DefaultRulesForProfile(ProfileHardcore)
+	g := NewGameWithOptions(12345, SkillGood, LengthMedium, rules)
+	g.Enterprise.Quad = Coord{1, 1}
+	g.Enterprise.Sector = Coord{4, 1}
+	g.CurrentQuad.Grid[4][1] = EntityEnterprise
+	g.QuadrantEnv[1][1] = EnvIonStorm
+	g.RNG = nil
 
+	for c := 2; c <= 8; c++ {
+		for r := 1; r <= 8; r++ {
+			g.CurrentQuad.Grid[r][c] = EntityEmpty
+		}
+	}
+
+	act := ActionMove{Course: 0.0, Warp: 0.625}
+	events, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error executing ActionMove in ion storm with nil RNG: %v", err)
+	}
+	for _, e := range events {
+		if h, ok := e.(EventHazardTriggered); ok && h.HazardType == "ion_storm_drift" {
+			t.Errorf("unexpected ion storm drift event when RNG is nil")
+		}
+	}
+}

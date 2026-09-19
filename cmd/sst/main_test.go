@@ -356,6 +356,30 @@ func TestCLIFlags_SpatialAnomalies(t *testing.T) {
 	}
 }
 
+func TestCLIFlags_SpatialAnomalies_MutualExclusion(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	called := false
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		called = true
+		return nil
+	}
+
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--anomalies", "--no-anomalies"}, strings.NewReader(""), &stdout, &stderr)
+	if code != 1 {
+		t.Fatalf("expected exit code 1 when specifying both flags, got %d", code)
+	}
+	if called {
+		t.Fatalf("expected runProgram NOT to be called")
+	}
+	expectedErr := "Error: cannot specify both --anomalies and --no-anomalies"
+	if !strings.Contains(stderr.String(), expectedErr) {
+		t.Errorf("expected stderr to contain %q, got %q", expectedErr, stderr.String())
+	}
+}
+
 func TestCLIModeFlag(t *testing.T) {
 	origRunProgram := runProgram
 	t.Cleanup(func() { runProgram = origRunProgram })
