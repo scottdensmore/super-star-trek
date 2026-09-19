@@ -523,4 +523,57 @@ func TestKlingonTurn_BlackHoleAbsorption(t *testing.T) {
 	}
 }
 
+func TestMoveKlingon_RejectsOccupiedSector(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	k := &Klingon{ID: 1, Sector: Coord{4, 3}, Energy: 400}
+	g.CurrentQuad.Klingons = []*Klingon{k}
+	g.CurrentQuad.Grid[4][3] = EntityKlingon
+	g.CurrentQuad.Grid[4][4] = EntityStar // Destination occupied by star
+
+	events := MoveKlingon(g, k, Coord{4, 4})
+	if events != nil {
+		t.Errorf("expected MoveKlingon to return nil when moving into occupied cell, got %v", events)
+	}
+	if k.Sector != (Coord{4, 3}) {
+		t.Errorf("expected Klingon sector unchanged at [4, 3], got %v", k.Sector)
+	}
+	if g.CurrentQuad.Grid[4][4] != EntityStar {
+		t.Errorf("expected destination cell [4, 4] to remain EntityStar, got %v", g.CurrentQuad.Grid[4][4])
+	}
+}
+
+func TestMoveKlingon_PreservesSuperCommander(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	sc := &Klingon{ID: 1, Sector: Coord{3, 3}, Energy: 1500, IsCommander: true}
+	g.CurrentQuad.Klingons = []*Klingon{sc}
+	g.CurrentQuad.Grid[3][3] = EntitySuperCommander
+
+	// Move to empty cell [3, 4]
+	events := MoveKlingon(g, sc, Coord{3, 4})
+	if events != nil {
+		t.Errorf("expected no events on empty move, got %v", events)
+	}
+	if g.CurrentQuad.Grid[3][4] != EntitySuperCommander {
+		t.Errorf("expected destination cell [3, 4] to be EntitySuperCommander, got %v", g.CurrentQuad.Grid[3][4])
+	}
+	if g.CurrentQuad.Grid[3][3] != EntityEmpty {
+		t.Errorf("expected origin cell [3, 3] to be EntityEmpty, got %v", g.CurrentQuad.Grid[3][3])
+	}
+
+	// Move into black hole at [3, 5]
+	g.CurrentQuad.Grid[3][5] = EntityBlackHole
+	events2 := MoveKlingon(g, sc, Coord{3, 5})
+	if len(events2) != 1 {
+		t.Fatalf("expected 1 event on black hole move, got %d", len(events2))
+	}
+	sa, ok := events2[0].(EventSingularityAbsorption)
+	if !ok || sa.Target != EntitySuperCommander {
+		t.Errorf("expected absorption target EntitySuperCommander, got %v", events2[0])
+	}
+	if g.Metrics.SuperCommandersKilled != 1 {
+		t.Errorf("expected SuperCommandersKilled 1, got %d", g.Metrics.SuperCommandersKilled)
+	}
+}
+
+
 

@@ -163,18 +163,27 @@ func MoveKlingon(g *GameState, k *Klingon, dest Coord) []Event {
 		return nil
 	}
 
-	var events []Event
 	cell := g.CurrentQuad.Grid[dest[0]][dest[1]]
-	if cell == EntityBlackHole {
-		origSector := k.Sector
-		if origSector[0] >= 1 && origSector[0] <= 8 && origSector[1] >= 1 && origSector[1] <= 8 {
-			if g.CurrentQuad.Grid[origSector[0]][origSector[1]] == EntityKlingon ||
-				g.CurrentQuad.Grid[origSector[0]][origSector[1]] == EntityCommander ||
-				g.CurrentQuad.Grid[origSector[0]][origSector[1]] == EntitySuperCommander {
-				g.CurrentQuad.Grid[origSector[0]][origSector[1]] = EntityEmpty
-			}
-		}
+	// If destination is occupied by an obstacle or another entity (not EntityBlackHole), reject the move
+	if cell != EntityEmpty && cell != EntityBlackHole {
+		return nil
+	}
 
+	origSector := k.Sector
+	var origEntity EntityType = EntityKlingon
+	if origSector[0] >= 1 && origSector[0] <= 8 && origSector[1] >= 1 && origSector[1] <= 8 {
+		gridEnt := g.CurrentQuad.Grid[origSector[0]][origSector[1]]
+		if gridEnt == EntityKlingon || gridEnt == EntityCommander || gridEnt == EntitySuperCommander {
+			origEntity = gridEnt
+			g.CurrentQuad.Grid[origSector[0]][origSector[1]] = EntityEmpty
+		} else if k.IsCommander {
+			origEntity = EntityCommander
+		}
+	} else if k.IsCommander {
+		origEntity = EntityCommander
+	}
+
+	if cell == EntityBlackHole {
 		for i, klingon := range g.CurrentQuad.Klingons {
 			if klingon.ID == k.ID {
 				g.CurrentQuad.Klingons = append(g.CurrentQuad.Klingons[:i], g.CurrentQuad.Klingons[i+1:]...)
@@ -188,38 +197,25 @@ func MoveKlingon(g *GameState, k *Klingon, dest Coord) []Event {
 		if qr >= 1 && qr <= 8 && qc >= 1 && qc <= 8 && g.GalaxyChart[qr][qc] >= 100 {
 			g.GalaxyChart[qr][qc] -= 100
 		}
-		if k.IsCommander {
+		if origEntity == EntitySuperCommander {
+			g.Metrics.SuperCommandersKilled++
+		} else if origEntity == EntityCommander || k.IsCommander {
 			g.Metrics.CommandersKilled++
 		} else {
 			g.Metrics.KlingonsKilled++
 		}
-		targetEntity := EntityKlingon
-		if k.IsCommander {
-			targetEntity = EntityCommander
+		return []Event{
+			EventSingularityAbsorption{
+				Sector: dest,
+				Target: origEntity,
+				Weapon: "singularity",
+			},
 		}
-		events = append(events, EventSingularityAbsorption{
-			Sector: dest,
-			Target: targetEntity,
-			Weapon: "singularity",
-		})
-		return events
 	}
 
-	origSector := k.Sector
-	if origSector[0] >= 1 && origSector[0] <= 8 && origSector[1] >= 1 && origSector[1] <= 8 {
-		if g.CurrentQuad.Grid[origSector[0]][origSector[1]] == EntityKlingon ||
-			g.CurrentQuad.Grid[origSector[0]][origSector[1]] == EntityCommander ||
-			g.CurrentQuad.Grid[origSector[0]][origSector[1]] == EntitySuperCommander {
-			g.CurrentQuad.Grid[origSector[0]][origSector[1]] = EntityEmpty
-		}
-	}
-	entity := EntityKlingon
-	if k.IsCommander {
-		entity = EntityCommander
-	}
-	g.CurrentQuad.Grid[dest[0]][dest[1]] = entity
+	g.CurrentQuad.Grid[dest[0]][dest[1]] = origEntity
 	k.Sector = dest
-	return events
+	return nil
 }
 
 // KlingonTurn executes environmental and combat updates for Klingons in the current quadrant.

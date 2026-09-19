@@ -751,9 +751,11 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 
 	if toQuad != fromQuad {
 		if g.QuadrantEnv[toQuad[0]][toQuad[1]] == EnvNebula {
-			g.Enterprise.Energy += g.Enterprise.Shields
-			if g.Enterprise.Energy > 5000 {
-				g.Enterprise.Energy = 5000
+			if g.Enterprise.Energy > 0 {
+				g.Enterprise.Energy += g.Enterprise.Shields
+				if g.Enterprise.Energy > 5000 {
+					g.Enterprise.Energy = 5000
+				}
 			}
 			g.Enterprise.Shields = 0
 			events = append(events, EventAnomalyDiscovered{
@@ -845,9 +847,11 @@ func handleWormholeJump(g *GameState, a ActionMove, fromQuad, fromSector, wormho
 
 	if targetQuad != fromQuad {
 		if g.QuadrantEnv[targetQuad[0]][targetQuad[1]] == EnvNebula {
-			g.Enterprise.Energy += g.Enterprise.Shields
-			if g.Enterprise.Energy > 5000 {
-				g.Enterprise.Energy = 5000
+			if g.Enterprise.Energy > 0 {
+				g.Enterprise.Energy += g.Enterprise.Shields
+				if g.Enterprise.Energy > 5000 {
+					g.Enterprise.Energy = 5000
+				}
 			}
 			g.Enterprise.Shields = 0
 			events = append(events, EventAnomalyDiscovered{
