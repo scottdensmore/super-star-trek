@@ -243,7 +243,8 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		return m, nil
 	}
 
-	if m.focus == FocusChapters {
+	switch m.focus {
+	case FocusChapters:
 		switch {
 		case keyMsg.Type == tea.KeyUp || keyStr == "up" || keyStr == "k":
 			m.selectedIdx = (m.selectedIdx - 1 + len(m.chapters)) % len(m.chapters)
@@ -257,7 +258,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			m.focus = FocusContent
 			return m, nil
 		}
-	} else if m.focus == FocusContent {
+	case FocusContent:
 		maxOffset := len(m.chapters[m.selectedIdx].Lines) - 14
 		if maxOffset < 0 {
 			maxOffset = 0

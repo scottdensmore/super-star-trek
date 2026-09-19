@@ -313,15 +313,9 @@ func (m Model) View() string {
 	if borderV == 0 {
 		borderV = 2
 	}
-	paddingV := panelStyle.GetVerticalPadding()
-
 	innerWidth := targetWidth - borderH - paddingH
 	if innerWidth < 10 {
 		innerWidth = 10
-	}
-	innerHeight := targetHeight - borderV - paddingV
-	if innerHeight < 1 {
-		innerHeight = 1
 	}
 
 	// In Lip Gloss, Style.Width(w) and Style.Height(h) define the container dimensions
@@ -348,9 +342,9 @@ func (m Model) View() string {
 	colHeaderBuilder.WriteString("     ")
 	for col := 1; col <= 8; col++ {
 		if col < 8 {
-			colHeaderBuilder.WriteString(fmt.Sprintf("  %d    ", col))
+			fmt.Fprintf(&colHeaderBuilder, "  %d    ", col)
 		} else {
-			colHeaderBuilder.WriteString(fmt.Sprintf("  %d  ", col))
+			fmt.Fprintf(&colHeaderBuilder, "  %d  ", col)
 		}
 	}
 	lineColHeader := styles.GridHeader.Render(colHeaderBuilder.String())

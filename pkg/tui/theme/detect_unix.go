@@ -20,7 +20,9 @@ func queryOSCDarkBackground(timeout time.Duration) (bool, bool) {
 	if err != nil {
 		return false, false
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	fd := int(f.Fd())
 

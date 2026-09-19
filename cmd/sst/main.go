@@ -60,9 +60,9 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	}
 
 	if *listScenariosFlag {
-		fmt.Fprintln(out, "Available Tactical Scenarios:")
+		_, _ = fmt.Fprintln(out, "Available Tactical Scenarios:")
 		for _, sc := range engine.ListScenarios() {
-			fmt.Fprintf(out, "  %-16s [%s] %s - %s\n", sc.ID, sc.Difficulty, sc.Name, sc.Description)
+			_, _ = fmt.Fprintf(out, "  %-16s [%s] %s - %s\n", sc.ID, sc.Difficulty, sc.Name, sc.Description)
 		}
 		return 0
 	}
@@ -72,14 +72,14 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 		var ok bool
 		sc, ok = engine.GetScenario(engine.ScenarioID(*scenarioFlag))
 		if !ok {
-			fmt.Fprintf(errOut, "Error: unknown scenario %q\n", *scenarioFlag)
+			_, _ = fmt.Fprintf(errOut, "Error: unknown scenario %q\n", *scenarioFlag)
 			return 1
 		}
 	}
 
 	parsedMode, err := theme.ParseColorMode(*modeFlag)
 	if err != nil {
-		fmt.Fprintf(errOut, "Error: %v\n", err)
+		_, _ = fmt.Fprintf(errOut, "Error: %v\n", err)
 		return 1
 	}
 
@@ -89,7 +89,7 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	})
 
 	if visited["anomalies"] && visited["no-anomalies"] {
-		fmt.Fprintln(errOut, "Error: cannot specify both --anomalies and --no-anomalies")
+		_, _ = fmt.Fprintln(errOut, "Error: cannot specify both --anomalies and --no-anomalies")
 		return 1
 	}
 
@@ -136,7 +136,7 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 
 	p := tui.NewModel(game, selectedTheme)
 	if err := runProgram(p, tea.WithAltScreen(), tea.WithMouseCellMotion()); err != nil {
-		fmt.Fprintf(errOut, "Error running game: %v\n", err)
+		_, _ = fmt.Fprintf(errOut, "Error running game: %v\n", err)
 		return 1
 	}
 	return 0

@@ -197,11 +197,11 @@ func (m Model) View() string {
 	}
 	styles := th.Styles()
 
-	boxStyle := styles.Panel.Copy().
+	boxStyle := styles.Panel.
 		Padding(1, 2).
 		Width(66)
 
-	titleStyle := styles.PanelTitle.Copy().
+	titleStyle := styles.PanelTitle.
 		Bold(true).
 		Align(lipgloss.Center)
 
@@ -254,7 +254,7 @@ func (m Model) View() string {
 	}
 	rows = append(rows, "", prefix+doneStyle.Render("[ Done / Resume Mission ]"), "")
 
-	footerStyle := styles.LogText.Copy().Italic(true)
+	footerStyle := styles.LogText.Italic(true)
 	rows = append(rows, footerStyle.Render("↑/↓: Navigate • ←/→/Space: Change • Esc/q: Close"))
 
 	return boxStyle.Render(strings.Join(rows, "\n"))

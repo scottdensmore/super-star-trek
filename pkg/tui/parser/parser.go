@@ -70,7 +70,7 @@ func ParseCommand(input string) ParsedCommand {
 }
 
 func parseNav(args []string) ParsedCommand {
-	usageErr := errors.New("usage: nav q <r> <c> (quadrant), nav s <r> <c> (sector), or nav <course> <warp>. Type 'help nav' for guide.")
+	usageErr := errors.New("usage: nav q <r> <c> (quadrant), nav s <r> <c> (sector), or nav <course> <warp>. Type 'help nav' for guide")
 
 	if len(args) < 2 {
 		return ParsedCommand{Error: usageErr}

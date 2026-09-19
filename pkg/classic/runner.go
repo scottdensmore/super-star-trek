@@ -27,13 +27,13 @@ func RunClassicCLI(in io.Reader, out io.Writer, args []string) int {
 
 	if *classicMode {
 		sub := NewTeletypeSubscriber(out)
-		fmt.Fprintln(out, "Super Star Trek (Go Edition)")
+		_, _ = fmt.Fprintln(out, "Super Star Trek (Go Edition)")
 		sub.HandleEvent(engine.EventShieldTransfer{
 			NewShields: game.Enterprise.Shields,
 			NewEnergy:  game.Enterprise.Energy,
 		})
 	} else {
-		fmt.Fprintln(out, "Charmbracelet TUI placeholder - use --classic for teletype mode.")
+		_, _ = fmt.Fprintln(out, "Charmbracelet TUI placeholder - use --classic for teletype mode.")
 	}
 	return 0
 }
