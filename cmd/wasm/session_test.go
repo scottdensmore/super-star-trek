@@ -127,3 +127,33 @@ func TestSession_QuitAndExit(t *testing.T) {
 		}
 	}
 }
+
+func TestSession_ScenarioCommands(t *testing.T) {
+	s := NewSession(42)
+	listOutput := s.Execute("scenario list")
+	if !strings.Contains(listOutput, "kobayashi-maru") {
+		t.Errorf("expected scenario list in WASM output, got: %s", listOutput)
+	}
+
+	loadOutput := s.Execute("scenario mutara")
+	if !strings.Contains(loadOutput, "MUTARA NEBULA") {
+		t.Errorf("expected Mutara briefing or header, got: %s", loadOutput)
+	}
+	if s.game.Scenario != engine.ScenarioMutaraNebula {
+		t.Errorf("expected game scenario to be %v, got %v", engine.ScenarioMutaraNebula, s.game.Scenario)
+	}
+}
+
+func TestSession_ScenarioCommands_Unknown(t *testing.T) {
+	s := NewSession(42)
+	out := s.Execute("scenario nonexistent")
+	if !strings.Contains(strings.ToLower(out), "unknown scenario: nonexistent") {
+		t.Errorf("expected unknown scenario error, got: %s", out)
+	}
+
+	multiOut := s.Execute("scenario starbase assault")
+	if !strings.Contains(strings.ToLower(multiOut), "unknown scenario: starbase-assault") {
+		t.Errorf("expected multi-word unknown scenario error, got: %s", multiOut)
+	}
+}
+

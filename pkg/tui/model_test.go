@@ -18,6 +18,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/galacticchart"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/halloffame"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/scenariomodal"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
@@ -2367,5 +2368,92 @@ func TestModel_CombatAnimation_TargetLockMsg(t *testing.T) {
 		t.Fatalf("expected non-nil cmd on targetlock.FirePhasersMsg")
 	}
 }
+
+func TestModel_ScenarioModal_Integration(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	mod := NewModel(g, theme.DefaultTheme())
+
+	// 1. Open via command "scenarios"
+	updated, _ := mod.handleCommand("scenarios")
+	modScen := updated.(Model)
+	if modScen.ActiveModal != ModalScenario {
+		t.Fatalf("expected ActiveModal = ModalScenario on 'scenarios', got %v", modScen.ActiveModal)
+	}
+
+	// 2. View contains modal title and scenario names
+	view := modScen.View()
+	if !strings.Contains(view, "TACTICAL CHALLENGE SIMULATOR") {
+		t.Errorf("expected View to contain modal title, got:\n%s", view)
+	}
+	if !strings.Contains(view, "Kobayashi Maru") {
+		t.Errorf("expected View to contain 'Kobayashi Maru'")
+	}
+	if !strings.Contains(view, "[EXTREME]") {
+		t.Errorf("expected View to contain '[EXTREME]'")
+	}
+
+	// 3. Navigate down to Mutara Nebula
+	downKey := tea.KeyMsg{Type: tea.KeyDown}
+	updated, _ = modScen.Update(downKey)
+	modScen = updated.(Model)
+	if modScen.scenarioModal.SelectedScenario().ID != engine.ScenarioMutaraNebula {
+		t.Fatalf("expected selected scenario Mutara Nebula, got %v", modScen.scenarioModal.SelectedScenario().ID)
+	}
+
+	// 4. Launch on Enter
+	enterKey := tea.KeyMsg{Type: tea.KeyEnter}
+	updated, cmd := modScen.Update(enterKey)
+	if cmd == nil {
+		t.Fatalf("expected command on Enter, got nil")
+	}
+	launchMsg := cmd()
+	updated, _ = updated.(Model).Update(launchMsg)
+	modLaunched := updated.(Model)
+
+	if modLaunched.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after launch, got %v", modLaunched.ActiveModal)
+	}
+	if modLaunched.Game == nil || modLaunched.Game.Scenario != engine.ScenarioMutaraNebula {
+		t.Errorf("expected new game scenario %v, got %+v", engine.ScenarioMutaraNebula, modLaunched.Game)
+	}
+
+	// 5. Open via short command "scen"
+	updated, _ = modLaunched.handleCommand("scen")
+	modScen2 := updated.(Model)
+	if modScen2.ActiveModal != ModalScenario {
+		t.Fatalf("expected ActiveModal = ModalScenario on 'scen', got %v", modScen2.ActiveModal)
+	}
+
+	// 6. Dismiss via 'q'
+	qKey := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}}
+	updated, cmd = modScen2.Update(qKey)
+	if cmd != nil {
+		updated, _ = updated.(Model).Update(cmd())
+	}
+	modDismissed := updated.(Model)
+	if modDismissed.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after 'q', got %v", modDismissed.ActiveModal)
+	}
+
+	// 7. Open via CommandPalette selection
+	palMsg := commandpalette.CommandSelectedMsg{
+		CommandPrefix: "scenarios",
+		Parameterized: false,
+	}
+	updated, _ = modDismissed.Update(palMsg)
+	modFromPal := updated.(Model)
+	if modFromPal.ActiveModal != ModalScenario {
+		t.Fatalf("expected ActiveModal = ModalScenario from palette, got %v", modFromPal.ActiveModal)
+	}
+
+	// 8. Dismiss via MsgCloseScenarioModal
+	closeMsg := scenariomodal.MsgCloseScenarioModal{}
+	updated, _ = modFromPal.Update(closeMsg)
+	modClosed := updated.(Model)
+	if modClosed.ActiveModal != ModalNone {
+		t.Errorf("expected ActiveModal = ModalNone after MsgCloseScenarioModal, got %v", modClosed.ActiveModal)
+	}
+}
+
 
 

@@ -494,3 +494,79 @@ func TestCLIModeFlag(t *testing.T) {
 		})
 	}
 }
+
+func TestCLI_ListScenarios(t *testing.T) {
+	out := &bytes.Buffer{}
+	errOut := &bytes.Buffer{}
+	code := run([]string{"--list-scenarios"}, strings.NewReader(""), out, errOut)
+	if code != 0 {
+		t.Errorf("expected exit code 0, got %d", code)
+	}
+	output := out.String()
+	if !strings.Contains(output, "kobayashi-maru") || !strings.Contains(output, "mutara-nebula") {
+		t.Errorf("expected scenario list in output, got: %s", output)
+	}
+}
+
+func TestCLI_ScenarioLaunch_Unknown(t *testing.T) {
+	out := &bytes.Buffer{}
+	errOut := &bytes.Buffer{}
+	code := run([]string{"--scenario=nonexistent"}, strings.NewReader(""), out, errOut)
+	if code != 1 {
+		t.Errorf("expected exit code 1 for invalid scenario, got %d", code)
+	}
+	if !strings.Contains(errOut.String(), "unknown scenario") {
+		t.Errorf("expected 'unknown scenario' error, got: %s", errOut.String())
+	}
+}
+
+func TestCLI_ScenarioLaunch(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	var capturedModel tea.Model
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		capturedModel = m
+		return nil
+	}
+
+	out := &bytes.Buffer{}
+	errOut := &bytes.Buffer{}
+	code := run([]string{"--scenario", "mutara-nebula"}, strings.NewReader(""), out, errOut)
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d: %s", code, errOut.String())
+	}
+	model, ok := capturedModel.(tui.Model)
+	if !ok {
+		t.Fatalf("captured model is not tui.Model: %T", capturedModel)
+	}
+	if model.Game.Scenario != engine.ScenarioMutaraNebula {
+		t.Errorf("expected scenario %v, got %v", engine.ScenarioMutaraNebula, model.Game.Scenario)
+	}
+}
+
+func TestCLI_ScenarioLaunch_Shorthand(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	var capturedModel tea.Model
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		capturedModel = m
+		return nil
+	}
+
+	out := &bytes.Buffer{}
+	errOut := &bytes.Buffer{}
+	code := run([]string{"-s", "kobayashi"}, strings.NewReader(""), out, errOut)
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d: %s", code, errOut.String())
+	}
+	model, ok := capturedModel.(tui.Model)
+	if !ok {
+		t.Fatalf("captured model is not tui.Model: %T", capturedModel)
+	}
+	if model.Game.Scenario != engine.ScenarioKobayashiMaru {
+		t.Errorf("expected scenario %v, got %v", engine.ScenarioKobayashiMaru, model.Game.Scenario)
+	}
+}
+

@@ -17,6 +17,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/halloffame"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/manual"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/scenariomodal"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
@@ -206,6 +207,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.CommandBar.Focus()
 		return m, cmd
 
+	case scenariomodal.MsgLaunchScenario:
+		m.ActiveModal = ModalNone
+		sc, ok := engine.GetScenario(msg.ScenarioID)
+		if ok && sc.Build != nil {
+			seed := time.Now().UnixNano()
+			m.Game = sc.Build(seed)
+			m.SelectedSector = engine.Coord{}
+			m.CommandBar.AddMessage(fmt.Sprintf("Tactical Scenario Launched: %s", sc.Name))
+			cmd := m.CommandBar.Focus()
+			pulseCmd := m.checkRedAlertCmd(engine.ConditionGreen)
+			return m, tea.Batch(cmd, pulseCmd)
+		}
+		cmd := m.CommandBar.Focus()
+		return m, cmd
+
+	case scenariomodal.MsgCloseScenarioModal:
+		m.ActiveModal = ModalNone
+		cmd := m.CommandBar.Focus()
+		return m, cmd
+
 	case halloffame.ScoreRecordedMsg:
 		m.CommandBar.AddMessage(fmt.Sprintf("Score recorded for Captain %s: %d points (%s)", msg.Entry.CaptainName, msg.Entry.Score, msg.Entry.Rank))
 		return m, nil
@@ -300,6 +321,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.ActiveModal == ModalManual {
 				var cmd tea.Cmd
 				m.Manual, cmd = m.Manual.Update(msg)
+				return m, cmd
+			}
+			if m.ActiveModal == ModalScenario {
+				var cmd tea.Cmd
+				m.scenarioModal, cmd = m.scenarioModal.Update(msg)
 				return m, cmd
 			}
 			if msg.Type == tea.KeyEsc || msg.String() == "esc" {
@@ -641,6 +667,7 @@ func (m Model) applyTheme(th theme.Theme) Model {
 	m.DamageSchematic.SetTheme(th)
 	m.HallOfFame.SetTheme(th)
 	m.Manual.SetTheme(th)
+	m.scenarioModal.SetTheme(th)
 	m.optionsModal.SetTheme(th)
 	m.syncChildComponents()
 	return m
@@ -973,6 +1000,12 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 				m.optionsModal.SetColorMode(m.Theme.ColorMode())
 			}
 			m.showOptions = true
+			m.CommandBar.Blur()
+			return m, nil
+
+		case parsed.Special == "scenarios":
+			m.scenarioModal.Reset()
+			m.ActiveModal = ModalScenario
 			m.CommandBar.Blur()
 			return m, nil
 

@@ -139,6 +139,12 @@ func defaultCatalog() []PaletteItem {
 			prefix:        "saves",
 			parameterized: false,
 		},
+		{
+			title:         "SCENARIOS",
+			desc:          "Browse and launch tactical challenge scenarios",
+			prefix:        "scenarios",
+			parameterized: false,
+		},
 
 		// Settings & Help
 		{

@@ -121,6 +121,7 @@ type GameMetrics struct {
 // GameState holds all mutable state for an active game session.
 type GameState struct {
 	RNG                *PRNG
+	Scenario           ScenarioID `json:"scenario,omitempty"`
 	Rules              GameRules `json:"rules"`
 	Skill              SkillLevel
 	Length             GameLength
@@ -254,7 +255,12 @@ func (g *GameState) PopulateQuadrant(quad Coord, entSector Coord) {
 	}
 
 	if numB > 0 {
-		sb := findEmptySector()
+		var sb Coord
+		if g.Scenario == ScenarioStarbaseSiege && quad == (Coord{4, 4}) && entSector != (Coord{4, 4}) {
+			sb = Coord{4, 4}
+		} else {
+			sb = findEmptySector()
+		}
 		g.CurrentQuad.Starbase = &sb
 		g.CurrentQuad.Grid[sb[0]][sb[1]] = EntityStarbase
 	}

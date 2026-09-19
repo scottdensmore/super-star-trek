@@ -89,6 +89,8 @@ func (m Model) renderDashboard() string {
 		modalView = m.HallOfFame.View()
 	case ModalManual:
 		modalView = m.Manual.View()
+	case ModalScenario:
+		modalView = m.scenarioModal.View()
 	default:
 		return dashboard
 	}

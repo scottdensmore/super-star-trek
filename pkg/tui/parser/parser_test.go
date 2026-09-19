@@ -415,3 +415,13 @@ func TestParseOptionsCommand(t *testing.T) {
 		}
 	}
 }
+
+func TestParseScenariosCommand(t *testing.T) {
+	for _, cmd := range []string{"scenarios", "scen", "SCENARIOS", "SCEN"} {
+		parsed := ParseCommand(cmd)
+		if parsed.Special != "scenarios" {
+			t.Errorf("command %q: expected Special 'scenarios', got %q", cmd, parsed.Special)
+		}
+	}
+}
+

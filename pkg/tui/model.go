@@ -14,6 +14,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/manual"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/optionsmodal"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/scenariomodal"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/sectorgrid"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/statuspanel"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
@@ -32,6 +33,7 @@ const (
 	ModalDamageSchematic
 	ModalHallOfFame
 	ModalManual
+	ModalScenario
 )
 
 // Ensure Model satisfies the Bubble Tea Model interface at compile time.
@@ -59,6 +61,7 @@ type Model struct {
 	DamageSchematic damageschematic.Model
 	HallOfFame      halloffame.Model
 	Manual          manual.Model
+	scenarioModal   scenariomodal.Model
 	optionsModal    optionsmodal.Model
 	showOptions     bool
 	activeAnim      anim.Animation
@@ -109,6 +112,7 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 		DamageSchematic: damageschematic.New(th, 66, 18),
 		HallOfFame:      halloffame.New(th, 66, 18, engine.DefaultLeaderboardPath()),
 		Manual:          manual.New(th, 66, 18),
+		scenarioModal:   scenariomodal.NewModel(th),
 		optionsModal:    optionsmodal.New(th, rules),
 		showOptions:     false,
 		lastDarkBg: func() bool {
