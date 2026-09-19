@@ -21,11 +21,12 @@ type MsgCloseScenarioModal struct{}
 
 // Model represents the interactive Scenario Browser modal component.
 type Model struct {
-	theme       theme.Theme
-	width       int
-	height      int
-	scenarios   []*engine.Scenario
-	selectedIdx int
+	theme            theme.Theme
+	width            int
+	height           int
+	scenarios        []*engine.Scenario
+	selectedIdx      int
+	leaderboardCache map[engine.ScenarioID]*engine.ScoreEntry
 }
 
 type modalStyles struct {
@@ -107,12 +108,30 @@ func New(th theme.Theme, width, height int) Model {
 	if height <= 0 {
 		height = 18
 	}
-	return Model{
-		theme:       th,
-		width:       width,
-		height:      height,
-		scenarios:   engine.ListScenarios(),
-		selectedIdx: 0,
+	m := Model{
+		theme:            th,
+		width:            width,
+		height:           height,
+		scenarios:        engine.ListScenarios(),
+		selectedIdx:      0,
+		leaderboardCache: make(map[engine.ScenarioID]*engine.ScoreEntry),
+	}
+	m.refreshCache()
+	return m
+}
+
+// refreshCache loads the top record for each scenario into memory.
+func (m *Model) refreshCache() {
+	if m.leaderboardCache == nil {
+		m.leaderboardCache = make(map[engine.ScenarioID]*engine.ScoreEntry)
+	}
+	for _, sc := range m.scenarios {
+		if lb, err := engine.LoadScenarioLeaderboard(sc.ID); err == nil && lb != nil && len(lb.Entries) > 0 {
+			entry := lb.Entries[0]
+			m.leaderboardCache[sc.ID] = &entry
+		} else {
+			m.leaderboardCache[sc.ID] = nil
+		}
 	}
 }
 
@@ -152,10 +171,11 @@ func (m Model) SelectedScenario() *engine.Scenario {
 	return m.scenarios[m.selectedIdx]
 }
 
-// Reset re-queries registered scenarios and resets cursor selection to top.
+// Reset re-queries registered scenarios, refreshes top records, and resets cursor selection to top.
 func (m *Model) Reset() {
 	m.scenarios = engine.ListScenarios()
 	m.selectedIdx = 0
+	m.refreshCache()
 }
 
 // Update processes keyboard navigation, selection, and dismissal.
@@ -335,11 +355,13 @@ func (m Model) renderDetailRows(styles modalStyles, width int) []string {
 
 	rows[13] = padRight(" "+styles.GaugeLabel.Render("TOP LEADERBOARD RECORD:"), width)
 
-	lb, err := engine.LoadScenarioLeaderboard(s.ID)
-	if err == nil && lb != nil && len(lb.Entries) > 0 {
-		top := lb.Entries[0]
+	var top *engine.ScoreEntry
+	if m.leaderboardCache != nil {
+		top = m.leaderboardCache[s.ID]
+	}
+	if top != nil {
 		rec1 := fmt.Sprintf(" %s  %s", styles.PanelTitle.Render(top.CaptainName), styles.GaugeValue.Render(fmt.Sprintf("%d pts", top.Score)))
-		rec2 := fmt.Sprintf(" Rank: %s | Stardate: %.1f | %s", top.Rank, top.Stardate, top.Date.Format("2006-01-02"))
+		rec2 := fmt.Sprintf("Rank: %s | Stardate: %.1f | %s", top.Rank, top.Stardate, top.Date.Format("2006-01-02"))
 		rows[14] = padRight(rec1, width)
 		rows[15] = padRight(" "+styles.LogText.Render(rec2), width)
 	} else {
