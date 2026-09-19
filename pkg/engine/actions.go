@@ -676,6 +676,12 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 
 	// Apply movement mutations
 	g.Enterprise.Energy -= energyNeeded
+	if g.Enterprise.Energy <= 0 {
+		g.Enterprise.Energy = 0
+		events = append(events, EventGameOver{
+			Reason: GameOverEnergy,
+		})
+	}
 	g.Stardate += timeUsed
 	g.TimeRemaining -= timeUsed
 
@@ -744,8 +750,11 @@ func handleWormholeJump(g *GameState, a ActionMove, fromQuad, fromSector, wormho
 
 	// Apply movement mutations
 	g.Enterprise.Energy -= energyNeeded
-	if g.Enterprise.Energy < 0 {
+	if g.Enterprise.Energy <= 0 {
 		g.Enterprise.Energy = 0
+		events = append(events, EventGameOver{
+			Reason: GameOverEnergy,
+		})
 	}
 	g.Stardate += timeUsed + 0.2
 	g.TimeRemaining -= (timeUsed + 0.2)

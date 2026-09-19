@@ -445,4 +445,63 @@ func TestActionMove_WormholeJump_Vector(t *testing.T) {
 	}
 }
 
+func TestActionMove_MidFlightGravityWellDepletion(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.Enterprise.Sector = Coord{4, 1}
+	g.CurrentQuad.Grid[4][1] = EntityEnterprise
+	g.CurrentQuad.Grid[4][4] = EntityBlackHole
+
+	// Enterprise has 0.3 energy.
+	// 2 steps East: step 1 -> (4, 2) [outside gravity well], step 2 -> (4, 3) [in gravity well of (4, 4)].
+	// Upfront cost check: quadrants=0.25, factor=1.0, cost=0.25 (0.3 >= 0.25 passes).
+	// Mid-flight: entering (4, 3) doubles energyNeeded to 0.5.
+	// 0.3 - 0.5 = -0.2 -> must be clamped to 0, emitting GameOverEnergy.
+	g.Enterprise.Energy = 0.3
+	act := ActionMove{Course: 0.0, Warp: 0.25}
+	events, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if g.Enterprise.Energy < 0 {
+		t.Errorf("expected energy to be clamped >= 0, got %f", g.Enterprise.Energy)
+	}
+	if g.Enterprise.Energy != 0 {
+		t.Errorf("expected energy to be 0, got %f", g.Enterprise.Energy)
+	}
+
+	foundGameOver := false
+	for _, e := range events {
+		if goe, ok := e.(EventGameOver); ok {
+			foundGameOver = true
+			if goe.Reason != GameOverEnergy {
+				t.Errorf("expected GameOverEnergy, got %v", goe.Reason)
+			}
+		}
+	}
+	if !foundGameOver {
+		t.Errorf("expected EventGameOver with GameOverEnergy when depleted mid-flight")
+	}
+}
+
+func TestActionMove_MidFlightGravityWellSufficientEnergy(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.Enterprise.Sector = Coord{4, 1}
+	g.CurrentQuad.Grid[4][1] = EntityEnterprise
+	g.CurrentQuad.Grid[4][4] = EntityBlackHole
+
+	g.Enterprise.Energy = 100.0
+	act := ActionMove{Course: 0.0, Warp: 0.25} // 2 steps East: (4, 2) then (4, 3)
+	_, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Cost doubled to 0.5
+	if math.Abs(g.Enterprise.Energy-99.5) > 0.001 {
+		t.Errorf("expected energy 99.5, got %f", g.Enterprise.Energy)
+	}
+}
+
+
 
