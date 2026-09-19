@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+	"github.com/scottdensmore/super-star-trek/pkg/audio"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/anim"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
@@ -17,6 +19,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/galacticchart"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/halloffame"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/optionsmodal"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/savebrowser"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/scenariomodal"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
@@ -1217,10 +1220,10 @@ func TestModel_GalacticChart_SingleKeyHotkeys(t *testing.T) {
 	}
 	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyEsc})
 
-	// Press 'm' with empty input -> opens chart
-	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}})
+	// Press 'C' with empty input -> opens chart
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'C'}})
 	if m.ActiveModal != ModalGalacticChart {
-		t.Fatalf("expected ActiveModal=ModalGalacticChart on 'm' with empty input, got %v", m.ActiveModal)
+		t.Fatalf("expected ActiveModal=ModalGalacticChart on 'C' with empty input, got %v", m.ActiveModal)
 	}
 	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyEsc})
 
@@ -2453,6 +2456,386 @@ func TestModel_ScenarioModal_Integration(t *testing.T) {
 		t.Errorf("expected ActiveModal = ModalNone after MsgCloseScenarioModal, got %v", modClosed.ActiveModal)
 	}
 }
+
+type mockAudioPlayer struct {
+	mu     sync.Mutex
+	played []audio.SoundID
+	muted  bool
+}
+
+func (p *mockAudioPlayer) Play(s audio.SoundID) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if !p.muted {
+		p.played = append(p.played, s)
+	}
+}
+
+func (p *mockAudioPlayer) SetMuted(m bool) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.muted = m
+}
+
+func (p *mockAudioPlayer) IsMuted() bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.muted
+}
+
+func (p *mockAudioPlayer) Played() []audio.SoundID {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	cp := make([]audio.SoundID, len(p.played))
+	copy(cp, p.played)
+	return cp
+}
+
+func TestAudio_HotkeyToggle(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+	mock := &mockAudioPlayer{}
+	m.AudioPlayer = mock
+	m.AudioDispatcher = audio.NewDispatcher(mock)
+
+	// Initially enabled
+	if !m.SoundEnabled() {
+		t.Fatalf("expected SoundEnabled=true initially")
+	}
+	if !m.Status.SoundEnabled() {
+		t.Fatalf("expected Status.SoundEnabled=true initially")
+	}
+	if mock.IsMuted() {
+		t.Fatalf("expected AudioPlayer not muted initially")
+	}
+
+	// 1. Toggle mute via Ctrl+S
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyCtrlS})
+	if m.SoundEnabled() {
+		t.Fatalf("expected SoundEnabled=false after Ctrl+S")
+	}
+	if m.Status.SoundEnabled() {
+		t.Fatalf("expected Status.SoundEnabled=false after Ctrl+S")
+	}
+	if !mock.IsMuted() {
+		t.Fatalf("expected AudioPlayer muted after Ctrl+S")
+	}
+	logLines := m.CommandBar.Messages()
+	lastMsg := logLines[len(logLines)-1]
+	if !strings.Contains(lastMsg, "*** Audio: Muted ***") {
+		t.Errorf("expected log to contain '*** Audio: Muted ***', got %q", lastMsg)
+	}
+
+	// 2. Toggle enable via Ctrl+S
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyCtrlS})
+	if !m.SoundEnabled() {
+		t.Fatalf("expected SoundEnabled=true after second Ctrl+S")
+	}
+	if !m.Status.SoundEnabled() {
+		t.Fatalf("expected Status.SoundEnabled=true after second Ctrl+S")
+	}
+	if mock.IsMuted() {
+		t.Fatalf("expected AudioPlayer unmuted after second Ctrl+S")
+	}
+	logLines = m.CommandBar.Messages()
+	lastMsg = logLines[len(logLines)-1]
+	if !strings.Contains(lastMsg, "*** Audio: Enabled ***") {
+		t.Errorf("expected log to contain '*** Audio: Enabled ***', got %q", lastMsg)
+	}
+
+	// 3. Toggle mute via 'm' with empty command buffer
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}})
+	if m.SoundEnabled() {
+		t.Fatalf("expected SoundEnabled=false after 'm'")
+	}
+	if !mock.IsMuted() {
+		t.Fatalf("expected AudioPlayer muted after 'm'")
+	}
+
+	// 4. Toggle enable via 'M' with empty command buffer
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'M'}})
+	if !m.SoundEnabled() {
+		t.Fatalf("expected SoundEnabled=true after 'M'")
+	}
+	if mock.IsMuted() {
+		t.Fatalf("expected AudioPlayer unmuted after 'M'")
+	}
+
+	// 5. 'm' with non-empty command buffer should NOT toggle mute, should type 'm'
+	m.CommandBar.SetValue("tor")
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'m'}})
+	if !m.SoundEnabled() {
+		t.Fatalf("expected SoundEnabled still true when typing 'm' into non-empty buffer")
+	}
+	if m.CommandBar.Value() != "torm" {
+		t.Fatalf("expected buffer to be 'torm', got %q", m.CommandBar.Value())
+	}
+}
+
+func TestAudio_OptionsModalSync(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+	mock := &mockAudioPlayer{}
+	m.AudioPlayer = mock
+	m.AudioDispatcher = audio.NewDispatcher(mock)
+
+	// Initially audio enabled
+	if !m.SoundEnabled() {
+		t.Fatalf("expected initial SoundEnabled=true")
+	}
+
+	// Open options modal
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
+	if !m.showOptions {
+		t.Fatalf("expected showOptions=true after 'o'")
+	}
+	if !m.optionsModal.AudioEnabled() {
+		t.Fatalf("expected optionsModal.AudioEnabled=true upon open")
+	}
+
+	// Navigate to RowAudio
+	m.optionsModal.SelectedRow = optionsmodal.RowAudio
+	// Toggle to disabled via Right arrow
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRight})
+	if m.optionsModal.AudioEnabled() {
+		t.Fatalf("expected optionsModal.AudioEnabled=false after toggle")
+	}
+
+	// Navigate to RowDone and close via Enter
+	m.optionsModal.SelectedRow = optionsmodal.RowDone
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyEnter})
+	if m.showOptions {
+		t.Fatalf("expected showOptions=false after closing modal")
+	}
+
+	// Model audio state should now be disabled
+	if m.SoundEnabled() {
+		t.Fatalf("expected Model.SoundEnabled=false after closing modal with sound disabled")
+	}
+	if m.Status.SoundEnabled() {
+		t.Fatalf("expected Status.SoundEnabled=false after closing modal")
+	}
+	if !mock.IsMuted() {
+		t.Fatalf("expected AudioPlayer muted after closing modal with sound disabled")
+	}
+
+	// Re-open options modal, verify it reflects disabled state
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'o'}})
+	if m.optionsModal.AudioEnabled() {
+		t.Fatalf("expected optionsModal.AudioEnabled=false when reopened")
+	}
+
+	// Re-enable audio in modal
+	m.optionsModal.SelectedRow = optionsmodal.RowAudio
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeySpace})
+	if !m.optionsModal.AudioEnabled() {
+		t.Fatalf("expected optionsModal.AudioEnabled=true after space")
+	}
+
+	// Close modal via Esc
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyEsc})
+	if m.showOptions {
+		t.Fatalf("expected showOptions=false after Esc")
+	}
+	if !m.SoundEnabled() {
+		t.Fatalf("expected Model.SoundEnabled=true after closing modal with sound re-enabled")
+	}
+	if !m.Status.SoundEnabled() {
+		t.Fatalf("expected Status.SoundEnabled=true after closing modal")
+	}
+	if mock.IsMuted() {
+		t.Fatalf("expected AudioPlayer unmuted after closing modal")
+	}
+}
+
+func TestAudio_EventDispatch(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Torpedoes = 10
+	g.Enterprise.Energy = 4000
+	g.Enterprise.Shields = 1000
+	g.CurrentQuad.Klingons = []*engine.Klingon{
+		{ID: 1, Sector: engine.Coord{1, 2}, Energy: 500},
+	}
+	m := NewModel(g, theme.DefaultTheme())
+	mock := &mockAudioPlayer{}
+	m.AudioPlayer = mock
+	m.AudioDispatcher = audio.NewDispatcher(mock)
+
+	// 1. Fire torpedo via command
+	res, _ := m.handleCommand("tor 1 1")
+	m = res.(Model)
+	played := mock.Played()
+	foundTorpedo := false
+	for _, s := range played {
+		if s == audio.SoundTorpedoLaunch {
+			foundTorpedo = true
+			break
+		}
+	}
+	if !foundTorpedo {
+		t.Errorf("expected SoundTorpedoLaunch to be dispatched on 'tor', played: %v", played)
+	}
+
+	// 2. Fire phasers via command
+	res, _ = m.handleCommand("pha 200")
+	m = res.(Model)
+	played = mock.Played()
+	foundPhaser := false
+	for _, s := range played {
+		if s == audio.SoundPhaser {
+			foundPhaser = true
+			break
+		}
+	}
+	if !foundPhaser {
+		t.Errorf("expected SoundPhaser to be dispatched on 'pha', played: %v", played)
+	}
+
+	// 3. Shield transfer
+	res, _ = m.handleCommand("she 100")
+	m = res.(Model)
+	played = mock.Played()
+	foundShields := false
+	for _, s := range played {
+		if s == audio.SoundShields {
+			foundShields = true
+			break
+		}
+	}
+	if !foundShields {
+		t.Errorf("expected SoundShields to be dispatched on 'she', played: %v", played)
+	}
+
+	// 4. Mute and ensure no new sounds are played
+	m.SetSoundEnabled(false)
+	countBefore := len(mock.Played())
+	res, _ = m.handleCommand("she 50")
+	m = res.(Model)
+	if len(mock.Played()) != countBefore {
+		t.Errorf("expected no sounds dispatched while muted, got %v", mock.Played()[countBefore:])
+	}
+}
+
+func TestModel_VisualBellActivationAndExpiration(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	if m.CommandBar.VisualBell() {
+		t.Fatalf("expected command bar visual bell initially false")
+	}
+
+	// 1. Torpedo hit event triggers visual bell
+	cmd := m.logEvents([]engine.Event{
+		engine.EventTorpedoHit{Target: engine.Coord{3, 4}, Damage: 120, Destroyed: false},
+	})
+	if !m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell to be activated on EventTorpedoHit")
+	}
+	if cmd == nil {
+		t.Fatalf("expected non-nil tea.Cmd for visual bell expiration")
+	}
+	expireMsg := cmd()
+	if _, ok := expireMsg.(VisualBellExpireMsg); !ok {
+		t.Errorf("expected VisualBellExpireMsg from timer tick, got: %T", expireMsg)
+	}
+
+	// Expire message resets visual bell
+	updated, _ := m.Update(VisualBellExpireMsg{})
+	m = updated.(Model)
+	if m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell to be deactivated on VisualBellExpireMsg")
+	}
+
+	// 2. Klingon counter attack triggers visual bell
+	cmd = m.logEvents([]engine.Event{
+		engine.EventKlingonCounterAttack{EnemyID: 1, Damage: 50},
+	})
+	if !m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell activated on EventKlingonCounterAttack")
+	}
+	if cmd == nil {
+		t.Fatalf("expected non-nil cmd on EventKlingonCounterAttack")
+	}
+
+	// 3. Subsystem damage triggers visual bell
+	m.CommandBar.SetVisualBell(false)
+	cmd = m.logEvents([]engine.Event{
+		engine.EventSubsystemDamaged{Device: engine.DevicePhasers, RepairTime: 3.5},
+	})
+	if !m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell activated on EventSubsystemDamaged")
+	}
+	if cmd == nil {
+		t.Fatalf("expected non-nil cmd on EventSubsystemDamaged")
+	}
+
+	// 4. Condition changed to RED triggers visual bell
+	m.CommandBar.SetVisualBell(false)
+	cmd = m.logEvents([]engine.Event{
+		engine.EventConditionChanged{From: engine.ConditionYellow, To: engine.ConditionRed},
+	})
+	if !m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell activated on ConditionRed")
+	}
+	if cmd == nil {
+		t.Fatalf("expected non-nil cmd on ConditionRed")
+	}
+
+	// 5. Non-critical event (e.g. Shields, Green) does NOT trigger visual bell
+	m.CommandBar.SetVisualBell(false)
+	cmd = m.logEvents([]engine.Event{
+		engine.EventShieldTransfer{NewShields: 500, NewEnergy: 2500},
+	})
+	if m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell NOT activated on EventShieldTransfer")
+	}
+	if cmd != nil {
+		t.Errorf("expected nil cmd for non-critical event, got %v", cmd)
+	}
+}
+
+func TestModel_VisualBellViaCommandExecution(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Sector = engine.Coord{4, 4}
+	g.Enterprise.Energy = 3000
+	klingon := &engine.Klingon{ID: 1, Sector: engine.Coord{4, 6}, Energy: 200}
+	g.CurrentQuad.Klingons = []*engine.Klingon{klingon}
+	g.CurrentQuad.Grid[4][6] = engine.EntityKlingon
+
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Fire phasers at Klingon
+	updated, cmd := m.Update(commandbar.CommandSubmittedMsg{Text: "pha 300"})
+	m = updated.(Model)
+
+	if !m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell active after firing phasers hitting enemy")
+	}
+	if cmd == nil {
+		t.Fatalf("expected non-nil batch cmd after phaser hit")
+	}
+
+	// Send VisualBellExpireMsg
+	updated, _ = m.Update(VisualBellExpireMsg{})
+	m = updated.(Model)
+	if m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell deactivated after VisualBellExpireMsg")
+	}
+}
+
+func TestModel_NewModelPlayerInit(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	if m.AudioPlayer == nil {
+		t.Fatal("expected non-nil AudioPlayer in NewModel")
+	}
+	if m.AudioDispatcher == nil {
+		t.Fatal("expected non-nil AudioDispatcher in NewModel")
+	}
+}
+
+
 
 
 

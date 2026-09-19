@@ -4,7 +4,7 @@
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2508.0   Time Remaining: 30.0 │                      
 │2  .   .   .   .   .  <E>  .   . ││ Energy:   [██████████] 5000/5000        │                      
 │3  .   .   .   .   .   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │                      
-│4  .   .   .   .   .   .   .   . ││ Torpedoes: [TORP: 10/10]                │                      
+│4  .   .   .   .   .   .   .   . ││ Torpedoes: [TORP: 10/10]   [SND: ON]    │                      
 │5  .   .   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                │                      
 │6  .   .   .   .   .   .   .   . ││ Warp:      OK  Tubes:             OK    │                      
 │7  .   .   .   .   .   .   .   . ││ SRS:       OK  Damage Control:    OK    │                      

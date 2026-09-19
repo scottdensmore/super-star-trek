@@ -1,9 +1,11 @@
 package tui
 
 import (
+	"os"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/scottdensmore/super-star-trek/pkg/audio"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/anim"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
@@ -64,6 +66,8 @@ type Model struct {
 	scenarioModal   scenariomodal.Model
 	optionsModal    optionsmodal.Model
 	showOptions     bool
+	AudioPlayer     audio.Player
+	AudioDispatcher *audio.Dispatcher
 	activeAnim      anim.Animation
 	animID          int
 	LastClickTime   time.Time
@@ -71,6 +75,23 @@ type Model struct {
 	lastDarkBg      bool
 	redAlertCycle   int
 	redAlertActive  bool
+}
+
+// SetSoundEnabled configures audio mute state across player, status telemetry, and options modal.
+func (m *Model) SetSoundEnabled(enabled bool) {
+	if m.AudioPlayer != nil {
+		m.AudioPlayer.SetMuted(!enabled)
+	}
+	m.Status.SetSoundEnabled(enabled)
+	m.optionsModal.SetAudioEnabled(enabled)
+}
+
+// SoundEnabled reports whether audio sound FX is currently enabled.
+func (m Model) SoundEnabled() bool {
+	if m.AudioPlayer != nil {
+		return !m.AudioPlayer.IsMuted()
+	}
+	return m.Status.SoundEnabled()
 }
 
 // syncChildComponents synchronizes telemetry sub-component state such as red alert pulse oscillation.
@@ -96,6 +117,12 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 		rules = engine.DefaultRulesForProfile(engine.ProfileNormal)
 	}
 
+	bellCallback := func() {
+		cb.SetVisualBell(true)
+	}
+	player := audio.NewNativeOSPlayer(os.Stdout, bellCallback)
+	dispatcher := audio.NewDispatcher(player)
+
 	m := Model{
 		Game:            g,
 		Theme:           th,
@@ -115,6 +142,8 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 		scenarioModal:   scenariomodal.NewModel(th),
 		optionsModal:    optionsmodal.New(th, rules),
 		showOptions:     false,
+		AudioPlayer:     player,
+		AudioDispatcher: dispatcher,
 		lastDarkBg: func() bool {
 			if th.ColorMode() == theme.ColorModeLight {
 				return false

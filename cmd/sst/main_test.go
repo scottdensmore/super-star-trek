@@ -380,6 +380,116 @@ func TestCLIFlags_SpatialAnomalies_MutualExclusion(t *testing.T) {
 	}
 }
 
+func TestCLIFlags_Sound(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	var capturedModel tea.Model
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		capturedModel = m
+		return nil
+	}
+
+	tests := []struct {
+		name        string
+		args        []string
+		wantEnabled bool
+	}{
+		{
+			name:        "default has sound enabled",
+			args:        []string{"-seed", "42"},
+			wantEnabled: true,
+		},
+		{
+			name:        "enable sound explicitly with --sound",
+			args:        []string{"--sound", "-seed", "42"},
+			wantEnabled: true,
+		},
+		{
+			name:        "enable sound explicitly with -sound",
+			args:        []string{"-sound", "-seed", "42"},
+			wantEnabled: true,
+		},
+		{
+			name:        "disable sound with --no-sound",
+			args:        []string{"--no-sound", "-seed", "42"},
+			wantEnabled: false,
+		},
+		{
+			name:        "disable sound with -no-sound",
+			args:        []string{"-no-sound", "-seed", "42"},
+			wantEnabled: false,
+		},
+		{
+			name:        "sound flag set to false with --sound=false",
+			args:        []string{"--sound=false", "-seed", "42"},
+			wantEnabled: false,
+		},
+		{
+			name:        "no-sound flag set to false with --no-sound=false",
+			args:        []string{"--no-sound=false", "-seed", "42"},
+			wantEnabled: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			code := run(tc.args, strings.NewReader(""), &stdout, &stderr)
+			if code != 0 {
+				t.Fatalf("run failed with code %d: %s", code, stderr.String())
+			}
+			model, ok := capturedModel.(tui.Model)
+			if !ok {
+				t.Fatalf("captured model is not tui.Model: %T", capturedModel)
+			}
+			if model.SoundEnabled() != tc.wantEnabled {
+				t.Errorf("expected SoundEnabled=%v, got %v", tc.wantEnabled, model.SoundEnabled())
+			}
+		})
+	}
+}
+
+func TestCLIFlags_Sound_MutualExclusion(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	called := false
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		called = true
+		return nil
+	}
+
+	// Long flags: --sound and --no-sound
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"--sound", "--no-sound"}, strings.NewReader(""), &stdout, &stderr)
+	if code != 1 {
+		t.Fatalf("expected exit code 1 when specifying both flags, got %d", code)
+	}
+	if called {
+		t.Fatalf("expected runProgram NOT to be called")
+	}
+	expectedErr := "Error: cannot specify both --sound and --no-sound"
+	if !strings.Contains(stderr.String(), expectedErr) {
+		t.Errorf("expected stderr to contain %q, got %q", expectedErr, stderr.String())
+	}
+
+	// Short flags: -sound and -no-sound
+	stdout.Reset()
+	stderr.Reset()
+	called = false
+	code = run([]string{"-sound", "-no-sound"}, strings.NewReader(""), &stdout, &stderr)
+	if code != 1 {
+		t.Fatalf("expected exit code 1 when specifying both flags with single dash, got %d", code)
+	}
+	if called {
+		t.Fatalf("expected runProgram NOT to be called")
+	}
+	if !strings.Contains(stderr.String(), expectedErr) {
+		t.Errorf("expected stderr to contain %q, got %q", expectedErr, stderr.String())
+	}
+}
+
 func TestCLIModeFlag(t *testing.T) {
 	origRunProgram := runProgram
 	t.Cleanup(func() { runProgram = origRunProgram })

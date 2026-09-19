@@ -20,6 +20,7 @@ type PanelData struct {
 	GalaxyChart   [9][9]int
 	Stardate      float64
 	Rules         engine.GameRules
+	SoundEnabled  bool
 }
 
 // SamplePanelData returns a default populated PanelData for testing and preview rendering.
@@ -39,6 +40,7 @@ func SamplePanelData() PanelData {
 		GalaxyChart:   [9][9]int{},
 		Stardate:      2800.0,
 		Rules:         engine.DefaultRulesForProfile(engine.ProfileNormal),
+		SoundEnabled:  true,
 	}
 }
 
@@ -55,6 +57,17 @@ type Model struct {
 	rules         engine.GameRules
 	hasState      bool
 	redAlertCycle int
+	soundEnabled  bool
+}
+
+// SoundEnabled reports whether sound FX telemetry is enabled.
+func (m Model) SoundEnabled() bool {
+	return m.soundEnabled
+}
+
+// SetSoundEnabled updates the sound FX telemetry state.
+func (m *Model) SetSoundEnabled(enabled bool) {
+	m.soundEnabled = enabled
 }
 
 // SetRedAlertCycle updates the active cycle index for Condition Red klaxon pulse oscillation.
@@ -96,9 +109,10 @@ func New(th theme.Theme, dims ...int) Model {
 		height = dims[1]
 	}
 	return Model{
-		theme:  th,
-		width:  width,
-		height: height,
+		theme:        th,
+		width:        width,
+		height:       height,
+		soundEnabled: true,
 	}
 }
 
@@ -242,6 +256,7 @@ func (m Model) Render(data PanelData) string {
 	m.galaxyChart = data.GalaxyChart
 	m.stardate = data.Stardate
 	m.rules = data.Rules
+	m.soundEnabled = data.SoundEnabled
 	if m.rules.Profile == "" && !m.rules.SensorDegradation {
 		m.rules = engine.DefaultRulesForProfile(engine.ProfileNormal)
 	}
@@ -262,6 +277,7 @@ func (m Model) View(gs ...*engine.GameState) string {
 			GalaxyChart:   g.GalaxyChart,
 			Stardate:      g.Stardate,
 			Rules:         g.Rules,
+			SoundEnabled:  m.soundEnabled,
 		})
 	}
 	if !m.hasState {
@@ -312,9 +328,16 @@ func (m Model) render() string {
 	energyLine := renderProgressBar("Energy", m.enterprise.Energy, 5000, styles.Styles)
 	shieldsLine := renderProgressBar("Shields", m.enterprise.Shields, 2500, styles.Styles)
 
-	// 5. Torpedo inventory
+	// 5. Torpedo inventory & Sound FX telemetry badge
+	var sndBadge string
+	if m.soundEnabled {
+		sndBadge = styles.Prompt.Render("[SND: ON]")
+	} else {
+		sndBadge = styles.TextMuted.Render("[SND: OFF]")
+	}
 	torpLine := styles.GaugeLabel.Render("Torpedoes: ") +
-		styles.GaugeValue.Render(fmt.Sprintf("[TORP: %d/10]", m.enterprise.Torpedoes))
+		styles.GaugeValue.Render(fmt.Sprintf("[TORP: %d/10]", m.enterprise.Torpedoes)) +
+		"   " + sndBadge
 
 	// 6. Subsystem device repair countdowns (2 columns of 4 devices)
 	devHeader := styles.PanelTitle.Render("SUBSYSTEM REPAIR STATUS:")

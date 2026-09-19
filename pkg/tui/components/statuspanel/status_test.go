@@ -106,6 +106,39 @@ func TestTorpedoInventory(t *testing.T) {
 	}
 }
 
+func TestStatusPanel_SoundTelemetryBadge(t *testing.T) {
+	th := theme.DefaultTheme()
+	m := New(th)
+
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+
+	// Default should display [SND: ON]
+	viewOn := m.View(g)
+	if !strings.Contains(viewOn, "[SND: ON]") {
+		t.Errorf("expected view to contain '[SND: ON]', got:\n%s", viewOn)
+	}
+	if strings.Contains(viewOn, "[SND: OFF]") {
+		t.Errorf("expected view NOT to contain '[SND: OFF]' when enabled")
+	}
+
+	// Disable sound should display [SND: OFF]
+	m.SetSoundEnabled(false)
+	viewOff := m.View(g)
+	if !strings.Contains(viewOff, "[SND: OFF]") {
+		t.Errorf("expected view to contain '[SND: OFF]', got:\n%s", viewOff)
+	}
+	if strings.Contains(viewOff, "[SND: ON]") {
+		t.Errorf("expected view NOT to contain '[SND: ON]' when disabled")
+	}
+
+	// Re-enable sound
+	m.SetSoundEnabled(true)
+	viewReOn := m.View(g)
+	if !strings.Contains(viewReOn, "[SND: ON]") {
+		t.Errorf("expected view to contain '[SND: ON]' after re-enabling")
+	}
+}
+
 func TestStardateAndTimeRemaining(t *testing.T) {
 	th := theme.DefaultTheme()
 	m := New(th)

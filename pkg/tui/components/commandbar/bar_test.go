@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
 
@@ -394,5 +396,45 @@ func TestCommandBarTabCompletion(t *testing.T) {
 	cb, _ = cb.Update(tea.KeyMsg{Type: tea.KeyTab})
 	if cb.Value() != "" {
 		t.Errorf("expected empty string to remain on tab with empty input, got %q", cb.Value())
+	}
+}
+
+func TestCommandBarVisualBell(t *testing.T) {
+	lipgloss.SetColorProfile(termenv.TrueColor)
+	defer lipgloss.SetColorProfile(termenv.Ascii)
+
+	th := theme.DefaultTheme()
+	cb := New(th)
+	cb.SetWidth(80)
+
+	// Initially visual bell is false
+	if cb.VisualBell() {
+		t.Errorf("expected visual bell initially false")
+	}
+
+	normalView := cb.View()
+
+	// Activate visual bell
+	cb.SetVisualBell(true)
+	if !cb.VisualBell() {
+		t.Errorf("expected visual bell true after SetVisualBell(true)")
+	}
+
+	bellView := cb.View()
+
+	// Views should differ in border styling/ANSI escape codes
+	if bellView == normalView {
+		t.Errorf("expected visual bell view to differ from normal view due to pulsed accent border")
+	}
+
+	// Deactivate visual bell
+	cb.SetVisualBell(false)
+	if cb.VisualBell() {
+		t.Errorf("expected visual bell false after SetVisualBell(false)")
+	}
+
+	restoredView := cb.View()
+	if restoredView != normalView {
+		t.Errorf("expected restored view to match normal view")
 	}
 }
