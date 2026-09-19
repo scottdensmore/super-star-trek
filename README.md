@@ -110,7 +110,7 @@ Type commands directly into the prompt bar at the bottom:
 
 ## Classic C Edition
 
-The original C implementation and classic curses full-screen interface are preserved in this repository.
+The original C implementation and classic curses full-screen interface are preserved in the `c/` directory.
 
 ### Requirements
 - C17 compiler (`gcc` or `clang`)
@@ -121,13 +121,13 @@ The original C implementation and classic curses full-screen interface are prese
 ```bash
 cmake --preset debug           # or release
 cmake --build --preset debug
-./build/debug/sst
+./build/debug/c/sst
 ```
 
 ### Running C Tests
 ```bash
 ctest --preset debug
-bash tests/golden.sh ./build/debug/sst
+bash c/tests/golden.sh ./build/debug/c/sst
 ```
 
 ### C Full-Screen Mode (`sst -t`)
