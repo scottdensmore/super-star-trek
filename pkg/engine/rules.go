@@ -36,6 +36,7 @@ type GameRules struct {
 	SensorDegradation bool              `json:"sensor_degradation"`
 	RepairMultiplier  float64           `json:"repair_multiplier"`
 	KlingonCloak      bool              `json:"klingon_cloak"`
+	SpatialAnomalies  bool              `json:"spatial_anomalies"`
 	TimeMargin        float64           `json:"time_margin"`
 	AnimSpeed         int               `json:"anim_speed"`
 }
@@ -50,6 +51,7 @@ func DefaultRulesForProfile(profile DifficultyProfile) GameRules {
 			SensorDegradation: false,
 			RepairMultiplier:  0.75,
 			KlingonCloak:      false,
+			SpatialAnomalies:  false,
 			TimeMargin:        1.25,
 			AnimSpeed:         AnimSpeedNormal,
 		}
@@ -60,6 +62,7 @@ func DefaultRulesForProfile(profile DifficultyProfile) GameRules {
 			SensorDegradation: true,
 			RepairMultiplier:  1.50,
 			KlingonCloak:      true,
+			SpatialAnomalies:  true,
 			TimeMargin:        0.80,
 			AnimSpeed:         AnimSpeedNormal,
 		}
@@ -70,6 +73,7 @@ func DefaultRulesForProfile(profile DifficultyProfile) GameRules {
 			SensorDegradation: true,
 			RepairMultiplier:  2.00,
 			KlingonCloak:      true,
+			SpatialAnomalies:  true,
 			TimeMargin:        0.60,
 			AnimSpeed:         AnimSpeedNormal,
 		}
@@ -82,6 +86,7 @@ func DefaultRulesForProfile(profile DifficultyProfile) GameRules {
 			SensorDegradation: true,
 			RepairMultiplier:  1.00,
 			KlingonCloak:      false,
+			SpatialAnomalies:  false,
 			TimeMargin:        1.00,
 			AnimSpeed:         AnimSpeedNormal,
 		}

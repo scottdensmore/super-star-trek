@@ -241,3 +241,51 @@ func TestInspectSave(t *testing.T) {
 		t.Errorf("expected error for corrupt JSON save, got nil")
 	}
 }
+
+func TestSaveLoadWithAnomalies(t *testing.T) {
+	tempDir := t.TempDir()
+	savePath := filepath.Join(tempDir, "ANOMALY.TRK")
+
+	rules := DefaultRulesForProfile(ProfileHardcore)
+	if !rules.SpatialAnomalies {
+		t.Fatalf("expected Hardcore profile to have SpatialAnomalies enabled")
+	}
+
+	orig := NewGameWithOptions(777, SkillExpert, LengthMedium, rules)
+
+	// Verify anomalies actually exist in orig
+	hasAnomaly := false
+	for r := 1; r <= 8; r++ {
+		for c := 1; c <= 8; c++ {
+			if orig.QuadrantEnv[r][c] != EnvNormal {
+				hasAnomaly = true
+				break
+			}
+		}
+	}
+	if !hasAnomaly {
+		t.Fatalf("expected seeded anomalies in Hardcore game")
+	}
+
+	if err := orig.Save(savePath); err != nil {
+		t.Fatalf("failed to save game: %v", err)
+	}
+
+	loaded, err := LoadGame(savePath)
+	if err != nil {
+		t.Fatalf("failed to load game: %v", err)
+	}
+
+	if !loaded.Rules.SpatialAnomalies {
+		t.Errorf("expected loaded.Rules.SpatialAnomalies to be true")
+	}
+
+	for r := 1; r <= 8; r++ {
+		for c := 1; c <= 8; c++ {
+			if loaded.QuadrantEnv[r][c] != orig.QuadrantEnv[r][c] {
+				t.Errorf("quadrant [%d,%d] env mismatch: want %v, got %v", r, c, orig.QuadrantEnv[r][c], loaded.QuadrantEnv[r][c])
+			}
+		}
+	}
+}
+
