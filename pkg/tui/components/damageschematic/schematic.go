@@ -52,10 +52,7 @@ func getSchematicStyles(th theme.Theme) schematicStyles {
 	}
 	base := th.Styles()
 	borderFg := base.Panel.GetBorderTopForeground()
-	bStyle := lipgloss.NewStyle()
-	if borderFg != nil {
-		bStyle = bStyle.Foreground(borderFg)
-	}
+	bStyle := lipgloss.NewStyle().Foreground(borderFg)
 	return schematicStyles{
 		Styles:   base,
 		Border:   bStyle,

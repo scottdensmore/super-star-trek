@@ -42,10 +42,7 @@ func getStyles(th theme.Theme) manualStyles {
 	}
 	base := th.Styles()
 	borderFg := base.Panel.GetBorderTopForeground()
-	bStyle := lipgloss.NewStyle()
-	if borderFg != nil {
-		bStyle = bStyle.Foreground(borderFg)
-	}
+	bStyle := lipgloss.NewStyle().Foreground(borderFg)
 	return manualStyles{
 		Styles:   base,
 		borderFg: bStyle,
