@@ -14,10 +14,19 @@ import (
 )
 
 var (
-	osGetenv       = os.Getenv
-	runtimeGOOS    = runtime.GOOS
-	darwinDetector = detectDarwinTerminalDarkBackground
+	osGetenv                 = os.Getenv
+	runtimeGOOS              = runtime.GOOS
+	darwinDetector           = detectDarwinTerminalDarkBackground
+	oscDetector              = queryOSCDarkBackground
+	detectDarkBackgroundImpl = detectDarkBackgroundInternal
 
+	detectCacheMu   sync.Mutex
+	detectLastCheck time.Time
+	detectCachedVal bool
+	detectHasCached bool
+	detectCacheTTL  = 2 * time.Second
+
+	// Preserved for backward compatibility with existing tests
 	darwinCacheMu   sync.Mutex
 	darwinLastCheck time.Time
 	darwinCachedVal bool
@@ -28,9 +37,43 @@ var (
 // or false if it has a light background.
 //
 // It addresses edge cases such as Apple Terminal on macOS, which does not support
-// OSC 11 background queries and does not export COLORFGBG (causing termenv and
-// lipgloss to falsely default to dark / black).
+// OSC 11 background queries and does not export COLORFGBG, and avoids blocking
+// 5-second OSC timeouts in tmux or remote SSH sessions.
 func DetectDarkBackground() bool {
+	return detectDarkBackgroundImpl()
+}
+
+// ResetDetectionCache clears the global background detection cache.
+func ResetDetectionCache() {
+	detectCacheMu.Lock()
+	detectHasCached = false
+	detectLastCheck = time.Time{}
+	detectCacheMu.Unlock()
+}
+
+func detectDarkBackgroundInternal() bool {
+	detectCacheMu.Lock()
+	if detectHasCached && detectCacheTTL > 0 && time.Since(detectLastCheck) < detectCacheTTL {
+		val := detectCachedVal
+		detectCacheMu.Unlock()
+		lipgloss.SetHasDarkBackground(val)
+		return val
+	}
+	detectCacheMu.Unlock()
+
+	val := detectDarkBackgroundUncached()
+
+	detectCacheMu.Lock()
+	detectCachedVal = val
+	detectHasCached = true
+	detectLastCheck = time.Now()
+	detectCacheMu.Unlock()
+
+	lipgloss.SetHasDarkBackground(val)
+	return val
+}
+
+func detectDarkBackgroundUncached() bool {
 	// 1. Explicit COLORFGBG environment variable (supported by rxvt, foot, some xterm)
 	colorFGBG := osGetenv("COLORFGBG")
 	if strings.Contains(colorFGBG, ";") {
@@ -38,10 +81,8 @@ func DetectDarkBackground() bool {
 		bgStr := strings.TrimSpace(parts[len(parts)-1])
 		if bg, err := strconv.Atoi(bgStr); err == nil {
 			if bg == 7 || bg >= 11 {
-				lipgloss.SetHasDarkBackground(false)
 				return false
 			}
-			lipgloss.SetHasDarkBackground(true)
 			return true
 		}
 	}
@@ -52,7 +93,6 @@ func DetectDarkBackground() bool {
 		if darwinCacheTTL > 0 && time.Since(darwinLastCheck) < darwinCacheTTL {
 			val := darwinCachedVal
 			darwinCacheMu.Unlock()
-			lipgloss.SetHasDarkBackground(val)
 			return val
 		}
 		darwinCacheMu.Unlock()
@@ -64,12 +104,21 @@ func DetectDarkBackground() bool {
 		darwinLastCheck = time.Now()
 		darwinCacheMu.Unlock()
 
-		lipgloss.SetHasDarkBackground(isDark)
 		return isDark
 	}
 
-	// 3. Standard fallback: lipgloss OSC 11 query
-	return lipgloss.HasDarkBackground()
+	// 3. Fast OSC 11 terminal query (50ms timeout)
+	if isDark, ok := oscDetector(50 * time.Millisecond); ok {
+		return isDark
+	}
+
+	// 4. Heuristics when OSC 11 is unsupported or unanswered (e.g. Apple Terminal over SSH, tmux without passthrough)
+	if osGetenv("TERM_PROGRAM") == "Apple_Terminal" {
+		return false
+	}
+
+	// Standard default: dark background
+	return true
 }
 
 // detectDarwinTerminalDarkBackground queries Apple Terminal or macOS system appearance.
