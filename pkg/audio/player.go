@@ -31,10 +31,9 @@ func NewTerminalBellPlayer(w io.Writer, visualBell func()) *TerminalBellPlayer {
 
 // Play triggers an ASCII bell and visual bell for combat and alert sound IDs.
 func (p *TerminalBellPlayer) Play(sound SoundID) {
-	p.mu.RLock()
-	muted := p.muted
-	p.mu.RUnlock()
-	if muted {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.muted {
 		return
 	}
 
