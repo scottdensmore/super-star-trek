@@ -117,7 +117,10 @@ func init() {
 			"Hull breached, 81 crew aboard, 300 passengers. Power systems failing.",
 			"You are entering the Neutral Zone in violation of the Organian Peace Treaty.",
 		},
-		Aliases: []string{"kobayashi", "km"},
+		Aliases:      []string{"kobayashi", "km"},
+		Build:        BuildKobayashiMaru,
+		Evaluate:     EvaluateKobayashiMaru,
+		ComputeScore: ComputeScoreKobayashiMaru,
 	})
 
 	RegisterScenario(&Scenario{
@@ -132,7 +135,10 @@ func init() {
 			"High electrostatic discharge has disabled defensive shields and blinded long-range sensors.",
 			"Locate and destroy the enemy commander before your ship is compromised.",
 		},
-		Aliases: []string{"mutara", "nebula"},
+		Aliases:      []string{"mutara", "nebula"},
+		Build:        BuildMutaraNebula,
+		Evaluate:     EvaluateMutaraNebula,
+		ComputeScore: ComputeScoreMutaraNebula,
 	})
 
 	RegisterScenario(&Scenario{
@@ -147,6 +153,9 @@ func init() {
 			"The starbase shields are degrading under heavy orbital bombardment.",
 			"Rush to their defense and eliminate all hostile warships before the base is destroyed.",
 		},
-		Aliases: []string{"siege", "starbase"},
+		Aliases:      []string{"siege", "starbase"},
+		Build:        BuildStarbaseSiege,
+		Evaluate:     EvaluateStarbaseSiege,
+		ComputeScore: ComputeScoreStarbaseSiege,
 	})
 }

@@ -310,6 +310,7 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 		}
 	}
 
+	events = evaluateScenario(g, events)
 	return events, nil
 }
 
@@ -481,6 +482,7 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 	}
 	g.CurrentQuad.Klingons = survivors
 
+	events = evaluateScenario(g, events)
 	return events, nil
 }
 
@@ -790,7 +792,45 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 		}
 	}
 
+	events = evaluateScenario(g, events)
 	return events, nil
+}
+
+// evaluateScenario checks if an active scenario's win/loss conditions are met
+// and updates the game state and event slice accordingly.
+func evaluateScenario(g *GameState, events []Event) []Event {
+	if g == nil || g.Scenario == ScenarioNone {
+		return events
+	}
+	s, ok := GetScenario(g.Scenario)
+	if !ok || s == nil || s.Evaluate == nil {
+		return events
+	}
+	done, won, reason := s.Evaluate(g)
+	if done {
+		g.GameWon = won
+		var scoreVal float64
+		if s.ComputeScore != nil {
+			scoreVal = float64(s.ComputeScore(g, won).TotalScore)
+		} else {
+			scoreVal = float64(ComputeScore(g, won).TotalScore)
+		}
+		found := false
+		for i, ev := range events {
+			if _, ok := ev.(EventGameOver); ok {
+				events[i] = EventGameOver{Reason: reason, Score: scoreVal}
+				found = true
+				break
+			}
+		}
+		if !found {
+			events = append(events, EventGameOver{
+				Reason: reason,
+				Score:  scoreVal,
+			})
+		}
+	}
+	return events
 }
 
 // isNearBlackHole checks if sector is within Chebyshev distance 1 of any EntityBlackHole in grid.
@@ -893,6 +933,7 @@ func handleWormholeJump(g *GameState, a ActionMove, fromQuad, fromSector, wormho
 		}
 	}
 
+	events = evaluateScenario(g, events)
 	return events, nil
 }
 
@@ -986,7 +1027,9 @@ func (a ActionKlingonCounterAttack) Execute(g *GameState) ([]Event, error) {
 	if attacker == nil {
 		return nil, errors.New("attacker not found in quadrant")
 	}
-	return KlingonCounterAttack(g, attacker, a.Damage), nil
+	events := KlingonCounterAttack(g, attacker, a.Damage)
+	events = evaluateScenario(g, events)
+	return events, nil
 }
 
 // ActionCallHelp places a distress call to Starfleet Command, incurring a scoring penalty.

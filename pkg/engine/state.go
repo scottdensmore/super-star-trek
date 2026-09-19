@@ -255,7 +255,12 @@ func (g *GameState) PopulateQuadrant(quad Coord, entSector Coord) {
 	}
 
 	if numB > 0 {
-		sb := findEmptySector()
+		var sb Coord
+		if g.Scenario == ScenarioStarbaseSiege && quad == (Coord{4, 4}) && entSector != (Coord{4, 4}) {
+			sb = Coord{4, 4}
+		} else {
+			sb = findEmptySector()
+		}
 		g.CurrentQuad.Starbase = &sb
 		g.CurrentQuad.Grid[sb[0]][sb[1]] = EntityStarbase
 	}
