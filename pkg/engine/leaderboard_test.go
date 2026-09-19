@@ -241,9 +241,8 @@ func TestLeaderboard_DefaultLegendsPresence(t *testing.T) {
 
 func TestScenarioLeaderboards_Isolation(t *testing.T) {
 	tempDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tempDir)
-	defer os.Setenv("HOME", origHome)
+	t.Setenv("HOME", tempDir)
+	t.Setenv("XDG_CONFIG_HOME", "")
 
 	// Save score for Kobayashi Maru
 	entry := ScoreEntry{

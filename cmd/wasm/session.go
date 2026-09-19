@@ -72,10 +72,7 @@ func (s *Session) Execute(input string) string {
 		}
 		sc, ok := engine.GetScenario(engine.ScenarioID(id))
 		if !ok {
-			sc, ok = engine.GetScenario(engine.ScenarioID(tokens[1]))
-		}
-		if !ok {
-			return fmt.Sprintf("Unknown scenario: %s\r\n", tokens[1])
+			return fmt.Sprintf("Unknown scenario: %s\r\n", id)
 		}
 		s.game = sc.Build(s.seed)
 		return FormatScenarioBriefing(sc)

@@ -147,8 +147,13 @@ func TestSession_ScenarioCommands(t *testing.T) {
 func TestSession_ScenarioCommands_Unknown(t *testing.T) {
 	s := NewSession(42)
 	out := s.Execute("scenario nonexistent")
-	if !strings.Contains(strings.ToLower(out), "unknown scenario") {
+	if !strings.Contains(strings.ToLower(out), "unknown scenario: nonexistent") {
 		t.Errorf("expected unknown scenario error, got: %s", out)
+	}
+
+	multiOut := s.Execute("scenario starbase assault")
+	if !strings.Contains(strings.ToLower(multiOut), "unknown scenario: starbase-assault") {
+		t.Errorf("expected multi-word unknown scenario error, got: %s", multiOut)
 	}
 }
 

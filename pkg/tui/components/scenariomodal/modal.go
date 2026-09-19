@@ -360,9 +360,9 @@ func (m Model) renderDetailRows(styles modalStyles, width int) []string {
 		top = m.leaderboardCache[s.ID]
 	}
 	if top != nil {
-		rec1 := fmt.Sprintf(" %s  %s", styles.PanelTitle.Render(top.CaptainName), styles.GaugeValue.Render(fmt.Sprintf("%d pts", top.Score)))
+		rec1 := fmt.Sprintf("%s  %s", styles.PanelTitle.Render(top.CaptainName), styles.GaugeValue.Render(fmt.Sprintf("%d pts", top.Score)))
 		rec2 := fmt.Sprintf("Rank: %s | Stardate: %.1f | %s", top.Rank, top.Stardate, top.Date.Format("2006-01-02"))
-		rows[14] = padRight(rec1, width)
+		rows[14] = padRight(" "+rec1, width)
 		rows[15] = padRight(" "+styles.LogText.Render(rec2), width)
 	} else {
 		rows[14] = padRight(" "+styles.LogText.Render("No record recorded yet."), width)
