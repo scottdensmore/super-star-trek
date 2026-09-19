@@ -117,7 +117,10 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 		rules = engine.DefaultRulesForProfile(engine.ProfileNormal)
 	}
 
-	player := audio.NewNativeOSPlayer(os.Stdout, nil)
+	bellCallback := func() {
+		cb.SetVisualBell(true)
+	}
+	player := audio.NewNativeOSPlayer(os.Stdout, bellCallback)
 	dispatcher := audio.NewDispatcher(player)
 
 	m := Model{

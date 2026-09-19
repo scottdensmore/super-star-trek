@@ -68,7 +68,7 @@ function createNoiseBuffer(ctx, durationSeconds) {
     const output = buffer.getChannelData(0);
     let rng = 0x12345678;
     for (let i = 0; i < bufferSize; i++) {
-        rng = (rng * 1103515245 + 12345) & 0x7fffffff;
+        rng = (Math.imul(rng, 1103515245) + 12345) & 0x7fffffff;
         output[i] = (rng % 65536) / 32768.0 - 1.0;
     }
     return buffer;
@@ -212,6 +212,7 @@ function playDock(ctx = getAudioContext()) {
             osc.type = 'sine';
             osc.frequency.setValueAtTime(freq, t0);
 
+            gain.gain.setValueAtTime(0.001, now);
             gain.gain.setValueAtTime(0.001, t0);
             gain.gain.linearRampToValueAtTime(0.25, t0 + 0.01);
             gain.gain.exponentialRampToValueAtTime(0.001, t0 + noteDuration + 0.05);
@@ -352,6 +353,7 @@ function playVictory(ctx = getAudioContext()) {
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(freq, t0);
 
+            gain.gain.setValueAtTime(0.001, now);
             gain.gain.setValueAtTime(0.001, t0);
             gain.gain.linearRampToValueAtTime(0.28, t0 + 0.01);
             gain.gain.exponentialRampToValueAtTime(0.001, t0 + noteDuration + 0.04);
@@ -450,6 +452,12 @@ if (typeof window !== 'undefined') {
     window.playShields = playShields;
     window.playVictory = playVictory;
     window.playDefeat = playDefeat;
+}
+
+if (typeof globalThis !== 'undefined' && typeof window === 'undefined') {
+    globalThis.sstPlaySound = sstPlaySound;
+    globalThis.sstSetMuted = sstSetMuted;
+    globalThis.sstIsMuted = sstIsMuted;
 }
 
 if (typeof module !== 'undefined' && module.exports) {

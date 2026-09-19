@@ -2716,6 +2716,126 @@ func TestAudio_EventDispatch(t *testing.T) {
 	}
 }
 
+func TestModel_VisualBellActivationAndExpiration(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	if m.CommandBar.VisualBell() {
+		t.Fatalf("expected command bar visual bell initially false")
+	}
+
+	// 1. Torpedo hit event triggers visual bell
+	cmd := m.logEvents([]engine.Event{
+		engine.EventTorpedoHit{Target: engine.Coord{3, 4}, Damage: 120, Destroyed: false},
+	})
+	if !m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell to be activated on EventTorpedoHit")
+	}
+	if cmd == nil {
+		t.Fatalf("expected non-nil tea.Cmd for visual bell expiration")
+	}
+	expireMsg := cmd()
+	if _, ok := expireMsg.(VisualBellExpireMsg); !ok {
+		t.Errorf("expected VisualBellExpireMsg from timer tick, got: %T", expireMsg)
+	}
+
+	// Expire message resets visual bell
+	updated, _ := m.Update(VisualBellExpireMsg{})
+	m = updated.(Model)
+	if m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell to be deactivated on VisualBellExpireMsg")
+	}
+
+	// 2. Klingon counter attack triggers visual bell
+	cmd = m.logEvents([]engine.Event{
+		engine.EventKlingonCounterAttack{EnemyID: 1, Damage: 50},
+	})
+	if !m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell activated on EventKlingonCounterAttack")
+	}
+	if cmd == nil {
+		t.Fatalf("expected non-nil cmd on EventKlingonCounterAttack")
+	}
+
+	// 3. Subsystem damage triggers visual bell
+	m.CommandBar.SetVisualBell(false)
+	cmd = m.logEvents([]engine.Event{
+		engine.EventSubsystemDamaged{Device: engine.DevicePhasers, RepairTime: 3.5},
+	})
+	if !m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell activated on EventSubsystemDamaged")
+	}
+	if cmd == nil {
+		t.Fatalf("expected non-nil cmd on EventSubsystemDamaged")
+	}
+
+	// 4. Condition changed to RED triggers visual bell
+	m.CommandBar.SetVisualBell(false)
+	cmd = m.logEvents([]engine.Event{
+		engine.EventConditionChanged{From: engine.ConditionYellow, To: engine.ConditionRed},
+	})
+	if !m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell activated on ConditionRed")
+	}
+	if cmd == nil {
+		t.Fatalf("expected non-nil cmd on ConditionRed")
+	}
+
+	// 5. Non-critical event (e.g. Shields, Green) does NOT trigger visual bell
+	m.CommandBar.SetVisualBell(false)
+	cmd = m.logEvents([]engine.Event{
+		engine.EventShieldTransfer{NewShields: 500, NewEnergy: 2500},
+	})
+	if m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell NOT activated on EventShieldTransfer")
+	}
+	if cmd != nil {
+		t.Errorf("expected nil cmd for non-critical event, got %v", cmd)
+	}
+}
+
+func TestModel_VisualBellViaCommandExecution(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	g.Enterprise.Sector = engine.Coord{4, 4}
+	g.Enterprise.Energy = 3000
+	klingon := &engine.Klingon{ID: 1, Sector: engine.Coord{4, 6}, Energy: 200}
+	g.CurrentQuad.Klingons = []*engine.Klingon{klingon}
+	g.CurrentQuad.Grid[4][6] = engine.EntityKlingon
+
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Fire phasers at Klingon
+	updated, cmd := m.Update(commandbar.CommandSubmittedMsg{Text: "pha 300"})
+	m = updated.(Model)
+
+	if !m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell active after firing phasers hitting enemy")
+	}
+	if cmd == nil {
+		t.Fatalf("expected non-nil batch cmd after phaser hit")
+	}
+
+	// Send VisualBellExpireMsg
+	updated, _ = m.Update(VisualBellExpireMsg{})
+	m = updated.(Model)
+	if m.CommandBar.VisualBell() {
+		t.Errorf("expected visual bell deactivated after VisualBellExpireMsg")
+	}
+}
+
+func TestModel_NewModelPlayerInit(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	if m.AudioPlayer == nil {
+		t.Fatal("expected non-nil AudioPlayer in NewModel")
+	}
+	if m.AudioDispatcher == nil {
+		t.Fatal("expected non-nil AudioDispatcher in NewModel")
+	}
+}
+
+
 
 
 

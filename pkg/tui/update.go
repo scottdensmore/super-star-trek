@@ -31,6 +31,46 @@ func redAlertPulseCmd() tea.Cmd {
 	})
 }
 
+// VisualBellExpireMsg is dispatched after 150ms to deactivate the visual bell accent pulse on the command bar.
+type VisualBellExpireMsg struct{}
+
+func visualBellCmd() tea.Cmd {
+	return tea.Tick(150*time.Millisecond, func(time.Time) tea.Msg {
+		return VisualBellExpireMsg{}
+	})
+}
+
+// checkVisualBell examines engine events for critical combat or alert occurrences,
+// activating the command bar visual bell pulse and scheduling its expiration.
+func (m *Model) checkVisualBell(events []engine.Event) tea.Cmd {
+	triggered := false
+	for _, ev := range events {
+		switch e := ev.(type) {
+		case engine.EventTorpedoHit, engine.EventPhaserHit, engine.EventKlingonCounterAttack, engine.EventSubsystemDamaged:
+			triggered = true
+		case engine.EventConditionChanged:
+			if e.To == engine.ConditionRed {
+				triggered = true
+			}
+		case engine.EventHazardTriggered:
+			triggered = true
+		case engine.EventGameOver:
+			if e.Reason != engine.GameOverWon {
+				triggered = true
+			}
+		}
+		if triggered {
+			break
+		}
+	}
+
+	if triggered {
+		m.CommandBar.SetVisualBell(true)
+		return visualBellCmd()
+	}
+	return nil
+}
+
 func (m *Model) checkRedAlertCmd(prevCond engine.ConditionType) tea.Cmd {
 	if m.Game != nil && m.Game.Enterprise.Condition == engine.ConditionRed && m.Game.Rules.AnimSpeed != engine.AnimSpeedOff {
 		if prevCond != engine.ConditionRed || !m.redAlertActive {
@@ -71,7 +111,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				m.CommandBar.AddMessage(err.Error())
 			} else {
-				m.logEvents(events)
+				bellCmd := m.logEvents(events)
 				for _, ev := range events {
 					if goEv, ok := ev.(engine.EventGameOver); ok {
 						return m.handleGameOver(goEv)
@@ -83,6 +123,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 				pulseCmd = m.checkRedAlertCmd(prevCond)
+				m.ActiveModal = ModalNone
+				cmd := m.CommandBar.Focus()
+				return m, tea.Batch(cmd, animCmd, pulseCmd, bellCmd)
 			}
 		}
 		m.ActiveModal = ModalNone
@@ -101,7 +144,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				m.CommandBar.AddMessage(err.Error())
 			} else {
-				m.logEvents(events)
+				bellCmd := m.logEvents(events)
 				for _, ev := range events {
 					if goEv, ok := ev.(engine.EventGameOver); ok {
 						return m.handleGameOver(goEv)
@@ -113,6 +156,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 				pulseCmd = m.checkRedAlertCmd(prevCond)
+				m.ActiveModal = ModalNone
+				cmd := m.CommandBar.Focus()
+				return m, tea.Batch(cmd, animCmd, pulseCmd, bellCmd)
 			}
 		}
 		m.ActiveModal = ModalNone
@@ -169,13 +215,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.CommandBar.AddMessage(err.Error())
 			} else {
 				m.SelectedSector = engine.Coord{}
-				m.logEvents(events)
+				bellCmd := m.logEvents(events)
 				for _, ev := range events {
 					if goEv, ok := ev.(engine.EventGameOver); ok {
 						return m.handleGameOver(goEv)
 					}
 				}
 				pulseCmd = m.checkRedAlertCmd(prevCond)
+				cmd := m.CommandBar.Focus()
+				return m, tea.Batch(cmd, pulseCmd, bellCmd)
 			}
 		}
 		cmd := m.CommandBar.Focus()
@@ -242,6 +290,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, redAlertPulseCmd()
 		}
 		m.redAlertActive = false
+		return m, nil
+
+	case VisualBellExpireMsg:
+		m.CommandBar.SetVisualBell(false)
 		return m, nil
 
 	case anim.TickMsg:
@@ -513,14 +565,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.CommandBar.AddMessage(err.Error())
 					} else {
 						m.SelectedSector = engine.Coord{}
-						m.logEvents(events)
+						bellCmd := m.logEvents(events)
 						for _, ev := range events {
 							if goEv, ok := ev.(engine.EventGameOver); ok {
 								return m.handleGameOver(goEv)
 							}
 						}
 						pulseCmd := m.checkRedAlertCmd(prevCond)
-						return m, pulseCmd
+						return m, tea.Batch(pulseCmd, bellCmd)
 					}
 				}
 				return m, nil
@@ -566,14 +618,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err != nil {
 						m.CommandBar.AddMessage(err.Error())
 					} else {
-						m.logEvents(events)
+						bellCmd := m.logEvents(events)
 						for _, ev := range events {
 							if goEv, ok := ev.(engine.EventGameOver); ok {
 								return m.handleGameOver(goEv)
 							}
 						}
 						pulseCmd := m.checkRedAlertCmd(prevCond)
-						return m, pulseCmd
+						return m, tea.Batch(pulseCmd, bellCmd)
 					}
 				}
 				return m, nil
@@ -586,14 +638,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if err != nil {
 						m.CommandBar.AddMessage(err.Error())
 					} else {
-						m.logEvents(events)
+						bellCmd := m.logEvents(events)
 						for _, ev := range events {
 							if goEv, ok := ev.(engine.EventGameOver); ok {
 								return m.handleGameOver(goEv)
 							}
 						}
 						pulseCmd := m.checkRedAlertCmd(prevCond)
-						return m, pulseCmd
+						return m, tea.Batch(pulseCmd, bellCmd)
 					}
 				}
 				return m, nil
@@ -1109,7 +1161,7 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-		m.logEvents(events)
+		bellCmd := m.logEvents(events)
 		for _, ev := range events {
 			if moveEv, ok := ev.(engine.EventShipMoved); ok && moveEv.FromQuad != moveEv.ToQuad {
 				m.SelectedSector = engine.Coord{}
@@ -1126,7 +1178,7 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			}
 		}
 		pulseCmd := m.checkRedAlertCmd(prevCond)
-		return m, tea.Batch(animCmd, pulseCmd)
+		return m, tea.Batch(animCmd, pulseCmd, bellCmd)
 	}
 
 	return m, nil
@@ -1146,8 +1198,8 @@ func (m *Model) toggleSound() (Model, tea.Cmd) {
 }
 
 // logEvents formats and appends engine events to the command bar log buffer,
-// and dispatches them to the audio engine.
-func (m *Model) logEvents(events []engine.Event) {
+// dispatches them to the audio engine, and triggers the visual bell for critical events.
+func (m *Model) logEvents(events []engine.Event) tea.Cmd {
 	if m.AudioDispatcher != nil && len(events) > 0 {
 		m.AudioDispatcher.DispatchEvents(events)
 	}
@@ -1160,6 +1212,7 @@ func (m *Model) logEvents(events []engine.Event) {
 			m.CommandBar.AddMessage(formatted)
 		}
 	}
+	return m.checkVisualBell(events)
 }
 
 // formatEvent translates an engine.Event into human-readable tactical log messages.

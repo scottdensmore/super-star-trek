@@ -22,6 +22,7 @@ type Model struct {
 	messages    []string
 	maxMessages int
 	width       int
+	visualBell  bool
 
 	history     []string
 	historyIdx  int
@@ -151,6 +152,16 @@ func (m Model) Width() int {
 	return m.width
 }
 
+// SetVisualBell sets whether the visual bell border accent pulse is active.
+func (m *Model) SetVisualBell(active bool) {
+	m.visualBell = active
+}
+
+// VisualBell returns whether the visual bell border accent pulse is currently active.
+func (m Model) VisualBell() bool {
+	return m.visualBell
+}
+
 // Focus focuses the text input element, enabling keyboard capture.
 func (m *Model) Focus() tea.Cmd {
 	return m.Model.Focus()
@@ -274,6 +285,13 @@ func (m Model) View() string {
 	b.WriteString(m.Model.View())
 
 	panelStyle := styles.Panel
+	if m.visualBell {
+		bellColor := styles.ConditionRed.GetForeground()
+		if styles.ConditionRed.GetBackground() != nil {
+			bellColor = styles.ConditionRed.GetBackground()
+		}
+		panelStyle = panelStyle.BorderForeground(bellColor)
+	}
 	if m.width > 0 {
 		borderPaddingWidth := panelStyle.GetHorizontalFrameSize()
 		contentWidth := m.width - borderPaddingWidth

@@ -16,14 +16,26 @@ type jsAudioPlayer struct {
 	muted bool
 }
 
+func getJSFunction(name string) js.Value {
+	fn := js.Global().Get(name)
+	if fn.Type() == js.TypeFunction {
+		return fn
+	}
+	win := js.Global().Get("window")
+	if win.Type() == js.TypeObject {
+		fn = win.Get(name)
+		if fn.Type() == js.TypeFunction {
+			return fn
+		}
+	}
+	return js.Undefined()
+}
+
 func (p *jsAudioPlayer) Play(sound audio.SoundID) {
-	p.mu.RLock()
-	muted := p.muted
-	p.mu.RUnlock()
-	if muted {
+	if p.IsMuted() {
 		return
 	}
-	fn := js.Global().Get("sstPlaySound")
+	fn := getJSFunction("sstPlaySound")
 	if fn.Type() == js.TypeFunction {
 		fn.Invoke(string(sound))
 	}
@@ -31,11 +43,24 @@ func (p *jsAudioPlayer) Play(sound audio.SoundID) {
 
 func (p *jsAudioPlayer) SetMuted(muted bool) {
 	p.mu.Lock()
-	defer p.mu.Unlock()
 	p.muted = muted
+	p.mu.Unlock()
+
+	fn := getJSFunction("sstSetMuted")
+	if fn.Type() == js.TypeFunction {
+		fn.Invoke(muted)
+	}
 }
 
 func (p *jsAudioPlayer) IsMuted() bool {
+	fn := getJSFunction("sstIsMuted")
+	if fn.Type() == js.TypeFunction {
+		res := fn.Invoke()
+		if res.Type() == js.TypeBoolean {
+			return res.Bool()
+		}
+	}
+
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.muted
