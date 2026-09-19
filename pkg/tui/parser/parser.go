@@ -53,6 +53,8 @@ func ParseCommand(input string) ParsedCommand {
 		return ParsedCommand{Action: engine.ActionDock{}}
 	case "opts", "options", "settings":
 		return ParsedCommand{Special: "options"}
+	case "scenarios", "scen":
+		return ParsedCommand{Special: "scenarios"}
 	case "theme":
 		if len(args) > 0 {
 			return ParsedCommand{Special: "theme " + strings.ToLower(args[0])}
