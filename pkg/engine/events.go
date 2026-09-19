@@ -102,6 +102,7 @@ const (
 	GameOverDestroyed
 	GameOverTime
 	GameOverStranded
+	GameOverLost
 )
 
 // EventGameOver is emitted when the game ends.
@@ -174,3 +175,35 @@ type EventHelpCalled struct{}
 
 // EventType returns the type name for EventHelpCalled.
 func (e EventHelpCalled) EventType() string { return "HelpCalled" }
+
+// EventHazardTriggered is emitted when an environmental hazard affects the ship.
+type EventHazardTriggered struct {
+	HazardType  string
+	Description string
+	EnergyDrain float64
+}
+
+// EventType returns the type name for EventHazardTriggered.
+func (e EventHazardTriggered) EventType() string { return "HazardTriggered" }
+
+// EventWormholeJump is emitted upon entering a wormhole transit rift.
+type EventWormholeJump struct {
+	FromQuad   Coord
+	FromSector Coord
+	ToQuad     Coord
+	ToSector   Coord
+	TimeDelta  float64
+}
+
+// EventType returns the type name for EventWormholeJump.
+func (e EventWormholeJump) EventType() string { return "WormholeJump" }
+
+// EventSingularityAbsorption is emitted when an entity or weapon is pulled into a black hole.
+type EventSingularityAbsorption struct {
+	Sector Coord
+	Target EntityType
+	Weapon string
+}
+
+// EventType returns the type name for EventSingularityAbsorption.
+func (e EventSingularityAbsorption) EventType() string { return "SingularityAbsorption" }

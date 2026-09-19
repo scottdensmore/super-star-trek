@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"math"
 	"testing"
 )
 
@@ -243,3 +244,205 @@ func TestActionKlingonCounterAttack_Execute(t *testing.T) {
 		t.Errorf("expected error for zero damage")
 	}
 }
+
+func TestActionMove_BlackHoleFatalCollision(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.Enterprise.Sector = Coord{4, 4}
+	g.CurrentQuad.Grid[4][4] = EntityEnterprise
+	g.CurrentQuad.Grid[4][5] = EntityBlackHole
+	g.CurrentQuad.Grid[3][5] = EntityBlackHole
+
+	// Move directly east into black hole
+	act := ActionMove{Course: 1.0, Warp: 0.125}
+	events, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	foundGameOver := false
+	for _, e := range events {
+		if goe, ok := e.(EventGameOver); ok {
+			foundGameOver = true
+			if goe.Reason != GameOverLost {
+				t.Errorf("expected GameOverLost, got %v", goe.Reason)
+			}
+		}
+	}
+	if !foundGameOver {
+		t.Errorf("expected EventGameOver when colliding with Black Hole")
+	}
+}
+
+func TestActionMove_BlackHoleGravityWellEnergyCost(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.Enterprise.Sector = Coord{4, 4}
+	g.CurrentQuad.Grid[4][4] = EntityEnterprise
+	g.CurrentQuad.Grid[5][5] = EntityBlackHole // Adjacent diagonal gravity well
+
+	initialEnergy := g.Enterprise.Energy
+	// Move away to Coord{3, 4}
+	act := ActionMove{DestSector: Coord{3, 4}, Warp: 0.1}
+	_, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	energyUsed := initialEnergy - g.Enterprise.Energy
+	// In gravity well, cost is doubled
+	expectedCost := 2.0 * (0.1 * 1.0 * 1.0 * 1.0 * 1.0)
+	if math.Abs(energyUsed-expectedCost) > 0.001 {
+		t.Errorf("expected energy cost %f, got %f", expectedCost, energyUsed)
+	}
+}
+
+func TestActionMove_WormholeJump(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.Enterprise.Quad = Coord{2, 2}
+	g.Enterprise.Sector = Coord{4, 4}
+	g.CurrentQuad.Grid[4][4] = EntityEnterprise
+	g.CurrentQuad.Grid[4][5] = EntityWormhole
+
+	act := ActionMove{DestSector: Coord{4, 5}, Warp: 0.1}
+	events, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	foundJump := false
+	for _, e := range events {
+		if j, ok := e.(EventWormholeJump); ok {
+			foundJump = true
+			if j.FromQuad != (Coord{2, 2}) || j.FromSector != (Coord{4, 4}) {
+				t.Errorf("unexpected jump origin: %+v", j)
+			}
+		}
+	}
+	if !foundJump {
+		t.Errorf("expected EventWormholeJump when entering wormhole")
+	}
+	if g.Enterprise.Quad == (Coord{2, 2}) && g.Enterprise.Sector == (Coord{4, 5}) {
+		t.Errorf("Enterprise should have teleported away from wormhole cell")
+	}
+}
+
+func TestActionMove_IonStormDrift(t *testing.T) {
+	rules := DefaultRulesForProfile(ProfileHardcore)
+	g := NewGameWithOptions(12345, SkillGood, LengthMedium, rules)
+	g.Enterprise.Quad = Coord{1, 1}
+	g.Enterprise.Sector = Coord{4, 1}
+	g.CurrentQuad.Grid[4][1] = EntityEnterprise
+	g.QuadrantEnv[1][1] = EnvIonStorm
+
+	// Clear path in quadrant
+	for c := 2; c <= 8; c++ {
+		for r := 1; r <= 8; r++ {
+			g.CurrentQuad.Grid[r][c] = EntityEmpty
+		}
+	}
+
+	// Move East across 5 sectors (Warp 0.625 = 5 steps)
+	act := ActionMove{Course: 0.0, Warp: 0.625}
+	events, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	foundHazard := false
+	for _, e := range events {
+		if h, ok := e.(EventHazardTriggered); ok {
+			if h.HazardType == "ion_storm_drift" {
+				foundHazard = true
+				break
+			}
+		}
+	}
+	if !foundHazard {
+		t.Errorf("expected EventHazardTriggered for ion storm drift")
+	}
+}
+
+func TestActionMove_BlackHoleFatalCollision_DestSector(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.Enterprise.Sector = Coord{4, 4}
+	g.CurrentQuad.Grid[4][4] = EntityEnterprise
+	g.CurrentQuad.Grid[4][5] = EntityBlackHole
+
+	act := ActionMove{DestSector: Coord{4, 5}, Warp: 0.1}
+	events, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	foundAbsorption := false
+	foundGameOver := false
+	for _, e := range events {
+		if sa, ok := e.(EventSingularityAbsorption); ok {
+			foundAbsorption = true
+			if sa.Sector != (Coord{4, 5}) || sa.Target != EntityEnterprise || sa.Weapon != "ship" {
+				t.Errorf("unexpected singularity absorption event: %+v", sa)
+			}
+		}
+		if goe, ok := e.(EventGameOver); ok {
+			foundGameOver = true
+			if goe.Reason != GameOverLost {
+				t.Errorf("expected GameOverLost, got %v", goe.Reason)
+			}
+		}
+	}
+	if !foundAbsorption {
+		t.Errorf("expected EventSingularityAbsorption")
+	}
+	if !foundGameOver {
+		t.Errorf("expected EventGameOver")
+	}
+}
+
+func TestActionMove_BlackHoleGravityWellEnergyCost_MovingInto(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	// Enterprise at (1, 1), not adjacent to black hole at (3, 3)
+	g.Enterprise.Sector = Coord{1, 1}
+	g.CurrentQuad.Grid[1][1] = EntityEnterprise
+	g.CurrentQuad.Grid[3][3] = EntityBlackHole
+
+	initialEnergy := g.Enterprise.Energy
+	// Move into (2, 2) which IS within Chebyshev distance 1 of (3, 3)
+	act := ActionMove{DestSector: Coord{2, 2}, Warp: 0.1}
+	_, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	energyUsed := initialEnergy - g.Enterprise.Energy
+	expectedCost := 2.0 * (0.1 * 1.0 * 1.0 * 1.0 * 1.0)
+	if math.Abs(energyUsed-expectedCost) > 0.001 {
+		t.Errorf("expected energy cost %f, got %f", expectedCost, energyUsed)
+	}
+}
+
+func TestActionMove_WormholeJump_Vector(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.Enterprise.Quad = Coord{2, 2}
+	g.Enterprise.Sector = Coord{4, 4}
+	g.CurrentQuad.Grid[4][4] = EntityEnterprise
+	g.CurrentQuad.Grid[4][5] = EntityWormhole
+
+	// Move east into wormhole with vector move (Course 0.0, Warp 0.125 = 1 step)
+	act := ActionMove{Course: 0.0, Warp: 0.125}
+	events, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	foundJump := false
+	for _, e := range events {
+		if j, ok := e.(EventWormholeJump); ok {
+			foundJump = true
+			if j.FromQuad != (Coord{2, 2}) || j.FromSector != (Coord{4, 4}) {
+				t.Errorf("unexpected jump origin: %+v", j)
+			}
+		}
+	}
+	if !foundJump {
+		t.Errorf("expected EventWormholeJump when entering wormhole via vector move")
+	}
+}
+
+
