@@ -410,3 +410,117 @@ func TestKlingonCounterAttack_DecloaksAttacker(t *testing.T) {
 		t.Errorf("expected EventKlingonCounterAttack, got %+v", events2[0])
 	}
 }
+
+func TestKlingonCombat_ZeroShieldsInNebula(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.QuadrantEnv[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] = EnvNebula
+	klingon := &Klingon{ID: 1, Sector: Coord{4, 5}, Energy: 400, Shields: 100}
+	g.CurrentQuad.Klingons = []*Klingon{klingon}
+	g.CurrentQuad.Grid[4][5] = EntityKlingon
+
+	// Symmetrical damage: in nebula, 100 energy phaser hit does full direct damage with no shield mitigation
+	act := ActionFirePhasers{Energy: 200}
+	_, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if klingon.Energy >= 400 {
+		t.Errorf("expected Klingon to take full damage in nebula, remaining: %f", klingon.Energy)
+	}
+	if klingon.Shields != 0 {
+		t.Errorf("expected Klingon shields to collapse to 0 in nebula, got %f", klingon.Shields)
+	}
+}
+
+func TestKlingonCombat_AbsorbedByBlackHole(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.CurrentQuad.Grid[4][4] = EntityBlackHole
+	klingon := &Klingon{ID: 1, Sector: Coord{4, 3}, Energy: 400}
+	g.CurrentQuad.Klingons = []*Klingon{klingon}
+	g.CurrentQuad.Grid[4][3] = EntityKlingon
+
+	// Move/push Klingon into black hole at [4, 4]
+	events := MoveKlingon(g, klingon, Coord{4, 4})
+
+	foundAbsorption := false
+	for _, e := range events {
+		if sa, ok := e.(EventSingularityAbsorption); ok {
+			foundAbsorption = true
+			if sa.Target != EntityKlingon {
+				t.Errorf("expected target EntityKlingon, got %v", sa.Target)
+			}
+			if sa.Sector != (Coord{4, 4}) {
+				t.Errorf("expected sector [4, 4], got %v", sa.Sector)
+			}
+		}
+	}
+	if !foundAbsorption {
+		t.Errorf("expected EventSingularityAbsorption when Klingon enters black hole")
+	}
+	if len(g.CurrentQuad.Klingons) != 0 {
+		t.Errorf("expected Klingon to be eliminated from quadrant, remaining: %d", len(g.CurrentQuad.Klingons))
+	}
+	if g.CurrentQuad.Grid[4][3] != EntityEmpty {
+		t.Errorf("expected origin cell [4, 3] to be empty, got %v", g.CurrentQuad.Grid[4][3])
+	}
+}
+
+func TestKlingonTurn_SymmetryAndBlackHole(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.QuadrantEnv[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] = EnvNebula
+	klingon := &Klingon{ID: 1, Sector: Coord{4, 3}, Energy: 400, Shields: 200}
+	g.CurrentQuad.Klingons = []*Klingon{klingon}
+	g.CurrentQuad.Grid[4][3] = EntityKlingon
+
+	KlingonTurn(g)
+
+	if klingon.Shields != 0 {
+		t.Errorf("expected Klingon shields to collapse to 0 in nebula, got %f", klingon.Shields)
+	}
+}
+
+func TestKlingonCombat_CommanderAbsorbedByBlackHole(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.CurrentQuad.Grid[5][5] = EntityBlackHole
+	cmd := &Klingon{ID: 1, Sector: Coord{5, 4}, Energy: 600, IsCommander: true}
+	g.CurrentQuad.Klingons = []*Klingon{cmd}
+	g.CurrentQuad.Grid[5][4] = EntityCommander
+
+	events := MoveKlingon(g, cmd, Coord{5, 5})
+	if len(events) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(events))
+	}
+	sa, ok := events[0].(EventSingularityAbsorption)
+	if !ok {
+		t.Fatalf("expected EventSingularityAbsorption, got %T", events[0])
+	}
+	if sa.Target != EntityCommander {
+		t.Errorf("expected target EntityCommander, got %v", sa.Target)
+	}
+	if g.Metrics.CommandersKilled != 1 {
+		t.Errorf("expected CommandersKilled 1, got %d", g.Metrics.CommandersKilled)
+	}
+	if len(g.CurrentQuad.Klingons) != 0 {
+		t.Errorf("expected Commander eliminated from CurrentQuad.Klingons")
+	}
+}
+
+func TestKlingonTurn_BlackHoleAbsorption(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.CurrentQuad.Grid[4][4] = EntityBlackHole
+	klingon := &Klingon{ID: 1, Sector: Coord{4, 4}, Energy: 400}
+	g.CurrentQuad.Klingons = []*Klingon{klingon}
+
+	events := KlingonTurn(g)
+	if len(events) != 1 {
+		t.Fatalf("expected 1 event, got %d", len(events))
+	}
+	if sa, ok := events[0].(EventSingularityAbsorption); !ok || sa.Sector != (Coord{4, 4}) {
+		t.Errorf("unexpected event: %+v", events[0])
+	}
+	if len(g.CurrentQuad.Klingons) != 0 {
+		t.Errorf("expected Klingon absorbed and removed")
+	}
+}
+
+

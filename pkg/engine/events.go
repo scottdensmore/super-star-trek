@@ -146,6 +146,8 @@ type EventLRScanCompleted struct {
 	ScannedQuads  []Coord
 	RelayedByBase bool
 	Degraded      bool
+	Readings      [3][3]int
+	ReadingsMap   map[Coord]int
 }
 
 // EventType returns the type name for EventLRScanCompleted.
@@ -207,3 +209,12 @@ type EventSingularityAbsorption struct {
 
 // EventType returns the type name for EventSingularityAbsorption.
 func (e EventSingularityAbsorption) EventType() string { return "SingularityAbsorption" }
+
+// EventAnomalyDiscovered is emitted when an anomaly is encountered.
+type EventAnomalyDiscovered struct {
+	Quad Coord
+	Env  EnvironmentType
+}
+
+// EventType returns the type name for EventAnomalyDiscovered.
+func (e EventAnomalyDiscovered) EventType() string { return "AnomalyDiscovered" }

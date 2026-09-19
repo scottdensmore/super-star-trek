@@ -151,3 +151,129 @@ func KlingonCounterAttack(g *GameState, k *Klingon, damage float64) []Event {
 	})
 	return events
 }
+
+// MoveKlingon moves a Klingon vessel to a destination sector.
+// If moved or pushed into EntityBlackHole, the vessel is absorbed into the singularity,
+// eliminated from CurrentQuad.Klingons, and emits an EventSingularityAbsorption.
+func MoveKlingon(g *GameState, k *Klingon, dest Coord) []Event {
+	if g == nil || k == nil {
+		return nil
+	}
+	if dest[0] < 1 || dest[0] > 8 || dest[1] < 1 || dest[1] > 8 {
+		return nil
+	}
+
+	var events []Event
+	cell := g.CurrentQuad.Grid[dest[0]][dest[1]]
+	if cell == EntityBlackHole {
+		origSector := k.Sector
+		if origSector[0] >= 1 && origSector[0] <= 8 && origSector[1] >= 1 && origSector[1] <= 8 {
+			if g.CurrentQuad.Grid[origSector[0]][origSector[1]] == EntityKlingon ||
+				g.CurrentQuad.Grid[origSector[0]][origSector[1]] == EntityCommander ||
+				g.CurrentQuad.Grid[origSector[0]][origSector[1]] == EntitySuperCommander {
+				g.CurrentQuad.Grid[origSector[0]][origSector[1]] = EntityEmpty
+			}
+		}
+
+		for i, klingon := range g.CurrentQuad.Klingons {
+			if klingon.ID == k.ID {
+				g.CurrentQuad.Klingons = append(g.CurrentQuad.Klingons[:i], g.CurrentQuad.Klingons[i+1:]...)
+				break
+			}
+		}
+		if g.RemainingKlingons > 0 {
+			g.RemainingKlingons--
+		}
+		qr, qc := g.Enterprise.Quad[0], g.Enterprise.Quad[1]
+		if qr >= 1 && qr <= 8 && qc >= 1 && qc <= 8 && g.GalaxyChart[qr][qc] >= 100 {
+			g.GalaxyChart[qr][qc] -= 100
+		}
+		if k.IsCommander {
+			g.Metrics.CommandersKilled++
+		} else {
+			g.Metrics.KlingonsKilled++
+		}
+		targetEntity := EntityKlingon
+		if k.IsCommander {
+			targetEntity = EntityCommander
+		}
+		events = append(events, EventSingularityAbsorption{
+			Sector: dest,
+			Target: targetEntity,
+			Weapon: "singularity",
+		})
+		return events
+	}
+
+	origSector := k.Sector
+	if origSector[0] >= 1 && origSector[0] <= 8 && origSector[1] >= 1 && origSector[1] <= 8 {
+		if g.CurrentQuad.Grid[origSector[0]][origSector[1]] == EntityKlingon ||
+			g.CurrentQuad.Grid[origSector[0]][origSector[1]] == EntityCommander ||
+			g.CurrentQuad.Grid[origSector[0]][origSector[1]] == EntitySuperCommander {
+			g.CurrentQuad.Grid[origSector[0]][origSector[1]] = EntityEmpty
+		}
+	}
+	entity := EntityKlingon
+	if k.IsCommander {
+		entity = EntityCommander
+	}
+	g.CurrentQuad.Grid[dest[0]][dest[1]] = entity
+	k.Sector = dest
+	return events
+}
+
+// KlingonTurn executes environmental and combat updates for Klingons in the current quadrant.
+// In EnvNebula, Klingon shields collapse to 0 (symmetrical with Enterprise).
+// If any Klingon occupies or is pulled into EntityBlackHole, it is absorbed and eliminated.
+func KlingonTurn(g *GameState) []Event {
+	if g == nil {
+		return nil
+	}
+	var events []Event
+	qr, qc := g.Enterprise.Quad[0], g.Enterprise.Quad[1]
+	inNebula := qr >= 1 && qr <= 8 && qc >= 1 && qc <= 8 && g.QuadrantEnv[qr][qc] == EnvNebula
+	if inNebula {
+		for _, k := range g.CurrentQuad.Klingons {
+			if k != nil {
+				k.Shields = 0
+			}
+		}
+	}
+
+	var survivors []*Klingon
+	for _, k := range g.CurrentQuad.Klingons {
+		if k == nil {
+			continue
+		}
+		if k.Sector[0] >= 1 && k.Sector[0] <= 8 && k.Sector[1] >= 1 && k.Sector[1] <= 8 &&
+			g.CurrentQuad.Grid[k.Sector[0]][k.Sector[1]] == EntityBlackHole {
+			if g.RemainingKlingons > 0 {
+				g.RemainingKlingons--
+			}
+			if qr >= 1 && qr <= 8 && qc >= 1 && qc <= 8 && g.GalaxyChart[qr][qc] >= 100 {
+				g.GalaxyChart[qr][qc] -= 100
+			}
+			if k.IsCommander {
+				g.Metrics.CommandersKilled++
+			} else {
+				g.Metrics.KlingonsKilled++
+			}
+			targetEntity := EntityKlingon
+			if k.IsCommander {
+				targetEntity = EntityCommander
+			}
+			events = append(events, EventSingularityAbsorption{
+				Sector: k.Sector,
+				Target: targetEntity,
+				Weapon: "singularity",
+			})
+		} else {
+			survivors = append(survivors, k)
+		}
+	}
+	g.CurrentQuad.Klingons = survivors
+
+	return events
+}
+
+

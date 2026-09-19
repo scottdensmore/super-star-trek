@@ -90,6 +90,7 @@ type Klingon struct {
 	ID          int
 	Sector      Coord
 	Energy      float64
+	Shields     float64
 	IsCommander bool
 	IsCloaked   bool
 }

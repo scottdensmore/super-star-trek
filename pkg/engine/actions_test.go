@@ -503,5 +503,180 @@ func TestActionMove_MidFlightGravityWellSufficientEnergy(t *testing.T) {
 	}
 }
 
+func TestActionShields_BlockedInNebula(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.QuadrantEnv[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] = EnvNebula
+
+	act := ActionShields{Amount: 500}
+	_, err := act.Execute(g)
+	if err == nil {
+		t.Fatalf("expected error when raising shields in a nebula, got nil")
+	}
+	expectedMsg := "sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula"
+	if err.Error() != expectedMsg {
+		t.Errorf("expected error message %q, got %q", expectedMsg, err.Error())
+	}
+	if g.Enterprise.Shields != 0 {
+		t.Errorf("shields should remain 0 in nebula, got %f", g.Enterprise.Shields)
+	}
+}
+
+func TestActionFireTorpedo_AbsorbedByBlackHole(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.Enterprise.Sector = Coord{4, 1}
+	g.CurrentQuad.Grid[4][1] = EntityEnterprise
+	g.CurrentQuad.Grid[4][4] = EntityBlackHole
+	// Place Klingon behind black hole
+	klingon := &Klingon{ID: 1, Sector: Coord{4, 7}, Energy: 500}
+	g.CurrentQuad.Klingons = []*Klingon{klingon}
+	g.CurrentQuad.Grid[4][7] = EntityKlingon
+
+	// Fire torpedo east along row 4 (direction 1.0)
+	act := ActionFireTorpedo{Direction: 1.0}
+	events, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	foundAbsorption := false
+	for _, e := range events {
+		if sa, ok := e.(EventSingularityAbsorption); ok {
+			foundAbsorption = true
+			if sa.Weapon != "torpedo" {
+				t.Errorf("expected weapon 'torpedo', got %s", sa.Weapon)
+			}
+			if sa.Sector != (Coord{4, 4}) {
+				t.Errorf("expected sector [4, 4], got %v", sa.Sector)
+			}
+			if sa.Target != EntityBlackHole {
+				t.Errorf("expected target EntityBlackHole, got %v", sa.Target)
+			}
+		}
+	}
+	if !foundAbsorption {
+		t.Errorf("expected EventSingularityAbsorption when torpedo hits Black Hole")
+	}
+	// Klingon behind black hole must not be hit
+	if klingon.Energy < 500 {
+		t.Errorf("Klingon behind black hole took damage, energy is %f", klingon.Energy)
+	}
+}
+
+func TestNebulaShieldDischarge(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	fromQuad := g.Enterprise.Quad
+	toQuad := Coord{fromQuad[0] + 1, fromQuad[1]}
+	if toQuad[0] > 8 {
+		toQuad[0] = fromQuad[0] - 1
+	}
+	g.QuadrantEnv[toQuad[0]][toQuad[1]] = EnvNebula
+	g.Enterprise.Energy = 4000
+	g.Enterprise.Shields = 500
+
+	act := ActionMove{DestQuad: toQuad, DestSector: Coord{4, 4}, Warp: 1.0}
+	events, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error moving to nebula: %v", err)
+	}
+
+	if g.Enterprise.Shields != 0 {
+		t.Errorf("expected shields to collapse to 0 in nebula, got %f", g.Enterprise.Shields)
+	}
+	// Energy should have received the 500 shield energy back (clamped to 5000)
+	if g.Enterprise.Energy < 4400 {
+		t.Errorf("expected shield energy returned to main power reserves, got %f", g.Enterprise.Energy)
+	}
+
+	foundDiscovery := false
+	for _, e := range events {
+		if ad, ok := e.(EventAnomalyDiscovered); ok {
+			foundDiscovery = true
+			if ad.Quad != toQuad || ad.Env != EnvNebula {
+				t.Errorf("unexpected anomaly discovery event: %+v", ad)
+			}
+		}
+	}
+	if !foundDiscovery {
+		t.Errorf("expected EventAnomalyDiscovered when entering nebula")
+	}
+}
+
+func TestNebulaLRSMasking(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.Enterprise.Quad = Coord{3, 3}
+	nebulaQuad := Coord{3, 4}
+	g.QuadrantEnv[nebulaQuad[0]][nebulaQuad[1]] = EnvNebula
+
+	act := ActionLRScan{}
+	events, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error executing LRScan: %v", err)
+	}
+
+	foundScan := false
+	for _, e := range events {
+		if sc, ok := e.(EventLRScanCompleted); ok {
+			foundScan = true
+			// Reading at [3, 4] corresponds to dr=0, dc=1 -> readings[1][2]
+			if sc.Readings[1][2] != -1 {
+				t.Errorf("expected reading -1 for nebula quad [3, 4], got %d", sc.Readings[1][2])
+			}
+		}
+	}
+	if !foundScan {
+		t.Errorf("expected EventLRScanCompleted")
+	}
+}
+
+func TestNebulaShieldDischarge_ClampedMaxEnergy(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	fromQuad := g.Enterprise.Quad
+	toQuad := Coord{fromQuad[0] + 1, fromQuad[1]}
+	if toQuad[0] > 8 {
+		toQuad[0] = fromQuad[0] - 1
+	}
+	g.QuadrantEnv[toQuad[0]][toQuad[1]] = EnvNebula
+	g.Enterprise.Energy = 4900
+	g.Enterprise.Shields = 500
+
+	act := ActionMove{DestQuad: toQuad, DestSector: Coord{4, 4}, Warp: 1.0}
+	_, err := act.Execute(g)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if g.Enterprise.Shields != 0 {
+		t.Errorf("expected shields 0, got %f", g.Enterprise.Shields)
+	}
+	if g.Enterprise.Energy != 5000 {
+		t.Errorf("expected energy to be clamped to 5000, got %f", g.Enterprise.Energy)
+	}
+}
+
+func TestScanQuadrant_Helper(t *testing.T) {
+	g := NewGame(10, SkillGood, LengthMedium)
+	g.QuadrantEnv[2][3] = EnvNebula
+	g.GalaxyChart[2][4] = 205
+
+	if val := ScanQuadrant(g, 2, 3); val != -1 {
+		t.Errorf("expected -1 for nebula quadrant, got %d", val)
+	}
+	if val := ScanQuadrant(g, 2, 4); val != 205 {
+		t.Errorf("expected 205 for normal quadrant, got %d", val)
+	}
+	if val := ScanQuadrant(g, 0, 4); val != -1 {
+		t.Errorf("expected -1 for out-of-bounds row 0, got %d", val)
+	}
+	if val := ScanQuadrant(g, 2, 9); val != -1 {
+		t.Errorf("expected -1 for out-of-bounds col 9, got %d", val)
+	}
+	act := ActionLRScan{}
+	if val := act.ReadQuadrant(g, 2, 3); val != -1 {
+		t.Errorf("expected -1 for ActionLRScan.ReadQuadrant, got %d", val)
+	}
+}
+
+
+
 
 
