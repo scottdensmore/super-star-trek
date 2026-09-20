@@ -116,8 +116,10 @@ func (e EventGameOver) EventType() string { return "GameOver" }
 
 // EventKlingonCounterAttack is emitted when enemy ships return fire.
 type EventKlingonCounterAttack struct {
-	EnemyID int
-	Damage  float64
+	EnemyID      int
+	Damage       float64
+	ShieldDamage float64
+	HullDamage   float64
 }
 
 // EventType returns the type name for EventKlingonCounterAttack.

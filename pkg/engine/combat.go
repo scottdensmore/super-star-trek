@@ -137,7 +137,7 @@ func KlingonCounterAttack(g *GameState, k *Klingon, damage float64) []Event {
 	if k.IsCloaked {
 		events = append(events, DecloakKlingon(g, k)...)
 	}
-	_, hullDamage := ResolveShieldHit(&g.Enterprise, damage)
+	shieldDmg, hullDamage := ResolveShieldHit(&g.Enterprise, damage)
 	if hullDamage > 0 {
 		casualties := int(math.Ceil(hullDamage / 50.0))
 		if casualties < 1 {
@@ -146,8 +146,10 @@ func KlingonCounterAttack(g *GameState, k *Klingon, damage float64) []Event {
 		g.Metrics.Casualties += casualties
 	}
 	events = append(events, EventKlingonCounterAttack{
-		EnemyID: k.ID,
-		Damage:  damage,
+		EnemyID:      k.ID,
+		Damage:       damage,
+		ShieldDamage: shieldDmg,
+		HullDamage:   hullDamage,
 	})
 	return events
 }
@@ -268,6 +270,36 @@ func KlingonTurn(g *GameState) []Event {
 		}
 	}
 	g.CurrentQuad.Klingons = survivors
+
+	// Surviving Klingons in quadrant return fire unless Enterprise is docked
+	if g.Enterprise.Condition != ConditionDocked {
+		for _, k := range g.CurrentQuad.Klingons {
+			if k == nil || k.Energy <= 0 {
+				continue
+			}
+			dist := Distance(g.Enterprise.Sector, k.Sector)
+			dustfac := 0.80
+			if g.RNG != nil {
+				dustfac += 0.05 * g.RNG.Float64()
+			} else {
+				dustfac = 0.825
+			}
+			damage := math.Round(k.Energy * math.Pow(dustfac, dist))
+			if damage < 10 {
+				damage = 10
+			}
+			k.Energy *= 0.75
+			events = append(events, KlingonCounterAttack(g, k, damage)...)
+
+			if g.Enterprise.Energy <= 0 {
+				g.Enterprise.Energy = 0
+				events = append(events, EventGameOver{
+					Reason: GameOverLost,
+				})
+				break
+			}
+		}
+	}
 
 	return events
 }

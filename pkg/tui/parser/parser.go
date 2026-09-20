@@ -186,6 +186,15 @@ func parseTorpedo(args []string) ParsedCommand {
 	}
 
 	if len(args) == 2 {
+		prefix := strings.ToLower(args[0])
+		if prefix == "c" || prefix == "course" {
+			dir, err := strconv.ParseFloat(args[1], 64)
+			if err != nil || dir < 1.0 || dir > 9.0 {
+				return ParsedCommand{Error: errors.New("torpedo course must be between 1.0 and 9.0 (1=E, 3=N, 5=W, 7=S)")}
+			}
+			return ParsedCommand{Action: engine.ActionFireTorpedo{Direction: dir}}
+		}
+
 		r, err1 := strconv.Atoi(args[0])
 		c, err2 := strconv.Atoi(args[1])
 		if err1 != nil || err2 != nil {

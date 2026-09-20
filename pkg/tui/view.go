@@ -63,7 +63,14 @@ func (m Model) renderDashboard() string {
 
 	gridView := m.Grid.View(quad, entSector, m.SelectedSector)
 	statusView := m.Status.View(m.Game)
-	middle := lipgloss.JoinHorizontal(lipgloss.Top, gridView, statusView)
+
+	var middle string
+	if m.Width >= 115 && m.Game != nil {
+		chartView := m.renderMiniGalacticChart()
+		middle = lipgloss.JoinHorizontal(lipgloss.Top, gridView, statusView, chartView)
+	} else {
+		middle = lipgloss.JoinHorizontal(lipgloss.Top, gridView, statusView)
+	}
 
 	cb := m.CommandBar
 	if m.Width > 0 {
@@ -206,4 +213,102 @@ func (m Model) renderHeader() string {
 	headerLine := title + strings.Repeat(" ", gap) + themeInfo
 
 	return styles.Title.Width(w).Render(headerLine)
+}
+
+// renderMiniGalacticChart renders an 8x8 Galactic Star Chart and Mission Ops
+// panel displayed side-by-side with Telemetry when terminal width >= 115.
+func (m Model) renderMiniGalacticChart() string {
+	if m.Game == nil {
+		return ""
+	}
+	th := m.Theme
+	if th == nil {
+		th = theme.DefaultTheme()
+	}
+	styles := th.Styles()
+	g := m.Game
+
+	var b strings.Builder
+	b.Grow(512)
+
+	// Line 1: Panel title centered in 43 columns
+	titleText := "GALACTIC STAR CHART [K-B-S]"
+	titlePadding := (43 - lipgloss.Width(titleText)) / 2
+	if titlePadding < 0 {
+		titlePadding = 0
+	}
+	b.WriteString(styles.PanelTitle.Render(strings.Repeat(" ", titlePadding) + titleText))
+
+	// Line 2: Column numbers header (1..8) with 5-character cell stride
+	b.WriteByte('\n')
+	var colHdr strings.Builder
+	colHdr.WriteString("   ")
+	for col := 1; col <= 8; col++ {
+		fmt.Fprintf(&colHdr, "  %d  ", col)
+	}
+	b.WriteString(styles.GridHeader.Render(colHdr.String()))
+
+	// Lines 3-10: 8 quadrant rows
+	explored := 0
+	for r := 1; r <= 8; r++ {
+		b.WriteByte('\n')
+		b.WriteString(styles.GridHeader.Render(fmt.Sprintf(" %d ", r)))
+		for c := 1; c <= 8; c++ {
+			isEnt := (r == g.Enterprise.Quad[0] && c == g.Enterprise.Quad[1])
+			discovered := g.ChartDiscovered[r][c]
+			if discovered {
+				explored++
+			}
+
+			if isEnt {
+				var valStr string
+				if discovered {
+					valStr = fmt.Sprintf("%03d", g.GalaxyChart[r][c])
+				} else {
+					valStr = "···"
+				}
+				b.WriteString(styles.Enterprise.Render("<" + valStr + ">"))
+			} else if discovered {
+				val := g.GalaxyChart[r][c]
+				valStr := fmt.Sprintf("%03d", val)
+				if val >= 100 {
+					b.WriteString(styles.SubsystemDamaged.Render(" " + valStr + " "))
+				} else if (val%100)/10 > 0 {
+					b.WriteString(styles.CommandText.Render(" " + valStr + " "))
+				} else {
+					b.WriteString(styles.LogText.Render(" " + valStr + " "))
+				}
+			} else if g.ChartKnownBases[r][c] {
+				b.WriteString(styles.CommandText.Render(" >B< "))
+			} else {
+				b.WriteString(styles.Empty.Render(" ··· "))
+			}
+		}
+	}
+
+	// Line 11: Divider
+	b.WriteByte('\n')
+	b.WriteString(styles.GridHeader.Render(strings.Repeat("─", 43)))
+
+	// Line 12: Mission Objectives (Klingons & Starbases)
+	b.WriteByte('\n')
+	klingonLabel := styles.GaugeLabel.Render("Klingons Left: ")
+	klingonVal := styles.GaugeValue.Render(fmt.Sprintf("%2d", g.RemainingKlingons))
+	baseLabel := styles.GaugeLabel.Render("    Starbases: ")
+	baseVal := styles.GaugeValue.Render(fmt.Sprintf("%d", g.RemainingStarbases))
+	b.WriteString(klingonLabel + klingonVal + baseLabel + baseVal)
+
+	// Line 13: Exploration Progress & Casualties
+	b.WriteByte('\n')
+	explLabel := styles.GaugeLabel.Render("Explored: ")
+	explVal := styles.GaugeValue.Render(fmt.Sprintf("%2d/64", explored))
+	casLabel := styles.GaugeLabel.Render("        Casualties: ")
+	casVal := styles.GaugeValue.Render(fmt.Sprintf("%d", g.Metrics.Casualties))
+	b.WriteString(explLabel + explVal + casLabel + casVal)
+
+	// Line 14: Action shortcuts
+	b.WriteByte('\n')
+	b.WriteString(styles.GaugeLabel.Render("[Ctrl+G] Interactive Map   [T] Target Lock"))
+
+	return styles.Panel.Render(b.String())
 }

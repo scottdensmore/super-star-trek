@@ -164,10 +164,10 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 	}
 
 	angle := a.Angle
-	if a.Direction != 0 {
-		angle = (a.Direction - 1.0) * math.Pi / 4.0
-	} else if angle == 0 && a.Target != (Coord{}) {
+	if a.Target != (Coord{}) {
 		angle = Bearing(g.Enterprise.Sector, a.Target)
+	} else if a.Direction != 0 {
+		angle = (a.Direction - 1.0) * math.Pi / 4.0
 	}
 
 	events := []Event{

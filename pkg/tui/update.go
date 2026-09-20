@@ -104,13 +104,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.Game != nil {
 			prevCond := m.Game.Enterprise.Condition
 			action := engine.ActionFireTorpedo{
-				Target: msg.Target,
-				Angle:  msg.Bearing,
+				Target:    msg.Target,
+				Direction: msg.Bearing,
 			}
 			events, err := m.Game.Dispatch(action)
 			if err != nil {
 				m.CommandBar.AddMessage(err.Error())
 			} else {
+				m.executeKlingonTurnIfActive(action, &events)
 				bellCmd := m.logEvents(events)
 				for _, ev := range events {
 					if goEv, ok := ev.(engine.EventGameOver); ok {
@@ -144,6 +145,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				m.CommandBar.AddMessage(err.Error())
 			} else {
+				m.executeKlingonTurnIfActive(action, &events)
 				bellCmd := m.logEvents(events)
 				for _, ev := range events {
 					if goEv, ok := ev.(engine.EventGameOver); ok {
@@ -440,7 +442,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.CommandBar.Blur()
 			return m, nil
 
-		case msg.Type == tea.KeyCtrlM || msg.String() == "ctrl+m":
+		case msg.Type == tea.KeyCtrlG || msg.String() == "ctrl+g":
 			return m.openGalacticChart()
 
 		case msg.Type == tea.KeyCtrlD || msg.String() == "ctrl+d":
@@ -977,11 +979,11 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		m.showOptions = true
 		m.CommandBar.Blur()
 		return m, nil
-	case "help", "man", "manual", "doc", "docs", "codex", "guide":
+	case "help", "man", "manual", "docs", "codex", "guide":
 		return m.openManual("")
 	}
 
-	for _, p := range []string{"help ", "man ", "manual ", "doc ", "docs ", "codex ", "guide "} {
+	for _, p := range []string{"help ", "man ", "manual ", "docs ", "codex ", "guide "} {
 		if strings.HasPrefix(trimmed, p) {
 			topic := strings.TrimSpace(trimmed[len(p):])
 			switch topic {
@@ -989,7 +991,7 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 				m.CommandBar.AddMessage("NAV: Direct Quad: nav q <r c> [warp] (e.g. 'nav q 3 5')")
 				m.CommandBar.AddMessage("     Direct Sector: nav s <r c> (or double-click sector grid)")
 				m.CommandBar.AddMessage("     Vector: nav <course> <warp> (0.0=East, 1.57=North, 3.14=West, 4.71=South)")
-				m.CommandBar.AddMessage("     Warp 1.0 = 1 Quad. Dist = sqrt(ΔR²+ΔC²). [Ctrl+M] map tool. Shields UP = 2x energy.")
+				m.CommandBar.AddMessage("     Warp 1.0 = 1 Quad. Dist = sqrt(ΔR²+ΔC²). [Ctrl+G] map tool. Shields UP = 2x energy.")
 			case "tor", "torpedo", "torpedoes", "target", "reticle":
 				m.CommandBar.AddMessage("TOR: Target Sector: tor <r c> (e.g. 'tor 4 7')")
 				m.CommandBar.AddMessage("     Bearing Angle: tor <angle> (0.0=East, 1.57=North, 3.14=West, 4.71=South)")
@@ -1008,7 +1010,7 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 				m.CommandBar.AddMessage("     Replenishes full energy & photon torpedo supply.")
 				m.CommandBar.AddMessage("     Repairs all damaged ship systems and lowers shields.")
 			case "chart", "map":
-				m.CommandBar.AddMessage("CHART: Interactive Galactic Star Chart & Warp Planner (Ctrl+M or 'chart')")
+				m.CommandBar.AddMessage("CHART: Interactive Galactic Star Chart & Warp Planner (Ctrl+G or 'chart')")
 				m.CommandBar.AddMessage("       Inspect 8x8 quadrant grid, telemetry vectors, and distance calculations.")
 				m.CommandBar.AddMessage("       [Arrows/HJKL] Move cursor  [Enter] Warp to quadrant  [Esc] Close")
 			case "saves", "thaw", "freeze":
@@ -1074,14 +1076,14 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		case parsed.Special == "help":
 			m.CommandBar.AddMessage("COMMANDS: nav | tor | pha | she | doc | chart | saves | theme | options")
 			m.CommandBar.AddMessage("Type 'help <command>' (e.g. 'help nav') for detailed guide.")
-			m.CommandBar.AddMessage("HOTKEYS: [Ctrl+P] Spock Palette | [Ctrl+M] Star Chart | [Ctrl+O] Saves | [O] Options | [T] Target Lock | [F2] Theme | [F1/?] Manual")
+			m.CommandBar.AddMessage("HOTKEYS: [Ctrl+P] Spock Palette | [Ctrl+G] Star Chart | [Ctrl+O] Saves | [O] Options | [T] Target Lock | [F2] Theme | [F1/?] Manual")
 			return m.openManual("")
 
 		case parsed.Special == "help nav":
 			m.CommandBar.AddMessage("NAV: Direct Quad: nav q <r c> [warp] (e.g. 'nav q 3 5')")
 			m.CommandBar.AddMessage("     Direct Sector: nav s <r c> (or double-click sector grid)")
 			m.CommandBar.AddMessage("     Vector: nav <course> <warp> (0.0=East, 1.57=North, 3.14=West, 4.71=South)")
-			m.CommandBar.AddMessage("     Warp 1.0 = 1 Quad. Dist = sqrt(ΔR²+ΔC²). [Ctrl+M] map tool. Shields UP = 2x energy.")
+			m.CommandBar.AddMessage("     Warp 1.0 = 1 Quad. Dist = sqrt(ΔR²+ΔC²). [Ctrl+G] map tool. Shields UP = 2x energy.")
 			return m.openManual("nav")
 
 		case parsed.Special == "help tor":
@@ -1110,7 +1112,7 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			return m.openManual("doc")
 
 		case parsed.Special == "help chart":
-			m.CommandBar.AddMessage("CHART: Interactive Galactic Star Chart & Warp Planner (Ctrl+M or 'chart')")
+			m.CommandBar.AddMessage("CHART: Interactive Galactic Star Chart & Warp Planner (Ctrl+G or 'chart')")
 			m.CommandBar.AddMessage("       Inspect 8x8 quadrant grid, telemetry vectors, and distance calculations.")
 			m.CommandBar.AddMessage("       [Arrows/HJKL] Move cursor  [Enter] Warp to quadrant  [Esc] Close")
 			return m.openManual("chart")
@@ -1161,6 +1163,8 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
+		m.executeKlingonTurnIfActive(parsed.Action, &events)
+
 		bellCmd := m.logEvents(events)
 		for _, ev := range events {
 			if moveEv, ok := ev.(engine.EventShipMoved); ok && moveEv.FromQuad != moveEv.ToQuad {
@@ -1203,14 +1207,28 @@ func (m *Model) logEvents(events []engine.Event) tea.Cmd {
 	if m.AudioDispatcher != nil && len(events) > 0 {
 		m.AudioDispatcher.DispatchEvents(events)
 	}
+	torpedoFired := false
+	torpedoHit := false
 	for _, ev := range events {
 		if _, ok := ev.(engine.EventGameOver); ok {
 			continue
+		}
+		if _, ok := ev.(engine.EventTorpedoFired); ok {
+			torpedoFired = true
+		}
+		if _, ok := ev.(engine.EventTorpedoHit); ok {
+			torpedoHit = true
+		}
+		if _, ok := ev.(engine.EventSingularityAbsorption); ok {
+			torpedoHit = true
 		}
 		formatted := formatEvent(ev)
 		if formatted != "" {
 			m.CommandBar.AddMessage(formatted)
 		}
+	}
+	if torpedoFired && !torpedoHit {
+		m.CommandBar.AddMessage("Torpedo missed.")
 	}
 	return m.checkVisualBell(events)
 }
@@ -1226,7 +1244,7 @@ func formatEvent(ev engine.Event) string {
 
 	case engine.EventTorpedoHit:
 		if e.Destroyed {
-			return fmt.Sprintf("*** Target destroyed at [%d,%d] ***", e.Target[0], e.Target[1])
+			return fmt.Sprintf("*** Target destroyed at [%d,%d] (%.0f damage) ***", e.Target[0], e.Target[1], e.Damage)
 		}
 		return fmt.Sprintf("Hit on [%d,%d]: %.0f units damage", e.Target[0], e.Target[1], e.Damage)
 
@@ -1235,7 +1253,7 @@ func formatEvent(ev engine.Event) string {
 
 	case engine.EventPhaserHit:
 		if e.Destroyed {
-			return fmt.Sprintf("*** Klingon #%d destroyed ***", e.KlingonID)
+			return fmt.Sprintf("*** Klingon #%d destroyed (%.0f damage) ***", e.KlingonID, e.Damage)
 		}
 		return fmt.Sprintf("Hit on Klingon #%d: %.0f units damage", e.KlingonID, e.Damage)
 
@@ -1261,6 +1279,13 @@ func formatEvent(ev engine.Event) string {
 		return fmt.Sprintf("Alert status changed to %s", conditionString(e.To))
 
 	case engine.EventKlingonCounterAttack:
+		if e.HullDamage > 0 && e.ShieldDamage > 0 {
+			return fmt.Sprintf("Klingon #%d returned fire: %.0f damage (Shields absorbed %.0f, Hull hit: -%.0f Energy)", e.EnemyID, e.Damage, e.ShieldDamage, e.HullDamage)
+		} else if e.HullDamage > 0 {
+			return fmt.Sprintf("Klingon #%d returned fire: %.0f damage (HULL HIT: -%.0f Energy)", e.EnemyID, e.Damage, e.HullDamage)
+		} else if e.ShieldDamage > 0 {
+			return fmt.Sprintf("Klingon #%d returned fire: %.0f damage (Shields absorbed %.0f)", e.EnemyID, e.Damage, e.ShieldDamage)
+		}
 		return fmt.Sprintf("Klingon #%d returned fire: %.0f damage", e.EnemyID, e.Damage)
 
 	case engine.EventKlingonCloakState:
@@ -1417,4 +1442,38 @@ func traceTorpedoBoundary(start engine.Coord, angle float64) engine.Coord {
 	}
 	return last
 }
+
+// executeKlingonTurnIfActive triggers surviving Klingon counter-attacks after turn-consuming player actions.
+func (m *Model) executeKlingonTurnIfActive(action engine.Action, events *[]engine.Event) {
+	if m.Game == nil {
+		return
+	}
+	for _, ev := range *events {
+		if _, ok := ev.(engine.EventGameOver); ok {
+			return
+		}
+	}
+	shouldAttack := false
+	switch act := action.(type) {
+	case engine.ActionFireTorpedo, engine.ActionTorpedoDirect, engine.ActionFirePhasers, engine.ActionShields:
+		shouldAttack = true
+	case engine.ActionMove:
+		// Sector movement within quadrant triggers return fire; inter-quadrant warp does not
+		isInterQuad := false
+		for _, ev := range *events {
+			if moveEv, ok := ev.(engine.EventShipMoved); ok && moveEv.FromQuad != moveEv.ToQuad {
+				isInterQuad = true
+				break
+			}
+		}
+		if !isInterQuad && act.DestQuad == (engine.Coord{}) {
+			shouldAttack = true
+		}
+	}
+	if shouldAttack && len(m.Game.CurrentQuad.Klingons) > 0 && m.Game.Enterprise.Condition != engine.ConditionDocked {
+		kEvents := engine.KlingonTurn(m.Game)
+		*events = append(*events, kEvents...)
+	}
+}
+
 

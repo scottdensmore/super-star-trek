@@ -61,6 +61,36 @@ func TestModelSizeGuard(t *testing.T) {
 	}
 }
 
+func TestModel_ResponsiveWideDashboard(t *testing.T) {
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+
+	// Standard 80x24: 2 panels only (sector grid + status panel)
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	m = updated.(Model)
+	view80 := m.View()
+	if strings.Contains(view80, "GALACTIC STAR CHART [K-B-S]") {
+		t.Errorf("expected 80-column view to NOT include side-panel Galactic Star Chart")
+	}
+
+	// Wide 130x30: 3 panels (sector grid + status panel + galactic star chart & ops)
+	updated, _ = m.Update(tea.WindowSizeMsg{Width: 130, Height: 30})
+	m = updated.(Model)
+	viewWide := m.View()
+	if !strings.Contains(viewWide, "GALACTIC STAR CHART [K-B-S]") {
+		t.Errorf("expected wide view (130 cols) to contain side-panel Galactic Star Chart")
+	}
+	if !strings.Contains(viewWide, "Klingons Left:") {
+		t.Errorf("expected wide view to contain 'Klingons Left:' telemetry")
+	}
+	if !strings.Contains(viewWide, "Starbases:") {
+		t.Errorf("expected wide view to contain 'Starbases:' telemetry")
+	}
+	if !strings.Contains(viewWide, "Explored:") {
+		t.Errorf("expected wide view to contain 'Explored:' telemetry")
+	}
+}
+
 func TestModelThemeToggle(t *testing.T) {
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
 	m := NewModel(g, theme.DefaultTheme())
@@ -645,7 +675,7 @@ func TestModel_ModalActionDispatch(t *testing.T) {
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
 	g.Enterprise.Sector = engine.Coord{4, 4}
 	g.Enterprise.Torpedoes = 10
-	klingon := &engine.Klingon{ID: 1, Sector: engine.Coord{4, 7}, Energy: 200}
+	klingon := &engine.Klingon{ID: 1, Sector: engine.Coord{4, 7}, Energy: 1000}
 	g.CurrentQuad.Klingons = []*engine.Klingon{klingon}
 	g.CurrentQuad.Grid[4][7] = engine.EntityKlingon
 
@@ -1137,10 +1167,10 @@ func TestModel_GalacticChart_HotkeyAndCommand(t *testing.T) {
 		t.Fatalf("expected ActiveModal=ModalNone after Esc, got %v", m.ActiveModal)
 	}
 
-	// Test 3: Ctrl+M hotkey activates ModalGalacticChart
-	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyCtrlM})
+	// Test 3: Ctrl+G hotkey activates ModalGalacticChart
+	m, _ = m.UpdateModel(tea.KeyMsg{Type: tea.KeyCtrlG})
 	if m.ActiveModal != ModalGalacticChart {
-		t.Fatalf("expected ActiveModal=ModalGalacticChart after Ctrl+M, got %v", m.ActiveModal)
+		t.Fatalf("expected ActiveModal=ModalGalacticChart after Ctrl+G, got %v", m.ActiveModal)
 	}
 
 	// Test 4: View composites modal over dashboard
@@ -1197,15 +1227,15 @@ func TestModel_HelpChartAndNavDistance(t *testing.T) {
 	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "help chart"})
 	msgs := m.CommandBar.Messages()
 	joined := strings.Join(msgs, "\n")
-	if !strings.Contains(joined, "CHART:") || !strings.Contains(joined, "Ctrl+M") {
-		t.Fatalf("expected help chart with Ctrl+M, got:\n%s", joined)
+	if !strings.Contains(joined, "CHART:") || !strings.Contains(joined, "Ctrl+G") {
+		t.Fatalf("expected help chart with Ctrl+G, got:\n%s", joined)
 	}
 
 	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "help nav"})
 	msgs = m.CommandBar.Messages()
 	joined = strings.Join(msgs, "\n")
-	if !strings.Contains(joined, "Ctrl+M") {
-		t.Fatalf("expected help nav to mention Ctrl+M map tool, got:\n%s", joined)
+	if !strings.Contains(joined, "Ctrl+G") {
+		t.Fatalf("expected help nav to mention Ctrl+G map tool, got:\n%s", joined)
 	}
 }
 
@@ -1274,7 +1304,7 @@ func TestModel_HelpMapCommand(t *testing.T) {
 	m, _ = m.UpdateModel(commandbar.CommandSubmittedMsg{Text: "help map"})
 	msgs := m.CommandBar.Messages()
 	joined := strings.Join(msgs, "\n")
-	if !strings.Contains(joined, "CHART:") || !strings.Contains(joined, "Ctrl+M") {
+	if !strings.Contains(joined, "CHART:") || !strings.Contains(joined, "Ctrl+G") {
 		t.Fatalf("expected help map to show chart help, got:\n%s", joined)
 	}
 }
