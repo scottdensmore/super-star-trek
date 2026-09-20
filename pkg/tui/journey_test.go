@@ -329,18 +329,12 @@ func TestTUIJourney_Scenario_StarbaseSiege(t *testing.T) {
 		t.Fatalf("expected 3 siege Klingons in quadrant [4,4], got %d", len(m.Game.CurrentQuad.Klingons))
 	}
 
-	// 2. Eliminate besieging Klingon cruisers
-	for i := 0; i < 5 && len(m.Game.CurrentQuad.Klingons) > 0; i++ {
-		k := m.Game.CurrentQuad.Klingons[0]
+	// 2. Eliminate besieging Klingon cruisers with phasers to prevent friendly fire on Starbase 12
+	for _, k := range m.Game.CurrentQuad.Klingons {
 		k.Energy = 10
-		m.Game.Enterprise.Torpedoes = 10 // keep torpedoes replenished during test
-		m, _ = sendTestCommand(m, fmt.Sprintf("tor %d %d", k.Sector[0], k.Sector[1]))
 	}
-	// Finish any obstacle-shielded Klingons with phasers
-	if len(m.Game.CurrentQuad.Klingons) > 0 {
-		m.Game.Enterprise.Energy = 3000
-		m, _ = sendTestCommand(m, "pha 500")
-	}
+	m.Game.Enterprise.Energy = 3000
+	m, _ = sendTestCommand(m, "pha 2000")
 
 	// 3. Verify Starbase Siege victory
 	done, won, reason := engine.EvaluateStarbaseSiege(m.Game)

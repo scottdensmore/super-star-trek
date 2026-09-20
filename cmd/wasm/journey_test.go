@@ -272,18 +272,12 @@ func TestWASMJourney_Scenario_StarbaseSiege(t *testing.T) {
 		t.Fatalf("expected Starbase 12 in quadrant [4,4]")
 	}
 
-	// Eliminate besieging fleet using torpedoes or phasers
-	for i := 0; i < 5 && len(s.Game().CurrentQuad.Klingons) > 0; i++ {
-		k := s.Game().CurrentQuad.Klingons[0]
+	// Eliminate besieging fleet with phasers to prevent friendly fire on Starbase 12
+	for _, k := range s.Game().CurrentQuad.Klingons {
 		k.Energy = 10
-		s.Game().Enterprise.Torpedoes = 10
-		s.Execute(fmt.Sprintf("tor %d %d", k.Sector[0], k.Sector[1]))
 	}
-	// Finish any obstacle-shielded Klingons with phasers
-	if len(s.Game().CurrentQuad.Klingons) > 0 {
-		s.Game().Enterprise.Energy = 3000
-		s.Execute("pha 500")
-	}
+	s.Game().Enterprise.Energy = 3000
+	s.Execute("pha 2000")
 
 	done, won, reason := engine.EvaluateStarbaseSiege(s.Game())
 	if !done || !won || reason != engine.GameOverWon {
