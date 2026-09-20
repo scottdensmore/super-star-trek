@@ -22,14 +22,14 @@ func TestNewMultiPhaserAnimation_MultipleTargets(t *testing.T) {
 		t.Fatalf("expected animation to be unfinished initially")
 	}
 
-	expectedDuration := 2 * 80 * time.Millisecond
+	expectedDuration := 4 * 120 * time.Millisecond
 	if anim.TotalDuration() != expectedDuration {
 		t.Errorf("expected total duration %v, got %v", expectedDuration, anim.TotalDuration())
 	}
 
 	frames := anim.Frames()
-	if len(frames) != 2 {
-		t.Fatalf("expected 2 frames, got %d", len(frames))
+	if len(frames) != 4 {
+		t.Fatalf("expected 4 frames, got %d", len(frames))
 	}
 
 	f := anim.Step()
@@ -63,21 +63,29 @@ func TestNewMultiPhaserAnimation_MultipleTargets(t *testing.T) {
 		t.Errorf("expected hit target glyph '<K>' at target3, got %+v", ovTarget3)
 	}
 
-	// Second frame
+	// Frames 2, 3, and 4
 	f2 := anim.Step()
 	if len(f2.Overrides) != len(f.Overrides) {
 		t.Errorf("expected frame 2 to have same overrides as frame 1")
 	}
+	f3 := anim.Step()
+	if len(f3.Overrides) != len(f.Overrides) {
+		t.Errorf("expected frame 3 to have same overrides as frame 1")
+	}
+	f4 := anim.Step()
+	if len(f4.Overrides) != len(f.Overrides) {
+		t.Errorf("expected frame 4 to have same overrides as frame 1")
+	}
 
 	if !anim.IsFinished() {
-		t.Errorf("expected animation to be finished after 2 steps")
+		t.Errorf("expected animation to be finished after 4 steps")
 	}
 }
 
 func TestNewMultiPhaserAnimation_EmptyTargets(t *testing.T) {
 	anim := NewMultiPhaserAnimation(engine.Coord{4, 4}, nil, nil, engine.AnimSpeedFast)
-	if len(anim.Frames()) != 2 {
-		t.Fatalf("expected 2 frames for empty targets")
+	if len(anim.Frames()) != 4 {
+		t.Fatalf("expected 4 frames for empty targets")
 	}
 	f := anim.Step()
 	if len(f.Overrides) != 0 {

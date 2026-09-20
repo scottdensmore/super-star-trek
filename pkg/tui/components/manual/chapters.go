@@ -348,7 +348,7 @@ func defaultChapters() []Chapter {
 				"• [F1] / [?]      Technical Manual",
 				"• [F2]            Cycle Color Palette",
 				"• [Ctrl+P]        Command Palette",
-				"• [C] / [Ctrl+M]  Galactic Chart",
+				"• [C] / [Ctrl+G]  Galactic Chart",
 				"• [D]             Damage Schematic",
 				"• [H]             Hall of Fame & Score",
 				"• [O]             Options & Rules",

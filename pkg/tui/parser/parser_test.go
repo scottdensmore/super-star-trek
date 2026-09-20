@@ -177,6 +177,32 @@ func TestParseTorpedo(t *testing.T) {
 		}
 	})
 
+	// Classic course direction form (tor c <course>)
+	t.Run("CourseDirection", func(t *testing.T) {
+		tests := []struct {
+			input         string
+			wantDirection float64
+		}{
+			{"tor c 5", 5.0},
+			{"tor course 3", 3.0},
+			{"TOR C 1", 1.0},
+			{"torpedo course 7.5", 7.5},
+		}
+		for _, tc := range tests {
+			res := ParseCommand(tc.input)
+			if res.Error != nil {
+				t.Fatalf("ParseCommand(%q) unexpected error: %v", tc.input, res.Error)
+			}
+			tor, ok := res.Action.(engine.ActionFireTorpedo)
+			if !ok {
+				t.Fatalf("ParseCommand(%q) action is %T, want ActionFireTorpedo", tc.input, res.Action)
+			}
+			if math.Abs(tor.Direction-tc.wantDirection) > 1e-6 {
+				t.Errorf("ParseCommand(%q) Direction = %v, want %v", tc.input, tor.Direction, tc.wantDirection)
+			}
+		}
+	})
+
 	// Errors
 	t.Run("Errors", func(t *testing.T) {
 		badInputs := []string{

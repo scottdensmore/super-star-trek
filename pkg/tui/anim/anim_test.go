@@ -200,18 +200,20 @@ func TestPhaserAnimation_DirectionalGlyphs(t *testing.T) {
 		t.Errorf("expected diagonal beam ' / ', got %q", ovSW.Glyph)
 	}
 
-	// 2 frames total
+	// 4 frames total
 	animCount := NewPhaserAnimation(startH, targetH, true, 2)
-	if len(animCount.Frames()) != 2 {
-		t.Errorf("expected 2 frames for phaser animation, got %d", len(animCount.Frames()))
+	if len(animCount.Frames()) != 4 {
+		t.Errorf("expected 4 frames for phaser animation, got %d", len(animCount.Frames()))
 	}
 	animCount.Step()
 	if animCount.IsFinished() {
 		t.Errorf("expected not finished after 1 frame")
 	}
 	animCount.Step()
+	animCount.Step()
+	animCount.Step()
 	if !animCount.IsFinished() {
-		t.Errorf("expected finished after 2 frames")
+		t.Errorf("expected finished after 4 frames")
 	}
 }
 
@@ -263,12 +265,12 @@ func TestFrameDuration(t *testing.T) {
 		expected time.Duration
 	}{
 		{"AnimSpeedOff", engine.AnimSpeedOff, 0},
-		{"AnimSpeedFast", engine.AnimSpeedFast, 40 * time.Millisecond},
-		{"AnimSpeedNormal", engine.AnimSpeedNormal, 80 * time.Millisecond},
-		{"AnimSpeedCinematic", engine.AnimSpeedCinematic, 160 * time.Millisecond},
-		{"Unexpected negative", -1, 80 * time.Millisecond},
-		{"Unexpected 4", 4, 80 * time.Millisecond},
-		{"Unexpected large", 999, 80 * time.Millisecond},
+		{"AnimSpeedFast", engine.AnimSpeedFast, 50 * time.Millisecond},
+		{"AnimSpeedNormal", engine.AnimSpeedNormal, 120 * time.Millisecond},
+		{"AnimSpeedCinematic", engine.AnimSpeedCinematic, 240 * time.Millisecond},
+		{"Unexpected negative", -1, 120 * time.Millisecond},
+		{"Unexpected 4", 4, 120 * time.Millisecond},
+		{"Unexpected large", 999, 120 * time.Millisecond},
 	}
 
 	for _, tc := range tests {

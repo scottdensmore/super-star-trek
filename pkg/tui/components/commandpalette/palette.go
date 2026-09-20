@@ -129,7 +129,7 @@ func defaultCatalog() []PaletteItem {
 		},
 		{
 			title:         "CHART",
-			desc:          "Interactive 8x8 galactic star chart and warp planner (Ctrl+M)",
+			desc:          "Interactive 8x8 galactic star chart and warp planner (Ctrl+G)",
 			prefix:        "chart",
 			parameterized: false,
 		},

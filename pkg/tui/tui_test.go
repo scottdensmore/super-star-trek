@@ -101,8 +101,8 @@ func TestModel_MultiTargetPhaserAnimation(t *testing.T) {
 	}
 
 	frames := m.activeAnim.Frames()
-	if len(frames) != 2 {
-		t.Fatalf("expected 2 frames for multi-target phaser animation, got %d", len(frames))
+	if len(frames) != 4 {
+		t.Fatalf("expected 4 frames for multi-target phaser animation, got %d", len(frames))
 	}
 
 	f1 := frames[0]

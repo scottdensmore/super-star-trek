@@ -43,18 +43,18 @@ func TickCmd(animID, step int, d time.Duration) tea.Cmd {
 }
 
 // FrameDuration returns the standard frame duration based on the speed setting.
-// 0 = Off (0ms), 1 = Fast (~40ms), 2 = Normal (~80ms), 3 = Cinematic (~160ms).
+// 0 = Off (0ms), 1 = Fast (~50ms), 2 = Normal (~120ms), 3 = Cinematic (~240ms).
 func FrameDuration(speed int) time.Duration {
 	switch speed {
 	case 0:
 		return 0
 	case 1:
-		return 40 * time.Millisecond
+		return 50 * time.Millisecond
 	case 2:
-		return 80 * time.Millisecond
+		return 120 * time.Millisecond
 	case 3:
-		return 160 * time.Millisecond
+		return 240 * time.Millisecond
 	default:
-		return 80 * time.Millisecond
+		return 120 * time.Millisecond
 	}
 }

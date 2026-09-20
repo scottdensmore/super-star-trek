@@ -73,7 +73,7 @@ func TestCommandPalette_Catalog(t *testing.T) {
 	}
 
 	chartItem := itemMap["CHART"]
-	expectedChartDesc := "Interactive 8x8 galactic star chart and warp planner (Ctrl+M)"
+	expectedChartDesc := "Interactive 8x8 galactic star chart and warp planner (Ctrl+G)"
 	if chartItem.Description() != expectedChartDesc {
 		t.Errorf("expected CHART description %q, got %q", expectedChartDesc, chartItem.Description())
 	}

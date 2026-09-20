@@ -64,19 +64,24 @@ func NewMultiPhaserAnimation(start engine.Coord, targets []engine.Coord, hits []
 		}
 	}
 
-	// 2 frames of beam discharge
-	f1Overrides := make(map[engine.Coord]CellOverride, len(overrides))
-	for k, v := range overrides {
-		f1Overrides[k] = v
-	}
-	f2Overrides := make(map[engine.Coord]CellOverride, len(overrides))
-	for k, v := range overrides {
-		f2Overrides[k] = v
-	}
-
-	frames := []Frame{
-		{Overrides: f1Overrides, Duration: d},
-		{Overrides: f2Overrides, Duration: d},
+	// 4 frames of beam discharge and sustained shield impact
+	frames := make([]Frame, 4)
+	for i := range frames {
+		fOverrides := make(map[engine.Coord]CellOverride, len(overrides))
+		for k, v := range overrides {
+			fOverrides[k] = v
+		}
+		if i == 1 || i == 2 {
+			for _, target := range targets {
+				if hitTarget, ok := fOverrides[target]; ok && hitTarget.Glyph == "<K>" {
+					fOverrides[target] = CellOverride{
+						Glyph: "*K*",
+						Style: lipgloss.NewStyle().Foreground(lipgloss.Color("11")).Bold(true),
+					}
+				}
+			}
+		}
+		frames[i] = Frame{Overrides: fOverrides, Duration: d}
 	}
 
 	return &phaserAnimation{
