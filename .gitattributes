@@ -1,6 +1,6 @@
 # The golden fixtures are compared byte for byte, so a clone that
 # rewrote their line endings would fail every journey.
-tests/golden/*.txt -text
+c/tests/golden/*.txt -text
 
 # The same reasoning, one directory further out. With no `text`
 # attribute git falls back to core.autocrlf, which is true by default in
@@ -15,7 +15,7 @@ tests/golden/*.txt -text
 # committed.
 #
 # These globs also freeze the newer LF files -- tui.c, tui.h, tuifmt.c,
-# rules.c, rules.h, osx.c, osx.h and the two under tests/. That is
+# rules.c, rules.h, osx.c, osx.h and the ones under c/tests/. That is
 # deliberate rather than inherited: it is the same guarantee in the
 # other direction, it covers any file added later without anyone
 # remembering to, and a per-file list would go stale the first time
@@ -29,10 +29,12 @@ tests/golden/*.txt -text
 # narrower option"; it is the damage, not the fix.
 #
 # This governs git's own conversion. It cannot stop an editor or a
-# text-mode script from rewriting a file in place; tests/lineendings.sh
+# text-mode script from rewriting a file in place; c/tests/lineendings.sh
 # is what catches that.
-*.c -text
-*.h -text
+c/*.c -text
+c/*.h -text
+c/tests/*.c -text
+
 # The test scripts, including the one that checks all of this. A shell
 # script converted to CRLF does not run: measured, it dies at
 # `set: Illegal option -` with exit 2, and ctest reads 2 as a failure
@@ -41,9 +43,11 @@ tests/golden/*.txt -text
 # conversion it exists to catch, and report as a broken test rather than
 # an unprotected tree. All ten are unprotected without this line -- the
 # nine that existed, and this change's own.
+c/tests/*.sh -text
 *.sh -text
+
 # sst.doc by name rather than `*.doc`. The reasoning above is about text
 # files whose endings must not move; the next `.doc` added here is more
 # likely a Word file, which wants `binary`, and inheriting `-text` for it
 # would be an accident rather than a decision.
-sst.doc -text
+c/sst.doc -text

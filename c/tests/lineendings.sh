@@ -89,17 +89,17 @@ git -C "$src" rev-parse --is-inside-work-tree >/dev/null 2>&1 ||
 # converts it, which is exactly the review this guards.
 # One name per line: the loops below split on newlines only, so a
 # space-separated list here would compare whole lines and match nothing.
-crlf_files='ai.c
-battle.c
-events.c
-finish.c
-moving.c
-planets.c
-reports.c
-setup.c
-sst.c
-sst.doc
-sst.h'
+crlf_files='c/ai.c
+c/battle.c
+c/events.c
+c/finish.c
+c/moving.c
+c/planets.c
+c/reports.c
+c/setup.c
+c/sst.c
+c/sst.doc
+c/sst.h'
 
 # `sst.doc` rather than `*.doc`, matching .gitattributes: that file
 # declines `*.doc` because the next one is likely a Word file wanting
@@ -111,7 +111,7 @@ sst.h'
 # nothing -- which the reach checks below catch loudly, but only after.
 globs='*.c
 *.h
-sst.doc
+c/sst.doc
 *.sh'
 
 is_crlf_file() {
@@ -214,11 +214,11 @@ done
 # arm guarding something. A counting check stood here instead and was
 # dead code -- with `tests/lineendings.sh` in this list, completeness
 # passing already implies checked > listed, so it could never fire.
-required_seen='sst.c
-sst.h
-sst.doc
-tui.c
-tests/lineendings.sh'
+required_seen='c/sst.c
+c/sst.h
+c/sst.doc
+c/tui.c
+c/tests/lineendings.sh'
 
 for known in $required_seen; do
 	found=0
