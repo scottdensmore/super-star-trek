@@ -680,3 +680,33 @@ func TestCLI_ScenarioLaunch_Shorthand(t *testing.T) {
 	}
 }
 
+func TestMain_VersionFlag(t *testing.T) {
+	cases := []struct {
+		name string
+		flag string
+	}{
+		{"LongFlag", "--version"},
+		{"ShortFlag", "-v"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var out, errOut bytes.Buffer
+			code := run([]string{tc.flag}, strings.NewReader(""), &out, &errOut)
+			if code != 0 {
+				t.Fatalf("expected exit code 0 for %s, got %d. stderr: %s", tc.flag, code, errOut.String())
+			}
+			stdout := out.String()
+			if !strings.Contains(stdout, "sst version") {
+				t.Errorf("expected 'sst version' in output, got: %q", stdout)
+			}
+			if !strings.Contains(stdout, "commit:") {
+				t.Errorf("expected 'commit:' in output, got: %q", stdout)
+			}
+			if !strings.Contains(stdout, "built at:") {
+				t.Errorf("expected 'built at:' in output, got: %q", stdout)
+			}
+		})
+	}
+}
+
