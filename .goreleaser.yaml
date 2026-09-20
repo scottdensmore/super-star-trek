@@ -94,3 +94,9 @@ changelog:
       - "^chore:"
       - Merge pull request
       - Merge branch
+
+release:
+  extra_files:
+    - glob: ./build/dist/*_wasm.tar.gz
+    - glob: ./build/dist/*_wasm.zip
+

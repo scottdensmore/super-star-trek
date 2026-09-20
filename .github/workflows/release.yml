@@ -20,6 +20,9 @@ jobs:
     name: Build & Publish Release
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -35,7 +38,7 @@ jobs:
       - name: Run verification tests
         run: |
           go vet ./...
-          go test -race ./pkg/engine/... ./pkg/audio/... ./cmd/sst/...
+          go test -race ./...
 
       - name: Package WebAssembly Standalone Bundle
         run: |
