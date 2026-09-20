@@ -184,6 +184,10 @@ func FormatCombatEvents(events []engine.Event) string {
 		case engine.EventTorpedoHit:
 			if e.Destroyed {
 				fmt.Fprintf(&b, "%s*** KLINGON WARSHIP DESTROYED AT [%d,%d] ***%s\r\n", ansiRed, e.Target.Row(), e.Target.Col(), ansiReset)
+			} else if e.Entity == engine.EntityStar {
+				fmt.Fprintf(&b, "Torpedo absorbed by star at [%d,%d]\r\n", e.Target.Row(), e.Target.Col())
+			} else if e.Entity == engine.EntityPlanet {
+				fmt.Fprintf(&b, "Torpedo absorbed by planet atmosphere at [%d,%d]\r\n", e.Target.Row(), e.Target.Col())
 			} else {
 				fmt.Fprintf(&b, "Torpedo hit Klingon at [%d,%d]: %.0f units damage\r\n", e.Target.Row(), e.Target.Col(), e.Damage)
 			}
