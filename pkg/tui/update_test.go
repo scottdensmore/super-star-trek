@@ -541,7 +541,7 @@ func TestTorpedoDamageAndMissLogging(t *testing.T) {
 	m4 := NewModel(g4, theme.DefaultTheme())
 
 	updated4, _ := m4.handleCommand("tor c 5")
-	m4 = updated4.(Model)
+	_ = updated4.(Model)
 	// 800 - 500 = 300; then 300 * 0.75 = 225
 	if k4.Energy != 225 {
 		t.Fatalf("expected Klingon to take 500 damage from 'tor c 5', got energy %f", k4.Energy)
