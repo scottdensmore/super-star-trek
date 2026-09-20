@@ -15,6 +15,12 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
 
+var (
+	version = "2.0.0-dev"
+	commit  = "none"
+	date    = "unknown"
+)
+
 var runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
 	p := tea.NewProgram(m, opts...)
 	_, err := p.Run()
@@ -38,6 +44,8 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	fs := flag.NewFlagSet("sst", flag.ContinueOnError)
 	fs.SetOutput(errOut)
 	_ = fs.Bool("classic", false, "run in teletype plain mode")
+	versionFlag := fs.Bool("version", false, "print version information and exit")
+	fs.BoolVar(versionFlag, "v", false, "shorthand for --version")
 	themeName := fs.String("theme", "modern", "initial theme name (modern, lcars, crt)")
 	modeFlag := fs.String("mode", "auto", "theme color mode (auto, dark, light)")
 	seed := fs.Int64("seed", 0, "PRNG seed (0 for random)")
@@ -59,6 +67,11 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 			return 0
 		}
 		return 1
+	}
+
+	if *versionFlag {
+		_, _ = fmt.Fprintf(out, "sst version %s (commit: %s, built at: %s)\n", version, commit, date)
+		return 0
 	}
 
 	if *listScenariosFlag {

@@ -133,7 +133,7 @@ func TestTUIJourney_Fighting(t *testing.T) {
 	m, _ = sendTestCommand(m, fmt.Sprintf("tor %d %d", k2Sector[0], k2Sector[1]))
 	if g.CurrentQuad.Grid[k2Sector[0]][k2Sector[1]] == engine.EntityKlingon {
 		// If high damage didn't destroy on first hit, finish with second torpedo
-		m, _ = sendTestCommand(m, fmt.Sprintf("tor %d %d", k2Sector[0], k2Sector[1]))
+		_, _ = sendTestCommand(m, fmt.Sprintf("tor %d %d", k2Sector[0], k2Sector[1]))
 	}
 
 	// Verify all Klingons in quadrant destroyed

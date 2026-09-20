@@ -1,6 +1,7 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 version: 2
 
-project_name: sst
+project_name: super-star-trek
 
 before:
   hooks:
@@ -22,26 +23,67 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
+    flags:
+      - -trimpath
     ldflags:
       - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+universal_binaries:
+  - id: sst
+    replace: false
+    name_template: sst
 
 archives:
-  - id: sst-archive
-    builds:
-      - sst
+  - id: default
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     format: tar.gz
     format_overrides:
       - goos: windows
         format: zip
     files:
-      - sst.doc
       - README.md
-      - docs/**/*
+      - LICENSE*
+      - c/sst.doc
+
+nfpms:
+  - id: packages
+    package_name: super-star-trek
+    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    vendor: Scott Densmore
+    homepage: https://github.com/scottdensmore/super-star-trek
+    maintainer: Scott Densmore <scottdensmore@users.noreply.github.com>
+    description: Authentic modernized Super Star Trek with Bubbletea TUI and retro audio
+    license: MIT
+    formats:
+      - deb
+      - rpm
+    bindir: /usr/bin
+    contents:
+      - src: README.md
+        dst: /usr/share/doc/super-star-trek/README.md
+      - src: c/sst.doc
+        dst: /usr/share/doc/super-star-trek/sst.doc
+
+brews:
+  - repository:
+      owner: scottdensmore
+      name: homebrew-tap
+    directory: Formula
+    homepage: https://github.com/scottdensmore/super-star-trek
+    description: Authentic modernized Super Star Trek with Bubbletea TUI and retro audio
+    license: MIT
+    test: |
+      system "#{bin}/sst", "--version"
 
 checksum:
   name_template: "checksums.txt"
   algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot"
 
 changelog:
   sort: asc
@@ -49,3 +91,12 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+      - "^chore:"
+      - Merge pull request
+      - Merge branch
+
+release:
+  extra_files:
+    - glob: ./build/dist/*_wasm.tar.gz
+    - glob: ./build/dist/*_wasm.zip
+

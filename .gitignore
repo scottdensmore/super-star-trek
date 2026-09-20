@@ -240,3 +240,6 @@ build-*/
 web/sst.wasm
 web/wasm_exec.js
 
+# GoReleaser build artifacts
+dist/
+

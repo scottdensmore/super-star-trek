@@ -34,6 +34,40 @@ This repository features both a **state-of-the-art terminal dashboard** built wi
 
 ---
 
+## Installation
+
+### Homebrew (macOS & Linux)
+```bash
+brew install scottdensmore/tap/super-star-trek
+```
+
+### Debian / Ubuntu (`.deb`)
+Download the `.deb` package from the [Releases page](https://github.com/scottdensmore/super-star-trek/releases) and install:
+```bash
+sudo dpkg -i super-star-trek_2.0.0_linux_amd64.deb
+```
+
+### Fedora / RHEL (`.rpm`)
+Download the `.rpm` package from the [Releases page](https://github.com/scottdensmore/super-star-trek/releases) and install:
+```bash
+sudo rpm -i super-star-trek_2.0.0_linux_amd64.rpm
+```
+
+### Direct Binary Download
+Pre-compiled standalone binaries for Linux (`amd64`, `arm64`), macOS (Universal Apple Silicon & Intel), and Windows (`amd64`) are available on the [Releases page](https://github.com/scottdensmore/super-star-trek/releases).
+
+### Go Toolchain
+```bash
+go install github.com/scottdensmore/super-star-trek/cmd/sst@latest
+```
+
+### WebAssembly Browser Edition
+Play instantly in your web browser with retro sound synthesis:
+- **Live Online:** [https://scottdensmore.github.io/super-star-trek/](https://scottdensmore.github.io/super-star-trek/)
+- **Self-Hosted:** Download `super-star-trek_2.0.0_wasm.tar.gz` from Releases and serve with any static web server (`python3 -m http.server 8080`).
+
+---
+
 ## Quick Start (Go Edition)
 
 ### Requirements
@@ -46,12 +80,6 @@ go run ./cmd/sst
 
 # Launch in classic 1978 teletype mode
 go run ./cmd/sst --classic
-```
-
-### Install
-```bash
-go install github.com/scottdensmore/super-star-trek/cmd/sst@latest
-sst
 ```
 
 ### Command-Line Options
