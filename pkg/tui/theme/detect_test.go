@@ -1,6 +1,8 @@
 package theme
 
 import (
+	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -318,6 +320,173 @@ func TestDetectDarkBackground_OSCFallback(t *testing.T) {
 	osGetenv = func(k string) string { return "" }
 	if got := DetectDarkBackground(); got != true {
 		t.Errorf("expected fallback to dark for standard terminal, got %v", got)
+	}
+}
+
+func TestIsAppleScriptDefaultWhite(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"65535, 65535, 65535", true},
+		{"65530, 65530, 65530", true},
+		{"65535, 65535, 65535\n", true},
+		{" 65535 , 65535 , 65535 ", true},
+		{"0, 0, 0", false},
+		{"55372, 54249, 46908", false}, // Novel profile
+		{"65520, 65535, 65535", false},
+		{"65535, 65535", false},
+		{"invalid, 1, 2", false},
+		{"", false},
+	}
+
+	for _, tt := range tests {
+		got := isAppleScriptDefaultWhite(tt.input)
+		if got != tt.expected {
+			t.Errorf("isAppleScriptDefaultWhite(%q) = %v, expected %v", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestDetectDarwinTerminalDarkBackground_Permutations(t *testing.T) {
+	origAppleScript := appleScriptDetector
+	origSystemDark := darwinSystemDarkDetector
+	defer func() {
+		appleScriptDetector = origAppleScript
+		darwinSystemDarkDetector = origSystemDark
+	}()
+
+	tests := []struct {
+		name         string
+		scriptOutput string
+		scriptErr    error
+		systemDark   bool
+		expectedDark bool
+	}{
+		{
+			name:         "Default white profile in Dark Mode (macOS auto dark)",
+			scriptOutput: "65535, 65535, 65535",
+			scriptErr:    nil,
+			systemDark:   true,
+			expectedDark: true,
+		},
+		{
+			name:         "Default white profile in Light Mode (macOS light)",
+			scriptOutput: "65535, 65535, 65535",
+			scriptErr:    nil,
+			systemDark:   false,
+			expectedDark: false,
+		},
+		{
+			name:         "Explicit dark profile (Pro) in Light Mode",
+			scriptOutput: "0, 0, 0",
+			scriptErr:    nil,
+			systemDark:   false,
+			expectedDark: true,
+		},
+		{
+			name:         "Explicit dark profile (Pro) in Dark Mode",
+			scriptOutput: "0, 0, 0",
+			scriptErr:    nil,
+			systemDark:   true,
+			expectedDark: true,
+		},
+		{
+			name:         "Explicit light profile (Novel) in Dark Mode",
+			scriptOutput: "55372, 54249, 46908",
+			scriptErr:    nil,
+			systemDark:   true,
+			expectedDark: false,
+		},
+		{
+			name:         "Explicit light profile (Novel) in Light Mode",
+			scriptOutput: "55372, 54249, 46908",
+			scriptErr:    nil,
+			systemDark:   false,
+			expectedDark: false,
+		},
+		{
+			name:         "AppleScript error fallback to Dark Mode",
+			scriptOutput: "",
+			scriptErr:    errors.New("osascript execution failed"),
+			systemDark:   true,
+			expectedDark: true,
+		},
+		{
+			name:         "AppleScript error fallback to Light Mode",
+			scriptOutput: "",
+			scriptErr:    errors.New("osascript execution failed"),
+			systemDark:   false,
+			expectedDark: false,
+		},
+		{
+			name:         "Invalid AppleScript response fallback to Dark Mode",
+			scriptOutput: "unrecognized output",
+			scriptErr:    nil,
+			systemDark:   true,
+			expectedDark: true,
+		},
+		{
+			name:         "Invalid AppleScript response fallback to Light Mode",
+			scriptOutput: "unrecognized output",
+			scriptErr:    nil,
+			systemDark:   false,
+			expectedDark: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			appleScriptDetector = func(ctx context.Context) ([]byte, error) {
+				return []byte(tt.scriptOutput), tt.scriptErr
+			}
+			darwinSystemDarkDetector = func() bool {
+				return tt.systemDark
+			}
+
+			got := detectDarwinTerminalDarkBackground()
+			if got != tt.expectedDark {
+				t.Errorf("detectDarwinTerminalDarkBackground() = %v, expected %v", got, tt.expectedDark)
+			}
+		})
+	}
+}
+
+func TestDetectDarkBackground_LiveDarwinIntegration(t *testing.T) {
+	if runtimeGOOS != "darwin" {
+		t.Skip("skipping Darwin live integration test on non-darwin")
+	}
+	ResetDetectionCache()
+	isDark := DetectDarkBackground()
+	t.Logf("Live Darwin background detection: isDark=%v", isDark)
+
+	// Test specifically with TERM_PROGRAM=Apple_Terminal on Darwin
+	origGetenv := osGetenv
+	origCacheTTL := darwinCacheTTL
+	origGlobalTTL := detectCacheTTL
+	defer func() {
+		osGetenv = origGetenv
+		darwinCacheTTL = origCacheTTL
+		detectCacheTTL = origGlobalTTL
+		ResetDetectionCache()
+	}()
+
+	darwinCacheTTL = 0
+	detectCacheTTL = 0
+	ResetDetectionCache()
+
+	osGetenv = func(k string) string {
+		if k == "TERM_PROGRAM" {
+			return "Apple_Terminal"
+		}
+		return origGetenv(k)
+	}
+
+	gotAppleTerminal := DetectDarkBackground()
+	t.Logf("Live Darwin Apple_Terminal background detection: isDark=%v", gotAppleTerminal)
+	// On this macOS system, AppleInterfaceStyle is "Dark", so Apple_Terminal must detect as dark.
+	if isDarwinSystemDark() && !gotAppleTerminal {
+		t.Errorf("expected Darwin Apple_Terminal to detect dark mode when AppleInterfaceStyle is Dark, got false")
 	}
 }
 
