@@ -17,6 +17,8 @@ var (
 	osGetenv                 = os.Getenv
 	runtimeGOOS              = runtime.GOOS
 	darwinDetector           = detectDarwinTerminalDarkBackground
+	darwinSystemDarkDetector = isDarwinSystemDark
+	appleScriptDetector      = queryAppleScriptTerminalBackground
 	oscDetector              = queryOSCDarkBackground
 	detectDarkBackgroundImpl = detectDarkBackgroundInternal
 
@@ -113,6 +115,9 @@ func detectDarkBackgroundUncached() bool {
 	}
 
 	// 4. Heuristics when OSC 11 is unsupported or unanswered (e.g. Apple Terminal over SSH, tmux without passthrough)
+	if runtimeGOOS == "darwin" {
+		return darwinSystemDarkDetector()
+	}
 	if osGetenv("TERM_PROGRAM") == "Apple_Terminal" {
 		return false
 	}
@@ -127,26 +132,56 @@ func detectDarwinTerminalDarkBackground() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "osascript", "-e", `tell application "Terminal" to get background color of selected tab of front window`)
-	out, err := cmd.Output()
+	out, err := appleScriptDetector(ctx)
 	if err == nil {
-		if isDark, ok := parseAppleScriptRGB(string(out)); ok {
-			return isDark
+		outStr := strings.TrimSpace(string(out))
+		if isDark, ok := parseAppleScriptRGB(outStr); ok {
+			if isDark {
+				return true
+			}
+			// When AppleScript returns pure white (65535, 65535, 65535), Terminal.app
+			// is using default profile settings (such as "Basic" or an uncustomized profile).
+			// On macOS Dark Mode, Terminal.app dynamically renders uncustomized profiles
+			// with a dark background.
+			if isAppleScriptDefaultWhite(outStr) && darwinSystemDarkDetector() {
+				return true
+			}
+			return false
 		}
 	}
 
 	// Fallback: Check macOS system appearance
+	return darwinSystemDarkDetector()
+}
+
+func queryAppleScriptTerminalBackground(ctx context.Context) ([]byte, error) {
+	cmd := exec.CommandContext(ctx, "osascript", "-e", `tell application "Terminal" to get background color of selected tab of front window`)
+	return cmd.Output()
+}
+
+// isDarwinSystemDark returns true if macOS system appearance is set to Dark Mode.
+func isDarwinSystemDark() bool {
 	ctxSys, cancelSys := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	defer cancelSys()
 
 	cmdSys := exec.CommandContext(ctxSys, "defaults", "read", "-g", "AppleInterfaceStyle")
 	outSys, errSys := cmdSys.Output()
-	if errSys == nil && strings.TrimSpace(string(outSys)) == "Dark" {
-		return true
-	}
+	return errSys == nil && strings.TrimSpace(string(outSys)) == "Dark"
+}
 
-	// Apple Terminal's default profile ("Basic") is light
-	return false
+// isAppleScriptDefaultWhite checks if the RGB values represent default pure white (65535, 65535, 65535).
+func isAppleScriptDefaultWhite(s string) bool {
+	parts := strings.Split(strings.TrimSpace(s), ",")
+	if len(parts) != 3 {
+		return false
+	}
+	r, errR := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
+	g, errG := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
+	b, errB := strconv.ParseFloat(strings.TrimSpace(parts[2]), 64)
+	if errR != nil || errG != nil || errB != nil {
+		return false
+	}
+	return r >= 65530 && g >= 65530 && b >= 65530
 }
 
 // parseAppleScriptRGB parses AppleScript 16-bit RGB values (e.g. "65535, 65535, 65535").
