@@ -112,6 +112,38 @@ func (s *Session) Execute(input string) string {
 		if err != nil {
 			return fmt.Sprintf("Cannot execute: %v\r\n", err)
 		}
+
+		// Surviving Klingons counter-attack on turn-consuming actions
+		gameOver := false
+		for _, ev := range events {
+			if _, ok := ev.(engine.EventGameOver); ok {
+				gameOver = true
+				break
+			}
+		}
+		if !gameOver && len(s.game.CurrentQuad.Klingons) > 0 && s.game.Enterprise.Condition != engine.ConditionDocked {
+			shouldAttack := false
+			switch parsed.Action.(type) {
+			case engine.ActionFireTorpedo, engine.ActionTorpedoDirect, engine.ActionFirePhasers, engine.ActionShields:
+				shouldAttack = true
+			case engine.ActionMove:
+				isInterQuad := false
+				for _, ev := range events {
+					if moveEv, ok := ev.(engine.EventShipMoved); ok && moveEv.FromQuad != moveEv.ToQuad {
+						isInterQuad = true
+						break
+					}
+				}
+				if !isInterQuad {
+					shouldAttack = true
+				}
+			}
+			if shouldAttack {
+				kEvents := engine.KlingonTurn(s.game)
+				events = append(events, kEvents...)
+			}
+		}
+
 		if s.dispatcher != nil {
 			s.dispatcher.DispatchEvents(events)
 		}
