@@ -56,10 +56,8 @@ Pre-compiled standalone binaries for Linux (`amd64`, `arm64`), macOS (Universal 
 go install github.com/scottdensmore/super-star-trek/cmd/sst@latest
 ```
 
-### WebAssembly Browser Edition
-Play instantly in your web browser with retro sound synthesis:
-- **Live Online:** [https://scottdensmore.github.io/super-star-trek/](https://scottdensmore.github.io/super-star-trek/)
-- **Self-Hosted:** Download `super-star-trek_2.0.0_wasm.tar.gz` from Releases and serve with any static web server (`python3 -m http.server 8080`).
+### WebAssembly Edition
+Download `super-star-trek_2.0.0_wasm.tar.gz` from the [Releases page](https://github.com/scottdensmore/super-star-trek/releases) and serve with any local static web server (e.g. `python3 -m http.server 8080`).
 
 ---
 
