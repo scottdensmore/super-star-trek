@@ -67,17 +67,6 @@ nfpms:
       - src: c/sst.doc
         dst: /usr/share/doc/super-star-trek/sst.doc
 
-brews:
-  - repository:
-      owner: scottdensmore
-      name: homebrew-tap
-    directory: Formula
-    homepage: https://github.com/scottdensmore/super-star-trek
-    description: Authentic modernized Super Star Trek with Bubbletea TUI and retro audio
-    license: MIT
-    test: |
-      system "#{bin}/sst", "--version"
-
 checksum:
   name_template: "checksums.txt"
   algorithm: sha256
@@ -96,6 +85,7 @@ changelog:
       - Merge branch
 
 release:
+  replace_existing_artifacts: true
   extra_files:
     - glob: ./build/dist/*_wasm.tar.gz
     - glob: ./build/dist/*_wasm.zip

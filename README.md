@@ -36,11 +36,6 @@ This repository features both a **state-of-the-art terminal dashboard** built wi
 
 ## Installation
 
-### Homebrew (macOS & Linux)
-```bash
-brew install scottdensmore/tap/super-star-trek
-```
-
 ### Debian / Ubuntu (`.deb`)
 Download the `.deb` package from the [Releases page](https://github.com/scottdensmore/super-star-trek/releases) and install:
 ```bash
