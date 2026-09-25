@@ -438,3 +438,196 @@ func TestScenarioLeaderboards_AliasAndPaths(t *testing.T) {
 		t.Errorf("expected error saving nil leaderboard, got nil")
 	}
 }
+
+func TestLeaderboard_RecordTourAndRankCommission(t *testing.T) {
+	lb := NewLeaderboard()
+	tour := NewTour(888)
+	tour.SectorsCompleted = 4
+	tour.Completed = true
+	tour.TotalTourScore = 18500
+	tour.InstalledRefits[RefitDilithiumCore] = 3
+
+	rec := lb.RecordTour(tour, "Kirk")
+	if rec == nil {
+		t.Fatal("expected non-nil TourRecord")
+	}
+	if rec.Rank != "Admiral of the Fleet" {
+		t.Errorf("expected Admiral of the Fleet for 4/4 clear, got %s", rec.Rank)
+	}
+	if len(rec.Medals) == 0 {
+		t.Errorf("expected medals awarded for full tour clear")
+	}
+	if rec.SectorsCleared != 4 {
+		t.Errorf("expected 4 sectors cleared, got %d", rec.SectorsCleared)
+	}
+}
+
+func TestCalculateTourCommission_RanksAndMedals(t *testing.T) {
+	tests := []struct {
+		name             string
+		sectorsCompleted int
+		installedRefits  map[RefitID]int
+		expectedRank     string
+		expectedMedals   []string
+	}{
+		{
+			name:             "4 sectors full clear with architect refits",
+			sectorsCompleted: 4,
+			installedRefits: map[RefitID]int{
+				RefitDilithiumCore: 3,
+				RefitTorpedoBays:   3,
+			},
+			expectedRank: "Admiral of the Fleet",
+			expectedMedals: []string{
+				"Starfleet Legion of Honor",
+				"Klingon Campaign Ribbon",
+				"Vanguard Star",
+				"Master Starship Architect",
+			},
+		},
+		{
+			name:             "3 sectors clear",
+			sectorsCompleted: 3,
+			installedRefits:  map[RefitID]int{},
+			expectedRank:     "Commodore",
+			expectedMedals: []string{
+				"Starfleet Merit Citation",
+				"Klingon Campaign Ribbon",
+			},
+		},
+		{
+			name:             "2 sectors clear",
+			sectorsCompleted: 2,
+			installedRefits:  map[RefitID]int{},
+			expectedRank:     "Fleet Captain",
+			expectedMedals: []string{
+				"Frontier Service Medal",
+			},
+		},
+		{
+			name:             "1 sector clear",
+			sectorsCompleted: 1,
+			installedRefits:  map[RefitID]int{},
+			expectedRank:     "Captain",
+			expectedMedals: []string{
+				"Patrol Ribbon",
+			},
+		},
+		{
+			name:             "0 sectors clear (KIA)",
+			sectorsCompleted: 0,
+			installedRefits:  map[RefitID]int{},
+			expectedRank:     "Commander (KIA)",
+			expectedMedals:   []string{},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tour := NewTour(123)
+			tour.SectorsCompleted = tc.sectorsCompleted
+			tour.InstalledRefits = tc.installedRefits
+
+			rank, medals := CalculateTourCommission(tour)
+			if rank != tc.expectedRank {
+				t.Errorf("expected rank %q, got %q", tc.expectedRank, rank)
+			}
+			if len(medals) != len(tc.expectedMedals) {
+				t.Fatalf("expected %d medals, got %d: %v", len(tc.expectedMedals), len(medals), medals)
+			}
+			for i, m := range tc.expectedMedals {
+				if medals[i] != m {
+					t.Errorf("expected medal %d to be %q, got %q", i, m, medals[i])
+				}
+			}
+		})
+	}
+
+	// Nil tour
+	rank, medals := CalculateTourCommission(nil)
+	if rank != "Cadet" {
+		t.Errorf("expected Cadet for nil tour, got %s", rank)
+	}
+	if len(medals) != 0 {
+		t.Errorf("expected 0 medals for nil tour, got %v", medals)
+	}
+}
+
+func TestLeaderboard_RecordTourEdgeCases(t *testing.T) {
+	lb := NewLeaderboard()
+
+	// Default callsign
+	tour := NewTour(101)
+	tour.SectorsCompleted = 1
+	rec := lb.RecordTour(tour, "")
+	if rec == nil {
+		t.Fatal("expected non-nil record")
+	}
+	if rec.Callsign != "Enterprise" {
+		t.Errorf("expected default callsign Enterprise, got %s", rec.Callsign)
+	}
+
+	// Nil tour
+	nilRec := lb.RecordTour(nil, "Enterprise")
+	if nilRec != nil {
+		t.Errorf("expected nil record for nil tour, got %+v", nilRec)
+	}
+
+	// Nil leaderboard
+	var nilLB *Leaderboard
+	if nilLB.RecordTour(tour, "Enterprise") != nil {
+		t.Errorf("expected nil record when recording on nil leaderboard")
+	}
+}
+
+func TestLeaderboard_SaveAndLoadTourRecords(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "highscores.json")
+
+	lb := NewLeaderboard()
+	tour := NewTour(777)
+	tour.SectorsCompleted = 4
+	tour.Completed = true
+	tour.TotalTourScore = 20000
+	tour.InstalledRefits[RefitDilithiumCore] = 3
+	tour.InstalledRefits[RefitDeflectorGrid] = 3
+
+	rec := lb.RecordTour(tour, "Excelsior")
+	if rec == nil {
+		t.Fatal("expected non-nil record")
+	}
+
+	if err := lb.Save(path); err != nil {
+		t.Fatalf("failed to save leaderboard: %v", err)
+	}
+
+	loaded, err := LoadLeaderboard(path)
+	if err != nil {
+		t.Fatalf("failed to load leaderboard: %v", err)
+	}
+
+	if len(loaded.TourRecords) != 1 {
+		t.Fatalf("expected 1 tour record, got %d", len(loaded.TourRecords))
+	}
+
+	loadedRec := loaded.TourRecords[0]
+	if loadedRec.Callsign != "Excelsior" {
+		t.Errorf("expected callsign Excelsior, got %s", loadedRec.Callsign)
+	}
+	if loadedRec.Rank != "Admiral of the Fleet" {
+		t.Errorf("expected Admiral of the Fleet, got %s", loadedRec.Rank)
+	}
+	if loadedRec.Score != 20000 {
+		t.Errorf("expected score 20000, got %d", loadedRec.Score)
+	}
+	if loadedRec.SectorsCleared != 4 {
+		t.Errorf("expected 4 sectors cleared, got %d", loadedRec.SectorsCleared)
+	}
+	if loadedRec.RefitsCount != 6 {
+		t.Errorf("expected 6 refits count, got %d", loadedRec.RefitsCount)
+	}
+	if !loadedRec.Completed {
+		t.Errorf("expected completed true")
+	}
+}
+

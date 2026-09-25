@@ -24,9 +24,32 @@ type ScoreEntry struct {
 	Commendation string    `json:"commendation,omitempty"`
 }
 
-// Leaderboard stores a list of top scores, capped at the top 10 rankings.
+// Leaderboard stores a list of top scores, capped at the top 10 rankings,
+// and historical records for completed or failed Patrol Tours.
 type Leaderboard struct {
-	Entries []ScoreEntry `json:"entries"`
+	Entries     []ScoreEntry `json:"entries"`
+	TourRecords []TourRecord `json:"tour_records,omitempty"`
+}
+
+// TourRecord records a captain's completed or terminated campaign tour.
+type TourRecord struct {
+	Date           string   `json:"date"`
+	Callsign       string   `json:"callsign"`
+	Rank           string   `json:"rank"`
+	Score          int      `json:"score"`
+	SectorsCleared int      `json:"sectors_cleared"`
+	TotalSectors   int      `json:"total_sectors"`
+	RefitsCount    int      `json:"refits_count"`
+	Medals         []string `json:"medals"`
+	Completed      bool     `json:"completed"`
+}
+
+// NewLeaderboard creates a new empty Leaderboard.
+func NewLeaderboard() *Leaderboard {
+	return &Leaderboard{
+		Entries:     make([]ScoreEntry, 0),
+		TourRecords: make([]TourRecord, 0),
+	}
 }
 
 // DefaultLeaderboard returns a leaderboard seeded with classic Starfleet legends.
@@ -135,6 +158,7 @@ func DefaultLeaderboard() *Leaderboard {
 				GameWon:     true,
 			},
 		},
+		TourRecords: make([]TourRecord, 0),
 	}
 }
 
@@ -214,6 +238,9 @@ func LoadLeaderboard(path ...string) (*Leaderboard, error) {
 	if lb.Entries == nil {
 		lb.Entries = make([]ScoreEntry, 0)
 	}
+	if lb.TourRecords == nil {
+		lb.TourRecords = make([]TourRecord, 0)
+	}
 
 	sort.SliceStable(lb.Entries, func(i, j int) bool {
 		return lb.Entries[i].Score > lb.Entries[j].Score
@@ -271,6 +298,75 @@ func (lb *Leaderboard) Save(path string) error {
 	tmpPath = ""
 	return nil
 }
+
+// CalculateTourCommission determines the honorary rank commission and campaign medals
+// awarded for a player's performance across a Starfleet Patrol Tour.
+func CalculateTourCommission(tour *TourState) (rank string, medals []string) {
+	medals = make([]string, 0)
+	if tour == nil {
+		return "Cadet", medals
+	}
+
+	switch tour.SectorsCompleted {
+	case 4:
+		rank = "Admiral of the Fleet"
+		medals = append(medals, "Starfleet Legion of Honor", "Klingon Campaign Ribbon", "Vanguard Star")
+	case 3:
+		rank = "Commodore"
+		medals = append(medals, "Starfleet Merit Citation", "Klingon Campaign Ribbon")
+	case 2:
+		rank = "Fleet Captain"
+		medals = append(medals, "Frontier Service Medal")
+	case 1:
+		rank = "Captain"
+		medals = append(medals, "Patrol Ribbon")
+	default:
+		rank = "Commander (KIA)"
+	}
+
+	totalRefits := 0
+	for _, tier := range tour.InstalledRefits {
+		totalRefits += tier
+	}
+	if totalRefits >= 6 {
+		medals = append(medals, "Master Starship Architect")
+	}
+
+	return rank, medals
+}
+
+// RecordTour calculates the final commission rank and medals for a completed or terminated tour,
+// creates a TourRecord, adds it to the Hall of Fame, and returns a pointer to the record.
+func (lb *Leaderboard) RecordTour(tour *TourState, callsign string) *TourRecord {
+	if lb == nil || tour == nil {
+		return nil
+	}
+	if callsign == "" {
+		callsign = "Enterprise"
+	}
+	rank, medals := CalculateTourCommission(tour)
+
+	totalRefits := 0
+	for _, tier := range tour.InstalledRefits {
+		totalRefits += tier
+	}
+
+	rec := TourRecord{
+		Date:           time.Now().Format("2006-01-02 15:04"),
+		Callsign:       callsign,
+		Rank:           rank,
+		Score:          tour.TotalTourScore,
+		SectorsCleared: tour.SectorsCompleted,
+		TotalSectors:   len(tour.Sectors),
+		RefitsCount:    totalRefits,
+		Medals:         medals,
+		Completed:      tour.Completed,
+	}
+
+	lb.TourRecords = append(lb.TourRecords, rec)
+	return &rec
+}
+
 
 // ScenarioLeaderboardPath resolves the file path for a scenario's dedicated leaderboard.
 func ScenarioLeaderboardPath(id ScenarioID) string {
