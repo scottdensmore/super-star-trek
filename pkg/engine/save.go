@@ -66,6 +66,19 @@ func LoadGame(path string) (*GameState, error) {
 		return nil, err
 	}
 
+	var envelope SaveEnvelope
+	if err := json.Unmarshal(data, &envelope); err == nil && envelope.GameState != nil {
+		state := envelope.GameState
+		if envelope.TourState != nil {
+			ApplyRefits(state, envelope.TourState.InstalledRefits)
+		}
+		if state.Rules.Profile == "" {
+			state.Rules = DefaultRulesForProfile(ProfileNormal)
+		}
+		state.RNG = NewPRNG(int64(state.Stardate))
+		return state, nil
+	}
+
 	var state GameState
 	if err := json.Unmarshal(data, &state); err != nil {
 		return nil, err
@@ -101,9 +114,20 @@ func InspectSave(path string) (*SaveMetadata, error) {
 		return nil, err
 	}
 
-	var state GameState
-	if err := json.Unmarshal(data, &state); err != nil {
-		return nil, fmt.Errorf("corrupted save file %s: %w", filepath.Base(path), err)
+	var state *GameState
+	var envelope SaveEnvelope
+	if err := json.Unmarshal(data, &envelope); err == nil && (envelope.GameState != nil || envelope.TourState != nil) {
+		if envelope.GameState != nil {
+			state = envelope.GameState
+		} else {
+			state = &GameState{}
+		}
+	} else {
+		var legacy GameState
+		if err := json.Unmarshal(data, &legacy); err != nil {
+			return nil, fmt.Errorf("corrupted save file %s: %w", filepath.Base(path), err)
+		}
+		state = &legacy
 	}
 
 	return &SaveMetadata{
@@ -116,4 +140,65 @@ func InspectSave(path string) (*SaveMetadata, error) {
 		Condition:     state.Enterprise.Condition,
 		KlingonsLeft:  state.RemainingKlingons,
 	}, nil
+}
+
+// SaveEnvelope wraps GameState and TourState for dual-state campaign persistence.
+type SaveEnvelope struct {
+	Version   int        `json:"version"`
+	GameState *GameState `json:"game_state"`
+	TourState *TourState `json:"tour_state,omitempty"`
+}
+
+// SaveTourGame serializes both the current sector GameState and the active TourState.
+func SaveTourGame(filename string, g *GameState, t *TourState) error {
+	envelope := SaveEnvelope{
+		Version:   2,
+		GameState: g,
+		TourState: t,
+	}
+	data, err := json.MarshalIndent(envelope, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to serialize tour save: %w", err)
+	}
+	return os.WriteFile(filename, data, 0o600)
+}
+
+// LoadTourGame deserializes a tour save file, applies installed refits, and reconstructs the PRNG.
+func LoadTourGame(filename string) (*GameState, *TourState, error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read save file: %w", err)
+	}
+	var envelope SaveEnvelope
+	if err := json.Unmarshal(data, &envelope); err != nil {
+		return nil, nil, fmt.Errorf("failed to deserialize save file: %w", err)
+	}
+
+	// Backward compatibility: If it's a legacy save without SaveEnvelope structure
+	if envelope.GameState == nil && envelope.TourState == nil {
+		var legacy GameState
+		if err := json.Unmarshal(data, &legacy); err == nil && (legacy.Enterprise.Energy > 0 || legacy.Stardate > 0 || legacy.Enterprise.MaxEnergy > 0) {
+			if legacy.Rules.Profile == "" {
+				legacy.Rules = DefaultRulesForProfile(ProfileNormal)
+			}
+			legacy.RNG = NewPRNG(int64(legacy.Stardate))
+			return &legacy, nil, nil
+		}
+	}
+
+	if envelope.GameState != nil && envelope.TourState != nil {
+		ApplyRefits(envelope.GameState, envelope.TourState.InstalledRefits)
+		if envelope.TourState.CurrentGameState == nil {
+			envelope.TourState.CurrentGameState = envelope.GameState
+		}
+	}
+	if envelope.GameState != nil {
+		if envelope.GameState.Rules.Profile == "" {
+			envelope.GameState.Rules = DefaultRulesForProfile(ProfileNormal)
+		}
+		if envelope.GameState.RNG == nil {
+			envelope.GameState.RNG = NewPRNG(int64(envelope.GameState.Stardate))
+		}
+	}
+	return envelope.GameState, envelope.TourState, nil
 }

@@ -336,3 +336,159 @@ func TestSaveLoadWithAnomalies(t *testing.T) {
 	}
 }
 
+func TestSaveAndLoadTourGame(t *testing.T) {
+	tmpDir := t.TempDir()
+	savePath := filepath.Join(tmpDir, "test_tour.json")
+
+	tour := NewTour(777)
+	g := tour.StartCurrentSector()
+	tour.RequisitionPoints = 1450
+	tour.InstalledRefits[RefitDilithiumCore] = 1
+
+	err := SaveTourGame(savePath, g, tour)
+	if err != nil {
+		t.Fatalf("failed to save tour game: %v", err)
+	}
+
+	loadedGame, loadedTour, err := LoadTourGame(savePath)
+	if err != nil {
+		t.Fatalf("failed to load tour game: %v", err)
+	}
+	if loadedTour == nil {
+		t.Fatal("expected non-nil loadedTour")
+	}
+	if loadedTour.RequisitionPoints != 1450 {
+		t.Errorf("expected 1450 RequisitionPoints, got %d", loadedTour.RequisitionPoints)
+	}
+	if loadedTour.InstalledRefits[RefitDilithiumCore] != 1 {
+		t.Errorf("expected tier 1 Dilithium Core, got %d", loadedTour.InstalledRefits[RefitDilithiumCore])
+	}
+	if loadedGame.Enterprise.MaxEnergy != 3500.0 {
+		t.Errorf("expected loadedGame MaxEnergy 3500, got %f", loadedGame.Enterprise.MaxEnergy)
+	}
+}
+
+func TestSaveAndLoadTourGame_InDrydock(t *testing.T) {
+	tmpDir := t.TempDir()
+	savePath := filepath.Join(tmpDir, "drydock_tour.json")
+
+	tour := NewTour(888)
+	tour.InDrydock = true
+	tour.RequisitionPoints = 2000
+	tour.InstalledRefits[RefitDeflectorGrid] = 2
+
+	err := SaveTourGame(savePath, nil, tour)
+	if err != nil {
+		t.Fatalf("failed to save drydock tour game: %v", err)
+	}
+
+	loadedGame, loadedTour, err := LoadTourGame(savePath)
+	if err != nil {
+		t.Fatalf("failed to load drydock tour game: %v", err)
+	}
+	if loadedGame != nil {
+		t.Errorf("expected nil loadedGame for drydock save, got %v", loadedGame)
+	}
+	if loadedTour == nil {
+		t.Fatal("expected non-nil loadedTour")
+	}
+	if !loadedTour.InDrydock {
+		t.Errorf("expected InDrydock true, got false")
+	}
+	if loadedTour.InstalledRefits[RefitDeflectorGrid] != 2 {
+		t.Errorf("expected tier 2 deflector grid, got %d", loadedTour.InstalledRefits[RefitDeflectorGrid])
+	}
+}
+
+func TestSaveAndLoadTourGame_BackwardCompatibility(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// 1. Single game saved with g.Save(), loaded via LoadTourGame()
+	legacySavePath := filepath.Join(tmpDir, "LEGACY.TRK")
+	orig := NewGame(1234, SkillGood, LengthMedium)
+	orig.Enterprise.Energy = 2800.0
+	orig.Stardate = 3200.0
+
+	if err := orig.Save(legacySavePath); err != nil {
+		t.Fatalf("failed to save legacy game: %v", err)
+	}
+
+	loadedGame, loadedTour, err := LoadTourGame(legacySavePath)
+	if err != nil {
+		t.Fatalf("failed to load legacy game via LoadTourGame: %v", err)
+	}
+	if loadedGame == nil {
+		t.Fatal("expected non-nil loadedGame from legacy save")
+	}
+	if loadedTour != nil {
+		t.Errorf("expected nil loadedTour from legacy save, got %v", loadedTour)
+	}
+	if loadedGame.Enterprise.Energy != 2800.0 {
+		t.Errorf("expected loaded energy 2800.0, got %f", loadedGame.Enterprise.Energy)
+	}
+	if loadedGame.RNG == nil {
+		t.Errorf("expected initialized PRNG on loadedGame")
+	}
+
+	// 2. Tour game saved with SaveTourGame(), loaded via LoadGame() and InspectSave()
+	tourSavePath := filepath.Join(tmpDir, "TOURSAVE.TRK")
+	tour := NewTour(999)
+	g := tour.StartCurrentSector()
+	g.Stardate = 3500.0
+	g.TimeRemaining = 25.0
+	g.Enterprise.Condition = ConditionRed
+	g.RemainingKlingons = 5
+	tour.InstalledRefits[RefitDilithiumCore] = 2
+
+	if err := SaveTourGame(tourSavePath, g, tour); err != nil {
+		t.Fatalf("failed to save tour game: %v", err)
+	}
+
+	// LoadGame interoperability
+	lg, err := LoadGame(tourSavePath)
+	if err != nil {
+		t.Fatalf("LoadGame failed on tour save: %v", err)
+	}
+	if lg.Enterprise.MaxEnergy != 4000.0 {
+		t.Errorf("expected MaxEnergy 4000.0 with tier 2 core, got %f", lg.Enterprise.MaxEnergy)
+	}
+	if lg.RNG == nil {
+		t.Errorf("expected initialized PRNG from LoadGame on tour save")
+	}
+
+	// InspectSave interoperability
+	meta, err := InspectSave(tourSavePath)
+	if err != nil {
+		t.Fatalf("InspectSave failed on tour save: %v", err)
+	}
+	if meta.Stardate != 3500.0 {
+		t.Errorf("expected Stardate 3500.0, got %f", meta.Stardate)
+	}
+	if meta.Condition != ConditionRed {
+		t.Errorf("expected ConditionRed, got %v", meta.Condition)
+	}
+	if meta.KlingonsLeft != 5 {
+		t.Errorf("expected KlingonsLeft 5, got %d", meta.KlingonsLeft)
+	}
+}
+
+func TestSaveAndLoadTourGame_Errors(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Nonexistent file
+	_, _, err := LoadTourGame(filepath.Join(tmpDir, "MISSING.TRK"))
+	if err == nil {
+		t.Errorf("expected error loading missing file, got nil")
+	}
+
+	// Corrupted file
+	corruptPath := filepath.Join(tmpDir, "CORRUPT.TRK")
+	if err := os.WriteFile(corruptPath, []byte("NOT_VALID_JSON{"), 0644); err != nil {
+		t.Fatalf("failed to write corrupt file: %v", err)
+	}
+	_, _, err = LoadTourGame(corruptPath)
+	if err == nil {
+		t.Errorf("expected error loading corrupt file, got nil")
+	}
+}
+
