@@ -20,6 +20,10 @@ func (m Model) View() string {
 		overlay := m.optionsModal.View()
 		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, overlay)
 	}
+	if m.Tour != nil && m.Tour.InDrydock {
+		overlay := m.Drydock.View()
+		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, overlay)
+	}
 	return m.renderDashboard()
 }
 
@@ -196,7 +200,17 @@ func (m Model) renderHeader() string {
 	}
 	styles := th.Styles()
 
-	title := "★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701"
+	title := "★ SUPER STAR TREK ★  USS ENTERPRISE"
+	if m.Tour != nil {
+		secIdx := m.Tour.CurrentSectorIndex + 1
+		total := len(m.Tour.Sectors)
+		if total == 0 {
+			total = 4
+		}
+		title += fmt.Sprintf("  TOUR: SEC %d/%d", secIdx, total)
+	} else {
+		title += " NCC-1701"
+	}
 	themeInfo := fmt.Sprintf("[Theme: %s (F2)]", strings.ToUpper(th.Name()))
 
 	w := m.Width

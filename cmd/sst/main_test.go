@@ -710,3 +710,73 @@ func TestMain_VersionFlag(t *testing.T) {
 	}
 }
 
+func TestMain_TourFlag(t *testing.T) {
+	var out, errOut bytes.Buffer
+	// Provide --help with tour flag check
+	code := run([]string{"--help"}, strings.NewReader(""), &out, &errOut)
+	if code != 0 {
+		t.Fatalf("expected code 0, got %d", code)
+	}
+	if !strings.Contains(out.String(), "--tour") {
+		t.Errorf("expected --tour flag documented in help output, got:\n%s", out.String())
+	}
+}
+
+func TestCLI_TourLaunch(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	var capturedModel tea.Model
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		capturedModel = m
+		return nil
+	}
+
+	out := &bytes.Buffer{}
+	errOut := &bytes.Buffer{}
+	code := run([]string{"--tour", "-seed", "42"}, strings.NewReader(""), out, errOut)
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d: %s", code, errOut.String())
+	}
+	model, ok := capturedModel.(tui.Model)
+	if !ok {
+		t.Fatalf("captured model is not tui.Model: %T", capturedModel)
+	}
+	if model.Tour == nil || !model.Tour.Active {
+		t.Errorf("expected active Tour in model")
+	}
+	if model.Tour.CurrentSectorIndex != 0 {
+		t.Errorf("expected sector index 0, got %d", model.Tour.CurrentSectorIndex)
+	}
+	if model.Game == nil {
+		t.Errorf("expected Game initialized in model")
+	}
+}
+
+func TestCLI_CampaignLaunch(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	var capturedModel tea.Model
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		capturedModel = m
+		return nil
+	}
+
+	out := &bytes.Buffer{}
+	errOut := &bytes.Buffer{}
+	code := run([]string{"--campaign", "-seed", "42"}, strings.NewReader(""), out, errOut)
+	if code != 0 {
+		t.Fatalf("expected exit code 0, got %d: %s", code, errOut.String())
+	}
+	model, ok := capturedModel.(tui.Model)
+	if !ok {
+		t.Fatalf("captured model is not tui.Model: %T", capturedModel)
+	}
+	if model.Tour == nil || !model.Tour.Active {
+		t.Errorf("expected active Tour in model")
+	}
+}
+
+
+

@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/drydockmodal"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/optionsmodal"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/targetlock"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
@@ -547,5 +548,101 @@ func TestTorpedoDamageAndMissLogging(t *testing.T) {
 		t.Fatalf("expected Klingon to take 500 damage from 'tor c 5', got energy %f", k4.Energy)
 	}
 }
+
+func TestModel_TourCommands(t *testing.T) {
+	// Without tour
+	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
+	m := NewModel(g, theme.DefaultTheme())
+	updated, _ := m.handleCommand("tour")
+	m = updated.(Model)
+	msgs := m.CommandBar.Messages()
+	found := false
+	for _, msg := range msgs {
+		if strings.Contains(msg, "No active patrol tour") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("expected 'No active patrol tour' message, got: %v", msgs)
+	}
+
+	// With tour
+	tour := engine.NewTour(42)
+	mTour := NewModelWithTour(tour, theme.DefaultTheme())
+	updatedTour, _ := mTour.handleCommand("orders")
+	mTour = updatedTour.(Model)
+	msgsTour := mTour.CommandBar.Messages()
+	foundOrders := false
+	for _, msg := range msgsTour {
+		if strings.Contains(msg, "STARFLEET PATROL ORDERS") {
+			foundOrders = true
+			break
+		}
+	}
+	if !foundOrders {
+		t.Fatalf("expected 'STARFLEET PATROL ORDERS' in messages, got: %v", msgsTour)
+	}
+}
+
+func TestModel_TourHeaderGauge(t *testing.T) {
+	tour := engine.NewTour(42)
+	m := NewModelWithTour(tour, theme.DefaultTheme())
+	m.Width = 80
+	m.Height = 24
+	view := m.View()
+	if !strings.Contains(view, "TOUR: SEC 1/4") {
+		t.Errorf("expected 'TOUR: SEC 1/4' in view header, got:\n%s", view)
+	}
+}
+
+func TestModel_DrydockModalTransitionAndDisembark(t *testing.T) {
+	tour := engine.NewTour(12345)
+	m := NewModelWithTour(tour, theme.DefaultTheme())
+	m.Width = 80
+	m.Height = 24
+
+	// Clear hostiles in Sector 1
+	m.Game.KlingonsRemaining = 0
+	// Trigger turn update
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m = updated.(Model)
+
+	if !m.Tour.InDrydock {
+		t.Fatalf("expected Tour to transition to Drydock")
+	}
+	if m.Tour.RequisitionPoints <= 0 {
+		t.Errorf("expected positive RequisitionPoints, got %d", m.Tour.RequisitionPoints)
+	}
+
+	// Drydock view should be displayed
+	view := m.View()
+	if !strings.Contains(view, "STARBASE 01 DRYDOCK & REFIT FACILITY") {
+		t.Fatalf("expected Drydock modal view, got:\n%s", view)
+	}
+
+	// Purchase refit: Enter key purchases highlighted refit (Dilithium Core)
+	m.Drydock.Tour = m.Tour
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m = updated.(Model)
+	if m.Tour.InstalledRefits[engine.RefitDilithiumCore] != 1 {
+		t.Fatalf("expected Dilithium Core installed tier 1, got %d", m.Tour.InstalledRefits[engine.RefitDilithiumCore])
+	}
+
+	// Disembark to Sector 2
+	updated, _ = m.Update(drydockmodal.DisembarkMsg{})
+	m = updated.(Model)
+
+	if m.Tour.InDrydock {
+		t.Errorf("expected InDrydock false after disembarking")
+	}
+	if m.Tour.CurrentSectorIndex != 1 {
+		t.Errorf("expected CurrentSectorIndex 1, got %d", m.Tour.CurrentSectorIndex)
+	}
+	if m.Game.Enterprise.MaxEnergy != 3500.0 {
+		t.Errorf("expected MaxEnergy 3500, got %f", m.Game.Enterprise.MaxEnergy)
+	}
+}
+
 
 

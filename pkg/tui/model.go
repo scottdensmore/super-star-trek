@@ -11,6 +11,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/drydockmodal"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/galacticchart"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/halloffame"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/manual"
@@ -66,6 +67,9 @@ type Model struct {
 	scenarioModal   scenariomodal.Model
 	optionsModal    optionsmodal.Model
 	showOptions     bool
+	Tour            *engine.TourState
+	Drydock         drydockmodal.Model
+	PlayerCallsign  string
 	AudioPlayer     audio.Player
 	AudioDispatcher *audio.Dispatcher
 	activeAnim      anim.Animation
@@ -142,6 +146,8 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 		scenarioModal:   scenariomodal.NewModel(th),
 		optionsModal:    optionsmodal.New(th, rules),
 		showOptions:     false,
+		Drydock:         drydockmodal.New(nil, th),
+		PlayerCallsign:  "Enterprise",
 		AudioPlayer:     player,
 		AudioDispatcher: dispatcher,
 		lastDarkBg: func() bool {
@@ -155,6 +161,33 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 		}(),
 	}
 	m.syncChildComponents()
+	return m
+}
+
+// NewModelWithTour initializes a new root TUI Model for a Starfleet Career & Campaign (Patrol Tour).
+// If tour is nil, it falls back to NewModel(nil, th).
+func NewModelWithTour(tour *engine.TourState, th theme.Theme) Model {
+	if th == nil {
+		th = theme.DefaultTheme()
+	}
+	if tour == nil {
+		return NewModel(nil, th)
+	}
+
+	var game *engine.GameState
+	if tour.CurrentGameState != nil {
+		game = tour.CurrentGameState
+	} else {
+		game = tour.StartCurrentSector()
+	}
+	if game != nil {
+		game.PopulateQuadrant(game.Enterprise.Quad, game.Enterprise.Sector)
+	}
+
+	m := NewModel(game, th)
+	m.Tour = tour
+	m.Drydock = drydockmodal.New(tour, th)
+	m.PlayerCallsign = "Enterprise"
 	return m
 }
 

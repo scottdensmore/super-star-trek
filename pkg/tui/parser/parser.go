@@ -55,6 +55,8 @@ func ParseCommand(input string) ParsedCommand {
 		return ParsedCommand{Special: "options"}
 	case "scenarios", "scen":
 		return ParsedCommand{Special: "scenarios"}
+	case "tour", "orders":
+		return ParsedCommand{Special: cmd}
 	case "theme":
 		if len(args) > 0 {
 			return ParsedCommand{Special: "theme " + strings.ToLower(args[0])}

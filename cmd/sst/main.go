@@ -43,6 +43,12 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 
 	fs := flag.NewFlagSet("sst", flag.ContinueOnError)
 	fs.SetOutput(errOut)
+	for _, arg := range args {
+		if arg == "--help" || arg == "-h" || arg == "-help" {
+			fs.SetOutput(out)
+			break
+		}
+	}
 	_ = fs.Bool("classic", false, "run in teletype plain mode")
 	versionFlag := fs.Bool("version", false, "print version information and exit")
 	fs.BoolVar(versionFlag, "v", false, "shorthand for --version")
@@ -61,6 +67,8 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	scenarioFlag := fs.String("scenario", "", "launch specific tactical scenario")
 	fs.StringVar(scenarioFlag, "s", "", "shorthand for --scenario")
 	listScenariosFlag := fs.Bool("list-scenarios", false, "display available tactical scenarios")
+	tourFlag := fs.Bool("tour", false, "Launch in Starfleet Career & Campaign (Patrol Tour) mode")
+	fs.BoolVar(tourFlag, "campaign", false, "alias for --tour")
 
 	if err := fs.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -162,7 +170,20 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	selectedTheme := theme.GetTheme(*themeName)
 	selectedTheme = selectedTheme.WithColorMode(parsedMode)
 
-	p := tui.NewModel(game, selectedTheme)
+	var p tui.Model
+	if *tourFlag {
+		tour := engine.NewTour(s)
+		p = tui.NewModelWithTour(tour, selectedTheme)
+	} else {
+		var game *engine.GameState
+		if sc != nil {
+			game = sc.Build(s)
+		} else {
+			game = engine.NewGameWithOptions(s, engine.SkillGood, engine.LengthMedium, rules)
+			game.PopulateQuadrant(game.Enterprise.Quad, game.Enterprise.Sector)
+		}
+		p = tui.NewModel(game, selectedTheme)
+	}
 	p.SetSoundEnabled(soundEnabled)
 	if err := runProgram(p, tea.WithAltScreen(), tea.WithMouseCellMotion()); err != nil {
 		_, _ = fmt.Fprintf(errOut, "Error running game: %v\n", err)

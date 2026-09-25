@@ -13,6 +13,7 @@ import (
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandpalette"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/damageschematic"
+	"github.com/scottdensmore/super-star-trek/pkg/tui/components/drydockmodal"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/galacticchart"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/halloffame"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/manual"
@@ -84,6 +85,15 @@ func (m *Model) checkRedAlertCmd(prevCond engine.ConditionType) tea.Cmd {
 // Update processes incoming Bubble Tea events, updating internal state
 // and delegating to sub-components as needed.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	resModel, resCmd := m.update(msg)
+	if concrete, ok := resModel.(Model); ok {
+		concrete = concrete.evaluateTourSector()
+		return concrete, resCmd
+	}
+	return resModel, resCmd
+}
+
+func (m Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.Width = msg.Width
@@ -277,6 +287,37 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.CommandBar.Focus()
 		return m, cmd
 
+	case drydockmodal.RefitPurchasedMsg:
+		m.CommandBar.AddMessage(fmt.Sprintf("Installed refit: %s (Tier %d)", msg.RefitID, msg.Tier))
+		return m, nil
+
+	case drydockmodal.DisembarkMsg:
+		if m.Tour != nil && m.Tour.InDrydock {
+			newGame, err := m.Tour.DisembarkToNextSector()
+			if err != nil {
+				m.CommandBar.AddMessage(fmt.Sprintf("Disembark error: %v", err))
+			} else if newGame != nil {
+				newGame.PopulateQuadrant(newGame.Enterprise.Quad, newGame.Enterprise.Sector)
+				m.Game = newGame
+				m.SelectedSector = engine.Coord{}
+				sec := m.Tour.CurrentSector()
+				if sec != nil {
+					m.CommandBar.AddMessage(fmt.Sprintf("★ ENTERING SECTOR %d: %s ★", sec.Index, strings.ToUpper(sec.Name)))
+					m.CommandBar.AddMessage(sec.Description)
+				}
+			} else if m.Tour.Completed {
+				m.CommandBar.AddMessage("★ PATROL TOUR COMPLETED! ALL SECTORS CLEARED! ★")
+				lb, _ := engine.LoadLeaderboard(engine.DefaultLeaderboardPath())
+				if lb == nil {
+					lb = engine.DefaultLeaderboard()
+				}
+				lb.RecordTour(m.Tour, m.PlayerCallsign)
+				_ = lb.Save(engine.DefaultLeaderboardPath())
+			}
+		}
+		cmd := m.CommandBar.Focus()
+		return m, cmd
+
 	case halloffame.ScoreRecordedMsg:
 		m.CommandBar.AddMessage(fmt.Sprintf("Score recorded for Captain %s: %d points (%s)", msg.Entry.CaptainName, msg.Entry.Score, msg.Entry.Rank))
 		return m, nil
@@ -346,6 +387,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.optionsModal.Closed = false
 				return m, m.CommandBar.Focus()
 			}
+			return m, cmd
+		}
+
+		if m.Tour != nil && m.Tour.InDrydock {
+			if msg.Type == tea.KeyCtrlC || msg.String() == "ctrl+c" {
+				return m, tea.Quit
+			}
+			if msg.Type == tea.KeyF2 || msg.String() == "f2" {
+				m = m.applyTheme(m.Theme.Next())
+				return m, nil
+			}
+			if msg.Type == tea.KeyCtrlT || msg.String() == "ctrl+t" || msg.String() == "shift+f2" {
+				newMode := m.Theme.ColorMode().Next()
+				m = m.applyTheme(m.Theme.WithColorMode(newMode))
+				m.CommandBar.AddMessage(fmt.Sprintf("Color mode set to %s (%s)", newMode, m.Theme.Name()))
+				return m, nil
+			}
+			var cmd tea.Cmd
+			m.Drydock, cmd = m.Drydock.Update(msg)
 			return m, cmd
 		}
 
@@ -513,7 +573,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case tea.MouseMsg:
-		if m.showOptions {
+		if m.showOptions || (m.Tour != nil && m.Tour.InDrydock) {
 			return m, nil
 		}
 		isLeftClick := msg.Button == tea.MouseButtonLeft
@@ -731,6 +791,10 @@ func (m Model) applyTheme(th theme.Theme) Model {
 	m.Manual.SetTheme(th)
 	m.scenarioModal.SetTheme(th)
 	m.optionsModal.SetTheme(th)
+	m.Drydock.SetTheme(th)
+	if m.Tour != nil {
+		m.Drydock.Tour = m.Tour
+	}
 	m.syncChildComponents()
 	return m
 }
@@ -834,7 +898,66 @@ func (m Model) handleGameOver(ev engine.EventGameOver) (Model, tea.Cmd) {
 		lb = engine.DefaultLeaderboard()
 	}
 	qualifies := lb.Qualifies(score.TotalScore)
+	if m.Tour != nil && !m.Tour.InDrydock && m.Tour.Active {
+		m = m.evaluateTourSector()
+	}
 	return m.openHallOfFame(qualifies)
+}
+
+// evaluateTourSector checks whether the active patrol tour sector was cleared or failed.
+func (m Model) evaluateTourSector() Model {
+	if m.Tour == nil || m.Tour.InDrydock || !m.Tour.Active {
+		return m
+	}
+	if m.Game != nil {
+		m.Tour.CurrentGameState = m.Game
+	}
+
+	cleared, failed, bounty := m.Tour.EvaluateSector()
+	if cleared {
+		m.Tour.AdvanceToDrydock(bounty)
+		m.Drydock = drydockmodal.New(m.Tour, m.Theme)
+		m.CommandBar.AddMessage(fmt.Sprintf("★ SECTOR %d CLEARED! REQUISITION BOUNTY: +%d PTS ★", m.Tour.SectorsCompleted, bounty))
+		m.CommandBar.AddMessage("Docked at Starbase 01 Drydock & Refit Facility. Select refits or press Space/D to disembark.")
+		return m
+	}
+	if failed {
+		lb, err := engine.LoadLeaderboard(engine.DefaultLeaderboardPath())
+		if err != nil || lb == nil {
+			lb = engine.DefaultLeaderboard()
+		}
+		lb.RecordTour(m.Tour, m.PlayerCallsign)
+		_ = lb.Save(engine.DefaultLeaderboardPath())
+		m.CommandBar.AddMessage(fmt.Sprintf("Tour failed: %v. Commission recorded in Hall of Fame.", m.Tour.FailureReason))
+		return m
+	}
+	return m
+}
+
+// displayTourOrders outputs the sector briefing, objectives, and remaining requirements to the command bar.
+func (m *Model) displayTourOrders() {
+	if m.Tour == nil {
+		m.CommandBar.AddMessage("No active patrol tour. Start one with --tour flag.")
+		return
+	}
+	sec := m.Tour.CurrentSector()
+	if sec == nil {
+		m.CommandBar.AddMessage("Tour completed or no active sector.")
+		return
+	}
+	m.CommandBar.AddMessage(fmt.Sprintf("★ STARFLEET PATROL ORDERS — SECTOR %d/%d: %s ★", sec.Index, len(m.Tour.Sectors), strings.ToUpper(sec.Name)))
+	m.CommandBar.AddMessage(fmt.Sprintf("Objective: %s — %s", sec.Objective, sec.Description))
+	remKlingons := 0
+	remDays := 0.0
+	if m.Game != nil {
+		remKlingons = m.Game.KlingonsRemaining
+		remDays = m.Game.DaysRemaining
+	}
+	m.CommandBar.AddMessage(fmt.Sprintf("Status: %d hostiles remaining | Time left: %.1f stardates | Requisition: %d PTS | Bounty: %d PTS",
+		remKlingons, remDays, m.Tour.RequisitionPoints, sec.BonusBounty))
+	if m.Tour.InDrydock {
+		m.CommandBar.AddMessage("Ship currently docked in Drydock. Press Space or D to disembark.")
+	}
 }
 
 // handleCommand tokenizes, parses, and executes player commands.
@@ -979,6 +1102,9 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 		m.showOptions = true
 		m.CommandBar.Blur()
 		return m, nil
+	case "tour", "orders":
+		m.displayTourOrders()
+		return m, nil
 	case "help", "man", "manual", "docs", "codex", "guide":
 		return m.openManual("")
 	}
@@ -1071,6 +1197,10 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			m.scenarioModal.Reset()
 			m.ActiveModal = ModalScenario
 			m.CommandBar.Blur()
+			return m, nil
+
+		case parsed.Special == "tour" || parsed.Special == "orders":
+			m.displayTourOrders()
 			return m, nil
 
 		case parsed.Special == "help":
