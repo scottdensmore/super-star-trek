@@ -118,6 +118,15 @@ type Styles struct {
 	LogText     lipgloss.Style
 }
 
+const (
+	// ThemeModern is the identifier for the Starfleet Modern theme.
+	ThemeModern = "modern"
+	// ThemeLcars is the identifier for the LCARS theme.
+	ThemeLcars = "lcars"
+	// ThemeCrt is the identifier for the CRT theme.
+	ThemeCrt = "crt"
+)
+
 // DefaultTheme returns the default theme (Starfleet Modern) with ColorModeAuto.
 func DefaultTheme() Theme {
 	return ModernTheme{mode: ColorModeAuto}
