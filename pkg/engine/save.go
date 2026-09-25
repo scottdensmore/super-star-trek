@@ -184,13 +184,12 @@ func LoadTourGame(filename string) (*GameState, *TourState, error) {
 			legacy.RNG = NewPRNG(int64(legacy.Stardate))
 			return &legacy, nil, nil
 		}
+		return nil, nil, fmt.Errorf("invalid save file %s: neither game state nor tour state found", filename)
 	}
 
 	if envelope.GameState != nil && envelope.TourState != nil {
 		ApplyRefits(envelope.GameState, envelope.TourState.InstalledRefits)
-		if envelope.TourState.CurrentGameState == nil {
-			envelope.TourState.CurrentGameState = envelope.GameState
-		}
+		envelope.TourState.CurrentGameState = envelope.GameState
 	}
 	if envelope.GameState != nil {
 		if envelope.GameState.Rules.Profile == "" {

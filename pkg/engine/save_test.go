@@ -366,6 +366,12 @@ func TestSaveAndLoadTourGame(t *testing.T) {
 	if loadedGame.Enterprise.MaxEnergy != 3500.0 {
 		t.Errorf("expected loadedGame MaxEnergy 3500, got %f", loadedGame.Enterprise.MaxEnergy)
 	}
+	if loadedTour.CurrentGameState != loadedGame {
+		t.Errorf("expected loadedTour.CurrentGameState to point to loadedGame instance (%p), got %p", loadedGame, loadedTour.CurrentGameState)
+	}
+	if loadedTour.CurrentGameState.RNG == nil {
+		t.Errorf("expected initialized PRNG on loadedTour.CurrentGameState")
+	}
 }
 
 func TestSaveAndLoadTourGame_InDrydock(t *testing.T) {
@@ -489,6 +495,26 @@ func TestSaveAndLoadTourGame_Errors(t *testing.T) {
 	_, _, err = LoadTourGame(corruptPath)
 	if err == nil {
 		t.Errorf("expected error loading corrupt file, got nil")
+	}
+
+	// Empty JSON schema without game_state or tour_state
+	emptyPath := filepath.Join(tmpDir, "EMPTY.json")
+	if err := os.WriteFile(emptyPath, []byte("{}"), 0644); err != nil {
+		t.Fatalf("failed to write empty file: %v", err)
+	}
+	_, _, err = LoadTourGame(emptyPath)
+	if err == nil {
+		t.Errorf("expected error loading empty JSON, got nil")
+	}
+
+	// Unrecognized JSON schema
+	unrecPath := filepath.Join(tmpDir, "UNRECOGNIZED.json")
+	if err := os.WriteFile(unrecPath, []byte(`{"some_other_app": true}`), 0644); err != nil {
+		t.Fatalf("failed to write unrecognized JSON file: %v", err)
+	}
+	_, _, err = LoadTourGame(unrecPath)
+	if err == nil {
+		t.Errorf("expected error loading unrecognized JSON schema, got nil")
 	}
 }
 
