@@ -292,6 +292,7 @@ func (m Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case drydockmodal.DisembarkMsg:
+		m.ActiveModal = ModalNone
 		if m.Tour != nil && m.Tour.InDrydock {
 			newGame, err := m.Tour.DisembarkToNextSector()
 			if err != nil {
@@ -885,8 +886,12 @@ func (m Model) handleGameOver(ev engine.EventGameOver) (Model, tea.Cmd) {
 	if formatted != "" {
 		m.CommandBar.AddMessage(formatted)
 	}
-	if ev.Reason == engine.GameOverWon && m.Game != nil {
-		m.Game.GameWon = true
+	if m.Game != nil {
+		m.Game.GameOver = true
+		m.Game.GameOverReason = ev.Reason
+		if ev.Reason == engine.GameOverWon {
+			m.Game.GameWon = true
+		}
 	}
 	var gameWon bool
 	if m.Game != nil {
@@ -915,6 +920,7 @@ func (m Model) evaluateTourSector() Model {
 
 	cleared, failed, bounty := m.Tour.EvaluateSector()
 	if cleared {
+		m.ActiveModal = ModalNone
 		m.Tour.AdvanceToDrydock(bounty)
 		m.Drydock = drydockmodal.New(m.Tour, m.Theme)
 		m.CommandBar.AddMessage(fmt.Sprintf("★ SECTOR %d CLEARED! REQUISITION BOUNTY: +%d PTS ★", m.Tour.SectorsCompleted, bounty))
@@ -1204,7 +1210,7 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case parsed.Special == "help":
-			m.CommandBar.AddMessage("COMMANDS: nav | tor | pha | she | doc | chart | saves | theme | options")
+			m.CommandBar.AddMessage("COMMANDS: nav | tor | pha | she | doc | chart | saves | theme | options | tour | orders")
 			m.CommandBar.AddMessage("Type 'help <command>' (e.g. 'help nav') for detailed guide.")
 			m.CommandBar.AddMessage("HOTKEYS: [Ctrl+P] Spock Palette | [Ctrl+G] Star Chart | [Ctrl+O] Saves | [O] Options | [T] Target Lock | [F2] Theme | [F1/?] Manual")
 			return m.openManual("")

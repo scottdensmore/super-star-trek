@@ -644,5 +644,45 @@ func TestModel_DrydockModalTransitionAndDisembark(t *testing.T) {
 	}
 }
 
+func TestModel_TourFailureRecording(t *testing.T) {
+	tour := engine.NewTour(54321)
+	m := NewModelWithTour(tour, theme.DefaultTheme())
+	m.PlayerCallsign = "Defiant"
+
+	// Dispatch GameOverDestroyed event
+	updated, _ := m.Update(engine.EventGameOver{
+		Reason: engine.GameOverDestroyed,
+		Score:  120,
+	})
+	m = updated.(Model)
+
+	if !m.Tour.Failed {
+		t.Fatalf("expected Tour.Failed to be true after ship destroyed")
+	}
+	if m.Tour.Active {
+		t.Fatalf("expected Tour.Active to be false after tour failure")
+	}
+	if m.Tour.FailureReason != engine.GameOverDestroyed {
+		t.Errorf("expected FailureReason GameOverDestroyed, got %v", m.Tour.FailureReason)
+	}
+
+	// Verify leaderboard has recorded tour record
+	lb, err := engine.LoadLeaderboard(engine.DefaultLeaderboardPath())
+	if err != nil {
+		t.Fatalf("failed to load leaderboard: %v", err)
+	}
+	foundTourRecord := false
+	for _, rec := range lb.TourRecords {
+		if rec.Callsign == "Defiant" && rec.Rank == "Commander (KIA)" {
+			foundTourRecord = true
+			break
+		}
+	}
+	if !foundTourRecord {
+		t.Fatalf("expected tour defeat record for Defiant with rank 'Commander (KIA)' in leaderboard, got records: %+v", lb.TourRecords)
+	}
+}
+
+
 
 

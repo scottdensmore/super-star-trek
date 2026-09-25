@@ -160,13 +160,6 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 		s = time.Now().UnixNano()
 	}
 
-	var game *engine.GameState
-	if sc != nil {
-		game = sc.Build(s)
-	} else {
-		game = engine.NewGameWithOptions(s, engine.SkillGood, engine.LengthMedium, rules)
-		game.PopulateQuadrant(game.Enterprise.Quad, game.Enterprise.Sector)
-	}
 	selectedTheme := theme.GetTheme(*themeName)
 	selectedTheme = selectedTheme.WithColorMode(parsedMode)
 
