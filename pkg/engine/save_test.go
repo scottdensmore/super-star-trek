@@ -374,6 +374,33 @@ func TestSaveAndLoadTourGame(t *testing.T) {
 	}
 }
 
+func TestSaveAndLoadTourGame_PreservesDamagedEnergy(t *testing.T) {
+	tmpDir := t.TempDir()
+	savePath := filepath.Join(tmpDir, "damaged_tour.json")
+
+	tour := NewTour(777)
+	g := tour.StartCurrentSector()
+	g.Enterprise.Energy = 1234.0
+	g.Enterprise.Torpedoes = 4
+	tour.RequisitionPoints = 1000
+
+	err := SaveTourGame(savePath, g, tour)
+	if err != nil {
+		t.Fatalf("failed to save tour game: %v", err)
+	}
+
+	loadedGame, _, err := LoadTourGame(savePath)
+	if err != nil {
+		t.Fatalf("failed to load tour game: %v", err)
+	}
+	if loadedGame.Enterprise.Energy != 1234.0 {
+		t.Errorf("expected loaded energy to be 1234.0, got %f", loadedGame.Enterprise.Energy)
+	}
+	if loadedGame.Enterprise.Torpedoes != 4 {
+		t.Errorf("expected loaded torpedoes to be 4, got %d", loadedGame.Enterprise.Torpedoes)
+	}
+}
+
 func TestSaveAndLoadTourGame_InDrydock(t *testing.T) {
 	tmpDir := t.TempDir()
 	savePath := filepath.Join(tmpDir, "drydock_tour.json")

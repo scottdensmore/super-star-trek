@@ -299,6 +299,14 @@ func (lb *Leaderboard) Save(path string) error {
 	return nil
 }
 
+func countInstalledRefits(refits map[RefitID]int) int {
+	total := 0
+	for _, tier := range refits {
+		total += tier
+	}
+	return total
+}
+
 // CalculateTourCommission determines the honorary rank commission and campaign medals
 // awarded for a player's performance across a Starfleet Patrol Tour.
 func CalculateTourCommission(tour *TourState) (rank string, medals []string) {
@@ -324,11 +332,7 @@ func CalculateTourCommission(tour *TourState) (rank string, medals []string) {
 		rank = "Commander (KIA)"
 	}
 
-	totalRefits := 0
-	for _, tier := range tour.InstalledRefits {
-		totalRefits += tier
-	}
-	if totalRefits >= 6 {
+	if countInstalledRefits(tour.InstalledRefits) >= 6 {
 		medals = append(medals, "Master Starship Architect")
 	}
 
@@ -346,11 +350,6 @@ func (lb *Leaderboard) RecordTour(tour *TourState, callsign string) *TourRecord 
 	}
 	rank, medals := CalculateTourCommission(tour)
 
-	totalRefits := 0
-	for _, tier := range tour.InstalledRefits {
-		totalRefits += tier
-	}
-
 	rec := TourRecord{
 		Date:           time.Now().Format("2006-01-02 15:04"),
 		Callsign:       callsign,
@@ -358,7 +357,7 @@ func (lb *Leaderboard) RecordTour(tour *TourState, callsign string) *TourRecord 
 		Score:          tour.TotalTourScore,
 		SectorsCleared: tour.SectorsCompleted,
 		TotalSectors:   len(tour.Sectors),
-		RefitsCount:    totalRefits,
+		RefitsCount:    countInstalledRefits(tour.InstalledRefits),
 		Medals:         medals,
 		Completed:      tour.Completed,
 	}

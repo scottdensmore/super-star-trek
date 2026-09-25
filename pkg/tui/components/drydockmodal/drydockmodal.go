@@ -149,7 +149,13 @@ func (m Model) View() string {
 	}
 	title := headerStyle.Render(fmt.Sprintf("★ STARBASE 01 DRYDOCK & REFIT FACILITY ★  (Sector %d Cleared)", secIdx))
 	reqText := accentStyle.Render(fmt.Sprintf("Requisition: %d PTS", reqPts))
-	topBar := fmt.Sprintf("%-52s %22s", title, reqText)
+	
+	gap := m.Width - 4 - lipgloss.Width(title) - lipgloss.Width(reqText)
+	if gap < 1 {
+		gap = 1
+	}
+	spacer := strings.Repeat(" ", gap)
+	topBar := lipgloss.JoinHorizontal(lipgloss.Center, title, spacer, reqText)
 
 	// Left: ASCII Starship Cutaway
 	schematic := `

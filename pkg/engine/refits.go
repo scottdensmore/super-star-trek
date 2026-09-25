@@ -114,24 +114,22 @@ func ApplyRefits(g *GameState, refits map[RefitID]int) {
 	if tier := refits[RefitDilithiumCore]; tier > 0 {
 		bonus := float64(tier * 500)
 		g.Enterprise.MaxEnergy = 3000.0 + bonus
-		g.Enterprise.Energy = g.Enterprise.MaxEnergy
 	} else {
 		g.Enterprise.MaxEnergy = 3000.0
-		if g.Enterprise.Energy > g.Enterprise.MaxEnergy {
-			g.Enterprise.Energy = g.Enterprise.MaxEnergy
-		}
+	}
+	if g.Enterprise.Energy > g.Enterprise.MaxEnergy {
+		g.Enterprise.Energy = g.Enterprise.MaxEnergy
 	}
 
 	// Torpedo Bays
 	if tier := refits[RefitTorpedoBays]; tier > 0 {
 		bonus := tier * 4
 		g.Enterprise.MaxTorpedoes = 10 + bonus
-		g.Enterprise.Torpedoes = g.Enterprise.MaxTorpedoes
 	} else {
 		g.Enterprise.MaxTorpedoes = 10
-		if g.Enterprise.Torpedoes > g.Enterprise.MaxTorpedoes {
-			g.Enterprise.Torpedoes = g.Enterprise.MaxTorpedoes
-		}
+	}
+	if g.Enterprise.Torpedoes > g.Enterprise.MaxTorpedoes {
+		g.Enterprise.Torpedoes = g.Enterprise.MaxTorpedoes
 	}
 }
 
@@ -168,6 +166,11 @@ func CalculateTorpedoDamage(g *GameState, baseDamage float64) float64 {
 		return baseDamage
 	}
 	tier := g.ActiveRefits[RefitTorpedoCasings]
+	if tier < 0 {
+		tier = 0
+	} else if tier > 3 {
+		tier = 3
+	}
 	if tier <= 0 {
 		return baseDamage
 	}
@@ -180,6 +183,11 @@ func CalculateShieldDamageAbsorption(g *GameState, incomingDamage float64) float
 		return incomingDamage
 	}
 	tier := g.ActiveRefits[RefitDeflectorGrid]
+	if tier < 0 {
+		tier = 0
+	} else if tier > 3 {
+		tier = 3
+	}
 	if tier <= 0 {
 		return incomingDamage
 	}

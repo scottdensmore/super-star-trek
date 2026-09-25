@@ -6,6 +6,8 @@ import (
 
 func TestRefits_ApplyEnergyAndTorpedoScaling(t *testing.T) {
 	g := NewGameWithSeed(100)
+	g.Enterprise.Energy = 1500.0 // Set below max
+	g.Enterprise.Torpedoes = 5   // Set below max
 	refits := map[RefitID]int{
 		RefitDilithiumCore: 2, // Tier 2: 3000 + 1000 = 4000
 		RefitTorpedoBays:   1, // Tier 1: 10 + 4 = 14
@@ -16,14 +18,14 @@ func TestRefits_ApplyEnergyAndTorpedoScaling(t *testing.T) {
 	if g.Enterprise.MaxEnergy != 4000.0 {
 		t.Errorf("expected MaxEnergy 4000, got %f", g.Enterprise.MaxEnergy)
 	}
-	if g.Enterprise.Energy != 4000.0 {
-		t.Errorf("expected Energy 4000, got %f", g.Enterprise.Energy)
+	if g.Enterprise.Energy != 1500.0 {
+		t.Errorf("expected Energy 1500, got %f", g.Enterprise.Energy) // Should not refill
 	}
 	if g.Enterprise.MaxTorpedoes != 14 {
 		t.Errorf("expected MaxTorpedoes 14, got %d", g.Enterprise.MaxTorpedoes)
 	}
-	if g.Enterprise.Torpedoes != 14 {
-		t.Errorf("expected Torpedoes 14, got %d", g.Enterprise.Torpedoes)
+	if g.Enterprise.Torpedoes != 5 {
+		t.Errorf("expected Torpedoes 5, got %d", g.Enterprise.Torpedoes) // Should not refill
 	}
 }
 

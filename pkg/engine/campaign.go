@@ -141,6 +141,9 @@ func (t *TourState) StartCurrentSector() *GameState {
 	// Apply any installed refits to starting game state
 	ApplyRefits(g, t.InstalledRefits)
 
+	g.Enterprise.Energy = g.Enterprise.MaxEnergy
+	g.Enterprise.Torpedoes = g.Enterprise.MaxTorpedoes
+
 	t.CurrentGameState = g
 	t.InDrydock = false
 	return g
