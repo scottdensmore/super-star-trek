@@ -47,13 +47,6 @@ type TourState struct {
 	Seed               int64              `json:"seed"`
 }
 
-// RefitID identifies a modular ship upgrade. Stub for Task 1; full catalog defined in refits.go in Task 2.
-type RefitID string
-
-// ApplyRefits applies installed refits to the game state.
-// Stub for Task 1; full implementation in refits.go (Task 2).
-func ApplyRefits(g *GameState, refits map[RefitID]int) {
-}
 
 func defaultSectors() []TourSectorConfig {
 	return []TourSectorConfig{

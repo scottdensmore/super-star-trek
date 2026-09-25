@@ -165,6 +165,7 @@ type GameState struct {
 	KlingonsRemaining  int         `json:"klingons_remaining"`
 	Score              int         `json:"score"`
 	Options            GameOptions `json:"options"`
+	ActiveRefits       map[RefitID]int `json:"active_refits,omitempty"`
 	Galaxy             [GalaxySize][GalaxySize]*QuadrantInfo `json:"-"`
 }
 

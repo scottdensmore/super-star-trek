@@ -64,10 +64,17 @@ func (a ActionDock) Execute(g *GameState) ([]Event, error) {
 	}
 
 	g.Enterprise.Condition = ConditionDocked
-	if g.Enterprise.Energy < 5000 {
-		g.Enterprise.Energy = 5000
+	maxEnergy := g.Enterprise.MaxEnergy
+	if maxEnergy <= 0 {
+		maxEnergy = 5000
 	}
-	g.Enterprise.Torpedoes = 10
+	g.Enterprise.Energy = maxEnergy
+
+	maxTorpedoes := g.Enterprise.MaxTorpedoes
+	if maxTorpedoes <= 0 {
+		maxTorpedoes = 10
+	}
+	g.Enterprise.Torpedoes = maxTorpedoes
 	for i := range g.Enterprise.Devices {
 		g.Enterprise.Devices[i] = 0
 	}
@@ -189,7 +196,7 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 		return events, nil
 	}
 
-	damage := 500.0
+	damage := CalculateTorpedoDamage(g, 500.0)
 	destroyed := false
 	var hitCommander *Klingon
 
@@ -746,6 +753,22 @@ func (a ActionMove) Execute(g *GameState) ([]Event, error) {
 	}
 	g.Stardate += timeUsed
 	g.TimeRemaining -= timeUsed
+
+	if g.ActiveRefits != nil {
+		if tier := g.ActiveRefits[RefitDamageNanites]; tier > 0 {
+			repairBoost := float64(tier) * 0.5
+			for dev, d := range g.Enterprise.Damage {
+				if d > 0 {
+					g.Enterprise.Damage[dev] = max(0.0, d-repairBoost)
+				}
+			}
+			for dev, d := range g.Enterprise.Devices {
+				if d > 0 {
+					g.Enterprise.Devices[dev] = max(0.0, d-repairBoost)
+				}
+			}
+		}
+	}
 
 	if g.Enterprise.Condition == ConditionDocked {
 		g.Enterprise.Condition = ConditionGreen

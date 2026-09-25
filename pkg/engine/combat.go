@@ -137,7 +137,11 @@ func KlingonCounterAttack(g *GameState, k *Klingon, damage float64) []Event {
 	if k.IsCloaked {
 		events = append(events, DecloakKlingon(g, k)...)
 	}
-	shieldDmg, hullDamage := ResolveShieldHit(&g.Enterprise, damage)
+	effectiveDamage := damage
+	if g.Enterprise.Shields > 0 {
+		effectiveDamage = CalculateShieldDamageAbsorption(g, damage)
+	}
+	shieldDmg, hullDamage := ResolveShieldHit(&g.Enterprise, effectiveDamage)
 	if hullDamage > 0 {
 		casualties := int(math.Ceil(hullDamage / 50.0))
 		if casualties < 1 {
