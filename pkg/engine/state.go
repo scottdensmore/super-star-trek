@@ -72,14 +72,17 @@ const (
 
 // Enterprise holds the operational status, systems, and coordinates of USS Enterprise.
 type Enterprise struct {
-	Quad        Coord
-	Sector      Coord
-	Energy      float64
-	Shields     float64
-	Torpedoes   int
-	Condition   ConditionType
-	Devices     [NumDevices]float64 // 0 = operational, >0 = turns until repaired
-	LifeSupport float64
+	Quad         Coord
+	Sector       Coord
+	Energy       float64
+	Shields      float64
+	Torpedoes    int
+	Condition    ConditionType
+	Devices      [NumDevices]float64 // 0 = operational, >0 = turns until repaired
+	Damage       [NumDevices]float64 // Subsystem damage indicators
+	MaxEnergy    float64             // Maximum energy capacity
+	MaxTorpedoes int                 // Maximum torpedo capacity
+	LifeSupport  float64
 }
 
 // EnterpriseState is a type alias for Enterprise.
@@ -118,6 +121,24 @@ type GameMetrics struct {
 	StarshipsLost         int `json:"starships_lost"`          // Starships lost (-100 pts each)
 }
 
+// GalaxySize is the standard quadrant grid dimension (8x8).
+const GalaxySize = 8
+
+// QuadrantInfo holds summary entity counts for tour sector compatibility.
+type QuadrantInfo struct {
+	Klingons        int
+	Commanders      int
+	SuperCommanders int
+}
+
+// GameOptions encapsulates high-level configuration options for a game session.
+type GameOptions struct {
+	Difficulty DifficultyProfile `json:"difficulty"`
+}
+
+// DifficultyNormal is an alias for ProfileNormal for campaign configuration.
+const DifficultyNormal = ProfileNormal
+
 // GameState holds all mutable state for an active game session.
 type GameState struct {
 	RNG                *PRNG
@@ -138,11 +159,26 @@ type GameState struct {
 	TimeRemaining      float64
 	Metrics            GameMetrics `json:"metrics"`
 	GameWon            bool        `json:"game_won"`
+	GameOver           bool        `json:"game_over"`
+	GameOverReason     GameOverReason `json:"game_over_reason,omitempty"`
+	DaysRemaining      float64     `json:"days_remaining"`
+	KlingonsRemaining  int         `json:"klingons_remaining"`
+	Score              int         `json:"score"`
+	Options            GameOptions `json:"options"`
+	Galaxy             [GalaxySize][GalaxySize]*QuadrantInfo `json:"-"`
 }
 
 // NewGame initializes a new game session with deterministic initial state from the given seed.
 func NewGame(seed int64, skill SkillLevel, length GameLength) *GameState {
 	return NewGameWithOptions(seed, skill, length, DefaultRulesForProfile(ProfileNormal))
+}
+
+// NewGameWithSeed initializes a new game session with deterministic initial state from the given seed.
+func NewGameWithSeed(seed int64) *GameState {
+	g := NewGame(seed, SkillGood, LengthMedium)
+	g.Enterprise.MaxEnergy = 3000.0
+	g.Enterprise.MaxTorpedoes = 10
+	return g
 }
 
 // NewGameWithOptions initializes a new game session with specified rules and deterministic initial state from the given seed.
@@ -155,18 +191,27 @@ func NewGameWithOptions(seed int64, skill SkillLevel, length GameLength, rules G
 		Length:             length,
 		Stardate:           float64(2000 + rng.Intn(1000)),
 		TimeRemaining:      30.0 * rules.TimeMargin,
+		DaysRemaining:      30.0 * rules.TimeMargin,
 		RemainingKlingons:  15,
+		KlingonsRemaining:  15,
 		RemainingStarbases: 3,
 		Enterprise: Enterprise{
-			Quad:      Coord{rng.Intn(8) + 1, rng.Intn(8) + 1},
-			Sector:    Coord{rng.Intn(8) + 1, rng.Intn(8) + 1},
-			Energy:    5000,
-			Shields:   0,
-			Torpedoes: 10,
-			Condition: ConditionGreen,
+			Quad:         Coord{rng.Intn(8) + 1, rng.Intn(8) + 1},
+			Sector:       Coord{rng.Intn(8) + 1, rng.Intn(8) + 1},
+			Energy:       5000,
+			Shields:      0,
+			Torpedoes:    10,
+			MaxEnergy:    5000,
+			MaxTorpedoes: 10,
+			Condition:    ConditionGreen,
 		},
 	}
 	g.InitialStardate = g.Stardate
+	for qx := 0; qx < GalaxySize; qx++ {
+		for qy := 0; qy < GalaxySize; qy++ {
+			g.Galaxy[qx][qy] = &QuadrantInfo{}
+		}
+	}
 
 	// Procedural generation:
 	// 1. Stars (1..9 in each quadrant)
