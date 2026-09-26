@@ -159,6 +159,9 @@ func SyncQuadrantEnemies(quad *QuadrantState) {
 	}
 	var legacy []*Klingon
 	for _, e := range quad.Enemies {
+		if e == nil {
+			continue
+		}
 		if e.Faction == FactionKlingon {
 			legacy = append(legacy, &Klingon{
 				ID:          e.ID,
