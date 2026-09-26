@@ -778,5 +778,131 @@ func TestCLI_CampaignLaunch(t *testing.T) {
 	}
 }
 
+func TestCLIFlags_Adversaries(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	var capturedModel tea.Model
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		capturedModel = m
+		return nil
+	}
+
+	tests := []struct {
+		name            string
+		args            []string
+		wantAdversaries bool
+		wantProfile     engine.DifficultyProfile
+	}{
+		{
+			name:            "default normal difficulty has adversaries disabled",
+			args:            []string{"-seed", "42"},
+			wantAdversaries: false,
+			wantProfile:     engine.ProfileNormal,
+		},
+		{
+			name:            "enable adversaries with --adversaries",
+			args:            []string{"--adversaries", "-seed", "42"},
+			wantAdversaries: true,
+			wantProfile:     engine.ProfileCustom,
+		},
+		{
+			name:            "enable adversaries with -adversaries",
+			args:            []string{"-adversaries", "-seed", "42"},
+			wantAdversaries: true,
+			wantProfile:     engine.ProfileCustom,
+		},
+		{
+			name:            "enable adversaries with -a shorthand",
+			args:            []string{"-a", "-seed", "42"},
+			wantAdversaries: true,
+			wantProfile:     engine.ProfileCustom,
+		},
+		{
+			name:            "explicit adversaries false",
+			args:            []string{"--adversaries=false", "-seed", "42"},
+			wantAdversaries: false,
+			wantProfile:     engine.ProfileCustom,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			code := run(tc.args, strings.NewReader(""), &stdout, &stderr)
+			if code != 0 {
+				t.Fatalf("run failed with code %d: %s", code, stderr.String())
+			}
+			model, ok := capturedModel.(tui.Model)
+			if !ok {
+				t.Fatalf("captured model is not tui.Model: %T", capturedModel)
+			}
+			if model.Game.Rules.Adversaries != tc.wantAdversaries {
+				t.Errorf("expected Adversaries=%v, got %v", tc.wantAdversaries, model.Game.Rules.Adversaries)
+			}
+			if model.Game.Rules.Profile != tc.wantProfile {
+				t.Errorf("expected Profile=%v, got %v", tc.wantProfile, model.Game.Rules.Profile)
+			}
+		})
+	}
+}
+
+func TestCLIFlags_Difficulty_Expert_And_Emeritus(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	var capturedModel tea.Model
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		capturedModel = m
+		return nil
+	}
+
+	tests := []struct {
+		name            string
+		args            []string
+		wantAdversaries bool
+		wantProfile     engine.DifficultyProfile
+	}{
+		{
+			name:            "expert difficulty enables adversaries by default",
+			args:            []string{"--difficulty=expert", "-seed", "42"},
+			wantAdversaries: true,
+			wantProfile:     engine.ProfileExpert,
+		},
+		{
+			name:            "emeritus difficulty enables adversaries by default",
+			args:            []string{"--difficulty=emeritus", "-seed", "42"},
+			wantAdversaries: true,
+			wantProfile:     engine.ProfileEmeritus,
+		},
+		{
+			name:            "expert difficulty with adversaries disabled override",
+			args:            []string{"--difficulty=expert", "--adversaries=false", "-seed", "42"},
+			wantAdversaries: false,
+			wantProfile:     engine.ProfileCustom,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			code := run(tc.args, strings.NewReader(""), &stdout, &stderr)
+			if code != 0 {
+				t.Fatalf("run failed with code %d: %s", code, stderr.String())
+			}
+			model, ok := capturedModel.(tui.Model)
+			if !ok {
+				t.Fatalf("captured model is not tui.Model: %T", capturedModel)
+			}
+			if model.Game.Rules.Adversaries != tc.wantAdversaries {
+				t.Errorf("expected Adversaries=%v, got %v", tc.wantAdversaries, model.Game.Rules.Adversaries)
+			}
+			if model.Game.Rules.Profile != tc.wantProfile {
+				t.Errorf("expected Profile=%v, got %v", tc.wantProfile, model.Game.Rules.Profile)
+			}
+		})
+	}
+}
+
 
 

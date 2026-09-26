@@ -8,6 +8,8 @@ const (
 	ProfileNormal    DifficultyProfile = "normal"
 	ProfileHardcore  DifficultyProfile = "hardcore"
 	ProfileNightmare DifficultyProfile = "nightmare"
+	ProfileExpert    DifficultyProfile = "expert"
+	ProfileEmeritus  DifficultyProfile = "emeritus"
 	ProfileCustom    DifficultyProfile = "custom"
 )
 
@@ -37,6 +39,7 @@ type GameRules struct {
 	RepairMultiplier  float64           `json:"repair_multiplier"`
 	KlingonCloak      bool              `json:"klingon_cloak"`
 	SpatialAnomalies  bool              `json:"spatial_anomalies"`
+	Adversaries       bool              `json:"adversaries"`
 	TimeMargin        float64           `json:"time_margin"`
 	AnimSpeed         int               `json:"anim_speed"`
 }
@@ -52,6 +55,7 @@ func DefaultRulesForProfile(profile DifficultyProfile) GameRules {
 			RepairMultiplier:  0.75,
 			KlingonCloak:      false,
 			SpatialAnomalies:  false,
+			Adversaries:       false,
 			TimeMargin:        1.25,
 			AnimSpeed:         AnimSpeedNormal,
 		}
@@ -63,6 +67,7 @@ func DefaultRulesForProfile(profile DifficultyProfile) GameRules {
 			RepairMultiplier:  1.50,
 			KlingonCloak:      true,
 			SpatialAnomalies:  true,
+			Adversaries:       false,
 			TimeMargin:        0.80,
 			AnimSpeed:         AnimSpeedNormal,
 		}
@@ -74,6 +79,31 @@ func DefaultRulesForProfile(profile DifficultyProfile) GameRules {
 			RepairMultiplier:  2.00,
 			KlingonCloak:      true,
 			SpatialAnomalies:  true,
+			Adversaries:       false,
+			TimeMargin:        0.60,
+			AnimSpeed:         AnimSpeedNormal,
+		}
+	case ProfileExpert:
+		return GameRules{
+			Profile:           ProfileExpert,
+			Surveillance:      SurveillanceClassic,
+			SensorDegradation: true,
+			RepairMultiplier:  1.25,
+			KlingonCloak:      true,
+			SpatialAnomalies:  true,
+			Adversaries:       true,
+			TimeMargin:        0.90,
+			AnimSpeed:         AnimSpeedNormal,
+		}
+	case ProfileEmeritus:
+		return GameRules{
+			Profile:           ProfileEmeritus,
+			Surveillance:      SurveillanceBlackout,
+			SensorDegradation: true,
+			RepairMultiplier:  2.00,
+			KlingonCloak:      true,
+			SpatialAnomalies:  true,
+			Adversaries:       true,
 			TimeMargin:        0.60,
 			AnimSpeed:         AnimSpeedNormal,
 		}
@@ -87,6 +117,7 @@ func DefaultRulesForProfile(profile DifficultyProfile) GameRules {
 			RepairMultiplier:  1.00,
 			KlingonCloak:      false,
 			SpatialAnomalies:  false,
+			Adversaries:       false,
 			TimeMargin:        1.00,
 			AnimSpeed:         AnimSpeedNormal,
 		}

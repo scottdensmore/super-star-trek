@@ -55,13 +55,15 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	themeName := fs.String("theme", "modern", "initial theme name (modern, lcars, crt)")
 	modeFlag := fs.String("mode", "auto", "theme color mode (auto, dark, light)")
 	seed := fs.Int64("seed", 0, "PRNG seed (0 for random)")
-	difficulty := fs.String("difficulty", "normal", "difficulty profile (casual, normal, hardcore, nightmare)")
+	difficulty := fs.String("difficulty", "normal", "difficulty profile (casual, normal, hardcore, nightmare, expert, emeritus)")
 	surveillance := fs.String("surveillance", "", "surveillance extent (full, classic, local, blackout)")
 	sensorDegradation := fs.Bool("sensor-degradation", true, "enable two-tier sensor degradation curve")
 	repairMult := fs.Float64("repair-multiplier", 1.0, "subsystem repair duration multiplier")
 	klingonCloak := fs.Bool("klingon-cloak", false, "enable Klingon commander tactical cloaking")
 	anomalies := fs.Bool("anomalies", false, "enable spatial anomalies & environmental hazards")
 	noAnomalies := fs.Bool("no-anomalies", false, "disable spatial anomalies & environmental hazards")
+	adversariesFlag := fs.Bool("adversaries", false, "enable Romulan and Tholian adversary factions in standard game")
+	fs.BoolVar(adversariesFlag, "a", false, "shorthand for --adversaries")
 	sound := fs.Bool("sound", true, "enable retro procedural audio and sound FX")
 	noSound := fs.Bool("no-sound", false, "disable retro procedural audio and sound FX")
 	scenarioFlag := fs.String("scenario", "", "launch specific tactical scenario")
@@ -152,6 +154,10 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	}
 	if visited["no-anomalies"] {
 		rules.SpatialAnomalies = !*noAnomalies
+		rules.Profile = engine.ProfileCustom
+	}
+	if visited["adversaries"] || visited["a"] {
+		rules.Adversaries = *adversariesFlag
 		rules.Profile = engine.ProfileCustom
 	}
 

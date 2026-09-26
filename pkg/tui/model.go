@@ -184,7 +184,7 @@ func NewModelWithTour(tour *engine.TourState, th theme.Theme) Model {
 	if tour.CurrentGameState != nil {
 		game = tour.CurrentGameState
 	} else {
-		game = tour.StartCurrentSector()
+		game, _ = tour.StartCurrentSector()
 	}
 	if game != nil {
 		game.PopulateQuadrant(game.Enterprise.Quad, game.Enterprise.Sector)

@@ -28,9 +28,9 @@ func TestNewTour_InitializesFourSectors(t *testing.T) {
 
 func TestTourState_SectorProgressionAndBounty(t *testing.T) {
 	tour := NewTour(12345)
-	state := tour.StartCurrentSector()
-	if state == nil {
-		t.Fatal("expected non-nil GameState for sector 1")
+	state, err := tour.StartCurrentSector()
+	if err != nil || state == nil {
+		t.Fatalf("expected non-nil GameState for sector 1, err: %v", err)
 	}
 	if tour.InDrydock {
 		t.Errorf("expected InDrydock false during active sector, got true")
@@ -87,7 +87,7 @@ func TestTourState_SectorProgressionAndBounty(t *testing.T) {
 
 func TestTourState_PermadeathOnLoss(t *testing.T) {
 	tour := NewTour(999)
-	state := tour.StartCurrentSector()
+	state, _ := tour.StartCurrentSector()
 
 	// Enterprise destroyed
 	state.GameOver = true
@@ -127,16 +127,16 @@ func TestTourState_CurrentSector_Bounds(t *testing.T) {
 	if tour.CurrentSector() != nil {
 		t.Errorf("expected nil for negative CurrentSectorIndex")
 	}
-	if tour.StartCurrentSector() != nil {
-		t.Errorf("expected nil StartCurrentSector for negative CurrentSectorIndex")
+	if s, err := tour.StartCurrentSector(); s != nil || err == nil {
+		t.Errorf("expected nil StartCurrentSector and error for negative CurrentSectorIndex")
 	}
 
 	tour.CurrentSectorIndex = 10
 	if tour.CurrentSector() != nil {
 		t.Errorf("expected nil for out-of-bounds CurrentSectorIndex")
 	}
-	if tour.StartCurrentSector() != nil {
-		t.Errorf("expected nil StartCurrentSector for out-of-bounds CurrentSectorIndex")
+	if s, err := tour.StartCurrentSector(); s != nil || err == nil {
+		t.Errorf("expected nil StartCurrentSector and error for out-of-bounds CurrentSectorIndex")
 	}
 }
 
@@ -150,7 +150,7 @@ func TestTourState_EvaluateSector_NilState(t *testing.T) {
 
 func TestTourState_EvaluateSector_FlawlessBonus(t *testing.T) {
 	tour := NewTour(100)
-	state := tour.StartCurrentSector()
+	state, _ := tour.StartCurrentSector()
 	state.KlingonsRemaining = 0
 
 	// Case 1: No damage -> flawless bonus (250) included
@@ -170,7 +170,7 @@ func TestTourState_EvaluateSector_FlawlessBonus(t *testing.T) {
 
 func TestTourState_DisembarkToNextSector_NotDocked(t *testing.T) {
 	tour := NewTour(100)
-	tour.StartCurrentSector()
+	_, _ = tour.StartCurrentSector()
 	// tour.InDrydock is false
 	_, err := tour.DisembarkToNextSector()
 	if err == nil {
@@ -181,9 +181,9 @@ func TestTourState_DisembarkToNextSector_NotDocked(t *testing.T) {
 func TestTourState_CompleteTourSequence(t *testing.T) {
 	tour := NewTour(100)
 	for i := 0; i < len(tour.Sectors); i++ {
-		state := tour.StartCurrentSector()
-		if state == nil {
-			t.Fatalf("expected valid state for sector %d", i+1)
+		state, err := tour.StartCurrentSector()
+		if err != nil || state == nil {
+			t.Fatalf("expected valid state for sector %d, err: %v", i+1, err)
 		}
 		state.KlingonsRemaining = 0
 		cleared, failed, bounty := tour.EvaluateSector()
@@ -217,6 +217,91 @@ func TestTourState_CompleteTourSequence(t *testing.T) {
 	}
 	if tour.SectorsCompleted != 4 {
 		t.Errorf("expected 4 sectors completed, got %d", tour.SectorsCompleted)
+	}
+}
+
+func TestCampaign_SectorFactionPopulations(t *testing.T) {
+	tour := NewTour(112233)
+
+	// Sector 1: Neutral Zone Patrol -> Romulans
+	g1, err := tour.StartCurrentSector(0)
+	if err != nil {
+		t.Fatalf("unexpected error starting sector 1: %v", err)
+	}
+	hasRomulans := false
+	for _, e := range g1.CurrentQuad.Enemies {
+		if e.Faction == FactionRomulan {
+			hasRomulans = true
+			break
+		}
+	}
+	if !hasRomulans {
+		t.Errorf("expected Romulans in sector 1 (Neutral Zone Patrol)")
+	}
+
+	// Sector 2: Border Outpost Defense -> Tholians
+	g2, err := tour.StartCurrentSector(1)
+	if err != nil {
+		t.Fatalf("unexpected error starting sector 2: %v", err)
+	}
+	hasTholians := false
+	for _, e := range g2.CurrentQuad.Enemies {
+		if e.Faction == FactionTholian {
+			hasTholians = true
+			break
+		}
+	}
+	if !hasTholians {
+		t.Errorf("expected Tholians in sector 2 (Border Outpost Defense)")
+	}
+
+	// Sector 3: Commander Decapitation -> Klingon wolf-pack
+	g3, err := tour.StartCurrentSector(2)
+	if err != nil {
+		t.Fatalf("unexpected error starting sector 3: %v", err)
+	}
+	hasCommander := false
+	klingonCount := 0
+	for _, e := range g3.CurrentQuad.Enemies {
+		if e.Faction == FactionKlingon {
+			klingonCount++
+			if e.IsCommander {
+				hasCommander = true
+			}
+		}
+	}
+	if !hasCommander || klingonCount != 3 {
+		t.Errorf("expected Klingon wolfpack (1 commander + 2 raiders) in sector 3, got count=%d, hasCommander=%v", klingonCount, hasCommander)
+	}
+	if len(g3.CurrentQuad.Klingons) != 3 {
+		t.Errorf("expected 3 synced legacy Klingons in sector 3, got %d", len(g3.CurrentQuad.Klingons))
+	}
+
+	// Sector 4: Invasion Fleet Interception -> Coalition
+	g4, err := tour.StartCurrentSector(3)
+	if err != nil {
+		t.Fatalf("unexpected error starting sector 4: %v", err)
+	}
+	hasKlingonCommander := false
+	hasRomulan := false
+	tholiansCount := 0
+	for _, e := range g4.CurrentQuad.Enemies {
+		switch e.Faction {
+		case FactionKlingon:
+			if e.IsCommander {
+				hasKlingonCommander = true
+			}
+		case FactionRomulan:
+			hasRomulan = true
+		case FactionTholian:
+			tholiansCount++
+		}
+	}
+	if !hasKlingonCommander || !hasRomulan || tholiansCount != 2 {
+		t.Errorf("expected multi-faction fleet in sector 4: KlingonCommander=%v, Romulan=%v, Tholians=%d", hasKlingonCommander, hasRomulan, tholiansCount)
+	}
+	if len(g4.CurrentQuad.Klingons) != 1 {
+		t.Errorf("expected 1 synced legacy Klingon in sector 4, got %d", len(g4.CurrentQuad.Klingons))
 	}
 }
 

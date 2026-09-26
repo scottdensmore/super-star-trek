@@ -341,11 +341,14 @@ func TestSaveAndLoadTourGame(t *testing.T) {
 	savePath := filepath.Join(tmpDir, "test_tour.json")
 
 	tour := NewTour(777)
-	g := tour.StartCurrentSector()
+	g, err := tour.StartCurrentSector()
+	if err != nil {
+		t.Fatalf("failed to start sector: %v", err)
+	}
 	tour.RequisitionPoints = 1450
 	tour.InstalledRefits[RefitDilithiumCore] = 1
 
-	err := SaveTourGame(savePath, g, tour)
+	err = SaveTourGame(savePath, g, tour)
 	if err != nil {
 		t.Fatalf("failed to save tour game: %v", err)
 	}
@@ -379,12 +382,15 @@ func TestSaveAndLoadTourGame_PreservesDamagedEnergy(t *testing.T) {
 	savePath := filepath.Join(tmpDir, "damaged_tour.json")
 
 	tour := NewTour(777)
-	g := tour.StartCurrentSector()
+	g, err := tour.StartCurrentSector()
+	if err != nil {
+		t.Fatalf("failed to start sector: %v", err)
+	}
 	g.Enterprise.Energy = 1234.0
 	g.Enterprise.Torpedoes = 4
 	tour.RequisitionPoints = 1000
 
-	err := SaveTourGame(savePath, g, tour)
+	err = SaveTourGame(savePath, g, tour)
 	if err != nil {
 		t.Fatalf("failed to save tour game: %v", err)
 	}
@@ -466,7 +472,10 @@ func TestSaveAndLoadTourGame_BackwardCompatibility(t *testing.T) {
 	// 2. Tour game saved with SaveTourGame(), loaded via LoadGame() and InspectSave()
 	tourSavePath := filepath.Join(tmpDir, "TOURSAVE.TRK")
 	tour := NewTour(999)
-	g := tour.StartCurrentSector()
+	g, err := tour.StartCurrentSector()
+	if err != nil {
+		t.Fatalf("failed to start sector: %v", err)
+	}
 	g.Stardate = 3500.0
 	g.TimeRemaining = 25.0
 	g.Enterprise.Condition = ConditionRed
@@ -688,7 +697,10 @@ func TestSaveAndLoadTourGame_PreservesExpandedAdversaries(t *testing.T) {
 	savePath := filepath.Join(tmpDir, "tour_adv.json")
 
 	tour := NewTour(7777)
-	g := tour.StartCurrentSector()
+	g, err := tour.StartCurrentSector()
+	if err != nil {
+		t.Fatalf("failed to start sector: %v", err)
+	}
 
 	tholian := &EnemyVessel{
 		ID:           30,

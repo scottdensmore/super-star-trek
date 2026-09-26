@@ -131,7 +131,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m *Model) cycleOption(dir int) {
-	profiles := []engine.DifficultyProfile{engine.ProfileCasual, engine.ProfileNormal, engine.ProfileHardcore, engine.ProfileNightmare, engine.ProfileCustom}
+	profiles := []engine.DifficultyProfile{engine.ProfileCasual, engine.ProfileNormal, engine.ProfileHardcore, engine.ProfileNightmare, engine.ProfileExpert, engine.ProfileEmeritus, engine.ProfileCustom}
 	survModes := []engine.SurveillanceMode{engine.SurveillanceFull, engine.SurveillanceClassic, engine.SurveillanceLocal, engine.SurveillanceBlackout}
 	repMults := []float64{0.75, 1.00, 1.50, 2.00}
 	timeMargins := []float64{1.25, 1.00, 0.80, 0.60}
