@@ -14,6 +14,19 @@ const (
 	EntityPlanet
 	EntityBlackHole
 	EntityWormhole
+	EntityRomulan
+	EntityTholian
+	EntityPlasmaTorpedo
+	EntityTholianWeb
+)
+
+// FactionType denotes the allegiance and tactical doctrine of an adversary.
+type FactionType int
+
+const (
+	FactionKlingon FactionType = iota
+	FactionRomulan
+	FactionTholian
 )
 
 // EnvironmentType defines the ambient phenomenon within a galactic quadrant.
@@ -98,12 +111,66 @@ type Klingon struct {
 	IsCloaked   bool
 }
 
+// EnemyVessel represents an active hostile starship in the current quadrant.
+type EnemyVessel struct {
+	ID           int         `json:"id"`
+	Faction      FactionType `json:"faction"`
+	Sector       Coord       `json:"sector"`
+	Energy       float64     `json:"energy"`
+	Shields      float64     `json:"shields"`
+	MaxEnergy    float64     `json:"max_energy"`
+	IsCommander  bool        `json:"is_commander"`
+	IsCloaked    bool        `json:"is_cloaked"`
+	CloakTurns   int         `json:"cloak_turns"`
+	SpecialState int         `json:"special_state"`
+}
+
+// PlasmaTorpedo represents an in-flight, self-guided thermal projectile.
+type PlasmaTorpedo struct {
+	ID            int     `json:"id"`
+	SourceID      int     `json:"source_id"`
+	Sector        Coord   `json:"sector"`
+	Energy        float64 `json:"energy"`
+	TargetSector  Coord   `json:"target"`
+	TurnsInFlight int     `json:"turns"`
+}
+
+// TholianWebSegment represents a localized energy barrier constructed by Tholian spinners.
+type TholianWebSegment struct {
+	Coord    Coord   `json:"coord"`
+	Strength float64 `json:"strength"`
+}
+
 // QuadrantState stores the layout and entities within the currently occupied quadrant.
 type QuadrantState struct {
-	Grid     [9][9]EntityType // 1..8 indexed
-	Klingons []*Klingon
-	Starbase *Coord
-	Stars    []Coord
+	Grid            [9][9]EntityType     `json:"grid"`
+	Enemies         []*EnemyVessel       `json:"enemies"`
+	PlasmaTorpedoes []*PlasmaTorpedo     `json:"plasma_torpedoes,omitempty"`
+	WebSegments     []*TholianWebSegment `json:"web_segments,omitempty"`
+	Starbase        *Coord               `json:"starbase,omitempty"`
+	Stars           []Coord              `json:"stars,omitempty"`
+	Klingons        []*Klingon           `json:"-"`
+}
+
+// SyncQuadrantEnemies synchronizes the legacy Klingons slice with Enemies.
+func SyncQuadrantEnemies(quad *QuadrantState) {
+	if quad == nil {
+		return
+	}
+	var legacy []*Klingon
+	for _, e := range quad.Enemies {
+		if e.Faction == FactionKlingon {
+			legacy = append(legacy, &Klingon{
+				ID:          e.ID,
+				Sector:      e.Sector,
+				Energy:      e.Energy,
+				Shields:     e.Shields,
+				IsCommander: e.IsCommander,
+				IsCloaked:   e.IsCloaked,
+			})
+		}
+	}
+	quad.Klingons = legacy
 }
 
 // GameMetrics records cumulative mission counters for scoring.
