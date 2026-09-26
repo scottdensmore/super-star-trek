@@ -73,6 +73,47 @@ func TestTholian_SpinnerDestructionCascade(t *testing.T) {
 	}
 }
 
+func TestTholian_DestroyedSpinnersCascade(t *testing.T) {
+	g := NewGameWithSeed(9999)
+	g.CurrentQuad.WebSegments = []*TholianWebSegment{
+		{Coord: Coord{1, 1}, Strength: 250.0},
+		{Coord: Coord{1, 2}, Strength: 250.0},
+	}
+	g.CurrentQuad.Grid[1][1] = EntityTholianWeb
+	g.CurrentQuad.Grid[1][2] = EntityTholianWeb
+
+	// Enemies slice contains Tholians with Energy <= 0 (destroyed) and a nil entry
+	g.CurrentQuad.Enemies = []*EnemyVessel{
+		{
+			ID:           201,
+			Faction:      FactionTholian,
+			Sector:       Coord{2, 2},
+			Energy:       0.0,
+			SpecialState: 0,
+		},
+		{
+			ID:           202,
+			Faction:      FactionTholian,
+			Sector:       Coord{6, 6},
+			Energy:       -50.0,
+			SpecialState: 1,
+		},
+		nil,
+	}
+
+	events := TholianTurn(g)
+
+	if len(g.CurrentQuad.WebSegments) != 0 {
+		t.Errorf("expected web segments to collapse when all spinners have Energy <= 0")
+	}
+	if g.CurrentQuad.Grid[1][1] != EntityEmpty || g.CurrentQuad.Grid[1][2] != EntityEmpty {
+		t.Errorf("expected grid cells to be empty after web collapse")
+	}
+	if len(events) != 1 || events[0].EventType() != "WebCollapsed" {
+		t.Errorf("expected WebCollapsed event, got %v", events)
+	}
+}
+
 func TestTholian_PerimeterNavigation(t *testing.T) {
 	// Test Alpha (clockwise):
 	// Top edge: (1, 2) -> (1, 3)
@@ -173,6 +214,17 @@ func TestTholian_WebDamageAndBreach(t *testing.T) {
 	}
 	if ev[0].EventType() != "WebBreached" {
 		t.Errorf("expected EventType WebBreached, got %s", ev[0].EventType())
+	}
+
+	// Test nil element inside WebSegments
+	g.CurrentQuad.WebSegments = []*TholianWebSegment{nil, {Coord: Coord{5, 5}, Strength: 250.0}}
+	g.CurrentQuad.Grid[5][5] = EntityTholianWeb
+	destroyed, ev = DamageWebSegment(g, Coord{5, 5}, 300.0)
+	if !destroyed || len(ev) != 1 {
+		t.Fatal("expected segment at (5,5) to be destroyed even with nil in slice")
+	}
+	if len(g.CurrentQuad.WebSegments) != 1 || g.CurrentQuad.WebSegments[0] != nil {
+		t.Errorf("expected only nil element remaining in WebSegments, got %v", g.CurrentQuad.WebSegments)
 	}
 }
 

@@ -33,7 +33,7 @@ func TholianTurn(g *GameState) []Event {
 	var events []Event
 	var tholians []*EnemyVessel
 	for _, e := range g.CurrentQuad.Enemies {
-		if e.Faction == FactionTholian {
+		if e != nil && e.Faction == FactionTholian && e.Energy > 0 {
 			tholians = append(tholians, e)
 		}
 	}
@@ -43,6 +43,9 @@ func TholianTurn(g *GameState) []Event {
 		if len(g.CurrentQuad.WebSegments) > 0 {
 			count := len(g.CurrentQuad.WebSegments)
 			for _, ws := range g.CurrentQuad.WebSegments {
+				if ws == nil {
+					continue
+				}
 				if g.CurrentQuad.Grid[ws.Coord[0]][ws.Coord[1]] == EntityTholianWeb {
 					g.CurrentQuad.Grid[ws.Coord[0]][ws.Coord[1]] = EntityEmpty
 				}
@@ -137,11 +140,16 @@ func DamageWebSegment(g *GameState, coord Coord, damage float64) (bool, []Event)
 		return false, nil
 	}
 	for i, ws := range g.CurrentQuad.WebSegments {
+		if ws == nil {
+			continue
+		}
 		if ws.Coord == coord {
 			ws.Strength -= damage
 			if ws.Strength <= 0 {
 				g.CurrentQuad.Grid[coord[0]][coord[1]] = EntityEmpty
-				g.CurrentQuad.WebSegments = append(g.CurrentQuad.WebSegments[:i], g.CurrentQuad.WebSegments[i+1:]...)
+				copy(g.CurrentQuad.WebSegments[i:], g.CurrentQuad.WebSegments[i+1:])
+				g.CurrentQuad.WebSegments[len(g.CurrentQuad.WebSegments)-1] = nil
+				g.CurrentQuad.WebSegments = g.CurrentQuad.WebSegments[:len(g.CurrentQuad.WebSegments)-1]
 				return true, []Event{EventWebBreached{Coord: coord}}
 			}
 			return false, nil
