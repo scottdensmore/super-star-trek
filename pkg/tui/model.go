@@ -2,6 +2,7 @@ package tui
 
 import (
 	"os"
+	"testing"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -124,7 +125,12 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 	bellCallback := func() {
 		cb.SetVisualBell(true)
 	}
-	player := audio.NewNativeOSPlayer(os.Stdout, bellCallback)
+	var player audio.Player
+	if testing.Testing() {
+		player = audio.NewNullPlayer()
+	} else {
+		player = audio.NewNativeOSPlayer(os.Stdout, bellCallback)
+	}
 	dispatcher := audio.NewDispatcher(player)
 
 	m := Model{

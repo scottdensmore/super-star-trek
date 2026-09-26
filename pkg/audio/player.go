@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sync"
+	"testing"
 	"time"
 )
 
@@ -39,7 +40,7 @@ func (p *TerminalBellPlayer) Play(sound SoundID) {
 
 	switch sound {
 	case SoundRedAlert, SoundDamage, SoundExplosion, SoundPhaser, SoundTorpedoLaunch:
-		if p.w != nil {
+		if p.w != nil && (!testing.Testing() || (p.w != os.Stdout && p.w != os.Stderr)) {
 			_, _ = p.w.Write([]byte("\a"))
 		}
 		if p.visualBell != nil {
@@ -85,6 +86,11 @@ func newNativeOSPlayerWithCmd(fallback Player, cmdPath string) *NativeOSPlayer {
 	}
 }
 
+func isOSAudioBinary(cmd string) bool {
+	base := filepath.Base(cmd)
+	return base == "afplay" || base == "aplay" || base == "paplay"
+}
+
 // Play streams the synthesized WAV sound to the OS player in a detached goroutine.
 func (p *NativeOSPlayer) Play(sound SoundID) {
 	p.mu.RLock()
@@ -101,6 +107,12 @@ func (p *NativeOSPlayer) Play(sound SoundID) {
 		if fallback != nil {
 			fallback.Play(sound)
 		}
+		return
+	}
+
+	// Never execute OS audio commands (afplay, aplay, paplay) in automated unit/e2e tests.
+	// Only human interactive play should execute audio binaries.
+	if testing.Testing() && isOSAudioBinary(cmd) {
 		return
 	}
 
