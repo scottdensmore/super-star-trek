@@ -139,3 +139,90 @@ func TestAdversaries_QuadrantStateSync_EdgeCases(t *testing.T) {
 	}
 }
 
+func TestAdversaries_SandboxSpawningInPopulateQuadrant(t *testing.T) {
+	// 1. When Rules.Adversaries is false, PopulateQuadrant should only populate Klingons, not Enemies.
+	gClassic := NewGameWithSeed(42)
+	gClassic.Rules.Adversaries = false
+	gClassic.GalaxyChart[4][4] = 203 // 2 Klingons, 0 Bases, 3 Stars
+	gClassic.PopulateQuadrant(Coord{4, 4}, Coord{1, 1})
+
+	if len(gClassic.CurrentQuad.Klingons) != 2 {
+		t.Fatalf("expected 2 Klingons in classic mode, got %d", len(gClassic.CurrentQuad.Klingons))
+	}
+	if len(gClassic.CurrentQuad.Enemies) != 0 {
+		t.Fatalf("expected 0 Enemies in classic mode, got %d", len(gClassic.CurrentQuad.Enemies))
+	}
+
+	// 2. When Rules.Adversaries is true in an inner quadrant without a starbase:
+	// One enemy should be converted to FactionRomulan (cloaked).
+	gRomulan := NewGameWithSeed(42)
+	gRomulan.Rules.Adversaries = true
+	gRomulan.GalaxyChart[4][4] = 203 // 2 Klingons, 0 Bases, 3 Stars (inner quadrant)
+	gRomulan.PopulateQuadrant(Coord{4, 4}, Coord{1, 1})
+
+	if len(gRomulan.CurrentQuad.Enemies) != 2 {
+		t.Fatalf("expected 2 Enemies in adversary mode, got %d", len(gRomulan.CurrentQuad.Enemies))
+	}
+	var foundRomulan bool
+	var foundKlingon bool
+	for _, enemy := range gRomulan.CurrentQuad.Enemies {
+		if enemy.Faction == FactionRomulan {
+			foundRomulan = true
+			if !enemy.IsCloaked {
+				t.Errorf("expected Romulan to be cloaked")
+			}
+			if gRomulan.CurrentQuad.Grid[enemy.Sector[0]][enemy.Sector[1]] != EntityEmpty {
+				t.Errorf("expected cloaked Romulan grid cell to be EntityEmpty, got %v", gRomulan.CurrentQuad.Grid[enemy.Sector[0]][enemy.Sector[1]])
+			}
+		}
+		if enemy.Faction == FactionKlingon {
+			foundKlingon = true
+		}
+	}
+	if !foundRomulan || !foundKlingon {
+		t.Errorf("expected 1 Romulan and 1 Klingon in inner quad, got romulan=%v, klingon=%v", foundRomulan, foundKlingon)
+	}
+	// Legacy slice should only contain the Klingon (Romulans omitted from legacy Klingons)
+	if len(gRomulan.CurrentQuad.Klingons) != 1 {
+		t.Errorf("expected 1 legacy Klingon, got %d", len(gRomulan.CurrentQuad.Klingons))
+	}
+
+	// 3. When Rules.Adversaries is true on a border quadrant:
+	// One enemy should be converted to FactionTholian.
+	gBorder := NewGameWithSeed(42)
+	gBorder.Rules.Adversaries = true
+	gBorder.GalaxyChart[1][4] = 203 // Border quadrant (row 1)
+	gBorder.PopulateQuadrant(Coord{1, 4}, Coord{1, 1})
+
+	var foundTholian bool
+	for _, enemy := range gBorder.CurrentQuad.Enemies {
+		if enemy.Faction == FactionTholian {
+			foundTholian = true
+			if gBorder.CurrentQuad.Grid[enemy.Sector[0]][enemy.Sector[1]] != EntityTholian {
+				t.Errorf("expected Tholian grid cell to be EntityTholian, got %v", gBorder.CurrentQuad.Grid[enemy.Sector[0]][enemy.Sector[1]])
+			}
+		}
+	}
+	if !foundTholian {
+		t.Errorf("expected 1 Tholian on border quad")
+	}
+
+	// 4. When Rules.Adversaries is true in an inner quadrant with a starbase:
+	// One enemy should be converted to FactionTholian (border or starbase defense).
+	gStarbase := NewGameWithSeed(42)
+	gStarbase.Rules.Adversaries = true
+	gStarbase.GalaxyChart[4][4] = 213 // 2 Klingons, 1 Base, 3 Stars
+	gStarbase.PopulateQuadrant(Coord{4, 4}, Coord{1, 1})
+
+	foundTholian = false
+	for _, enemy := range gStarbase.CurrentQuad.Enemies {
+		if enemy.Faction == FactionTholian {
+			foundTholian = true
+		}
+	}
+	if !foundTholian {
+		t.Errorf("expected 1 Tholian in quadrant with starbase")
+	}
+}
+
+

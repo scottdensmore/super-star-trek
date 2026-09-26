@@ -683,6 +683,40 @@ func TestModel_TourFailureRecording(t *testing.T) {
 	}
 }
 
+func TestModel_TourPreservesSectorEnemies(t *testing.T) {
+	tour := engine.NewTour(42)
+	th := theme.DefaultTheme()
+	m := NewModelWithTour(tour, th)
+
+	if m.Game == nil {
+		t.Fatal("expected non-nil Game in model")
+	}
+	if len(m.Game.CurrentQuad.Enemies) != 2 {
+		t.Fatalf("expected 2 Romulans in sector 1, got %d", len(m.Game.CurrentQuad.Enemies))
+	}
+	if m.Game.CurrentQuad.Enemies[0].Faction != engine.FactionRomulan {
+		t.Errorf("expected Romulan in sector 1, got %v", m.Game.CurrentQuad.Enemies[0].Faction)
+	}
+
+	// Advance to drydock and disembark to Sector 2
+	m.Game.KlingonsRemaining = 0
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m = updated.(Model)
+	if !m.Tour.InDrydock {
+		t.Fatalf("expected tour to be in drydock")
+	}
+
+	updated, _ = m.Update(drydockmodal.DisembarkMsg{})
+	m = updated.(Model)
+
+	if len(m.Game.CurrentQuad.Enemies) != 2 {
+		t.Fatalf("expected 2 Tholians in sector 2, got %d", len(m.Game.CurrentQuad.Enemies))
+	}
+	if m.Game.CurrentQuad.Enemies[0].Faction != engine.FactionTholian {
+		t.Errorf("expected Tholian in sector 2, got %v", m.Game.CurrentQuad.Enemies[0].Faction)
+	}
+}
+
 
 
 

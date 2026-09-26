@@ -298,7 +298,9 @@ func (m Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				m.CommandBar.AddMessage(fmt.Sprintf("Disembark error: %v", err))
 			} else if newGame != nil {
-				newGame.PopulateQuadrant(newGame.Enterprise.Quad, newGame.Enterprise.Sector)
+				if len(newGame.CurrentQuad.Enemies) == 0 {
+					newGame.PopulateQuadrant(newGame.Enterprise.Quad, newGame.Enterprise.Sector)
+				}
 				m.Game = newGame
 				m.SelectedSector = engine.Coord{}
 				sec := m.Tour.CurrentSector()

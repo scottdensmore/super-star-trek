@@ -219,7 +219,7 @@ func (t *TourState) EvaluateSector() (cleared bool, failed bool, bounty int) {
 	}
 
 	// Sector cleared when hostiles remaining reach zero
-	if g.KlingonsRemaining <= 0 {
+	if g.KlingonsRemaining <= 0 || g.RemainingKlingons <= 0 || (len(g.CurrentQuad.Enemies) == 0 && len(g.CurrentQuad.Klingons) == 0) {
 		baseBounty := 1000
 		stardateBonus := int(g.DaysRemaining * 50)
 		flawlessBonus := 0

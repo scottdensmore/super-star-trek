@@ -407,6 +407,59 @@ func (g *GameState) PopulateQuadrant(quad Coord, entSector Coord) {
 			}
 			g.CurrentQuad.Klingons = append(g.CurrentQuad.Klingons, k)
 		}
+
+		if g.Rules.Adversaries && len(g.CurrentQuad.Klingons) > 0 {
+			convertIdx := len(g.CurrentQuad.Klingons) - 1
+			targetK := g.CurrentQuad.Klingons[convertIdx]
+
+			isBorder := quad[0] == 1 || quad[0] == 8 || quad[1] == 1 || quad[1] == 8
+			hasStarbase := numB > 0
+
+			var adv *EnemyVessel
+			if hasStarbase || isBorder {
+				adv = &EnemyVessel{
+					ID:           targetK.ID,
+					Faction:      FactionTholian,
+					Sector:       targetK.Sector,
+					Energy:       800.0,
+					Shields:      300.0,
+					MaxEnergy:    800.0,
+					SpecialState: 0,
+				}
+				g.CurrentQuad.Grid[targetK.Sector[0]][targetK.Sector[1]] = EntityTholian
+			} else {
+				adv = &EnemyVessel{
+					ID:         targetK.ID,
+					Faction:    FactionRomulan,
+					Sector:     targetK.Sector,
+					Energy:     1000.0,
+					Shields:    400.0,
+					MaxEnergy:  1000.0,
+					IsCloaked:  true,
+					CloakTurns: 2,
+				}
+				g.CurrentQuad.Grid[targetK.Sector[0]][targetK.Sector[1]] = EntityEmpty
+			}
+
+			g.CurrentQuad.Enemies = make([]*EnemyVessel, 0, len(g.CurrentQuad.Klingons))
+			for idx, k := range g.CurrentQuad.Klingons {
+				if idx == convertIdx {
+					g.CurrentQuad.Enemies = append(g.CurrentQuad.Enemies, adv)
+				} else {
+					g.CurrentQuad.Enemies = append(g.CurrentQuad.Enemies, &EnemyVessel{
+						ID:          k.ID,
+						Faction:     FactionKlingon,
+						Sector:      k.Sector,
+						Energy:      k.Energy,
+						Shields:     k.Shields,
+						MaxEnergy:   k.Energy,
+						IsCommander: k.IsCommander,
+						IsCloaked:   k.IsCloaked,
+					})
+				}
+			}
+			SyncQuadrantEnemies(&g.CurrentQuad)
+		}
 	}
 
 	if numS > 0 {

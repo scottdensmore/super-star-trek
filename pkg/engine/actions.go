@@ -262,6 +262,7 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 			if g.RemainingKlingons > 0 {
 				g.RemainingKlingons--
 			}
+			g.KlingonsRemaining = g.RemainingKlingons
 			qr, qc := g.Enterprise.Quad[0], g.Enterprise.Quad[1]
 			if qr >= 1 && qr <= 8 && qc >= 1 && qc <= 8 && g.GalaxyChart[qr][qc] >= 100 {
 				g.GalaxyChart[qr][qc] -= 100
@@ -398,6 +399,7 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 				if g.RemainingKlingons > 0 {
 					g.RemainingKlingons--
 				}
+				g.KlingonsRemaining = g.RemainingKlingons
 				qr, qc := g.Enterprise.Quad[0], g.Enterprise.Quad[1]
 				if qr >= 1 && qr <= 8 && qc >= 1 && qc <= 8 && g.GalaxyChart[qr][qc] >= 100 {
 					g.GalaxyChart[qr][qc] -= 100
@@ -456,6 +458,7 @@ func (a ActionFirePhasers) Execute(g *GameState) ([]Event, error) {
 				if g.RemainingKlingons > 0 {
 					g.RemainingKlingons--
 				}
+				g.KlingonsRemaining = g.RemainingKlingons
 				qr, qc := g.Enterprise.Quad[0], g.Enterprise.Quad[1]
 				if qr >= 1 && qr <= 8 && qc >= 1 && qc <= 8 && g.GalaxyChart[qr][qc] >= 100 {
 					g.GalaxyChart[qr][qc] -= 100

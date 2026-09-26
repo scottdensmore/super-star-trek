@@ -105,6 +105,18 @@ func (a ActionPhaserDirect) Execute(g *GameState) ([]Event, error) {
 					if e.Faction == FactionRomulan {
 						g.Metrics.RomulansKilled++
 					}
+					var remaining []*EnemyVessel
+					for _, other := range g.CurrentQuad.Enemies {
+						if other != nil && other.ID != e.ID && other.Energy > 0 {
+							remaining = append(remaining, other)
+						}
+					}
+					g.CurrentQuad.Enemies = remaining
+					SyncQuadrantEnemies(&g.CurrentQuad)
+					if g.RemainingKlingons > 0 {
+						g.RemainingKlingons--
+					}
+					g.KlingonsRemaining = g.RemainingKlingons
 				}
 				break
 			}
