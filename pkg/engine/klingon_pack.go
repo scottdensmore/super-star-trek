@@ -78,81 +78,50 @@ func ExecuteCommanderScreening(g *GameState) []Event {
 	screenedRaiders := make(map[int]bool)
 
 	for _, cmd := range g.CurrentQuad.Enemies {
-		if cmd == nil || !cmd.IsCommander || cmd.Faction != FactionKlingon {
-			continue
-		}
-		if cmd.MaxEnergy > 0 && cmd.Energy <= 0 {
+		if cmd == nil || !cmd.IsCommander || cmd.Faction != FactionKlingon || cmd.Energy <= 0 {
 			continue
 		}
 
 		// Check if in direct horizontal or vertical line of fire with Enterprise
+		var targetCoord Coord
 		if cmd.Sector[0] == ent[0] { // Same row
 			startC, endC := ent[1], cmd.Sector[1]
 			if startC > endC {
 				startC, endC = endC, startC
 			}
-
-			// Find escort nearby that can step into (cmd.Sector[0], middle)
 			targetC := int(math.Round(float64(startC+endC) / 2.0))
-			targetCoord := Coord{cmd.Sector[0], targetC}
-
-			for _, raider := range g.CurrentQuad.Enemies {
-				if raider == nil || raider.IsCommander || raider.Faction != FactionKlingon || screenedRaiders[raider.ID] {
-					continue
-				}
-				if raider.MaxEnergy > 0 && raider.Energy <= 0 {
-					continue
-				}
-				if math.Abs(float64(raider.Sector[0]-targetCoord[0])) <= 1 &&
-					math.Abs(float64(raider.Sector[1]-targetCoord[1])) <= 1 &&
-					g.CurrentQuad.Grid[targetCoord[0]][targetCoord[1]] == EntityEmpty {
-
-					g.CurrentQuad.Grid[raider.Sector[0]][raider.Sector[1]] = EntityEmpty
-					g.CurrentQuad.Grid[targetCoord[0]][targetCoord[1]] = EntityKlingon
-					raider.Sector = targetCoord
-					screenedRaiders[raider.ID] = true
-
-					events = append(events, EventKlingonScreening{
-						RaiderID:    raider.ID,
-						CommanderID: cmd.ID,
-						Interposed:  targetCoord,
-					})
-					break
-				}
-			}
+			targetCoord = Coord{cmd.Sector[0], targetC}
 		} else if cmd.Sector[1] == ent[1] { // Same column
 			startR, endR := ent[0], cmd.Sector[0]
 			if startR > endR {
 				startR, endR = endR, startR
 			}
-
-			// Find escort nearby that can step into (middle, cmd.Sector[1])
 			targetR := int(math.Round(float64(startR+endR) / 2.0))
-			targetCoord := Coord{targetR, cmd.Sector[1]}
+			targetCoord = Coord{targetR, cmd.Sector[1]}
+		} else {
+			continue
+		}
 
-			for _, raider := range g.CurrentQuad.Enemies {
-				if raider == nil || raider.IsCommander || raider.Faction != FactionKlingon || screenedRaiders[raider.ID] {
-					continue
-				}
-				if raider.MaxEnergy > 0 && raider.Energy <= 0 {
-					continue
-				}
-				if math.Abs(float64(raider.Sector[0]-targetCoord[0])) <= 1 &&
-					math.Abs(float64(raider.Sector[1]-targetCoord[1])) <= 1 &&
-					g.CurrentQuad.Grid[targetCoord[0]][targetCoord[1]] == EntityEmpty {
+		// Unified raider search and interposition
+		for _, raider := range g.CurrentQuad.Enemies {
+			if raider == nil || raider.IsCommander || raider.Faction != FactionKlingon || raider.Energy <= 0 || screenedRaiders[raider.ID] {
+				continue
+			}
+			if math.Abs(float64(raider.Sector[0]-targetCoord[0])) <= 1 &&
+				math.Abs(float64(raider.Sector[1]-targetCoord[1])) <= 1 &&
+				g.CurrentQuad.Grid[targetCoord[0]][targetCoord[1]] == EntityEmpty {
 
-					g.CurrentQuad.Grid[raider.Sector[0]][raider.Sector[1]] = EntityEmpty
-					g.CurrentQuad.Grid[targetCoord[0]][targetCoord[1]] = EntityKlingon
-					raider.Sector = targetCoord
-					screenedRaiders[raider.ID] = true
+				g.CurrentQuad.Grid[raider.Sector[0]][raider.Sector[1]] = EntityEmpty
+				g.CurrentQuad.Grid[targetCoord[0]][targetCoord[1]] = EntityKlingon
+				raider.Sector = targetCoord
+				screenedRaiders[raider.ID] = true
 
-					events = append(events, EventKlingonScreening{
-						RaiderID:    raider.ID,
-						CommanderID: cmd.ID,
-						Interposed:  targetCoord,
-					})
-					break
-				}
+				events = append(events, EventKlingonScreening{
+					RaiderID:    raider.ID,
+					CommanderID: cmd.ID,
+					Interposed:  targetCoord,
+				})
+				break
 			}
 		}
 	}

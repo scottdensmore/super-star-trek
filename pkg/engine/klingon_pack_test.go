@@ -27,6 +27,7 @@ func TestKlingonPack_CrossfireBracketDetection(t *testing.T) {
 func TestKlingonPack_CommanderScreeningInterposition(t *testing.T) {
 	g := NewGameWithSeed(888)
 	g.Enterprise.Sector = Coord{4, 1}
+	g.CurrentQuad.Grid[4][1] = EntityEnterprise
 
 	// Commander at (4, 6) in direct row line-of-fire
 	commander := &EnemyVessel{
