@@ -212,17 +212,54 @@ func parseTorpedo(args []string) ParsedCommand {
 }
 
 func parsePhasers(args []string) ParsedCommand {
-	if len(args) != 1 {
-		return ParsedCommand{Error: errors.New("usage: pha <energy>")}
+	if len(args) == 1 {
+		energy, err := strconv.ParseFloat(args[0], 64)
+		if err != nil {
+			return ParsedCommand{Error: fmt.Errorf("invalid phaser energy: %s", args[0])}
+		}
+		if energy <= 0 {
+			return ParsedCommand{Error: errors.New("phaser energy must be positive")}
+		}
+		return ParsedCommand{Action: engine.ActionFirePhasers{Energy: energy}}
 	}
-	energy, err := strconv.ParseFloat(args[0], 64)
-	if err != nil {
-		return ParsedCommand{Error: fmt.Errorf("invalid phaser energy: %s", args[0])}
+
+	if len(args) == 2 {
+		energy, err := strconv.ParseFloat(args[0], 64)
+		if err != nil {
+			return ParsedCommand{Error: fmt.Errorf("invalid phaser energy: %s", args[0])}
+		}
+		if energy <= 0 {
+			return ParsedCommand{Error: errors.New("phaser energy must be positive")}
+		}
+		parts := strings.Split(args[1], ",")
+		if len(parts) == 2 {
+			r, err1 := strconv.Atoi(strings.TrimSpace(parts[0]))
+			c, err2 := strconv.Atoi(strings.TrimSpace(parts[1]))
+			if err1 != nil || err2 != nil || r < 1 || r > 8 || c < 1 || c > 8 {
+				return ParsedCommand{Error: errors.New("phaser target sector coordinates must be between 1 and 8")}
+			}
+			return ParsedCommand{Action: engine.ActionPhaserDirect{Energy: energy, TargetSector: engine.Coord{r, c}}}
+		}
+		return ParsedCommand{Error: errors.New("usage: pha <energy> or pha <energy> <row> <col>")}
 	}
-	if energy <= 0 {
-		return ParsedCommand{Error: errors.New("phaser energy must be positive")}
+
+	if len(args) == 3 {
+		energy, err := strconv.ParseFloat(args[0], 64)
+		if err != nil {
+			return ParsedCommand{Error: fmt.Errorf("invalid phaser energy: %s", args[0])}
+		}
+		if energy <= 0 {
+			return ParsedCommand{Error: errors.New("phaser energy must be positive")}
+		}
+		r, err1 := strconv.Atoi(args[1])
+		c, err2 := strconv.Atoi(args[2])
+		if err1 != nil || err2 != nil || r < 1 || r > 8 || c < 1 || c > 8 {
+			return ParsedCommand{Error: errors.New("phaser target sector coordinates must be between 1 and 8")}
+		}
+		return ParsedCommand{Action: engine.ActionPhaserDirect{Energy: energy, TargetSector: engine.Coord{r, c}}}
 	}
-	return ParsedCommand{Action: engine.ActionFirePhasers{Energy: energy}}
+
+	return ParsedCommand{Error: errors.New("usage: pha <energy> or pha <energy> <row> <col>")}
 }
 
 func parseShields(args []string) ParsedCommand {

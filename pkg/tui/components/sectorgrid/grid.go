@@ -82,6 +82,17 @@ func (m Model) HitTest(relX, relY int) (engine.Coord, bool) {
 	return engine.Coord{r, c}, true
 }
 
+// ViewWithGame renders the 8x8 sector grid for the provided game state.
+func (m Model) ViewWithGame(g *engine.GameState) string {
+	var quad *engine.QuadrantState
+	var entSector engine.Coord
+	if g != nil {
+		quad = &g.CurrentQuad
+		entSector = g.Enterprise.Sector
+	}
+	return m.View(quad, entSector, engine.Coord{})
+}
+
 // View renders the 8x8 sector grid for the current quadrant, Enterprise position, and selected reticle cell.
 func (m Model) View(quad *engine.QuadrantState, entSector engine.Coord, selected engine.Coord) string {
 	th := m.theme
@@ -122,6 +133,14 @@ func (m Model) View(quad *engine.QuadrantState, entSector engine.Coord, selected
 						break
 					}
 				}
+				if !isCloaked {
+					for _, e := range quad.Enemies {
+						if e != nil && e.Sector[0] == r && e.Sector[1] == c && e.IsCloaked {
+							isCloaked = true
+							break
+						}
+					}
+				}
 			}
 			isSelected := selected[0] == r && selected[1] == c
 			b.WriteString(entityGlyph(ent, styles, isSelected, isCloaked))
@@ -149,6 +168,14 @@ func entityGlyph(ent engine.EntityType, styles theme.Styles, selected bool, cloa
 			return styles.Enterprise.Reverse(true).Render("[E]")
 		case engine.EntityKlingon, engine.EntityCommander, engine.EntitySuperCommander:
 			return styles.Klingon.Reverse(true).Render("[K]")
+		case engine.EntityRomulan:
+			return styles.Romulan.Reverse(true).Render("[R]")
+		case engine.EntityTholian:
+			return styles.Tholian.Reverse(true).Render("[T]")
+		case engine.EntityPlasmaTorpedo:
+			return styles.PlasmaTorpedo.Reverse(true).Render("[P]")
+		case engine.EntityTholianWeb:
+			return styles.TholianWeb.Reverse(true).Render("[:]")
 		case engine.EntityStarbase:
 			return styles.Starbase.Reverse(true).Render("[B]")
 		case engine.EntityStar:
@@ -171,6 +198,14 @@ func entityGlyph(ent engine.EntityType, styles theme.Styles, selected bool, cloa
 		return styles.Enterprise.Render("<E>")
 	case engine.EntityKlingon, engine.EntityCommander, engine.EntitySuperCommander:
 		return styles.Klingon.Render("+K+")
+	case engine.EntityRomulan:
+		return styles.Romulan.Render("+R+")
+	case engine.EntityTholian:
+		return styles.Tholian.Render("<T>")
+	case engine.EntityPlasmaTorpedo:
+		return styles.PlasmaTorpedo.Render("*P*")
+	case engine.EntityTholianWeb:
+		return styles.TholianWeb.Render(":::")
 	case engine.EntityStarbase:
 		return styles.Starbase.Render(">B<")
 	case engine.EntityStar:
@@ -201,6 +236,14 @@ func RenderCell(r, c int, quad *engine.QuadrantState, selected bool) string {
 			if k != nil && k.Sector[0] == r && k.Sector[1] == c && k.IsCloaked {
 				isCloaked = true
 				break
+			}
+		}
+		if !isCloaked {
+			for _, e := range quad.Enemies {
+				if e != nil && e.Sector[0] == r && e.Sector[1] == c && e.IsCloaked {
+					isCloaked = true
+					break
+				}
 			}
 		}
 	}

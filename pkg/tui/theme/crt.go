@@ -27,6 +27,13 @@ func (t CrtTheme) Next() Theme {
 	return ModernTheme{mode: t.ColorMode()}
 }
 
+func (t CrtTheme) Romulan() lipgloss.Style       { return t.Styles().Romulan }
+func (t CrtTheme) Tholian() lipgloss.Style       { return t.Styles().Tholian }
+func (t CrtTheme) PlasmaTorpedo() lipgloss.Style { return t.Styles().PlasmaTorpedo }
+func (t CrtTheme) TholianWeb() lipgloss.Style    { return t.Styles().TholianWeb }
+func (t CrtTheme) AlertRed() lipgloss.Style      { return t.Styles().AlertRed }
+func (t CrtTheme) AlertYellow() lipgloss.Style   { return t.Styles().AlertYellow }
+
 func (t CrtTheme) Styles() Styles {
 	switch t.ColorMode() {
 	case ColorModeDark:
@@ -79,6 +86,22 @@ func (t CrtTheme) PaletteStyles(isDark bool) Styles {
 				Bold(true).
 				Foreground(lipgloss.Color("#33FF33")),
 
+			Romulan: lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("#33FF33")),
+
+			Tholian: lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("#FFB000")),
+
+			PlasmaTorpedo: lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("#33FF33")),
+
+			TholianWeb: lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("#66FF66")),
+
 			Starbase: lipgloss.NewStyle().
 				Bold(true).
 				Foreground(lipgloss.Color("#33FF33")),
@@ -117,6 +140,16 @@ func (t CrtTheme) PaletteStyles(isDark bool) Styles {
 				Bold(true).
 				Foreground(lipgloss.Color("#33FF33")).
 				Italic(true),
+
+			AlertRed: lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("#050B05")).
+				Background(lipgloss.Color("#33FF33")),
+
+			AlertYellow: lipgloss.NewStyle().
+				Bold(true).
+				Foreground(lipgloss.Color("#33FF33")).
+				Underline(true),
 
 			ProgressBarFilled: lipgloss.NewStyle().
 				Foreground(lipgloss.Color("#33FF33")),
@@ -188,6 +221,22 @@ func (t CrtTheme) PaletteStyles(isDark bool) Styles {
 			Bold(true).
 			Foreground(lipgloss.Color("#14532D")),
 
+		Romulan: lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#14532D")),
+
+		Tholian: lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#854D0E")),
+
+		PlasmaTorpedo: lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#14532D")),
+
+		TholianWeb: lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#15803D")),
+
 		Starbase: lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color("#14532D")),
@@ -226,6 +275,16 @@ func (t CrtTheme) PaletteStyles(isDark bool) Styles {
 			Bold(true).
 			Foreground(lipgloss.Color("#14532D")).
 			Italic(true),
+
+		AlertRed: lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#F0FDF4")).
+			Background(lipgloss.Color("#14532D")),
+
+		AlertYellow: lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#14532D")).
+			Underline(true),
 
 		ProgressBarFilled: lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#14532D")),

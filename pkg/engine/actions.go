@@ -294,6 +294,82 @@ func (a ActionFireTorpedo) Execute(g *GameState) ([]Event, error) {
 		}
 		g.Metrics.StarbasesDestroyed++
 
+	case EntityRomulan, EntityTholian:
+		var targetEnemy *EnemyVessel
+		var targetIndex = -1
+		for i, e := range g.CurrentQuad.Enemies {
+			if e != nil && e.Sector == hitCoord {
+				targetEnemy = e
+				targetIndex = i
+				break
+			}
+		}
+
+		if targetEnemy != nil {
+			if targetEnemy.IsCloaked {
+				targetEnemy.IsCloaked = false
+				events = append(events, EventRomulanDecloak{Sector: hitCoord})
+			}
+			if g.QuadrantEnv[g.Enterprise.Quad[0]][g.Enterprise.Quad[1]] == EnvNebula {
+				targetEnemy.Shields = 0
+			}
+			effectiveDamage := damage
+			if targetEnemy.Shields > 0 {
+				if targetEnemy.Shields >= damage {
+					targetEnemy.Shields -= damage
+					effectiveDamage = 0
+				} else {
+					effectiveDamage = damage - targetEnemy.Shields
+					targetEnemy.Shields = 0
+				}
+			}
+			if effectiveDamage >= targetEnemy.Energy {
+				destroyed = true
+				damage = targetEnemy.Energy
+				targetEnemy.Energy = 0
+				g.CurrentQuad.Enemies = append(g.CurrentQuad.Enemies[:targetIndex], g.CurrentQuad.Enemies[targetIndex+1:]...)
+			} else {
+				targetEnemy.Energy -= effectiveDamage
+			}
+		} else {
+			destroyed = true
+		}
+
+		if destroyed {
+			g.CurrentQuad.Grid[hitCoord[0]][hitCoord[1]] = EntityEmpty
+			if targetEnemy != nil && targetEnemy.Faction == FactionRomulan {
+				g.Metrics.RomulansKilled++
+			}
+			SyncQuadrantEnemies(&g.CurrentQuad)
+			if g.RemainingKlingons > 0 {
+				g.RemainingKlingons--
+			}
+			g.KlingonsRemaining = g.RemainingKlingons
+			qr, qc := g.Enterprise.Quad[0], g.Enterprise.Quad[1]
+			if qr >= 1 && qr <= 8 && qc >= 1 && qc <= 8 && g.GalaxyChart[qr][qc] >= 100 {
+				g.GalaxyChart[qr][qc] -= 100
+			}
+		}
+
+	case EntityPlasmaTorpedo:
+		intercepted, intEvents := InterceptPlasmaTorpedo(g, hitCoord, math.Max(damage, 1000.0))
+		if intercepted {
+			destroyed = true
+			events = append(events, intEvents...)
+			g.Metrics.RomulansSurrendered++
+		} else {
+			destroyed = false
+		}
+
+	case EntityTholianWeb:
+		breached, breachEvents := DamageWebSegment(g, hitCoord, damage)
+		if breached {
+			destroyed = true
+			events = append(events, breachEvents...)
+		} else {
+			destroyed = false
+		}
+
 	case EntityPlanet:
 		damage = 0
 		destroyed = false

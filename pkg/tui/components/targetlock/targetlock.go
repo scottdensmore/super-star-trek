@@ -21,6 +21,8 @@ type TargetInfo struct {
 	Bearing        float64
 	HitProbability float64
 	Power          float64
+	Name           string
+	Type           engine.EntityType
 }
 
 // FireTorpedoMsg is emitted when firing a torpedo at the locked target.
@@ -116,6 +118,163 @@ func (m *Model) SetState(
 			Bearing:        bearing,
 			HitProbability: hitProb,
 			Power:          k.Energy,
+		})
+	}
+
+	// Sort targets ascending by Distance, tie-breaking by KlingonID
+	sort.Slice(m.targets, func(i, j int) bool {
+		if math.Abs(m.targets[i].Distance-m.targets[j].Distance) > 1e-6 {
+			return m.targets[i].Distance < m.targets[j].Distance
+		}
+		return m.targets[i].KlingonID < m.targets[j].KlingonID
+	})
+
+	m.targetIdx = 0
+	if initialTarget != (engine.Coord{}) {
+		for i, t := range m.targets {
+			if t.Coord == initialTarget {
+				m.targetIdx = i
+				break
+			}
+		}
+	}
+}
+
+// SetStateFromGame updates ship status and populates telemetry for hostile targets,
+// projectiles, and web segments from the provided GameState.
+func (m *Model) SetStateFromGame(g *engine.GameState, initialTarget engine.Coord) {
+	if g == nil {
+		return
+	}
+	m.entSector = g.Enterprise.Sector
+	m.entEnergy = g.Enterprise.Energy
+	m.torpedoCount = g.Enterprise.Torpedoes
+	m.inputtingPhaser = false
+	m.phaserInput = ""
+	m.warningMessage = ""
+	m.targets = nil
+
+	// 1. Adversary vessels / Klingons
+	if len(g.CurrentQuad.Enemies) > 0 {
+		for _, e := range g.CurrentQuad.Enemies {
+			if e == nil || e.Energy <= 0 || e.IsCloaked {
+				continue
+			}
+			dist := engine.Distance(m.entSector, e.Sector)
+			rad := engine.Bearing(m.entSector, e.Sector)
+			bearing := 1.0 + rad*4.0/math.Pi
+			if bearing >= 9.0 {
+				bearing -= 8.0
+			}
+			if bearing < 1.0 {
+				bearing += 8.0
+			}
+			hitProb := math.Max(0.10, math.Min(0.95, 1.0-dist/15.0))
+			var name string
+			switch e.Faction {
+			case engine.FactionRomulan:
+				name = fmt.Sprintf("ROMULAN RAIDER #%d", e.ID)
+			case engine.FactionTholian:
+				name = fmt.Sprintf("THOLIAN SPINNER #%d", e.ID)
+			default:
+				if e.IsCommander {
+					name = fmt.Sprintf("KLINGON COMMANDER #%d", e.ID)
+				} else {
+					name = fmt.Sprintf("KLINGON BATTLECRUISER #%d", e.ID)
+				}
+			}
+			m.targets = append(m.targets, TargetInfo{
+				KlingonID:      e.ID,
+				Coord:          e.Sector,
+				Distance:       dist,
+				Bearing:        bearing,
+				HitProbability: hitProb,
+				Power:          e.Energy,
+				Name:           name,
+			})
+		}
+	} else {
+		for _, k := range g.CurrentQuad.Klingons {
+			if k == nil || k.Energy <= 0 || k.IsCloaked {
+				continue
+			}
+			dist := engine.Distance(m.entSector, k.Sector)
+			rad := engine.Bearing(m.entSector, k.Sector)
+			bearing := 1.0 + rad*4.0/math.Pi
+			if bearing >= 9.0 {
+				bearing -= 8.0
+			}
+			if bearing < 1.0 {
+				bearing += 8.0
+			}
+			hitProb := math.Max(0.10, math.Min(0.95, 1.0-dist/15.0))
+			name := fmt.Sprintf("KLINGON BATTLECRUISER #%d", k.ID)
+			if k.IsCommander {
+				name = fmt.Sprintf("KLINGON COMMANDER #%d", k.ID)
+			}
+			m.targets = append(m.targets, TargetInfo{
+				KlingonID:      k.ID,
+				Coord:          k.Sector,
+				Distance:       dist,
+				Bearing:        bearing,
+				HitProbability: hitProb,
+				Power:          k.Energy,
+				Name:           name,
+			})
+		}
+	}
+
+	// 2. In-flight Plasma Torpedoes
+	for _, pt := range g.CurrentQuad.PlasmaTorpedoes {
+		if pt == nil || pt.Energy <= 0 {
+			continue
+		}
+		dist := engine.Distance(m.entSector, pt.Sector)
+		rad := engine.Bearing(m.entSector, pt.Sector)
+		bearing := 1.0 + rad*4.0/math.Pi
+		if bearing >= 9.0 {
+			bearing -= 8.0
+		}
+		if bearing < 1.0 {
+			bearing += 8.0
+		}
+		hitProb := math.Max(0.10, math.Min(0.95, 1.0-dist/15.0))
+		m.targets = append(m.targets, TargetInfo{
+			KlingonID:      pt.ID,
+			Coord:          pt.Sector,
+			Distance:       dist,
+			Bearing:        bearing,
+			HitProbability: hitProb,
+			Power:          pt.Energy,
+			Name:           fmt.Sprintf("INCOMING PLASMA TORPEDO #%d", pt.ID),
+			Type:           engine.EntityPlasmaTorpedo,
+		})
+	}
+
+	// 3. Web Segments
+	for i, ws := range g.CurrentQuad.WebSegments {
+		if ws == nil || ws.Strength <= 0 {
+			continue
+		}
+		dist := engine.Distance(m.entSector, ws.Coord)
+		rad := engine.Bearing(m.entSector, ws.Coord)
+		bearing := 1.0 + rad*4.0/math.Pi
+		if bearing >= 9.0 {
+			bearing -= 8.0
+		}
+		if bearing < 1.0 {
+			bearing += 8.0
+		}
+		hitProb := math.Max(0.10, math.Min(0.95, 1.0-dist/15.0))
+		m.targets = append(m.targets, TargetInfo{
+			KlingonID:      10000 + i,
+			Coord:          ws.Coord,
+			Distance:       dist,
+			Bearing:        bearing,
+			HitProbability: hitProb,
+			Power:          ws.Strength,
+			Name:           fmt.Sprintf("THOLIAN WEB FILAMENT [%d,%d]", ws.Coord[0], ws.Coord[1]),
+			Type:           engine.EntityTholianWeb,
 		})
 	}
 
@@ -304,7 +463,11 @@ func (m Model) View() string {
 	// Line 2: Target Identifier
 	var line2 string
 	if target != nil {
-		line2 = styles.Klingon.Render(fmt.Sprintf("Target: KLINGON BATTLECRUISER #%d", target.KlingonID))
+		if target.Name != "" {
+			line2 = styles.Klingon.Render(fmt.Sprintf("Target: %s", target.Name))
+		} else {
+			line2 = styles.Klingon.Render(fmt.Sprintf("Target: KLINGON BATTLECRUISER #%d", target.KlingonID))
+		}
 	} else {
 		line2 = styles.GaugeLabel.Render("Target: NO HOSTILE VESSELS DETECTED")
 	}

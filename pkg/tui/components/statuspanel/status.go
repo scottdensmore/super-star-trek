@@ -21,6 +21,7 @@ type PanelData struct {
 	Stardate      float64
 	Rules         engine.GameRules
 	SoundEnabled  bool
+	HazardAlerts  []string
 }
 
 // SamplePanelData returns a default populated PanelData for testing and preview rendering.
@@ -41,6 +42,7 @@ func SamplePanelData() PanelData {
 		Stardate:      2800.0,
 		Rules:         engine.DefaultRulesForProfile(engine.ProfileNormal),
 		SoundEnabled:  true,
+		HazardAlerts:  nil,
 	}
 }
 
@@ -58,6 +60,7 @@ type Model struct {
 	hasState      bool
 	redAlertCycle int
 	soundEnabled  bool
+	hazardAlerts  []string
 }
 
 // SoundEnabled reports whether sound FX telemetry is enabled.
@@ -73,6 +76,11 @@ func (m *Model) SetSoundEnabled(enabled bool) {
 // SetRedAlertCycle updates the active cycle index for Condition Red klaxon pulse oscillation.
 func (m *Model) SetRedAlertCycle(cycle int) {
 	m.redAlertCycle = cycle
+}
+
+// SetHazardAlerts sets the active tactical hazard alert lines.
+func (m *Model) SetHazardAlerts(alerts []string) {
+	m.hazardAlerts = alerts
 }
 
 type panelStyles struct {
@@ -257,6 +265,7 @@ func (m Model) Render(data PanelData) string {
 	m.stardate = data.Stardate
 	m.rules = data.Rules
 	m.soundEnabled = data.SoundEnabled
+	m.hazardAlerts = data.HazardAlerts
 	if m.rules.Profile == "" && !m.rules.SensorDegradation {
 		m.rules = engine.DefaultRulesForProfile(engine.ProfileNormal)
 	}
@@ -269,6 +278,21 @@ func (m Model) Render(data PanelData) string {
 func (m Model) View(gs ...*engine.GameState) string {
 	if len(gs) > 0 && gs[0] != nil {
 		g := gs[0]
+		th := m.theme
+		if th == nil {
+			th = theme.DefaultTheme()
+		}
+		var alerts []string
+		if len(g.CurrentQuad.PlasmaTorpedoes) > 0 {
+			alerts = append(alerts, th.AlertRed().Render("⚠️ INCOMING PLASMA TORPEDO TRACKING"))
+		}
+		if count := len(g.CurrentQuad.WebSegments); count > 0 {
+			containment := engine.CalculateWebContainment(g)
+			alerts = append(alerts, th.AlertYellow().Render(fmt.Sprintf("⚠️ THOLIAN WEB ENCLOSURE: %.0f%%", containment)))
+		}
+		if engine.DetectCrossfireBracket(g) {
+			alerts = append(alerts, th.AlertRed().Render("⚠️ CROSSFIRE BRACKET ACTIVE (+35% DMG)"))
+		}
 		return m.Render(PanelData{
 			Enterprise:    g.Enterprise,
 			Devices:       g.Enterprise.Devices,
@@ -278,6 +302,7 @@ func (m Model) View(gs ...*engine.GameState) string {
 			Stardate:      g.Stardate,
 			Rules:         g.Rules,
 			SoundEnabled:  m.soundEnabled,
+			HazardAlerts:  alerts,
 		})
 	}
 	if !m.hasState {
@@ -389,6 +414,10 @@ func (m Model) render() string {
 	for _, radarRow := range radarRows {
 		b.WriteByte('\n')
 		b.WriteString(radarRow)
+	}
+	for _, alert := range m.hazardAlerts {
+		b.WriteByte('\n')
+		b.WriteString(alert)
 	}
 
 	return styles.Panel.Render(b.String())

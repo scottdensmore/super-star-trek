@@ -148,8 +148,15 @@ func (m Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var pulseCmd tea.Cmd
 		if m.Game != nil {
 			prevCond := m.Game.Enterprise.Condition
-			action := engine.ActionFirePhasers{
+			var action engine.Action = engine.ActionFirePhasers{
 				Energy: msg.Energy,
+			}
+			curTarget := m.TargetLock.CurrentTarget()
+			if curTarget != nil && (curTarget.Type == engine.EntityPlasmaTorpedo || curTarget.Type == engine.EntityTholianWeb) {
+				action = engine.ActionPhaserDirect{
+					Energy:       msg.Energy,
+					TargetSector: curTarget.Coord,
+				}
 			}
 			events, err := m.Game.Dispatch(action)
 			if err != nil {
@@ -521,17 +528,11 @@ func (m Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case strings.TrimSpace(m.CommandBar.Value()) == "":
 			switch {
 			case msg.String() == "t" || msg.String() == "T":
-				if m.Game == nil || len(m.Game.CurrentQuad.Klingons) == 0 {
+				if m.Game == nil || (len(m.Game.CurrentQuad.Klingons) == 0 && len(m.Game.CurrentQuad.Enemies) == 0 && len(m.Game.CurrentQuad.PlasmaTorpedoes) == 0 && len(m.Game.CurrentQuad.WebSegments) == 0) {
 					m.CommandBar.AddMessage("Sensors detect no hostile targets in sector.")
 					return m, nil
 				}
-				m.TargetLock.SetState(
-					m.Game.Enterprise.Sector,
-					m.Game.Enterprise.Energy,
-					m.Game.Enterprise.Torpedoes,
-					m.Game.CurrentQuad.Klingons,
-					engine.Coord{},
-				)
+				m.TargetLock.SetStateFromGame(m.Game, engine.Coord{})
 				m.ActiveModal = ModalTargetLock
 				m.CommandBar.Blur()
 				return m, nil
@@ -724,30 +725,48 @@ func (m Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.LastClickTime = now
 		m.LastClickCoord = coord
 
-		isKlingon := false
+		isTargetable := false
 		if m.Game != nil {
 			for _, k := range m.Game.CurrentQuad.Klingons {
-				if k != nil && k.Sector == coord {
-					isKlingon = true
+				if k != nil && k.Sector == coord && !k.IsCloaked {
+					isTargetable = true
 					break
 				}
 			}
-			if !isKlingon && coord[0] >= 1 && coord[0] <= 8 && coord[1] >= 1 && coord[1] <= 8 {
+			if !isTargetable {
+				for _, e := range m.Game.CurrentQuad.Enemies {
+					if e != nil && e.Sector == coord && !e.IsCloaked {
+						isTargetable = true
+						break
+					}
+				}
+			}
+			if !isTargetable {
+				for _, pt := range m.Game.CurrentQuad.PlasmaTorpedoes {
+					if pt != nil && pt.Sector == coord {
+						isTargetable = true
+						break
+					}
+				}
+			}
+			if !isTargetable {
+				for _, ws := range m.Game.CurrentQuad.WebSegments {
+					if ws != nil && ws.Coord == coord {
+						isTargetable = true
+						break
+					}
+				}
+			}
+			if !isTargetable && coord[0] >= 1 && coord[0] <= 8 && coord[1] >= 1 && coord[1] <= 8 {
 				gridEnt := m.Game.CurrentQuad.Grid[coord[0]][coord[1]]
-				if gridEnt == engine.EntityKlingon || gridEnt == engine.EntityCommander || gridEnt == engine.EntitySuperCommander {
-					isKlingon = true
+				if gridEnt == engine.EntityKlingon || gridEnt == engine.EntityCommander || gridEnt == engine.EntitySuperCommander || gridEnt == engine.EntityRomulan || gridEnt == engine.EntityTholian || gridEnt == engine.EntityPlasmaTorpedo || gridEnt == engine.EntityTholianWeb {
+					isTargetable = true
 				}
 			}
 		}
 
-		if isKlingon {
-			m.TargetLock.SetState(
-				m.Game.Enterprise.Sector,
-				m.Game.Enterprise.Energy,
-				m.Game.Enterprise.Torpedoes,
-				m.Game.CurrentQuad.Klingons,
-				coord,
-			)
+		if isTargetable {
+			m.TargetLock.SetStateFromGame(m.Game, coord)
 			m.ActiveModal = ModalTargetLock
 			m.CommandBar.Blur()
 			return m, nil
@@ -1048,17 +1067,11 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 
 	switch trimmed {
 	case "target":
-		if m.Game == nil || len(m.Game.CurrentQuad.Klingons) == 0 {
+		if m.Game == nil || (len(m.Game.CurrentQuad.Klingons) == 0 && len(m.Game.CurrentQuad.Enemies) == 0 && len(m.Game.CurrentQuad.PlasmaTorpedoes) == 0 && len(m.Game.CurrentQuad.WebSegments) == 0) {
 			m.CommandBar.AddMessage("Sensors detect no hostile targets in sector.")
 			return m, nil
 		}
-		m.TargetLock.SetState(
-			m.Game.Enterprise.Sector,
-			m.Game.Enterprise.Energy,
-			m.Game.Enterprise.Torpedoes,
-			m.Game.CurrentQuad.Klingons,
-			engine.Coord{},
-		)
+		m.TargetLock.SetStateFromGame(m.Game, engine.Coord{})
 		m.ActiveModal = ModalTargetLock
 		m.CommandBar.Blur()
 		return m, nil
@@ -1557,6 +1570,10 @@ func (m Model) createCombatAnimation(action engine.Action, events []engine.Event
 			return nil
 		}
 		return anim.NewMultiPhaserAnimation(start, targets, hits, m.Game.Rules.AnimSpeed)
+
+	case engine.ActionPhaserDirect:
+		start := m.Game.Enterprise.Sector
+		return anim.NewMultiPhaserAnimation(start, []engine.Coord{act.TargetSector}, []bool{true}, m.Game.Rules.AnimSpeed)
 	}
 	return nil
 }
@@ -1593,7 +1610,7 @@ func (m *Model) executeKlingonTurnIfActive(action engine.Action, events *[]engin
 	}
 	shouldAttack := false
 	switch act := action.(type) {
-	case engine.ActionFireTorpedo, engine.ActionTorpedoDirect, engine.ActionFirePhasers, engine.ActionShields:
+	case engine.ActionFireTorpedo, engine.ActionTorpedoDirect, engine.ActionFirePhasers, engine.ActionPhaserDirect, engine.ActionShields:
 		shouldAttack = true
 	case engine.ActionMove:
 		// Sector movement within quadrant triggers return fire; inter-quadrant warp does not
@@ -1608,9 +1625,14 @@ func (m *Model) executeKlingonTurnIfActive(action engine.Action, events *[]engin
 			shouldAttack = true
 		}
 	}
-	if shouldAttack && len(m.Game.CurrentQuad.Klingons) > 0 && m.Game.Enterprise.Condition != engine.ConditionDocked {
-		kEvents := engine.KlingonTurn(m.Game)
-		*events = append(*events, kEvents...)
+	if shouldAttack && m.Game.Enterprise.Condition != engine.ConditionDocked {
+		if len(m.Game.CurrentQuad.Enemies) > 0 || m.Game.Rules.Adversaries || len(m.Game.CurrentQuad.PlasmaTorpedoes) > 0 || len(m.Game.CurrentQuad.WebSegments) > 0 {
+			kEvents := engine.UnifiedAdversaryTurn(m.Game)
+			*events = append(*events, kEvents...)
+		} else if len(m.Game.CurrentQuad.Klingons) > 0 {
+			kEvents := engine.KlingonTurn(m.Game)
+			*events = append(*events, kEvents...)
+		}
 	}
 }
 

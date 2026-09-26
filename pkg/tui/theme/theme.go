@@ -69,6 +69,13 @@ type Theme interface {
 	ColorMode() ColorMode
 	WithColorMode(mode ColorMode) Theme
 	Next() Theme
+
+	Romulan() lipgloss.Style
+	Tholian() lipgloss.Style
+	PlasmaTorpedo() lipgloss.Style
+	TholianWeb() lipgloss.Style
+	AlertRed() lipgloss.Style
+	AlertYellow() lipgloss.Style
 }
 
 // Styles holds Lip Gloss styles for dashboard panels, grid cells,
@@ -87,20 +94,26 @@ type Styles struct {
 	GridHeader lipgloss.Style
 
 	// Entity glyphs
-	Enterprise lipgloss.Style
-	Klingon    lipgloss.Style
-	Starbase   lipgloss.Style
-	Star       lipgloss.Style
-	Planet     lipgloss.Style
-	BlackHole  lipgloss.Style
-	Wormhole   lipgloss.Style
-	Empty      lipgloss.Style
+	Enterprise    lipgloss.Style
+	Klingon       lipgloss.Style
+	Romulan       lipgloss.Style
+	Tholian       lipgloss.Style
+	PlasmaTorpedo lipgloss.Style
+	TholianWeb    lipgloss.Style
+	Starbase      lipgloss.Style
+	Star          lipgloss.Style
+	Planet        lipgloss.Style
+	BlackHole     lipgloss.Style
+	Wormhole      lipgloss.Style
+	Empty         lipgloss.Style
 
 	// Condition alert badges
 	ConditionGreen  lipgloss.Style
 	ConditionYellow lipgloss.Style
 	ConditionRed    lipgloss.Style
 	ConditionDocked lipgloss.Style
+	AlertRed        lipgloss.Style
+	AlertYellow     lipgloss.Style
 
 	// Telemetry & Progress Bars
 	ProgressBarFilled lipgloss.Style
