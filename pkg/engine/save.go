@@ -59,6 +59,26 @@ func (g *GameState) Save(path string) error {
 	return os.WriteFile(path, data, 0644)
 }
 
+// SaveGame serializes the GameState wrapped in a SaveEnvelope to the specified path.
+func SaveGame(g *GameState, path string) error {
+	if g == nil {
+		return errors.New("cannot save nil game state")
+	}
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return errors.New("file path cannot be empty")
+	}
+	envelope := SaveEnvelope{
+		Version:   2,
+		GameState: g,
+	}
+	data, err := json.MarshalIndent(envelope, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to serialize game save: %w", err)
+	}
+	return os.WriteFile(path, data, 0644)
+}
+
 // LoadGame reads and unmarshals GameState from the specified file and reconstructs the PRNG.
 func LoadGame(path string) (*GameState, error) {
 	data, err := os.ReadFile(path)
@@ -76,6 +96,7 @@ func LoadGame(path string) (*GameState, error) {
 			state.Rules = DefaultRulesForProfile(ProfileNormal)
 		}
 		state.RNG = NewPRNG(int64(state.Stardate))
+		SyncQuadrantEnemies(&state.CurrentQuad)
 		return state, nil
 	}
 
@@ -87,6 +108,7 @@ func LoadGame(path string) (*GameState, error) {
 		state.Rules = DefaultRulesForProfile(ProfileNormal)
 	}
 	state.RNG = NewPRNG(int64(state.Stardate))
+	SyncQuadrantEnemies(&state.CurrentQuad)
 	return &state, nil
 }
 
@@ -182,6 +204,7 @@ func LoadTourGame(filename string) (*GameState, *TourState, error) {
 				legacy.Rules = DefaultRulesForProfile(ProfileNormal)
 			}
 			legacy.RNG = NewPRNG(int64(legacy.Stardate))
+			SyncQuadrantEnemies(&legacy.CurrentQuad)
 			return &legacy, nil, nil
 		}
 		return nil, nil, fmt.Errorf("invalid save file %s: neither game state nor tour state found", filename)
@@ -198,6 +221,7 @@ func LoadTourGame(filename string) (*GameState, *TourState, error) {
 		if envelope.GameState.RNG == nil {
 			envelope.GameState.RNG = NewPRNG(int64(envelope.GameState.Stardate))
 		}
+		SyncQuadrantEnemies(&envelope.GameState.CurrentQuad)
 	}
 	return envelope.GameState, envelope.TourState, nil
 }

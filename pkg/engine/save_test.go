@@ -545,3 +545,186 @@ func TestSaveAndLoadTourGame_Errors(t *testing.T) {
 	}
 }
 
+func TestSaveAndLoad_PreservesExpandedAdversariesAndHazards(t *testing.T) {
+	tmpDir := t.TempDir()
+	savePath := filepath.Join(tmpDir, "adversaries_save.json")
+
+	g := NewGameWithSeed(5555)
+	romulan := &EnemyVessel{
+		ID:         10,
+		Faction:    FactionRomulan,
+		Sector:     Coord{2, 3},
+		Energy:     1150.0,
+		Shields:    450.0,
+		IsCloaked:  true,
+		CloakTurns: 2,
+	}
+	plasma := &PlasmaTorpedo{
+		ID:            20,
+		SourceID:      10,
+		Sector:        Coord{3, 4},
+		Energy:        880.0,
+		TargetSector:  g.Enterprise.Sector,
+		TurnsInFlight: 1,
+	}
+	web := &TholianWebSegment{
+		Coord:    Coord{7, 7},
+		Strength: 180.0,
+	}
+
+	g.CurrentQuad.Enemies = []*EnemyVessel{romulan}
+	g.CurrentQuad.PlasmaTorpedoes = []*PlasmaTorpedo{plasma}
+	g.CurrentQuad.WebSegments = []*TholianWebSegment{web}
+	g.CurrentQuad.Grid[2][3] = EntityRomulan
+	g.CurrentQuad.Grid[3][4] = EntityPlasmaTorpedo
+	g.CurrentQuad.Grid[7][7] = EntityTholianWeb
+
+	if err := SaveGame(g, savePath); err != nil {
+		t.Fatalf("failed to save game with adversaries: %v", err)
+	}
+
+	loadedGame, err := LoadGame(savePath)
+	if err != nil {
+		t.Fatalf("failed to load game with adversaries: %v", err)
+	}
+
+	if len(loadedGame.CurrentQuad.Enemies) != 1 {
+		t.Fatalf("expected 1 enemy vessel, got %d", len(loadedGame.CurrentQuad.Enemies))
+	}
+	if loadedGame.CurrentQuad.Enemies[0].Faction != FactionRomulan || !loadedGame.CurrentQuad.Enemies[0].IsCloaked {
+		t.Errorf("mismatched enemy after load: %+v", loadedGame.CurrentQuad.Enemies[0])
+	}
+	if len(loadedGame.CurrentQuad.PlasmaTorpedoes) != 1 || loadedGame.CurrentQuad.PlasmaTorpedoes[0].Energy != 880.0 {
+		t.Errorf("mismatched plasma torpedo after load: %+v", loadedGame.CurrentQuad.PlasmaTorpedoes)
+	}
+	if len(loadedGame.CurrentQuad.WebSegments) != 1 || loadedGame.CurrentQuad.WebSegments[0].Strength != 180.0 {
+		t.Errorf("mismatched web segment after load: %+v", loadedGame.CurrentQuad.WebSegments)
+	}
+}
+
+func TestSaveAndLoad_SyncsKlingonsOnLoad(t *testing.T) {
+	tmpDir := t.TempDir()
+	savePath := filepath.Join(tmpDir, "klingon_sync.json")
+
+	g := NewGameWithSeed(6666)
+	klingon := &EnemyVessel{
+		ID:          1,
+		Faction:     FactionKlingon,
+		Sector:      Coord{3, 3},
+		Energy:      600.0,
+		Shields:     200.0,
+		IsCommander: true,
+	}
+	g.CurrentQuad.Enemies = []*EnemyVessel{klingon}
+	g.CurrentQuad.Grid[3][3] = EntityCommander
+
+	if err := SaveGame(g, savePath); err != nil {
+		t.Fatalf("failed to save game: %v", err)
+	}
+
+	loadedGame, err := LoadGame(savePath)
+	if err != nil {
+		t.Fatalf("failed to load game: %v", err)
+	}
+
+	if len(loadedGame.CurrentQuad.Enemies) != 1 {
+		t.Fatalf("expected 1 enemy, got %d", len(loadedGame.CurrentQuad.Enemies))
+	}
+	if len(loadedGame.CurrentQuad.Klingons) != 1 {
+		t.Fatalf("expected 1 legacy Klingon synced, got %d", len(loadedGame.CurrentQuad.Klingons))
+	}
+	k := loadedGame.CurrentQuad.Klingons[0]
+	if k.ID != 1 || k.Sector != (Coord{3, 3}) || k.Energy != 600.0 || !k.IsCommander {
+		t.Errorf("mismatched synced legacy Klingon: %+v", k)
+	}
+}
+
+func TestSaveAndLoad_BackwardCompatibility_MissingAdversaryFields(t *testing.T) {
+	tmpDir := t.TempDir()
+	legacyPath := filepath.Join(tmpDir, "OLD_FORMAT.TRK")
+
+	// Raw JSON mimicking an old save file with no enemies, plasma_torpedoes, or web_segments
+	rawJSON := `{
+		"Enterprise": {
+			"Energy": 4500.0,
+			"Shields": 250.0,
+			"Torpedoes": 8,
+			"Condition": 1
+		},
+		"CurrentQuad": {
+			"grid": [[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]]
+		},
+		"Stardate": 2500.0,
+		"TimeRemaining": 20.0,
+		"RemainingKlingons": 5
+	}`
+	if err := os.WriteFile(legacyPath, []byte(rawJSON), 0644); err != nil {
+		t.Fatalf("failed to write legacy save file: %v", err)
+	}
+
+	loadedGame, err := LoadGame(legacyPath)
+	if err != nil {
+		t.Fatalf("expected legacy save to load cleanly without error: %v", err)
+	}
+	if loadedGame.Enterprise.Energy != 4500.0 {
+		t.Errorf("expected loaded energy 4500.0, got %f", loadedGame.Enterprise.Energy)
+	}
+	if len(loadedGame.CurrentQuad.Enemies) != 0 {
+		t.Errorf("expected 0 enemies from legacy save, got %d", len(loadedGame.CurrentQuad.Enemies))
+	}
+	if len(loadedGame.CurrentQuad.PlasmaTorpedoes) != 0 {
+		t.Errorf("expected 0 plasma torpedoes from legacy save, got %d", len(loadedGame.CurrentQuad.PlasmaTorpedoes))
+	}
+	if len(loadedGame.CurrentQuad.WebSegments) != 0 {
+		t.Errorf("expected 0 web segments from legacy save, got %d", len(loadedGame.CurrentQuad.WebSegments))
+	}
+	if len(loadedGame.CurrentQuad.Klingons) != 0 {
+		t.Errorf("expected 0 legacy klingons, got %d", len(loadedGame.CurrentQuad.Klingons))
+	}
+}
+
+func TestSaveAndLoadTourGame_PreservesExpandedAdversaries(t *testing.T) {
+	tmpDir := t.TempDir()
+	savePath := filepath.Join(tmpDir, "tour_adv.json")
+
+	tour := NewTour(7777)
+	g := tour.StartCurrentSector()
+
+	tholian := &EnemyVessel{
+		ID:           30,
+		Faction:      FactionTholian,
+		Sector:       Coord{1, 1},
+		Energy:       800.0,
+		SpecialState: 0,
+	}
+	web := &TholianWebSegment{
+		Coord:    Coord{1, 2},
+		Strength: 250.0,
+	}
+	g.CurrentQuad.Enemies = []*EnemyVessel{tholian}
+	g.CurrentQuad.WebSegments = []*TholianWebSegment{web}
+	g.CurrentQuad.Grid[1][1] = EntityTholian
+	g.CurrentQuad.Grid[1][2] = EntityTholianWeb
+
+	if err := SaveTourGame(savePath, g, tour); err != nil {
+		t.Fatalf("failed to save tour game: %v", err)
+	}
+
+	loadedGame, loadedTour, err := LoadTourGame(savePath)
+	if err != nil {
+		t.Fatalf("failed to load tour game: %v", err)
+	}
+	if loadedTour == nil {
+		t.Fatal("expected non-nil loadedTour")
+	}
+	if len(loadedGame.CurrentQuad.Enemies) != 1 {
+		t.Fatalf("expected 1 enemy in loaded tour game, got %d", len(loadedGame.CurrentQuad.Enemies))
+	}
+	if loadedGame.CurrentQuad.Enemies[0].Faction != FactionTholian {
+		t.Errorf("expected Tholian faction, got %v", loadedGame.CurrentQuad.Enemies[0].Faction)
+	}
+	if len(loadedGame.CurrentQuad.WebSegments) != 1 || loadedGame.CurrentQuad.WebSegments[0].Strength != 250.0 {
+		t.Errorf("mismatched web segment in tour game: %+v", loadedGame.CurrentQuad.WebSegments)
+	}
+}
+
