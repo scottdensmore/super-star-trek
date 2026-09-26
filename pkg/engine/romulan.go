@@ -223,13 +223,13 @@ func AdvancePlasmaTorpedoes(g *GameState) []Event {
 			// Try routing around obstacle: horizontal or vertical step
 			alt1 := Coord{pt.Sector[0] + dr, pt.Sector[1]}
 			alt2 := Coord{pt.Sector[0], pt.Sector[1] + dc}
-			if dr != 0 && alt1[0] >= 1 && alt1[0] <= 8 && g.CurrentQuad.Grid[alt1[0]][alt1[1]] == EntityEmpty {
+			if dr != 0 && alt1[0] >= 1 && alt1[0] <= 8 && alt1[1] >= 1 && alt1[1] <= 8 && g.CurrentQuad.Grid[alt1[0]][alt1[1]] == EntityEmpty {
 				if g.CurrentQuad.Grid[oldCoord[0]][oldCoord[1]] == EntityPlasmaTorpedo {
 					g.CurrentQuad.Grid[oldCoord[0]][oldCoord[1]] = EntityEmpty
 				}
 				g.CurrentQuad.Grid[alt1[0]][alt1[1]] = EntityPlasmaTorpedo
 				pt.Sector = alt1
-			} else if dc != 0 && alt2[1] >= 1 && alt2[1] <= 8 && g.CurrentQuad.Grid[alt2[0]][alt2[1]] == EntityEmpty {
+			} else if dc != 0 && alt2[0] >= 1 && alt2[0] <= 8 && alt2[1] >= 1 && alt2[1] <= 8 && g.CurrentQuad.Grid[alt2[0]][alt2[1]] == EntityEmpty {
 				if g.CurrentQuad.Grid[oldCoord[0]][oldCoord[1]] == EntityPlasmaTorpedo {
 					g.CurrentQuad.Grid[oldCoord[0]][oldCoord[1]] = EntityEmpty
 				}

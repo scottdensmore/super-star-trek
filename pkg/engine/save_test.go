@@ -740,3 +740,15 @@ func TestSaveAndLoadTourGame_PreservesExpandedAdversaries(t *testing.T) {
 	}
 }
 
+func TestSaveGame_ErrorPaths(t *testing.T) {
+	g := NewGameWithSeed(123)
+	err := SaveGame(g, "")
+	if err == nil {
+		t.Error("expected error when saving game with empty path, got nil")
+	}
+	
+	err = SaveGame(g, "/invalid/directory/path/save.trk")
+	if err == nil {
+		t.Error("expected error when saving game to invalid directory, got nil")
+	}
+}

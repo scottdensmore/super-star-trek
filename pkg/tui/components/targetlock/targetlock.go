@@ -171,16 +171,21 @@ func (m *Model) SetStateFromGame(g *engine.GameState, initialTarget engine.Coord
 			}
 			hitProb := math.Max(0.10, math.Min(0.95, 1.0-dist/15.0))
 			var name string
+			var eType engine.EntityType
 			switch e.Faction {
 			case engine.FactionRomulan:
 				name = fmt.Sprintf("ROMULAN RAIDER #%d", e.ID)
+				eType = engine.EntityRomulan
 			case engine.FactionTholian:
 				name = fmt.Sprintf("THOLIAN SPINNER #%d", e.ID)
+				eType = engine.EntityTholian
 			default:
 				if e.IsCommander {
 					name = fmt.Sprintf("KLINGON COMMANDER #%d", e.ID)
+					eType = engine.EntityCommander
 				} else {
 					name = fmt.Sprintf("KLINGON BATTLECRUISER #%d", e.ID)
+					eType = engine.EntityKlingon
 				}
 			}
 			m.targets = append(m.targets, TargetInfo{
@@ -191,6 +196,7 @@ func (m *Model) SetStateFromGame(g *engine.GameState, initialTarget engine.Coord
 				HitProbability: hitProb,
 				Power:          e.Energy,
 				Name:           name,
+				Type:           eType,
 			})
 		}
 	} else {
@@ -209,8 +215,10 @@ func (m *Model) SetStateFromGame(g *engine.GameState, initialTarget engine.Coord
 			}
 			hitProb := math.Max(0.10, math.Min(0.95, 1.0-dist/15.0))
 			name := fmt.Sprintf("KLINGON BATTLECRUISER #%d", k.ID)
+			eType := engine.EntityKlingon
 			if k.IsCommander {
 				name = fmt.Sprintf("KLINGON COMMANDER #%d", k.ID)
+				eType = engine.EntityCommander
 			}
 			m.targets = append(m.targets, TargetInfo{
 				KlingonID:      k.ID,
@@ -220,6 +228,7 @@ func (m *Model) SetStateFromGame(g *engine.GameState, initialTarget engine.Coord
 				HitProbability: hitProb,
 				Power:          k.Energy,
 				Name:           name,
+				Type:           eType,
 			})
 		}
 	}

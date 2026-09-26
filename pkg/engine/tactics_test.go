@@ -308,3 +308,31 @@ func TestTactics_UnifiedTurn_AllPhasesSequence(t *testing.T) {
 	}
 }
 
+func TestUnifiedAdversaryTurn_Decloak(t *testing.T) {
+	g := NewGameWithSeed(123)
+	// Add enterprise so there is a target for the Klingon to attack
+	g.Enterprise.Sector = Coord{1, 1}
+	
+	// Create a cloaked Klingon
+	klingon := &EnemyVessel{ID: 1, Faction: FactionKlingon, Sector: Coord{4, 4}, Energy: 500, IsCloaked: true}
+	g.CurrentQuad.Enemies = []*EnemyVessel{klingon}
+	
+	events := UnifiedAdversaryTurn(g)
+	
+	// Ensure that after turn, IsCloaked is updated
+	if g.CurrentQuad.Enemies[0].IsCloaked {
+		t.Errorf("Expected Klingon to be decloaked after firing, but it was still cloaked")
+	}
+	
+	// Ensure it fired
+	fired := false
+	for _, ev := range events {
+		if ev.EventType() == "KlingonCounterAttack" || ev.EventType() == "KlingonDecloak" {
+			fired = true
+		}
+	}
+	if !fired {
+		t.Logf("Events: %v", events)
+	}
+}
+

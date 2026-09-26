@@ -33,6 +33,7 @@ func UnifiedAdversaryTurn(g *GameState) []Event {
 			k := &Klingon{ID: e.ID, Sector: e.Sector, IsCommander: e.IsCommander, IsCloaked: e.IsCloaked}
 			baseDmg := e.Energy * 0.35 * mult
 			events = append(events, KlingonCounterAttack(g, k, baseDmg)...)
+			e.IsCloaked = k.IsCloaked
 		}
 	}
 
