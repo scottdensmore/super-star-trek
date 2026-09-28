@@ -8,6 +8,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/scottdensmore/super-star-trek/pkg/config"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/anim"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
@@ -394,6 +395,31 @@ func (m Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m = m.applyTheme(m.Theme.WithColorMode(m.optionsModal.ColorMode()))
 				}
 				m.SetSoundEnabled(m.optionsModal.AudioEnabled())
+				if m.AudioPlayer != nil {
+					m.AudioPlayer.SetVolume(m.optionsModal.Volume())
+				}
+				m.Status.SetAudioTelemetry(m.optionsModal.Volume(), !m.optionsModal.AudioEnabled())
+
+				cfg, err := config.LoadConfig()
+				if err != nil {
+					cfg = config.DefaultConfig()
+				}
+				cfg.Volume = m.optionsModal.Volume()
+				cfg.Muted = !m.optionsModal.AudioEnabled()
+				cfg.AudioMode = m.optionsModal.AudioMode()
+				if m.Theme != nil {
+					cfg.Theme = m.Theme.Name()
+				}
+				switch m.optionsModal.Rules().AnimSpeed {
+				case engine.AnimSpeedFast:
+					cfg.AnimSpeed = "fast"
+				case engine.AnimSpeedCinematic:
+					cfg.AnimSpeed = "slow"
+				default:
+					cfg.AnimSpeed = "normal"
+				}
+				_ = config.SaveConfig(cfg)
+
 				m.optionsModal.Closed = false
 				return m, m.CommandBar.Focus()
 			}
@@ -556,16 +582,7 @@ func (m Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m.openHallOfFame(false)
 
 			case msg.String() == "o" || msg.String() == "O":
-				if m.Game != nil {
-					m.optionsModal.SetRules(m.Game.Rules)
-				}
-				if m.Theme != nil {
-					m.optionsModal.SetColorMode(m.Theme.ColorMode())
-				}
-				m.optionsModal.SetAudioEnabled(m.SoundEnabled())
-				m.showOptions = true
-				m.CommandBar.Blur()
-				return m, nil
+				return m.openOptionsModal()
 
 			case msg.String() == "?":
 				return m.openManual("")
@@ -901,6 +918,31 @@ func (m Model) openManual(topic string) (Model, tea.Cmd) {
 	return m, nil
 }
 
+// openOptionsModal initializes and opens the configuration & options modal dialog.
+func (m Model) openOptionsModal() (Model, tea.Cmd) {
+	if m.Game != nil {
+		m.optionsModal.SetRules(m.Game.Rules)
+	}
+	if m.Theme != nil {
+		m.optionsModal.SetColorMode(m.Theme.ColorMode())
+	}
+	m.optionsModal.SetAudioEnabled(m.SoundEnabled())
+	if m.AudioPlayer != nil {
+		if vol := m.AudioPlayer.Volume(); vol > 0 {
+			m.optionsModal.SetVolume(vol)
+		}
+		m.optionsModal.SetPlayer(m.AudioPlayer)
+	}
+	cfg, err := config.LoadConfig()
+	if err == nil && cfg.AudioMode != "" {
+		m.optionsModal.SetAudioMode(cfg.AudioMode)
+	}
+	m.optionsModal.Closed = false
+	m.showOptions = true
+	m.CommandBar.Blur()
+	return m, nil
+}
+
 // handleGameOver processes a game over event, logs the message, and opens the Hall of Fame modal.
 func (m Model) handleGameOver(ev engine.EventGameOver) (Model, tea.Cmd) {
 	formatted := formatEvent(ev)
@@ -1113,16 +1155,7 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 	case "score", "scores", "halloffame", "hof":
 		return m.openHallOfFame(false)
 	case "opts", "options", "settings":
-		if m.Game != nil {
-			m.optionsModal.SetRules(m.Game.Rules)
-		}
-		if m.Theme != nil {
-			m.optionsModal.SetColorMode(m.Theme.ColorMode())
-		}
-		m.optionsModal.SetAudioEnabled(m.SoundEnabled())
-		m.showOptions = true
-		m.CommandBar.Blur()
-		return m, nil
+		return m.openOptionsModal()
 	case "tour", "orders":
 		m.displayTourOrders()
 		return m, nil
@@ -1203,16 +1236,7 @@ func (m Model) handleCommand(text string) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 
 		case parsed.Special == "options":
-			if m.Game != nil {
-				m.optionsModal.SetRules(m.Game.Rules)
-			}
-			if m.Theme != nil {
-				m.optionsModal.SetColorMode(m.Theme.ColorMode())
-			}
-			m.optionsModal.SetAudioEnabled(m.SoundEnabled())
-			m.showOptions = true
-			m.CommandBar.Blur()
-			return m, nil
+			return m.openOptionsModal()
 
 		case parsed.Special == "scenarios":
 			m.scenarioModal.Reset()

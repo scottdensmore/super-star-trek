@@ -7,6 +7,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/scottdensmore/super-star-trek/pkg/audio"
+	"github.com/scottdensmore/super-star-trek/pkg/config"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/anim"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/components/commandbar"
@@ -131,7 +132,27 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 	} else {
 		player = audio.NewNativeOSPlayer(os.Stdout, bellCallback)
 	}
+	player.SetVolume(80)
+	cfg, err := config.LoadConfig()
+	if err == nil {
+		path, _ := config.ConfigPath()
+		if _, statErr := os.Stat(path); statErr == nil {
+			player.SetVolume(cfg.Volume)
+			player.SetMuted(cfg.Muted)
+		}
+	}
 	dispatcher := audio.NewDispatcher(player)
+
+	optModal := optionsmodal.New(th, rules)
+	optModal.SetVolume(player.Volume())
+	optModal.SetAudioEnabled(!player.IsMuted())
+	optModal.SetPlayer(player)
+	if err == nil && cfg.AudioMode != "" {
+		optModal.SetAudioMode(cfg.AudioMode)
+	}
+
+	st := statuspanel.New(th)
+	st.SetAudioTelemetry(player.Volume(), player.IsMuted())
 
 	m := Model{
 		Game:            g,
@@ -139,18 +160,18 @@ func NewModel(g *engine.GameState, th theme.Theme) Model {
 		Width:           80,
 		Height:          24,
 		Grid:            sectorgrid.New(th),
-		Status:          statuspanel.New(th),
+		Status:          st,
 		CommandBar:      cb,
 		ActiveModal:     ModalNone,
 		TargetLock:      targetlock.New(th),
 		CommandPalette:  commandpalette.New(th, 56, 16),
 		SaveBrowser:     savebrowser.New(th, "."),
 		GalacticChart:   galacticchart.New(th, 64, 18),
-		DamageSchematic: damageschematic.New(th, 66, 18),
+		DamageSchematic:  damageschematic.New(th, 66, 18),
 		HallOfFame:      halloffame.New(th, 66, 18, engine.DefaultLeaderboardPath()),
 		Manual:          manual.New(th, 66, 18),
 		scenarioModal:   scenariomodal.NewModel(th),
-		optionsModal:    optionsmodal.New(th, rules),
+		optionsModal:    optModal,
 		showOptions:     false,
 		Drydock:         drydockmodal.New(nil, th),
 		PlayerCallsign:  "Enterprise",
