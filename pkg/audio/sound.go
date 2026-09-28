@@ -16,6 +16,16 @@ const (
 	SoundShields       SoundID = "shields"
 	SoundVictory       SoundID = "victory"
 	SoundDefeat        SoundID = "defeat"
+
+	SoundCloak         SoundID = "cloak"
+	SoundDecloak       SoundID = "decloak"
+	SoundPlasmaLaunch  SoundID = "plasma_launch"
+	SoundPlasmaImpact  SoundID = "plasma_impact"
+	SoundTholianWeb    SoundID = "tholian_web"
+	SoundWebBreached   SoundID = "web_breached"
+	SoundPointDefense  SoundID = "point_defense"
+	SoundCommChime     SoundID = "comm_chime"
+	SoundComputerBeep  SoundID = "computer_beep"
 )
 
 // Player defines the playback interface for sound effects.
