@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/scottdensmore/super-star-trek/pkg/config"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
@@ -903,6 +904,214 @@ func TestCLIFlags_Difficulty_Expert_And_Emeritus(t *testing.T) {
 		})
 	}
 }
+
+func TestCLIAudioFlags(t *testing.T) {
+	// Test parsing --volume, --mute, --audio-mode
+	flags := parseFlags([]string{"--volume=50", "--mute", "--audio-mode=bell"})
+	if flags.volume != 50 {
+		t.Errorf("expected volume 50, got %d", flags.volume)
+	}
+	if !flags.mute {
+		t.Errorf("expected mute true")
+	}
+	if flags.audioMode != "bell" {
+		t.Errorf("expected audioMode 'bell', got %s", flags.audioMode)
+	}
+
+	// Test default values when no flags passed
+	defaultFlags := parseFlags([]string{})
+	if defaultFlags.volume != -1 {
+		t.Errorf("expected default volume -1, got %d", defaultFlags.volume)
+	}
+	if defaultFlags.mute {
+		t.Errorf("expected default mute false")
+	}
+	if defaultFlags.audioMode != "" {
+		t.Errorf("expected default audioMode '', got %s", defaultFlags.audioMode)
+	}
+
+	// Test flag formats and edge values
+	customFlags := parseFlags([]string{"-volume", "0", "-mute=false", "--audio-mode=native"})
+	if customFlags.volume != 0 {
+		t.Errorf("expected volume 0, got %d", customFlags.volume)
+	}
+	if customFlags.mute {
+		t.Errorf("expected mute false, got true")
+	}
+	if customFlags.audioMode != "native" {
+		t.Errorf("expected audioMode 'native', got %s", customFlags.audioMode)
+	}
+}
+
+func TestRun_AudioFlags(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	var capturedModel tea.Model
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		capturedModel = m
+		return nil
+	}
+
+	tests := []struct {
+		name        string
+		args        []string
+		wantVolume  int
+		wantMuted   bool
+		wantEnabled bool
+	}{
+		{
+			name:        "volume override to 45",
+			args:        []string{"--volume=45", "-seed", "42"},
+			wantVolume:  45,
+			wantMuted:   false,
+			wantEnabled: true,
+		},
+		{
+			name:        "volume override to 0",
+			args:        []string{"--volume=0", "-seed", "42"},
+			wantVolume:  0,
+			wantMuted:   false,
+			wantEnabled: true,
+		},
+		{
+			name:        "mute flag sets mute true and sound disabled",
+			args:        []string{"--mute", "-seed", "42"},
+			wantVolume:  80,
+			wantMuted:   true,
+			wantEnabled: false,
+		},
+		{
+			name:        "volume and mute combined",
+			args:        []string{"--volume=60", "--mute", "-seed", "42"},
+			wantVolume:  60,
+			wantMuted:   true,
+			wantEnabled: false,
+		},
+		{
+			name:        "audio-mode off mutes audio",
+			args:        []string{"--audio-mode=off", "-seed", "42"},
+			wantVolume:  80,
+			wantMuted:   true,
+			wantEnabled: false,
+		},
+		{
+			name:        "audio-mode bell keeps audio enabled",
+			args:        []string{"--audio-mode=bell", "-seed", "42"},
+			wantVolume:  80,
+			wantMuted:   false,
+			wantEnabled: true,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("HOME", t.TempDir())
+			var stdout, stderr bytes.Buffer
+			code := run(tc.args, strings.NewReader(""), &stdout, &stderr)
+			if code != 0 {
+				t.Fatalf("run failed with code %d: %s", code, stderr.String())
+			}
+			model, ok := capturedModel.(tui.Model)
+			if !ok {
+				t.Fatalf("captured model is not tui.Model: %T", capturedModel)
+			}
+			if model.AudioPlayer == nil {
+				t.Fatalf("expected non-nil AudioPlayer")
+			}
+			if model.AudioPlayer.Volume() != tc.wantVolume {
+				t.Errorf("expected AudioPlayer volume %d, got %d", tc.wantVolume, model.AudioPlayer.Volume())
+			}
+			if model.AudioPlayer.IsMuted() != tc.wantMuted {
+				t.Errorf("expected AudioPlayer muted %v, got %v", tc.wantMuted, model.AudioPlayer.IsMuted())
+			}
+			if model.SoundEnabled() != tc.wantEnabled {
+				t.Errorf("expected model SoundEnabled %v, got %v", tc.wantEnabled, model.SoundEnabled())
+			}
+		})
+	}
+}
+
+func TestRun_ConfigAudioOverrides(t *testing.T) {
+	origRunProgram := runProgram
+	t.Cleanup(func() { runProgram = origRunProgram })
+
+	var capturedModel tea.Model
+	runProgram = func(m tea.Model, opts ...tea.ProgramOption) error {
+		capturedModel = m
+		return nil
+	}
+
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+
+	savedCfg := config.Config{
+		Volume:    35,
+		Muted:     true,
+		AudioMode: config.AudioModeNative,
+		Theme:     "modern",
+		AnimSpeed: "normal",
+	}
+	if err := config.SaveConfig(savedCfg); err != nil {
+		t.Fatalf("failed to save test config: %v", err)
+	}
+
+	// 1. Without flags, should load saved config (volume 35, muted true)
+	var stdout, stderr bytes.Buffer
+	code := run([]string{"-seed", "42"}, strings.NewReader(""), &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("run failed with code %d: %s", code, stderr.String())
+	}
+	m := capturedModel.(tui.Model)
+	if m.AudioPlayer.Volume() != 35 {
+		t.Errorf("expected volume 35 from config, got %d", m.AudioPlayer.Volume())
+	}
+	if !m.AudioPlayer.IsMuted() {
+		t.Errorf("expected muted true from config, got false")
+	}
+
+	// 2. Explicit --volume flag should override config
+	stdout.Reset()
+	stderr.Reset()
+	code = run([]string{"--volume=90", "-seed", "42"}, strings.NewReader(""), &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("run failed with code %d: %s", code, stderr.String())
+	}
+	m = capturedModel.(tui.Model)
+	if m.AudioPlayer.Volume() != 90 {
+		t.Errorf("expected volume 90 from CLI override, got %d", m.AudioPlayer.Volume())
+	}
+	if !m.AudioPlayer.IsMuted() {
+		t.Errorf("expected muted true to remain from config, got false")
+	}
+
+	// 3. Explicit --sound flag un-mutes even if config is muted
+	stdout.Reset()
+	stderr.Reset()
+	code = run([]string{"--sound", "-seed", "42"}, strings.NewReader(""), &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("run failed with code %d: %s", code, stderr.String())
+	}
+	m = capturedModel.(tui.Model)
+	if m.AudioPlayer.IsMuted() {
+		t.Errorf("expected muted false from --sound override, got true")
+	}
+}
+
+func TestMain_HelpContainsAudioFlags(t *testing.T) {
+	var out, errOut bytes.Buffer
+	code := run([]string{"--help"}, strings.NewReader(""), &out, &errOut)
+	if code != 0 {
+		t.Fatalf("expected code 0, got %d", code)
+	}
+	helpText := out.String()
+	for _, flagName := range []string{"-volume", "-mute", "-audio-mode"} {
+		if !strings.Contains(helpText, flagName) {
+			t.Errorf("expected %s in help output, got:\n%s", flagName, helpText)
+		}
+	}
+}
+
 
 
 
