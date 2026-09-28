@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/scottdensmore/super-star-trek/pkg/audio"
+	"github.com/scottdensmore/super-star-trek/pkg/config"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
@@ -61,6 +63,10 @@ func TestOptionsModal_RenderLayout(t *testing.T) {
 		"Combat Animations",
 		"Color Mode",
 		"Sound FX",
+		"Audio Mode",
+		"Audio Volume",
+		"Sound Test",
+		"[■■■■■■■■··] 80%",
 	}
 	for _, exp := range expectedStrings {
 		if !strings.Contains(view, exp) {
@@ -325,17 +331,18 @@ func TestOptionsModal_AudioRow(t *testing.T) {
 		t.Errorf("expected view to contain '[DISABLED]', got:\n%s", viewDisabled)
 	}
 
-	// Navigation: Up from RowDone should be RowAudio
-	m.SelectedRow = RowDone
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
-	if m.SelectedRow != RowAudio {
-		t.Errorf("expected SelectedRow to be RowAudio after Up from RowDone, got %v", m.SelectedRow)
+	// Navigation: Down from RowAudio should be RowAudioMode
+	m.SelectedRow = RowAudio
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if m.SelectedRow != RowAudioMode {
+		t.Errorf("expected SelectedRow to be RowAudioMode after Down from RowAudio, got %v", m.SelectedRow)
 	}
 
-	// Down from RowAudio should be RowDone
-	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
-	if m.SelectedRow != RowDone {
-		t.Errorf("expected SelectedRow to be RowDone after Down from RowAudio, got %v", m.SelectedRow)
+	// Up from RowAudioMode should be RowAudio
+	m.SelectedRow = RowAudioMode
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if m.SelectedRow != RowAudio {
+		t.Errorf("expected SelectedRow to be RowAudio after Up from RowAudioMode, got %v", m.SelectedRow)
 	}
 
 	// Up from RowAudio should be RowColorMode
@@ -352,4 +359,179 @@ func TestOptionsModal_AudioRow(t *testing.T) {
 	}
 }
 
+func TestOptionsModal_AudioNavigation(t *testing.T) {
+	th := theme.DefaultTheme()
+	rules := engine.DefaultRulesForProfile(engine.ProfileNormal)
+	m := New(th, rules)
 
+	m.SelectedRow = RowColorMode
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if m.SelectedRow != RowAudio {
+		t.Errorf("expected RowAudio down from RowColorMode, got %v", m.SelectedRow)
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if m.SelectedRow != RowAudioMode {
+		t.Errorf("expected RowAudioMode down from RowAudio, got %v", m.SelectedRow)
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if m.SelectedRow != RowVolume {
+		t.Errorf("expected RowVolume down from RowAudioMode, got %v", m.SelectedRow)
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if m.SelectedRow != RowSoundTest {
+		t.Errorf("expected RowSoundTest down from RowVolume, got %v", m.SelectedRow)
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	if m.SelectedRow != RowDone {
+		t.Errorf("expected RowDone down from RowSoundTest, got %v", m.SelectedRow)
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if m.SelectedRow != RowSoundTest {
+		t.Errorf("expected RowSoundTest up from RowDone, got %v", m.SelectedRow)
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if m.SelectedRow != RowVolume {
+		t.Errorf("expected RowVolume up from RowSoundTest, got %v", m.SelectedRow)
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if m.SelectedRow != RowAudioMode {
+		t.Errorf("expected RowAudioMode up from RowVolume, got %v", m.SelectedRow)
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	if m.SelectedRow != RowAudio {
+		t.Errorf("expected RowAudio up from RowAudioMode, got %v", m.SelectedRow)
+	}
+}
+
+type mockAudioPlayer struct {
+	audio.NullPlayer
+	playedSound audio.SoundID
+	playCount   int
+}
+
+func (m *mockAudioPlayer) Play(s audio.SoundID) {
+	m.playedSound = s
+	m.playCount++
+}
+
+func TestOptionsModalAudioRows(t *testing.T) {
+	th := theme.DefaultTheme()
+	rules := engine.DefaultRulesForProfile(engine.ProfileNormal)
+	m := New(th, rules)
+	m.SetVolume(70)
+	if m.Volume() != 70 {
+		t.Errorf("expected volume 70, got %d", m.Volume())
+	}
+
+	// Test adjusting volume via Right arrow on RowVolume
+	m.SelectedRow = RowVolume
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.Volume() != 80 {
+		t.Errorf("expected volume 80 after KeyRight, got %d", m.Volume())
+	}
+
+	// Test adjusting volume via Left arrow on RowVolume
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	if m.Volume() != 70 {
+		t.Errorf("expected volume 70 after KeyLeft, got %d", m.Volume())
+	}
+
+	// Test Volume boundary clamping at 100
+	m.SetVolume(95)
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.Volume() != 100 {
+		t.Errorf("expected volume clamped to 100, got %d", m.Volume())
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.Volume() != 100 {
+		t.Errorf("expected volume still 100, got %d", m.Volume())
+	}
+
+	// Test Volume boundary clamping at 0
+	m.SetVolume(5)
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	if m.Volume() != 0 {
+		t.Errorf("expected volume clamped to 0, got %d", m.Volume())
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	if m.Volume() != 0 {
+		t.Errorf("expected volume still 0, got %d", m.Volume())
+	}
+
+	// Test SetAudioMode and AudioMode getter
+	m.SetAudioMode(config.AudioModeNative)
+	if m.AudioMode() != config.AudioModeNative {
+		t.Errorf("expected audio mode Native, got %s", m.AudioMode())
+	}
+
+	// Test AudioMode cycling on RowAudioMode: Auto -> Native -> Bell -> Off -> Auto
+	m.SelectedRow = RowAudioMode
+	m.SetAudioMode(config.AudioModeAuto)
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.AudioMode() != config.AudioModeNative {
+		t.Errorf("expected AudioModeNative after KeyRight, got %s", m.AudioMode())
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.AudioMode() != config.AudioModeBell {
+		t.Errorf("expected AudioModeBell after KeyRight, got %s", m.AudioMode())
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.AudioMode() != config.AudioModeOff {
+		t.Errorf("expected AudioModeOff after KeyRight, got %s", m.AudioMode())
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.AudioMode() != config.AudioModeAuto {
+		t.Errorf("expected AudioModeAuto after KeyRight wrap, got %s", m.AudioMode())
+	}
+	// Left arrow cycles backward
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	if m.AudioMode() != config.AudioModeOff {
+		t.Errorf("expected AudioModeOff after KeyLeft, got %s", m.AudioMode())
+	}
+
+	// Test Sound Test navigation and Enter key
+	m.SelectedRow = RowSoundTest
+	testSound := m.SelectedSound()
+	if testSound == "" {
+		t.Errorf("expected non-empty selected sound")
+	}
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
+	if m.SelectedSound() == testSound {
+		t.Errorf("expected cycling to next sound on KeyRight")
+	}
+
+	// Test auditioning with Enter key
+	currSound := m.SelectedSound()
+	var cmd tea.Cmd
+	m, cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if cmd == nil {
+		t.Fatalf("expected non-nil tea.Cmd on KeyEnter for RowSoundTest")
+	}
+	msg := cmd()
+	soundMsg, ok := msg.(PlaySoundMsg)
+	if !ok {
+		t.Fatalf("expected PlaySoundMsg from audition cmd, got %T", msg)
+	}
+	if soundMsg.Sound != currSound {
+		t.Errorf("expected PlaySoundMsg.Sound=%s, got %s", currSound, soundMsg.Sound)
+	}
+
+	// Test auditioning with Space key
+	m, cmd = m.Update(tea.KeyMsg{Type: tea.KeySpace})
+	if cmd == nil {
+		t.Fatalf("expected non-nil tea.Cmd on KeySpace for RowSoundTest")
+	}
+	msg = cmd()
+	soundMsg, ok = msg.(PlaySoundMsg)
+	if !ok || soundMsg.Sound != currSound {
+		t.Errorf("expected PlaySoundMsg with %s on KeySpace", currSound)
+	}
+
+	// Test Injected Player
+	mock := &mockAudioPlayer{}
+	m.SetPlayer(mock)
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if mock.playedSound != currSound {
+		t.Errorf("expected injected player to play %s, got %s", currSound, mock.playedSound)
+	}
+}

@@ -6,6 +6,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/scottdensmore/super-star-trek/pkg/audio"
+	"github.com/scottdensmore/super-star-trek/pkg/config"
 	"github.com/scottdensmore/super-star-trek/pkg/engine"
 	"github.com/scottdensmore/super-star-trek/pkg/tui/theme"
 )
@@ -23,9 +25,39 @@ const (
 	RowAnimSpeed
 	RowColorMode
 	RowAudio
+	RowAudioMode
+	RowVolume
+	RowSoundTest
 	RowDone
 	NumRows
 )
+
+// PlaySoundMsg is emitted when a sound test audition is triggered.
+type PlaySoundMsg struct {
+	Sound audio.SoundID
+}
+
+var defaultTestSounds = []audio.SoundID{
+	audio.SoundPhaser,
+	audio.SoundTorpedoLaunch,
+	audio.SoundExplosion,
+	audio.SoundRedAlert,
+	audio.SoundDock,
+	audio.SoundWarp,
+	audio.SoundDamage,
+	audio.SoundShields,
+	audio.SoundVictory,
+	audio.SoundDefeat,
+	audio.SoundCloak,
+	audio.SoundDecloak,
+	audio.SoundPlasmaLaunch,
+	audio.SoundPlasmaImpact,
+	audio.SoundTholianWeb,
+	audio.SoundWebBreached,
+	audio.SoundPointDefense,
+	audio.SoundCommChime,
+	audio.SoundComputerBeep,
+}
 
 // Model represents the interactive options modal overlay component.
 type Model struct {
@@ -33,6 +65,11 @@ type Model struct {
 	rules        engine.GameRules
 	colorMode    theme.ColorMode
 	audioEnabled bool
+	audioMode    config.AudioMode
+	volume       int
+	testSoundIdx int
+	testSounds   []audio.SoundID
+	player       audio.Player
 	SelectedRow  Row
 	Closed       bool
 }
@@ -42,11 +79,17 @@ func New(th theme.Theme, rules engine.GameRules) Model {
 	if th == nil {
 		th = theme.DefaultTheme()
 	}
+	testSounds := make([]audio.SoundID, len(defaultTestSounds))
+	copy(testSounds, defaultTestSounds)
 	return Model{
 		Theme:        th,
 		rules:        rules,
 		colorMode:    th.ColorMode(),
 		audioEnabled: true,
+		audioMode:    config.AudioModeAuto,
+		volume:       80,
+		testSoundIdx: 0,
+		testSounds:   testSounds,
 		SelectedRow:  RowProfile,
 		Closed:       false,
 	}
@@ -60,6 +103,68 @@ func (m Model) AudioEnabled() bool {
 // SetAudioEnabled updates the audio enabled state inside the modal.
 func (m *Model) SetAudioEnabled(enabled bool) {
 	m.audioEnabled = enabled
+}
+
+// Volume returns the audio playback volume (0-100).
+func (m Model) Volume() int {
+	return m.volume
+}
+
+// SetVolume updates the audio playback volume clamped to [0, 100].
+func (m *Model) SetVolume(vol int) {
+	if vol < 0 {
+		vol = 0
+	} else if vol > 100 {
+		vol = 100
+	}
+	m.volume = vol
+}
+
+// AudioMode returns the configured audio subsystem mode.
+func (m Model) AudioMode() config.AudioMode {
+	return m.audioMode
+}
+
+// SetAudioMode updates the audio subsystem mode.
+func (m *Model) SetAudioMode(mode config.AudioMode) {
+	switch mode {
+	case config.AudioModeAuto, config.AudioModeNative, config.AudioModeBell, config.AudioModeOff:
+		m.audioMode = mode
+	default:
+		m.audioMode = config.AudioModeAuto
+	}
+}
+
+// SelectedSound returns the currently selected sound ID for testing.
+func (m Model) SelectedSound() audio.SoundID {
+	if len(m.testSounds) == 0 {
+		return ""
+	}
+	idx := m.testSoundIdx % len(m.testSounds)
+	if idx < 0 {
+		idx += len(m.testSounds)
+	}
+	return m.testSounds[idx]
+}
+
+// SetSelectedSound sets the selected test sound if found in the palette.
+func (m *Model) SetSelectedSound(s audio.SoundID) {
+	for i, sound := range m.testSounds {
+		if sound == s {
+			m.testSoundIdx = i
+			return
+		}
+	}
+}
+
+// SetPlayer injects an audio player for direct sound auditioning.
+func (m *Model) SetPlayer(p audio.Player) {
+	m.player = p
+}
+
+// Player returns the injected audio player, if any.
+func (m Model) Player() audio.Player {
+	return m.player
 }
 
 // Rules returns the current game rules configured in the modal.
@@ -115,11 +220,18 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			}
 		case "left", "h":
 			m.cycleOption(-1)
-		case "right", "l", " ", "space":
+		case "right", "l":
+			m.cycleOption(1)
+		case " ", "space":
+			if m.SelectedRow == RowSoundTest {
+				return m, m.auditionSound()
+			}
 			m.cycleOption(1)
 		case "enter":
 			if m.SelectedRow == RowDone {
 				m.Closed = true
+			} else if m.SelectedRow == RowSoundTest {
+				return m, m.auditionSound()
 			} else {
 				m.cycleOption(1)
 			}
@@ -128,6 +240,19 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		}
 	}
 	return m, nil
+}
+
+func (m Model) auditionSound() tea.Cmd {
+	sound := m.SelectedSound()
+	if sound == "" {
+		return nil
+	}
+	if m.player != nil {
+		m.player.Play(sound)
+	}
+	return func() tea.Msg {
+		return PlaySoundMsg{Sound: sound}
+	}
 }
 
 func (m *Model) cycleOption(dir int) {
@@ -201,6 +326,36 @@ func (m *Model) cycleOption(dir int) {
 		m.colorMode = colorModes[(idx+dir+len(colorModes))%len(colorModes)]
 	case RowAudio:
 		m.audioEnabled = !m.audioEnabled
+	case RowAudioMode:
+		audioModes := []config.AudioMode{config.AudioModeAuto, config.AudioModeNative, config.AudioModeBell, config.AudioModeOff}
+		idx := 0
+		for i, am := range audioModes {
+			if am == m.audioMode {
+				idx = i
+				break
+			}
+		}
+		newIdx := (idx + dir) % len(audioModes)
+		if newIdx < 0 {
+			newIdx += len(audioModes)
+		}
+		m.audioMode = audioModes[newIdx]
+	case RowVolume:
+		newVol := m.volume + dir*10
+		if newVol < 0 {
+			newVol = 0
+		} else if newVol > 100 {
+			newVol = 100
+		}
+		m.volume = newVol
+	case RowSoundTest:
+		if len(m.testSounds) > 0 {
+			newIdx := (m.testSoundIdx + dir) % len(m.testSounds)
+			if newIdx < 0 {
+				newIdx += len(m.testSounds)
+			}
+			m.testSoundIdx = newIdx
+		}
 	}
 }
 
@@ -265,6 +420,27 @@ func (m Model) View() string {
 		audioStr = "[ENABLED]"
 	}
 	rows = append(rows, renderRow(RowAudio, "Sound FX", audioStr))
+
+	modeStr := "AUTO"
+	switch m.audioMode {
+	case config.AudioModeAuto:
+		modeStr = "AUTO"
+	case config.AudioModeNative:
+		modeStr = "NATIVE OS"
+	case config.AudioModeBell:
+		modeStr = "TERMINAL BELL"
+	case config.AudioModeOff:
+		modeStr = "OFF"
+	default:
+		modeStr = strings.ToUpper(string(m.audioMode))
+	}
+	rows = append(rows, renderRow(RowAudioMode, "Audio Mode", modeStr))
+
+	volBar := fmt.Sprintf("[%s%s] %d%%", strings.Repeat("■", m.volume/10), strings.Repeat("·", 10-m.volume/10), m.volume)
+	rows = append(rows, renderRow(RowVolume, "Audio Volume", volBar))
+
+	soundName := strings.ToUpper(strings.ReplaceAll(string(m.SelectedSound()), "_", " "))
+	rows = append(rows, renderRow(RowSoundTest, "Sound Test", soundName))
 
 	doneStyle := styles.LogText
 	prefix := "  "
