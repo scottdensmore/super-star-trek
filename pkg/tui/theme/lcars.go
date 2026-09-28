@@ -1,6 +1,11 @@
 package theme
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/charmbracelet/lipgloss"
+)
 
 // LcarsTheme implements the 24th-century LCARS aesthetic palette.
 type LcarsTheme struct {
@@ -33,6 +38,60 @@ func (t LcarsTheme) PlasmaTorpedo() lipgloss.Style { return t.Styles().PlasmaTor
 func (t LcarsTheme) TholianWeb() lipgloss.Style    { return t.Styles().TholianWeb }
 func (t LcarsTheme) AlertRed() lipgloss.Style      { return t.Styles().AlertRed }
 func (t LcarsTheme) AlertYellow() lipgloss.Style   { return t.Styles().AlertYellow }
+
+// PillCaps returns the LCARS curved pill caps ◖ and ◗.
+func (t LcarsTheme) PillCaps() (string, string) {
+	return "◖", "◗"
+}
+
+// FormatHeader formats the top status banner using LCARS curved pill caps and color blocking.
+func (t LcarsTheme) FormatHeader(title, themeInfo string, width int) string {
+	isDark := true
+	switch t.ColorMode() {
+	case ColorModeDark:
+		isDark = true
+	case ColorModeLight:
+		isDark = false
+	default:
+		isDark = DetectDarkBackground()
+	}
+
+	var primaryColor, secondaryColor, textColor, panelBg lipgloss.Color
+	if isDark {
+		primaryColor = lipgloss.Color("#FF9900")
+		secondaryColor = lipgloss.Color("#3399CC")
+		textColor = lipgloss.Color("#000000")
+		panelBg = lipgloss.Color("#000000")
+	} else {
+		primaryColor = lipgloss.Color("#C2410C")
+		secondaryColor = lipgloss.Color("#0E7490")
+		textColor = lipgloss.Color("#FEF9EF")
+		panelBg = lipgloss.Color("#FEF9EF")
+	}
+
+	capLeft := lipgloss.NewStyle().Foreground(primaryColor).Background(panelBg).Render("◖")
+	titleBlock := lipgloss.NewStyle().Bold(true).Foreground(textColor).Background(primaryColor).Render(" " + title + " ")
+	themeBlock := lipgloss.NewStyle().Bold(true).Foreground(textColor).Background(secondaryColor).Render(" " + themeInfo + " ")
+	capRight := lipgloss.NewStyle().Foreground(secondaryColor).Background(panelBg).Render("◗")
+
+	fixedWidth := lipgloss.Width(capLeft) + lipgloss.Width(titleBlock) + lipgloss.Width(themeBlock) + lipgloss.Width(capRight)
+	gap := width - fixedWidth
+	if gap < 1 {
+		gap = 1
+	}
+	gapStr := lipgloss.NewStyle().Background(panelBg).Render(strings.Repeat(" ", gap))
+
+	return capLeft + titleBlock + gapStr + themeBlock + capRight
+}
+
+// FormatAudioBadge formats the HUD audio volume indicator badge for LCARS theme.
+func (t LcarsTheme) FormatAudioBadge(volume int, muted bool) string {
+	styles := t.Styles()
+	if muted || volume == 0 {
+		return styles.Empty.Render("🔇 MUTED")
+	}
+	return styles.Prompt.Render(fmt.Sprintf("🔊 %d%%", volume))
+}
 
 func (t LcarsTheme) Styles() Styles {
 	switch t.ColorMode() {

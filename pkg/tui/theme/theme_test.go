@@ -1,6 +1,7 @@
 package theme
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/charmbracelet/lipgloss"
@@ -473,5 +474,108 @@ func TestThemeGridBackgrounds(t *testing.T) {
 				t.Errorf("theme %s (%s mode): Grid background (%v) does not match Panel background (%v)", th.Name(), modeStr, gridBg, panelBg)
 			}
 		}
+	}
+}
+
+func TestLcarsHeaderCurvesAndPillCaps(t *testing.T) {
+	th := LcarsTheme{}
+	title := "★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701"
+	tag := "[Theme: LCARS (F2)]"
+	hdr := th.FormatHeader(title, tag, 80)
+
+	if !strings.Contains(hdr, "◖") || !strings.Contains(hdr, "◗") {
+		t.Errorf("expected LCARS header to contain pill curves ◖ and ◗, got:\n%s", hdr)
+	}
+	if !strings.Contains(hdr, title) {
+		t.Errorf("expected LCARS header to contain title %q, got:\n%s", title, hdr)
+	}
+	if !strings.Contains(hdr, tag) {
+		t.Errorf("expected LCARS header to contain tag %q, got:\n%s", tag, hdr)
+	}
+	if strings.Contains(hdr, "\n") {
+		t.Errorf("expected single-line header, got newlines:\n%s", hdr)
+	}
+	if w := lipgloss.Width(hdr); w != 80 {
+		t.Errorf("expected header width 80, got %d", w)
+	}
+}
+
+func TestCrtPhosphorStylingAndScanline(t *testing.T) {
+	th := CrtTheme{}
+	title := "★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701"
+	tag := "[Theme: CRT (F2)]"
+	hdr := th.FormatHeader(title, tag, 80)
+
+	if !strings.Contains(hdr, title) || !strings.Contains(hdr, tag) {
+		t.Errorf("expected CRT header to contain title and tag, got:\n%s", hdr)
+	}
+	if strings.Contains(hdr, "\n") {
+		t.Errorf("expected single-line header, got newlines:\n%s", hdr)
+	}
+	if w := lipgloss.Width(hdr); w != 80 {
+		t.Errorf("expected header width 80, got %d", w)
+	}
+
+	// Verify phosphor warning styling
+	styles := th.Styles()
+	alert := styles.AlertRed.Render("WARNING")
+	if alert == "" {
+		t.Errorf("expected non-empty AlertRed render")
+	}
+	if !styles.ConditionRed.GetBold() {
+		t.Errorf("expected bold ConditionRed in CRT")
+	}
+}
+
+func TestModernHeaderCleanBorders(t *testing.T) {
+	th := ModernTheme{}
+	title := "★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701"
+	tag := "[Theme: MODERN (F2)]"
+	hdr := th.FormatHeader(title, tag, 80)
+
+	if !strings.Contains(hdr, title) || !strings.Contains(hdr, tag) {
+		t.Errorf("expected Modern header to contain title and tag, got:\n%s", hdr)
+	}
+	if strings.Contains(hdr, "\n") {
+		t.Errorf("expected single-line header, got newlines:\n%s", hdr)
+	}
+	if w := lipgloss.Width(hdr); w != 80 {
+		t.Errorf("expected header width 80, got %d", w)
+	}
+}
+
+func TestThemeAudioBadges(t *testing.T) {
+	modern := ModernTheme{}
+	lcars := LcarsTheme{}
+	crt := CrtTheme{}
+
+	// Active badges
+	if badge := modern.FormatAudioBadge(80, false); !strings.Contains(badge, "80%") || !strings.Contains(badge, "🔊") {
+		t.Errorf("expected modern audio badge to contain '🔊 80%%', got %q", badge)
+	}
+	if badge := lcars.FormatAudioBadge(80, false); !strings.Contains(badge, "80%") || !strings.Contains(badge, "🔊") {
+		t.Errorf("expected LCARS audio badge to contain '🔊 80%%', got %q", badge)
+	}
+	if badge := crt.FormatAudioBadge(80, false); !strings.Contains(badge, "[SND: 80%]") {
+		t.Errorf("expected CRT audio badge to contain '[SND: 80%%]', got %q", badge)
+	}
+
+	// Muted badges
+	if badge := modern.FormatAudioBadge(0, true); !strings.Contains(badge, "MUTED") || !strings.Contains(badge, "🔇") {
+		t.Errorf("expected modern muted badge to contain '🔇 MUTED', got %q", badge)
+	}
+	if badge := lcars.FormatAudioBadge(0, true); !strings.Contains(badge, "MUTED") || !strings.Contains(badge, "🔇") {
+		t.Errorf("expected LCARS muted badge to contain '🔇 MUTED', got %q", badge)
+	}
+	if badge := crt.FormatAudioBadge(0, true); !strings.Contains(badge, "[SND: OFF]") {
+		t.Errorf("expected CRT muted badge to contain '[SND: OFF]', got %q", badge)
+	}
+
+	// Volume == 0 unmuted badge should also show muted / off
+	if badge := modern.FormatAudioBadge(0, false); !strings.Contains(badge, "MUTED") {
+		t.Errorf("expected modern 0%% badge to indicate MUTED, got %q", badge)
+	}
+	if badge := crt.FormatAudioBadge(0, false); !strings.Contains(badge, "[SND: OFF]") {
+		t.Errorf("expected CRT 0%% badge to indicate [SND: OFF], got %q", badge)
 	}
 }

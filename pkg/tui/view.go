@@ -198,7 +198,6 @@ func (m Model) renderHeader() string {
 	if th == nil {
 		th = theme.DefaultTheme()
 	}
-	styles := th.Styles()
 
 	title := "★ SUPER STAR TREK ★  USS ENTERPRISE"
 	if m.Tour != nil {
@@ -218,15 +217,7 @@ func (m Model) renderHeader() string {
 		w = 80
 	}
 
-	frame := styles.Title.GetHorizontalFrameSize()
-	contentWidth := w - frame
-	gap := contentWidth - lipgloss.Width(title) - lipgloss.Width(themeInfo)
-	if gap < 2 {
-		gap = 2
-	}
-	headerLine := title + strings.Repeat(" ", gap) + themeInfo
-
-	return styles.Title.Width(w).Render(headerLine)
+	return th.FormatHeader(title, themeInfo, w)
 }
 
 // renderMiniGalacticChart renders an 8x8 Galactic Star Chart and Mission Ops

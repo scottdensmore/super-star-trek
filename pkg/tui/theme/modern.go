@@ -1,6 +1,11 @@
 package theme
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/charmbracelet/lipgloss"
+)
 
 // ModernTheme implements the Starfleet Modern high-contrast 24-bit TrueColor theme.
 type ModernTheme struct {
@@ -33,6 +38,28 @@ func (t ModernTheme) PlasmaTorpedo() lipgloss.Style { return t.Styles().PlasmaTo
 func (t ModernTheme) TholianWeb() lipgloss.Style    { return t.Styles().TholianWeb }
 func (t ModernTheme) AlertRed() lipgloss.Style      { return t.Styles().AlertRed }
 func (t ModernTheme) AlertYellow() lipgloss.Style   { return t.Styles().AlertYellow }
+
+// FormatHeader formats the top status banner for Starfleet Modern theme with clean UTF-8 borders.
+func (t ModernTheme) FormatHeader(title, themeInfo string, width int) string {
+	styles := t.Styles()
+	frame := styles.Title.GetHorizontalFrameSize()
+	contentWidth := width - frame
+	gap := contentWidth - lipgloss.Width(title) - lipgloss.Width(themeInfo)
+	if gap < 2 {
+		gap = 2
+	}
+	headerLine := title + strings.Repeat(" ", gap) + themeInfo
+	return styles.Title.Width(width).Render(headerLine)
+}
+
+// FormatAudioBadge formats the HUD audio volume indicator badge for Modern theme.
+func (t ModernTheme) FormatAudioBadge(volume int, muted bool) string {
+	styles := t.Styles()
+	if muted || volume == 0 {
+		return styles.Empty.Render("🔇 MUTED")
+	}
+	return styles.Prompt.Render(fmt.Sprintf("🔊 %d%%", volume))
+}
 
 func (t ModernTheme) Styles() Styles {
 	switch t.ColorMode() {

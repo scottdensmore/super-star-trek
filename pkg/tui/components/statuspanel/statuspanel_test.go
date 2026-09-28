@@ -112,30 +112,40 @@ func TestStatusPanel_SoundTelemetryBadge(t *testing.T) {
 
 	g := engine.NewGame(12345, engine.SkillGood, engine.LengthMedium)
 
-	// Default should display [SND: ON]
+	// Modern / LCARS: Default should display 🔊 80%
 	viewOn := m.View(g)
-	if !strings.Contains(viewOn, "[SND: ON]") {
-		t.Errorf("expected view to contain '[SND: ON]', got:\n%s", viewOn)
+	if !strings.Contains(viewOn, "🔊 80%") && !strings.Contains(viewOn, "80%") {
+		t.Errorf("expected view to contain '🔊 80%%', got:\n%s", viewOn)
 	}
-	if strings.Contains(viewOn, "[SND: OFF]") {
-		t.Errorf("expected view NOT to contain '[SND: OFF]' when enabled")
+	if strings.Contains(viewOn, "MUTED") {
+		t.Errorf("expected view NOT to contain 'MUTED' when enabled")
 	}
 
-	// Disable sound should display [SND: OFF]
+	// Disable sound should display 🔇 MUTED
 	m.SetSoundEnabled(false)
 	viewOff := m.View(g)
-	if !strings.Contains(viewOff, "[SND: OFF]") {
-		t.Errorf("expected view to contain '[SND: OFF]', got:\n%s", viewOff)
-	}
-	if strings.Contains(viewOff, "[SND: ON]") {
-		t.Errorf("expected view NOT to contain '[SND: ON]' when disabled")
+	if !strings.Contains(viewOff, "🔇 MUTED") && !strings.Contains(viewOff, "MUTED") {
+		t.Errorf("expected view to contain '🔇 MUTED', got:\n%s", viewOff)
 	}
 
 	// Re-enable sound
 	m.SetSoundEnabled(true)
 	viewReOn := m.View(g)
-	if !strings.Contains(viewReOn, "[SND: ON]") {
-		t.Errorf("expected view to contain '[SND: ON]' after re-enabling")
+	if !strings.Contains(viewReOn, "🔊 80%") && !strings.Contains(viewReOn, "80%") {
+		t.Errorf("expected view to contain '🔊 80%%' after re-enabling")
+	}
+
+	// CRT Theme: should display [SND: 80%] / [SND: OFF]
+	m.SetTheme(theme.CrtTheme{})
+	viewCrtOn := m.View(g)
+	if !strings.Contains(viewCrtOn, "[SND: 80%]") {
+		t.Errorf("expected CRT view to contain '[SND: 80%%]', got:\n%s", viewCrtOn)
+	}
+
+	m.SetSoundEnabled(false)
+	viewCrtOff := m.View(g)
+	if !strings.Contains(viewCrtOff, "[SND: OFF]") {
+		t.Errorf("expected CRT view to contain '[SND: OFF]', got:\n%s", viewCrtOff)
 	}
 }
 
@@ -478,5 +488,21 @@ func TestRedAlertBadgeAnimSpeedOff(t *testing.T) {
 
 	if viewCycle0 != viewCycle1 {
 		t.Errorf("expected identical rendered styles regardless of cycle when AnimSpeed is off")
+	}
+}
+
+func TestAudioTelemetryBadge(t *testing.T) {
+	th := theme.DefaultTheme()
+	sp := New(th)
+	sp.SetAudioTelemetry(80, false)
+	view := sp.View()
+	if !strings.Contains(view, "80%") && !strings.Contains(view, "VOL: 80%") {
+		t.Errorf("expected view to contain audio volume telemetry, got:\n%s", view)
+	}
+
+	sp.SetAudioTelemetry(0, true)
+	viewMuted := sp.View()
+	if !strings.Contains(viewMuted, "MUTED") && !strings.Contains(viewMuted, "OFF") {
+		t.Errorf("expected view to indicate muted audio, got:\n%s", viewMuted)
 	}
 }

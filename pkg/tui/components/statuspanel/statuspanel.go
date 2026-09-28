@@ -21,6 +21,8 @@ type PanelData struct {
 	Stardate      float64
 	Rules         engine.GameRules
 	SoundEnabled  bool
+	AudioVolume   int
+	AudioMuted    bool
 	HazardAlerts  []string
 }
 
@@ -42,6 +44,8 @@ func SamplePanelData() PanelData {
 		Stardate:      2800.0,
 		Rules:         engine.DefaultRulesForProfile(engine.ProfileNormal),
 		SoundEnabled:  true,
+		AudioVolume:   80,
+		AudioMuted:    false,
 		HazardAlerts:  nil,
 	}
 }
@@ -60,7 +64,26 @@ type Model struct {
 	hasState      bool
 	redAlertCycle int
 	soundEnabled  bool
+	audioVolume   int
+	audioMuted    bool
 	hazardAlerts  []string
+}
+
+// SetAudioTelemetry updates the audio volume and mute state for HUD telemetry.
+func (m *Model) SetAudioTelemetry(vol int, muted bool) {
+	m.audioVolume = vol
+	m.audioMuted = muted
+	m.soundEnabled = !muted && vol > 0
+}
+
+// AudioVolume returns the current audio volume telemetry.
+func (m Model) AudioVolume() int {
+	return m.audioVolume
+}
+
+// AudioMuted returns whether audio is currently muted in telemetry.
+func (m Model) AudioMuted() bool {
+	return m.audioMuted
 }
 
 // SoundEnabled reports whether sound FX telemetry is enabled.
@@ -71,6 +94,7 @@ func (m Model) SoundEnabled() bool {
 // SetSoundEnabled updates the sound FX telemetry state.
 func (m *Model) SetSoundEnabled(enabled bool) {
 	m.soundEnabled = enabled
+	m.audioMuted = !enabled
 }
 
 // SetRedAlertCycle updates the active cycle index for Condition Red klaxon pulse oscillation.
@@ -116,11 +140,21 @@ func New(th theme.Theme, dims ...int) Model {
 	if len(dims) > 1 {
 		height = dims[1]
 	}
+	sample := SamplePanelData()
 	return Model{
-		theme:        th,
-		width:        width,
-		height:       height,
-		soundEnabled: true,
+		theme:         th,
+		width:         width,
+		height:        height,
+		enterprise:    sample.Enterprise,
+		timeRemaining: sample.TimeRemaining,
+		isDocked:      sample.IsDocked,
+		galaxyChart:   sample.GalaxyChart,
+		stardate:      sample.Stardate,
+		rules:         sample.Rules,
+		soundEnabled:  true,
+		audioVolume:   80,
+		audioMuted:    false,
+		hasState:      true,
 	}
 }
 
@@ -265,6 +299,10 @@ func (m Model) Render(data PanelData) string {
 	m.stardate = data.Stardate
 	m.rules = data.Rules
 	m.soundEnabled = data.SoundEnabled
+	if data.AudioVolume > 0 || data.AudioMuted {
+		m.audioVolume = data.AudioVolume
+		m.audioMuted = data.AudioMuted
+	}
 	m.hazardAlerts = data.HazardAlerts
 	if m.rules.Profile == "" && !m.rules.SensorDegradation {
 		m.rules = engine.DefaultRulesForProfile(engine.ProfileNormal)
@@ -302,6 +340,8 @@ func (m Model) View(gs ...*engine.GameState) string {
 			Stardate:      g.Stardate,
 			Rules:         g.Rules,
 			SoundEnabled:  m.soundEnabled,
+			AudioVolume:   m.audioVolume,
+			AudioMuted:    m.audioMuted,
 			HazardAlerts:  alerts,
 		})
 	}
@@ -354,12 +394,8 @@ func (m Model) render() string {
 	shieldsLine := renderProgressBar("Shields", m.enterprise.Shields, 2500, styles.Styles)
 
 	// 5. Torpedo inventory & Sound FX telemetry badge
-	var sndBadge string
-	if m.soundEnabled {
-		sndBadge = styles.Prompt.Render("[SND: ON]")
-	} else {
-		sndBadge = styles.TextMuted.Render("[SND: OFF]")
-	}
+	isMuted := m.audioMuted || !m.soundEnabled || m.audioVolume == 0
+	sndBadge := m.Theme().FormatAudioBadge(m.audioVolume, isMuted)
 	torpLine := styles.GaugeLabel.Render("Torpedoes: ") +
 		styles.GaugeValue.Render(fmt.Sprintf("[TORP: %d/10]", m.enterprise.Torpedoes)) +
 		"   " + sndBadge

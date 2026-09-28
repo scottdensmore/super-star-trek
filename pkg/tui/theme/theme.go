@@ -76,6 +76,9 @@ type Theme interface {
 	TholianWeb() lipgloss.Style
 	AlertRed() lipgloss.Style
 	AlertYellow() lipgloss.Style
+
+	FormatHeader(title, themeInfo string, width int) string
+	FormatAudioBadge(volume int, muted bool) string
 }
 
 // Styles holds Lip Gloss styles for dashboard panels, grid cells,

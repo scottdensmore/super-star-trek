@@ -1,6 +1,11 @@
 package theme
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/charmbracelet/lipgloss"
+)
 
 // CrtTheme implements the 1970s monochrome phosphor CRT green aesthetic.
 type CrtTheme struct {
@@ -33,6 +38,28 @@ func (t CrtTheme) PlasmaTorpedo() lipgloss.Style { return t.Styles().PlasmaTorpe
 func (t CrtTheme) TholianWeb() lipgloss.Style    { return t.Styles().TholianWeb }
 func (t CrtTheme) AlertRed() lipgloss.Style      { return t.Styles().AlertRed }
 func (t CrtTheme) AlertYellow() lipgloss.Style   { return t.Styles().AlertYellow }
+
+// FormatHeader formats the top status banner for CRT theme with phosphor text and scanline spacing.
+func (t CrtTheme) FormatHeader(title, themeInfo string, width int) string {
+	styles := t.Styles()
+	frame := styles.Title.GetHorizontalFrameSize()
+	contentWidth := width - frame
+	gap := contentWidth - lipgloss.Width(title) - lipgloss.Width(themeInfo)
+	if gap < 2 {
+		gap = 2
+	}
+	headerLine := title + strings.Repeat(" ", gap) + themeInfo
+	return styles.Title.Width(width).Render(headerLine)
+}
+
+// FormatAudioBadge formats the HUD audio volume indicator badge for CRT theme.
+func (t CrtTheme) FormatAudioBadge(volume int, muted bool) string {
+	styles := t.Styles()
+	if muted || volume == 0 {
+		return styles.Empty.Render("[SND: OFF]")
+	}
+	return styles.Prompt.Render(fmt.Sprintf("[SND: %d%%]", volume))
+}
 
 func (t CrtTheme) Styles() Styles {
 	switch t.ColorMode() {
