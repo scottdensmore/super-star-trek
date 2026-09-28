@@ -3,6 +3,8 @@ package main
 import (
 	"bytes"
 	"errors"
+	"flag"
+	"io"
 	"reflect"
 	"strings"
 	"testing"
@@ -905,6 +907,50 @@ func TestCLIFlags_Difficulty_Expert_And_Emeritus(t *testing.T) {
 	}
 }
 
+type audioFlags struct {
+	volume    int
+	mute      bool
+	audioMode string
+}
+
+func parseFlags(args []string) audioFlags {
+	fs := flag.NewFlagSet("sst", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	flagVolume := fs.Int("volume", -1, "Set audio playback volume (0-100)")
+	flagMute := fs.Bool("mute", false, "Mute all audio playback")
+	flagAudioMode := fs.String("audio-mode", "", "Set audio mode (auto, native, bell, off)")
+
+	_ = fs.Bool("classic", false, "")
+	_ = fs.Bool("version", false, "")
+	_ = fs.Bool("v", false, "")
+	_ = fs.String("theme", "modern", "")
+	_ = fs.String("mode", "auto", "")
+	_ = fs.Int64("seed", 0, "")
+	_ = fs.String("difficulty", "normal", "")
+	_ = fs.String("surveillance", "", "")
+	_ = fs.Bool("sensor-degradation", true, "")
+	_ = fs.Float64("repair-multiplier", 1.0, "")
+	_ = fs.Bool("klingon-cloak", false, "")
+	_ = fs.Bool("anomalies", false, "")
+	_ = fs.Bool("no-anomalies", false, "")
+	_ = fs.Bool("adversaries", false, "")
+	_ = fs.Bool("a", false, "")
+	_ = fs.Bool("sound", true, "")
+	_ = fs.Bool("no-sound", false, "")
+	_ = fs.String("scenario", "", "")
+	_ = fs.String("s", "", "")
+	_ = fs.Bool("list-scenarios", false, "")
+	_ = fs.Bool("tour", false, "")
+	_ = fs.Bool("campaign", false, "")
+
+	_ = fs.Parse(args)
+	return audioFlags{
+		volume:    *flagVolume,
+		mute:      *flagMute,
+		audioMode: *flagAudioMode,
+	}
+}
+
 func TestCLIAudioFlags(t *testing.T) {
 	// Test parsing --volume, --mute, --audio-mode
 	flags := parseFlags([]string{"--volume=50", "--mute", "--audio-mode=bell"})
@@ -970,6 +1016,13 @@ func TestRun_AudioFlags(t *testing.T) {
 		{
 			name:        "volume override to 0",
 			args:        []string{"--volume=0", "-seed", "42"},
+			wantVolume:  0,
+			wantMuted:   false,
+			wantEnabled: true,
+		},
+		{
+			name:        "negative volume clamped to 0",
+			args:        []string{"--volume=-5", "-seed", "42"},
 			wantVolume:  0,
 			wantMuted:   false,
 			wantEnabled: true,

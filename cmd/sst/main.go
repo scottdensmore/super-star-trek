@@ -37,50 +37,6 @@ func isClassic(args []string) bool {
 	return false
 }
 
-type audioFlags struct {
-	volume    int
-	mute      bool
-	audioMode string
-}
-
-func parseFlags(args []string) audioFlags {
-	fs := flag.NewFlagSet("sst", flag.ContinueOnError)
-	fs.SetOutput(io.Discard)
-	flagVolume := fs.Int("volume", -1, "Set audio playback volume (0-100)")
-	flagMute := fs.Bool("mute", false, "Mute all audio playback")
-	flagAudioMode := fs.String("audio-mode", "", "Set audio mode (auto, native, bell, off)")
-
-	_ = fs.Bool("classic", false, "")
-	_ = fs.Bool("version", false, "")
-	_ = fs.Bool("v", false, "")
-	_ = fs.String("theme", "modern", "")
-	_ = fs.String("mode", "auto", "")
-	_ = fs.Int64("seed", 0, "")
-	_ = fs.String("difficulty", "normal", "")
-	_ = fs.String("surveillance", "", "")
-	_ = fs.Bool("sensor-degradation", true, "")
-	_ = fs.Float64("repair-multiplier", 1.0, "")
-	_ = fs.Bool("klingon-cloak", false, "")
-	_ = fs.Bool("anomalies", false, "")
-	_ = fs.Bool("no-anomalies", false, "")
-	_ = fs.Bool("adversaries", false, "")
-	_ = fs.Bool("a", false, "")
-	_ = fs.Bool("sound", true, "")
-	_ = fs.Bool("no-sound", false, "")
-	_ = fs.String("scenario", "", "")
-	_ = fs.String("s", "", "")
-	_ = fs.Bool("list-scenarios", false, "")
-	_ = fs.Bool("tour", false, "")
-	_ = fs.Bool("campaign", false, "")
-
-	_ = fs.Parse(args)
-	return audioFlags{
-		volume:    *flagVolume,
-		mute:      *flagMute,
-		audioMode: *flagAudioMode,
-	}
-}
-
 func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	if isClassic(args) {
 		return classic.RunClassicCLI(in, out, args)
@@ -182,7 +138,7 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	if visited["mute"] {
 		cfg.Muted = *flagMute
 	}
-	if visited["volume"] && *flagVolume >= 0 {
+	if visited["volume"] {
 		cfg.Volume = *flagVolume
 	}
 	if visited["audio-mode"] {
@@ -248,7 +204,6 @@ func run(args []string, in io.Reader, out, errOut io.Writer) int {
 	p.SetSoundEnabled(!cfg.Muted)
 	if p.AudioPlayer != nil {
 		p.AudioPlayer.SetVolume(cfg.Volume)
-		p.AudioPlayer.SetMuted(cfg.Muted)
 	}
 	if err := runProgram(p, tea.WithAltScreen(), tea.WithMouseCellMotion()); err != nil {
 		_, _ = fmt.Fprintf(errOut, "Error running game: %v\n", err)
