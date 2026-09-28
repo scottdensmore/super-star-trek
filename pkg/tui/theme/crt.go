@@ -55,7 +55,7 @@ func (t CrtTheme) FormatHeader(title, themeInfo string, width int) string {
 // FormatAudioBadge formats the HUD audio volume indicator badge for CRT theme.
 func (t CrtTheme) FormatAudioBadge(volume int, muted bool) string {
 	styles := t.Styles()
-	if muted || volume == 0 {
+	if muted || volume <= 0 {
 		return styles.Empty.Render("[SND: OFF]")
 	}
 	return styles.Prompt.Render(fmt.Sprintf("[SND: %d%%]", volume))

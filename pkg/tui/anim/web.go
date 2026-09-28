@@ -47,7 +47,7 @@ func NewWebAnimation(coord engine.Coord, action WebAction) *WebAnimation {
 // NewWebAnimationWithSpeed creates a new WebAnimation with a specified speed setting.
 func NewWebAnimationWithSpeed(coord engine.Coord, action WebAction, speed int) *WebAnimation {
 	d := FrameDuration(speed)
-	if d <= 0 {
+	if speed < 0 || speed > 3 {
 		d = 120 * time.Millisecond
 	}
 
@@ -91,12 +91,17 @@ func NewWebAnimationWithSpeed(coord engine.Coord, action WebAction, speed int) *
 		}
 	}
 
-	return &WebAnimation{
+	anim := &WebAnimation{
 		coord:   coord,
 		action:  action,
 		stages:  stages,
 		frames:  frames,
 	}
+	if speed == engine.AnimSpeedOff || d == 0 {
+		anim.finished = true
+		anim.current = len(frames)
+	}
+	return anim
 }
 
 // Coord returns the sector coordinate where the web animation occurs.

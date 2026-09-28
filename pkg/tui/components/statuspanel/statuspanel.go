@@ -299,7 +299,7 @@ func (m Model) Render(data PanelData) string {
 	m.stardate = data.Stardate
 	m.rules = data.Rules
 	m.soundEnabled = data.SoundEnabled
-	if data.AudioVolume > 0 || data.AudioMuted {
+	if data.AudioVolume >= 0 || data.AudioMuted {
 		m.audioVolume = data.AudioVolume
 		m.audioMuted = data.AudioMuted
 	}

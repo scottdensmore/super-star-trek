@@ -27,9 +27,7 @@ func TestDefaultConfig(t *testing.T) {
 
 func TestSaveAndLoadRoundtrip(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", origHome)
-	os.Setenv("HOME", tmpDir)
+	t.Setenv("HOME", tmpDir)
 
 	cfg := Config{
 		Volume:    65,
@@ -54,9 +52,8 @@ func TestSaveAndLoadRoundtrip(t *testing.T) {
 
 func TestLoadConfig_MissingFileReturnsDefault(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", origHome)
-	os.Setenv("HOME", tmpDir)
+
+	t.Setenv("HOME", tmpDir)
 
 	loaded, err := LoadConfig()
 	if err != nil {
@@ -112,9 +109,8 @@ func TestConfigValidationBounds(t *testing.T) {
 
 func TestConfigPath(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", origHome)
-	os.Setenv("HOME", tmpDir)
+
+	t.Setenv("HOME", tmpDir)
 
 	p, err := ConfigPath()
 	if err != nil {
@@ -128,9 +124,8 @@ func TestConfigPath(t *testing.T) {
 
 func TestLoadConfig_CorruptedFileReturnsDefaultWithError(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", origHome)
-	os.Setenv("HOME", tmpDir)
+
+	t.Setenv("HOME", tmpDir)
 
 	cfgDir := filepath.Join(tmpDir, ".super-star-trek")
 	if err := os.MkdirAll(cfgDir, 0755); err != nil {

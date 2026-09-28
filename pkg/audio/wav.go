@@ -538,13 +538,13 @@ func synthesizePlasmaImpact() []int16 {
 	return samples
 }
 
-// synthesizeTholianWeb produces a crystalline arpeggio (harmonic chirps at 2400 Hz, 3200 Hz, 4800 Hz over 300ms).
+// synthesizeTholianWeb produces a crystalline arpeggio (harmonic chirps at 2400 Hz, 3200 Hz, 3600 Hz over 300ms).
 func synthesizeTholianWeb() []int16 {
 	duration := 0.30 // 300 ms
 	numSamples := int(float64(sampleRate) * duration)
 	samples := make([]int16, numSamples)
 
-	notes := []float64{2400.0, 3200.0, 4800.0}
+	notes := []float64{2400.0, 3200.0, 3600.0}
 	noteDuration := duration / float64(len(notes))
 
 	for i := 0; i < numSamples; i++ {

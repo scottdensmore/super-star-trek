@@ -407,11 +407,16 @@ type mockAudioPlayer struct {
 	audio.NullPlayer
 	playedSound audio.SoundID
 	playCount   int
+	volume      int
 }
 
 func (m *mockAudioPlayer) Play(s audio.SoundID) {
 	m.playedSound = s
 	m.playCount++
+}
+
+func (m *mockAudioPlayer) SetVolume(v int) {
+	m.volume = v
 }
 
 func TestOptionsModalAudioRows(t *testing.T) {
@@ -533,5 +538,35 @@ func TestOptionsModalAudioRows(t *testing.T) {
 	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	if mock.playedSound != currSound {
 		t.Errorf("expected injected player to play %s, got %s", currSound, mock.playedSound)
+	}
+}
+
+func TestOptionsModal_AuditionVolumeSync(t *testing.T) {
+	th := theme.DefaultTheme()
+	rules := engine.DefaultRulesForProfile(engine.ProfileNormal)
+	m := New(th, rules)
+	mock := &mockAudioPlayer{}
+	m.SetPlayer(mock)
+
+	// Set a volume and test audition
+	m.SetVolume(50)
+	m.SelectedRow = RowSoundTest
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if mock.volume != 50 {
+		t.Errorf("expected mock volume 50 on audition, got %d", mock.volume)
+	}
+
+	// Change volume via keys
+	m.SelectedRow = RowVolume
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight}) // +10 = 60
+	if mock.volume != 60 {
+		t.Errorf("expected mock volume 60 on cycle, got %d", mock.volume)
+	}
+
+	// Audition again
+	m.SelectedRow = RowSoundTest
+	m, _ = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if mock.volume != 60 {
+		t.Errorf("expected mock volume 60 on audition, got %d", mock.volume)
 	}
 }

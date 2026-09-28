@@ -55,7 +55,7 @@ func (t ModernTheme) FormatHeader(title, themeInfo string, width int) string {
 // FormatAudioBadge formats the HUD audio volume indicator badge for Modern theme.
 func (t ModernTheme) FormatAudioBadge(volume int, muted bool) string {
 	styles := t.Styles()
-	if muted || volume == 0 {
+	if muted || volume <= 0 {
 		return styles.Empty.Render("🔇 MUTED")
 	}
 	return styles.Prompt.Render(fmt.Sprintf("🔊 %d%%", volume))

@@ -26,7 +26,7 @@ func NewCloakAnimation(coord engine.Coord, cloaking bool) *CloakAnimation {
 // NewCloakAnimationWithSpeed creates a new Romulan cloak/decloak shimmer animation with a specific speed setting.
 func NewCloakAnimationWithSpeed(coord engine.Coord, cloaking bool, speed int) *CloakAnimation {
 	d := FrameDuration(speed)
-	if d <= 0 {
+	if speed < 0 || speed > 3 {
 		d = 120 * time.Millisecond
 	}
 
@@ -58,12 +58,17 @@ func NewCloakAnimationWithSpeed(coord engine.Coord, cloaking bool, speed int) *C
 		}
 	}
 
-	return &CloakAnimation{
+	anim := &CloakAnimation{
 		coord:    coord,
 		cloaking: cloaking,
 		stages:   stages,
 		frames:   frames,
 	}
+	if speed == engine.AnimSpeedOff || d == 0 {
+		anim.finished = true
+		anim.current = len(frames)
+	}
+	return anim
 }
 
 // Coord returns the sector coordinate where the shimmer is rendered.

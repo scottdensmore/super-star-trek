@@ -120,6 +120,9 @@ func (m *Model) SetVolume(vol int) {
 		vol = 100
 	}
 	m.volume = vol
+	if m.player != nil {
+		m.player.SetVolume(m.volume)
+	}
 }
 
 // AudioMode returns the configured audio subsystem mode.
@@ -260,6 +263,7 @@ func (m Model) auditionSound() tea.Cmd {
 		return nil
 	}
 	if m.player != nil {
+		m.player.SetVolume(m.volume)
 		m.player.Play(sound)
 	}
 	return func() tea.Msg {
@@ -360,6 +364,9 @@ func (m *Model) cycleOption(dir int) {
 			newVol = 100
 		}
 		m.volume = newVol
+		if m.player != nil {
+			m.player.SetVolume(newVol)
+		}
 	case RowSoundTest:
 		if len(m.testSounds) > 0 {
 			newIdx := (m.testSoundIdx + dir) % len(m.testSounds)

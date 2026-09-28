@@ -20,7 +20,7 @@ type PlasmaAnimation struct {
 
 // NewPlasmaAnimation creates a new PlasmaAnimation step-wise tracking movement from from to to.
 func NewPlasmaAnimation(from, to engine.Coord, stepDuration time.Duration) *PlasmaAnimation {
-	if stepDuration <= 0 {
+	if stepDuration < 0 {
 		stepDuration = 100 * time.Millisecond
 	}
 
@@ -40,12 +40,17 @@ func NewPlasmaAnimation(from, to engine.Coord, stepDuration time.Duration) *Plas
 		}
 	}
 
-	return &PlasmaAnimation{
+	anim := &PlasmaAnimation{
 		from:   from,
 		to:     to,
 		path:   pts,
 		frames: frames,
 	}
+	if stepDuration == 0 {
+		anim.finished = true
+		anim.current = len(frames)
+	}
+	return anim
 }
 
 // From returns the initial launch coordinate.

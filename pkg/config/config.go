@@ -45,6 +45,9 @@ func DefaultConfig() Config {
 // Normalize ensures all configuration parameters fall within valid bounds and domains,
 // falling back to safe defaults when encountering invalid or unrecognized values.
 func (c *Config) Normalize() {
+	if c == nil {
+		return
+	}
 	if c.Volume < 0 {
 		c.Volume = 0
 	} else if c.Volume > 100 {

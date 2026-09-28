@@ -241,3 +241,20 @@ func TestTacticalAnimations_GlyphRuneWidths(t *testing.T) {
 		}
 	}
 }
+
+func TestTacticalAnimations_AnimSpeedOff_ImmediatelyFinished(t *testing.T) {
+	c := NewCloakAnimationWithSpeed(engine.Coord{1, 1}, true, engine.AnimSpeedOff)
+	if !c.Done() || !c.IsFinished() {
+		t.Errorf("expected cloak animation to be immediately finished with AnimSpeedOff")
+	}
+
+	w := NewWebAnimationWithSpeed(engine.Coord{1, 1}, WebActionWeave, engine.AnimSpeedOff)
+	if !w.Done() || !w.IsFinished() {
+		t.Errorf("expected web animation to be immediately finished with AnimSpeedOff")
+	}
+
+	p := NewPlasmaAnimation(engine.Coord{1, 1}, engine.Coord{2, 2}, 0)
+	if !p.Done() || !p.IsFinished() {
+		t.Errorf("expected plasma animation to be immediately finished with duration 0")
+	}
+}
