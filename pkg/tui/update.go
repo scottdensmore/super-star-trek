@@ -420,6 +420,7 @@ func (m Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				_ = config.SaveConfig(cfg)
 
+				m.optionsModal.SetActive(false)
 				m.optionsModal.Closed = false
 				return m, m.CommandBar.Focus()
 			}
@@ -928,15 +929,14 @@ func (m Model) openOptionsModal() (Model, tea.Cmd) {
 	}
 	m.optionsModal.SetAudioEnabled(m.SoundEnabled())
 	if m.AudioPlayer != nil {
-		if vol := m.AudioPlayer.Volume(); vol > 0 {
-			m.optionsModal.SetVolume(vol)
-		}
+		m.optionsModal.SetVolume(m.AudioPlayer.Volume())
 		m.optionsModal.SetPlayer(m.AudioPlayer)
 	}
 	cfg, err := config.LoadConfig()
 	if err == nil && cfg.AudioMode != "" {
 		m.optionsModal.SetAudioMode(cfg.AudioMode)
 	}
+	m.optionsModal.SetActive(true)
 	m.optionsModal.Closed = false
 	m.showOptions = true
 	m.CommandBar.Blur()

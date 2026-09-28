@@ -72,6 +72,7 @@ type Model struct {
 	player       audio.Player
 	SelectedRow  Row
 	Closed       bool
+	active       bool
 }
 
 // New creates a new options modal initialized with the given theme and rules.
@@ -92,6 +93,7 @@ func New(th theme.Theme, rules engine.GameRules) Model {
 		testSounds:   testSounds,
 		SelectedRow:  RowProfile,
 		Closed:       false,
+		active:       true,
 	}
 }
 
@@ -198,7 +200,15 @@ func (m *Model) SetTheme(th theme.Theme) {
 
 // Active reports whether the modal is currently open and accepting input.
 func (m Model) Active() bool {
-	return !m.Closed
+	return !m.Closed && m.active
+}
+
+// SetActive sets whether the modal is actively open and accepting input.
+func (m *Model) SetActive(active bool) {
+	m.active = active
+	if active {
+		m.Closed = false
+	}
 }
 
 // Update handles keyboard navigation and option cycling.
@@ -230,6 +240,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		case "enter":
 			if m.SelectedRow == RowDone {
 				m.Closed = true
+				m.active = false
 			} else if m.SelectedRow == RowSoundTest {
 				return m, m.auditionSound()
 			} else {
@@ -237,6 +248,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			}
 		case "esc", "q":
 			m.Closed = true
+			m.active = false
 		}
 	}
 	return m, nil

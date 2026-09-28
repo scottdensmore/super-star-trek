@@ -2492,6 +2492,7 @@ type mockAudioPlayer struct {
 	played []audio.SoundID
 	muted  bool
 	volume int
+	volSet bool
 }
 
 func (p *mockAudioPlayer) Play(s audio.SoundID) {
@@ -2518,11 +2519,15 @@ func (p *mockAudioPlayer) SetVolume(v int) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.volume = v
+	p.volSet = true
 }
 
 func (p *mockAudioPlayer) Volume() int {
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	if !p.volSet && p.volume == 0 {
+		return 80
+	}
 	return p.volume
 }
 

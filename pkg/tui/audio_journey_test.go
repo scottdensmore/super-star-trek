@@ -43,8 +43,10 @@ func TestAudioAndPresentationJourney(t *testing.T) {
 
 	// 3. Adjust volume to 60%
 	m.optionsModal.SelectedRow = optionsmodal.RowVolume
-	m.optionsModal, _ = m.optionsModal.Update(tea.KeyMsg{Type: tea.KeyLeft})
-	m.optionsModal, _ = m.optionsModal.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	m = updated.(Model)
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	m = updated.(Model)
 	if m.optionsModal.Volume() != 60 {
 		t.Errorf("expected volume 60 in options modal, got %d", m.optionsModal.Volume())
 	}
@@ -62,37 +64,33 @@ func TestAudioAndPresentationJourney(t *testing.T) {
 		}
 	}
 
-	// 5. Dismiss modal and verify persistence
-	m.optionsModal, _ = m.optionsModal.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	// 5. Dismiss modal and verify persistence via root model Update
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m = updated.(Model)
 	if m.optionsModal.Active() {
-		t.Errorf("expected options modal to close")
+		t.Errorf("expected options modal to close (Active == false)")
 	}
-	m.showOptions = false
-	if m.AudioPlayer != nil {
-		m.AudioPlayer.SetVolume(m.optionsModal.Volume())
+	if m.showOptions {
+		t.Errorf("expected showOptions to be false after Esc")
 	}
-	m.Status.SetAudioTelemetry(m.optionsModal.Volume(), !m.optionsModal.AudioEnabled())
 
-	// Verify config.json was created
+	// Verify config.json was saved naturally by root model without manual fallback saves
 	cfgPath := filepath.Join(tmpDir, ".super-star-trek", "config.json")
-	if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
-		// Save if explicitly triggered on exit or options close
-		cfg := config.DefaultConfig()
-		cfg.Volume = m.optionsModal.Volume()
-		cfg.Muted = !m.optionsModal.AudioEnabled()
-		cfg.AudioMode = m.optionsModal.AudioMode()
-		if err := config.SaveConfig(cfg); err != nil {
-			t.Fatalf("failed to save config on options close: %v", err)
-		}
-	}
 	if _, err := os.Stat(cfgPath); err != nil {
-		t.Errorf("expected config file %s to exist: %v", cfgPath, err)
+		t.Fatalf("expected config file %s to exist: %v", cfgPath, err)
+	}
+	savedCfg, err := config.LoadConfig()
+	if err != nil {
+		t.Fatalf("failed to load saved config: %v", err)
+	}
+	if savedCfg.Volume != 60 {
+		t.Errorf("expected persisted volume 60, got %d", savedCfg.Volume)
 	}
 
-	// 6. Test full root model Update lifecycle: reopen, adjust, close via root Update
+	// 6. Test second root model Update lifecycle: reopen, adjust, close via root Update
 	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("o")})
 	m = updated.(Model)
-	if !m.showOptions {
+	if !m.showOptions || !m.optionsModal.Active() {
 		t.Fatalf("expected options modal to open via root model 'o'")
 	}
 	if m.optionsModal.Volume() != 60 {
@@ -112,7 +110,7 @@ func TestAudioAndPresentationJourney(t *testing.T) {
 	// Dismiss modal via Esc through root model Update
 	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
 	m = updated.(Model)
-	if m.showOptions {
+	if m.showOptions || m.optionsModal.Active() {
 		t.Fatalf("expected options modal to close in root model")
 	}
 
@@ -125,15 +123,41 @@ func TestAudioAndPresentationJourney(t *testing.T) {
 	}
 
 	// Verify config file was updated on disk with volume 40
-	savedCfg, err := config.LoadConfig()
+	savedCfg, err = config.LoadConfig()
 	if err != nil {
-		t.Fatalf("failed to load saved config: %v", err)
+		t.Fatalf("failed to reload config: %v", err)
 	}
 	if savedCfg.Volume != 40 {
 		t.Errorf("expected persisted volume 40, got %d", savedCfg.Volume)
 	}
 
-	// 7. Verify tactical animations and audio events under test silence guarantees
+	// 7. Verify zero volume preservation in options modal
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("O")})
+	m = updated.(Model)
+	m.optionsModal.SelectedRow = optionsmodal.RowVolume
+	for i := 0; i < 4; i++ {
+		updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyLeft})
+		m = updated.(Model)
+	}
+	if m.optionsModal.Volume() != 0 {
+		t.Errorf("expected volume 0 after decreasing to zero, got %d", m.optionsModal.Volume())
+	}
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m = updated.(Model)
+	if m.AudioPlayer.Volume() != 0 {
+		t.Errorf("expected AudioPlayer volume 0, got %d", m.AudioPlayer.Volume())
+	}
+
+	// Reopen options modal and verify 0 volume is preserved, not overwritten by stale value
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("O")})
+	m = updated.(Model)
+	if m.optionsModal.Volume() != 0 {
+		t.Errorf("expected options modal to preserve volume 0 on reopen, got %d", m.optionsModal.Volume())
+	}
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyEsc})
+	m = updated.(Model)
+
+	// 8. Verify tactical animations and audio events under test silence guarantees
 	m.Game.Enterprise.Energy = 3000
 	m.Game.Enterprise.Torpedoes = 10
 	updated, _ = m.Update(commandbar.CommandSubmittedMsg{Text: "tor 1 1"})
@@ -144,12 +168,12 @@ func TestAudioAndPresentationJourney(t *testing.T) {
 	m.activeAnim.Skip()
 	m.activeAnim = nil
 
-	// 8. Verify new Model instance loads persisted volume and mute state
+	// 9. Verify new Model instance loads persisted volume from disk
 	mNew := NewModel(g, theme.DefaultTheme())
-	if mNew.AudioPlayer.Volume() != 40 {
-		t.Errorf("expected new Model to initialize with persisted volume 40, got %d", mNew.AudioPlayer.Volume())
+	if mNew.AudioPlayer.Volume() != 0 {
+		t.Errorf("expected new Model to initialize with persisted volume 0, got %d", mNew.AudioPlayer.Volume())
 	}
-	if mNew.Status.AudioVolume() != 40 {
-		t.Errorf("expected new Model status telemetry volume 40, got %d", mNew.Status.AudioVolume())
+	if mNew.Status.AudioVolume() != 0 {
+		t.Errorf("expected new Model status telemetry volume 0, got %d", mNew.Status.AudioVolume())
 	}
 }
