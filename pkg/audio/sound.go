@@ -33,17 +33,22 @@ type Player interface {
 	Play(sound SoundID)
 	SetMuted(muted bool)
 	IsMuted() bool
+	SetVolume(vol int)
+	Volume() int
 }
 
 // NullPlayer provides a no-op implementation of Player.
 type NullPlayer struct {
-	mu    sync.RWMutex
-	muted bool
+	mu     sync.RWMutex
+	muted  bool
+	volume int
 }
 
 // NewNullPlayer returns a newly initialized NullPlayer.
 func NewNullPlayer() *NullPlayer {
-	return &NullPlayer{}
+	return &NullPlayer{
+		volume: 100,
+	}
 }
 
 // Play does nothing.
@@ -61,4 +66,23 @@ func (p *NullPlayer) IsMuted() bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.muted
+}
+
+// SetVolume sets the playback volume (clamped to 0-100).
+func (p *NullPlayer) SetVolume(vol int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if vol < 0 {
+		vol = 0
+	} else if vol > 100 {
+		vol = 100
+	}
+	p.volume = vol
+}
+
+// Volume reports the current playback volume (0-100).
+func (p *NullPlayer) Volume() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.volume
 }

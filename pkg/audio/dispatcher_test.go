@@ -9,6 +9,7 @@ import (
 type mockPlayer struct {
 	played []SoundID
 	muted  bool
+	volume int
 }
 
 func (m *mockPlayer) Play(s SoundID) {
@@ -18,6 +19,8 @@ func (m *mockPlayer) Play(s SoundID) {
 }
 func (m *mockPlayer) SetMuted(muted bool) { m.muted = muted }
 func (m *mockPlayer) IsMuted() bool       { return m.muted }
+func (m *mockPlayer) SetVolume(vol int)   { m.volume = vol }
+func (m *mockPlayer) Volume() int         { return m.volume }
 
 func TestDispatcher_EventMapping(t *testing.T) {
 	p := &mockPlayer{}

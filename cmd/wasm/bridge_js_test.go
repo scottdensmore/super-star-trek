@@ -103,3 +103,25 @@ func TestJSAudioPlayer_PlayDelegation(t *testing.T) {
 		t.Fatalf("expected no additional sounds played when muted, got: %v", playedSounds)
 	}
 }
+
+func TestJSAudioPlayer_Volume(t *testing.T) {
+	player := &jsAudioPlayer{volume: 80}
+	if player.Volume() != 80 {
+		t.Errorf("expected default volume 80, got %d", player.Volume())
+	}
+
+	player.SetVolume(50)
+	if player.Volume() != 50 {
+		t.Errorf("expected volume 50, got %d", player.Volume())
+	}
+
+	// Test clamping
+	player.SetVolume(-20)
+	if player.Volume() != 0 {
+		t.Errorf("expected volume clamped to 0, got %d", player.Volume())
+	}
+	player.SetVolume(120)
+	if player.Volume() != 100 {
+		t.Errorf("expected volume clamped to 100, got %d", player.Volume())
+	}
+}

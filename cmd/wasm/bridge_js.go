@@ -12,8 +12,9 @@ import (
 
 // jsAudioPlayer implements audio.Player by delegating playback to window.sstPlaySound.
 type jsAudioPlayer struct {
-	mu    sync.RWMutex
-	muted bool
+	mu     sync.RWMutex
+	muted  bool
+	volume int
 }
 
 func getJSFunction(name string) js.Value {
@@ -66,9 +67,39 @@ func (p *jsAudioPlayer) IsMuted() bool {
 	return p.muted
 }
 
+func (p *jsAudioPlayer) SetVolume(vol int) {
+	if vol < 0 {
+		vol = 0
+	} else if vol > 100 {
+		vol = 100
+	}
+	p.mu.Lock()
+	p.volume = vol
+	p.mu.Unlock()
+
+	fn := getJSFunction("sstSetVolume")
+	if fn.Type() == js.TypeFunction {
+		fn.Invoke(vol)
+	}
+}
+
+func (p *jsAudioPlayer) Volume() int {
+	fn := getJSFunction("sstGetVolume")
+	if fn.Type() == js.TypeFunction {
+		res := fn.Invoke()
+		if res.Type() == js.TypeNumber {
+			return res.Int()
+		}
+	}
+
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.volume
+}
+
 var (
 	activeSession     *Session
-	activeAudioPlayer = &jsAudioPlayer{}
+	activeAudioPlayer = &jsAudioPlayer{volume: 80}
 )
 
 func registerBridge() {

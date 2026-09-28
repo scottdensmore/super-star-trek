@@ -163,6 +163,7 @@ type mockAudioPlayer struct {
 	mu     sync.Mutex
 	sounds []audio.SoundID
 	muted  bool
+	volume int
 }
 
 func (m *mockAudioPlayer) Play(sound audio.SoundID) {
@@ -181,6 +182,18 @@ func (m *mockAudioPlayer) IsMuted() bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.muted
+}
+
+func (m *mockAudioPlayer) SetVolume(vol int) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.volume = vol
+}
+
+func (m *mockAudioPlayer) Volume() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.volume
 }
 
 func (m *mockAudioPlayer) Sounds() []audio.SoundID {

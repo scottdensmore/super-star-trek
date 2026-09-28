@@ -19,6 +19,7 @@ type TerminalBellPlayer struct {
 	w          io.Writer
 	visualBell func()
 	muted      bool
+	volume     int
 }
 
 // NewTerminalBellPlayer creates a TerminalBellPlayer that writes \a to w and invokes
@@ -27,6 +28,7 @@ func NewTerminalBellPlayer(w io.Writer, visualBell func()) *TerminalBellPlayer {
 	return &TerminalBellPlayer{
 		w:          w,
 		visualBell: visualBell,
+		volume:     80,
 	}
 }
 
@@ -34,7 +36,7 @@ func NewTerminalBellPlayer(w io.Writer, visualBell func()) *TerminalBellPlayer {
 func (p *TerminalBellPlayer) Play(sound SoundID) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if p.muted {
+	if p.muted || p.volume == 0 {
 		return
 	}
 
@@ -63,11 +65,31 @@ func (p *TerminalBellPlayer) IsMuted() bool {
 	return p.muted
 }
 
+// SetVolume sets the volume (0-100) for this player.
+func (p *TerminalBellPlayer) SetVolume(vol int) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if vol < 0 {
+		vol = 0
+	} else if vol > 100 {
+		vol = 100
+	}
+	p.volume = vol
+}
+
+// Volume reports the current volume (0-100) of this player.
+func (p *TerminalBellPlayer) Volume() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.volume
+}
+
 // NativeOSPlayer streams in-memory WAV buffers to OS audio commands (afplay, paplay, aplay)
 // in non-blocking background goroutines, falling back to TerminalBellPlayer if no command is available.
 type NativeOSPlayer struct {
 	mu       sync.RWMutex
 	muted    bool
+	volume   int
 	cmdPath  string
 	fallback Player
 }
@@ -83,6 +105,7 @@ func newNativeOSPlayerWithCmd(fallback Player, cmdPath string) *NativeOSPlayer {
 	return &NativeOSPlayer{
 		fallback: fallback,
 		cmdPath:  cmdPath,
+		volume:   80,
 	}
 }
 
@@ -95,11 +118,12 @@ func isOSAudioBinary(cmd string) bool {
 func (p *NativeOSPlayer) Play(sound SoundID) {
 	p.mu.RLock()
 	muted := p.muted
+	volume := p.volume
 	cmd := p.cmdPath
 	fallback := p.fallback
 	p.mu.RUnlock()
 
-	if muted {
+	if muted || volume == 0 {
 		return
 	}
 
@@ -118,13 +142,14 @@ func (p *NativeOSPlayer) Play(sound SoundID) {
 
 	go func() {
 		p.mu.RLock()
-		if p.muted {
+		if p.muted || p.volume == 0 {
 			p.mu.RUnlock()
 			return
 		}
+		vol := p.volume
 		p.mu.RUnlock()
 
-		wavData := SynthesizeWav(sound)
+		wavData := SynthesizeWavWithVolume(sound, vol)
 		tmpFile, err := os.CreateTemp("", "sst-audio-*.wav")
 		if err != nil {
 			if fallback != nil {
@@ -181,6 +206,30 @@ func (p *NativeOSPlayer) IsMuted() bool {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 	return p.muted
+}
+
+// SetVolume sets the volume (0-100) for the player and its fallback.
+func (p *NativeOSPlayer) SetVolume(vol int) {
+	if vol < 0 {
+		vol = 0
+	} else if vol > 100 {
+		vol = 100
+	}
+	p.mu.Lock()
+	p.volume = vol
+	fb := p.fallback
+	p.mu.Unlock()
+
+	if fb != nil {
+		fb.SetVolume(vol)
+	}
+}
+
+// Volume reports the current volume of the player.
+func (p *NativeOSPlayer) Volume() int {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.volume
 }
 
 func findOSAudioPlayer() string {
