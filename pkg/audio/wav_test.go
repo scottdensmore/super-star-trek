@@ -3,8 +3,14 @@ package audio
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"math"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 )
 
 func TestSynthesizeWav_HeaderValid(t *testing.T) {
@@ -170,6 +176,135 @@ func TestVolumeAttenuationBounds(t *testing.T) {
 	hundredWav := SynthesizeWavWithVolume(SoundPhaser, 100)
 	if !bytes.Equal(overWav, hundredWav) {
 		t.Errorf("expected volume > 100 to be clamped to 100")
+	}
+}
+
+func TestSynthesizeWav_SubtleAmplitudeAndSmoothEnvelope(t *testing.T) {
+	allSounds := []SoundID{
+		SoundPhaser,
+		SoundTorpedoLaunch,
+		SoundExplosion,
+		SoundRedAlert,
+		SoundDock,
+		SoundWarp,
+		SoundDamage,
+		SoundShields,
+		SoundVictory,
+		SoundDefeat,
+		SoundCloak,
+		SoundDecloak,
+		SoundPlasmaLaunch,
+		SoundPlasmaImpact,
+		SoundTholianWeb,
+		SoundWebBreached,
+		SoundPointDefense,
+		SoundCommChime,
+		SoundComputerBeep,
+	}
+
+	for _, id := range allSounds {
+		t.Run(string(id), func(t *testing.T) {
+			samples := rawSamples(id)
+			if len(samples) == 0 {
+				t.Fatalf("expected non-empty samples for %s", id)
+			}
+
+			var peak int16
+			for _, s := range samples {
+				abs := s
+				if abs < 0 {
+					abs = -abs
+				}
+				if abs > peak {
+					peak = abs
+				}
+			}
+
+			// Ensure sound is audible but subtle (never exceeding ~30% of full scale 32767)
+			if peak < 500 {
+				t.Errorf("%s: expected audible peak >= 500, got %d", id, peak)
+			}
+			if peak > 10000 {
+				t.Errorf("%s: expected subtle peak <= 10000 (30%% FS), got %d", id, peak)
+			}
+
+			// Ensure smooth fade-in and fade-out to prevent speaker clicks
+			first := samples[0]
+			if first < 0 {
+				first = -first
+			}
+			last := samples[len(samples)-1]
+			if last < 0 {
+				last = -last
+			}
+			if first > 100 {
+				t.Errorf("%s: expected soft attack near 0 on first sample, got %d", id, samples[0])
+			}
+			if last > 100 {
+				t.Errorf("%s: expected soft release near 0 on last sample, got %d", id, samples[len(samples)-1])
+			}
+		})
+	}
+}
+
+func TestAudition(t *testing.T) {
+	raw := strings.TrimSpace(os.Getenv("SST_AUDITION"))
+	if raw == "" {
+		t.Skip("set SST_AUDITION=1 (or comma-separated sound IDs like SST_AUDITION=torpedo_launch,dock,phaser) to play sounds")
+	}
+
+	var list []SoundID
+	if raw == "1" || strings.EqualFold(raw, "all") {
+		list = []SoundID{
+			SoundTorpedoLaunch,
+			SoundDock,
+			SoundPhaser,
+			SoundExplosion,
+			SoundDamage,
+			SoundWarp,
+			SoundShields,
+			SoundRedAlert,
+		}
+	} else {
+		for _, part := range strings.Split(raw, ",") {
+			if s := strings.TrimSpace(part); s != "" {
+				list = append(list, SoundID(s))
+			}
+		}
+	}
+
+	tmpDir := t.TempDir()
+
+	// Wake up macOS CoreAudio hardware first so the first sound's attack is never clipped
+	warmupPath := filepath.Join(tmpDir, "warmup.wav")
+	warmupSamples := make([]int16, sampleRate*250/1000)
+	if err := os.WriteFile(warmupPath, encodeWAV(warmupSamples), 0600); err == nil {
+		_ = exec.Command("afplay", warmupPath).Run()
+	}
+
+	leadPad := sampleRate * 80 / 1000  // 80ms silent lead-in
+	tailPad := sampleRate * 220 / 1000 // 220ms silent tail-out
+
+	for idx, id := range list {
+		src := rawSamples(id)
+		durMs := len(src) * 1000 / sampleRate
+		fmt.Printf("🔊 [%d/%d] Playing %-16s (%d ms)...\n", idx+1, len(list), id, durMs)
+
+		padded := make([]int16, leadPad+len(src)+tailPad)
+		copy(padded[leadPad:], src)
+		wav := encodeWAV(padded)
+
+		path := filepath.Join(tmpDir, string(id)+".wav")
+		if err := os.WriteFile(path, wav, 0600); err != nil {
+			t.Fatalf("failed to write wav for %s: %v", id, err)
+		}
+		cmd := exec.Command("afplay", path)
+		if err := cmd.Run(); err != nil {
+			t.Fatalf("afplay failed for %s: %v", id, err)
+		}
+		if idx < len(list)-1 {
+			time.Sleep(850 * time.Millisecond)
+		}
 	}
 }
 

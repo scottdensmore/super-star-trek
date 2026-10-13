@@ -73,6 +73,37 @@ func (d *Dispatcher) DispatchEvents(events []engine.Event) {
 			} else {
 				d.player.Play(SoundDefeat)
 			}
+
+		case engine.EventKlingonCloakState:
+			if e.Cloaked {
+				d.player.Play(SoundCloak)
+			} else {
+				d.player.Play(SoundDecloak)
+			}
+
+		case engine.EventRomulanDecloak:
+			d.player.Play(SoundDecloak)
+
+		case engine.EventPlasmaLaunched:
+			d.player.Play(SoundPlasmaLaunch)
+
+		case engine.EventPlasmaImpact:
+			d.player.Play(SoundPlasmaImpact)
+
+		case engine.EventPlasmaIntercepted:
+			d.player.Play(SoundPointDefense)
+
+		case engine.EventWebSegmentLaid:
+			d.player.Play(SoundTholianWeb)
+
+		case engine.EventWebBreached, engine.EventWebCollapsed:
+			d.player.Play(SoundWebBreached)
+
+		case engine.EventHelpCalled, engine.EventStarbaseSurveillance:
+			d.player.Play(SoundCommChime)
+
+		case engine.EventLRScanCompleted:
+			d.player.Play(SoundComputerBeep)
 		}
 	}
 }

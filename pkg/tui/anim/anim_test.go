@@ -106,10 +106,25 @@ func TestTorpedoAnimation_StepAndSkip(t *testing.T) {
 
 func TestTorpedoAnimation_ImpactAndMiss(t *testing.T) {
 	start := engine.Coord{1, 1}
-	target := engine.Coord{1, 3}
+	target := engine.Coord{1, 4}
 
-	// Hit animation should finish with shockwave frames
+	// Hit animation should keep the target visible during flight and finish with shockwave frames
 	animHit := NewTorpedoAnimation(start, target, true, 2)
+	frames := animHit.Frames()
+	// Trajectory from {1,1} to {1,4} has 2 intermediate flight frames ({1,2} and {1,3}) + 3 impact frames = 5 frames
+	if len(frames) != 5 {
+		t.Fatalf("expected 5 frames (2 flight + 3 impact), got %d", len(frames))
+	}
+	for i := 0; i < 2; i++ {
+		ovTarget, ok := frames[i].Overrides[target]
+		if !ok {
+			t.Fatalf("expected target %v to remain visible in flight frame %d", target, i)
+		}
+		if ovTarget.Glyph != "+K+" {
+			t.Errorf("expected target glyph '+K+' during flight frame %d, got %q", i, ovTarget.Glyph)
+		}
+	}
+
 	var lastFrame Frame
 	for !animHit.IsFinished() {
 		lastFrame = animHit.Step()
