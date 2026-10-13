@@ -110,3 +110,46 @@ func TestDispatcher_IgnoredEvents(t *testing.T) {
 		t.Errorf("expected 0 sounds for non-audio events, got %d: %v", len(p.played), p.played)
 	}
 }
+
+func TestDispatcher_ExtendedEventMapping(t *testing.T) {
+	p := &mockPlayer{}
+	d := NewDispatcher(p)
+
+	events := []engine.Event{
+		engine.EventKlingonCloakState{KlingonID: 1, Cloaked: true},
+		engine.EventKlingonCloakState{KlingonID: 1, Cloaked: false},
+		engine.EventRomulanDecloak{RomulanID: 2, Sector: engine.Coord{2, 2}},
+		engine.EventPlasmaLaunched{TorpedoID: 1, SourceID: 2, Sector: engine.Coord{2, 2}},
+		engine.EventPlasmaImpact{TorpedoID: 1, ShieldDamage: 100, HullDamage: 50},
+		engine.EventPlasmaIntercepted{TorpedoID: 1, Sector: engine.Coord{3, 3}},
+		engine.EventWebSegmentLaid{SpinnerID: 3, Coord: engine.Coord{4, 4}},
+		engine.EventWebBreached{Coord: engine.Coord{4, 4}},
+		engine.EventHelpCalled{},
+		engine.EventLRScanCompleted{CenterQuad: engine.Coord{1, 1}},
+	}
+
+	d.DispatchEvents(events)
+
+	expected := []SoundID{
+		SoundCloak,
+		SoundDecloak,
+		SoundDecloak,
+		SoundPlasmaLaunch,
+		SoundPlasmaImpact,
+		SoundPointDefense,
+		SoundTholianWeb,
+		SoundWebBreached,
+		SoundCommChime,
+		SoundComputerBeep,
+	}
+
+	if len(p.played) != len(expected) {
+		t.Fatalf("expected %d sounds, got %d: %v", len(expected), len(p.played), p.played)
+	}
+	for i, exp := range expected {
+		if p.played[i] != exp {
+			t.Errorf("sound %d: expected %s, got %s", i, exp, p.played[i])
+		}
+	}
+}
+

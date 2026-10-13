@@ -698,10 +698,12 @@ func (m Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if ent == engine.EntityEmpty {
 				if m.Game != nil {
 					prevCond := m.Game.Enterprise.Condition
-					events, err := m.Game.Dispatch(engine.ActionMove{DestSector: coord, Warp: 1.0})
+					action := engine.ActionMove{DestSector: coord, Warp: 1.0}
+					events, err := m.Game.Dispatch(action)
 					if err != nil {
 						m.CommandBar.AddMessage(err.Error())
 					} else {
+						m.executeKlingonTurnIfActive(action, &events)
 						bellCmd := m.logEvents(events)
 						for _, ev := range events {
 							if goEv, ok := ev.(engine.EventGameOver); ok {
@@ -1551,6 +1553,7 @@ func (m Model) createCombatAnimation(action engine.Action, events []engine.Event
 	case engine.ActionFireTorpedo:
 		start := m.Game.Enterprise.Sector
 		var hitEv *engine.EventTorpedoHit
+		var absorbEv *engine.EventSingularityAbsorption
 		firedAngle := act.Angle
 		hasFiredAngle := act.Angle != 0
 
@@ -1563,13 +1566,20 @@ func (m Model) createCombatAnimation(action engine.Action, events []engine.Event
 			case engine.EventTorpedoHit:
 				hitCopy := e
 				hitEv = &hitCopy
+			case engine.EventSingularityAbsorption:
+				absCopy := e
+				absorbEv = &absCopy
 			}
 		}
 
 		var end engine.Coord
 		hit := hitEv != nil
+		hitEntity := engine.EntityKlingon
 		if hit {
 			end = hitEv.Target
+			hitEntity = hitEv.Entity
+		} else if absorbEv != nil {
+			end = absorbEv.Sector
 		} else if act.Target != (engine.Coord{}) {
 			end = act.Target
 		} else if hasFiredAngle {
@@ -1578,7 +1588,7 @@ func (m Model) createCombatAnimation(action engine.Action, events []engine.Event
 			end = start
 		}
 
-		return anim.NewTorpedoAnimation(start, end, hit, m.Game.Rules.AnimSpeed)
+		return anim.NewTorpedoAnimationWithEntity(start, end, hit, hitEntity, m.Game.Rules.AnimSpeed)
 
 	case engine.ActionFirePhasers:
 		start := m.Game.Enterprise.Sector
