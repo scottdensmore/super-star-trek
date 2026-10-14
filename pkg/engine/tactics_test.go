@@ -302,7 +302,7 @@ func TestTactics_UnifiedTurn_AllPhasesSequence(t *testing.T) {
 	}
 
 	// Verify order: Phase 1 < Phase 2 < Phase 3 < Phase 4
-	if !(plasmaIdx < screenIdx && screenIdx < attackIdx && attackIdx < romulanIdx && romulanIdx < tholianIdx) {
+	if plasmaIdx >= screenIdx || screenIdx >= attackIdx || attackIdx >= romulanIdx || romulanIdx >= tholianIdx {
 		t.Errorf("expected phase order Phase 1 < Phase 2 (screening < attack) < Phase 3 < Phase 4, got indices: plasma=%d, screen=%d, attack=%d, romulan=%d, tholian=%d",
 			plasmaIdx, screenIdx, attackIdx, romulanIdx, tholianIdx)
 	}

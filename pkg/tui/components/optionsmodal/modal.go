@@ -241,12 +241,13 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 			}
 			m.cycleOption(1)
 		case "enter":
-			if m.SelectedRow == RowDone {
+			switch m.SelectedRow {
+			case RowDone:
 				m.Closed = true
 				m.active = false
-			} else if m.SelectedRow == RowSoundTest {
+			case RowSoundTest:
 				return m, m.auditionSound()
-			} else {
+			default:
 				m.cycleOption(1)
 			}
 		case "esc", "q":
@@ -440,7 +441,7 @@ func (m Model) View() string {
 	}
 	rows = append(rows, renderRow(RowAudio, "Sound FX", audioStr))
 
-	modeStr := "AUTO"
+	var modeStr string
 	switch m.audioMode {
 	case config.AudioModeAuto:
 		modeStr = "AUTO"

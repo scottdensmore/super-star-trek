@@ -16,9 +16,7 @@ import (
 
 func TestAudioAndPresentationJourney(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	defer os.Setenv("HOME", origHome)
-	os.Setenv("HOME", tmpDir)
+	t.Setenv("HOME", tmpDir)
 
 	g := engine.NewGame(1234, engine.SkillNovice, engine.LengthShort)
 	m := NewModel(g, theme.DefaultTheme())
