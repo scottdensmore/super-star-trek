@@ -46,7 +46,7 @@ func (t LcarsTheme) PillCaps() (string, string) {
 
 // FormatHeader formats the top status banner using LCARS curved pill caps and color blocking.
 func (t LcarsTheme) FormatHeader(title, themeInfo string, width int) string {
-	isDark := true
+	var isDark bool
 	switch t.ColorMode() {
 	case ColorModeDark:
 		isDark = true

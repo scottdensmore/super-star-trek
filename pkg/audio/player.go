@@ -181,7 +181,10 @@ type NativeOSPlayer struct {
 // NewNativeOSPlayer initializes a NativeOSPlayer with automatic OS command detection
 // and a TerminalBellPlayer fallback.
 func NewNativeOSPlayer(w io.Writer, visualBell func()) *NativeOSPlayer {
-	fallback := NewTerminalBellPlayer(w, visualBell)
+	var fallback Player = NewTerminalBellPlayer(w, visualBell)
+	if testing.Testing() {
+		fallback = NewNullPlayer()
+	}
 	p := newNativeOSPlayerWithCmd(fallback, findOSAudioPlayer())
 	if !testing.Testing() && isOSAudioBinary(p.cmdPath) {
 		go func() {

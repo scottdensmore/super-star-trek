@@ -30,7 +30,7 @@ func TestRomulan_CloakingAndRepositioning(t *testing.T) {
 	}
 
 	// Trigger next turn to cause decloak and attack
-	events = RomulanTurn(g, r)
+	_ = RomulanTurn(g, r)
 	if r.IsCloaked {
 		t.Errorf("expected Romulan to decloak when CloakTurns reaches 0")
 	}
