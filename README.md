@@ -183,6 +183,9 @@ Progress through **4 escalating campaign sectors** (*Neutral Zone Patrol* $\to$ 
 ## `>> 60-SECOND FLIGHT CHECK (QUICK START)`
 
 ```bash
+# 0. Provision toolchain & linters (Go 1.26.6 + golangci-lint) via mise
+mise install
+
 # 1. Launch the modern interactive TUI bridge console
 go run ./cmd/sst
 
@@ -202,6 +205,14 @@ go run ./cmd/sst --classic
 ---
 
 ## `>> INSTALLATION`
+
+### Development & Toolchain Setup (`mise`)
+If building or contributing from source, run [`mise`](https://mise.jdx.dev) first to install the pinned Go toolchain (`1.26.6`) and `golangci-lint` defined in [`mise.toml`](./mise.toml):
+```bash
+mise install
+golangci-lint run
+go test -race ./...
+```
 
 ### Go Toolchain (macOS / Linux / Windows)
 Requires [Go 1.26+](https://golang.org):
