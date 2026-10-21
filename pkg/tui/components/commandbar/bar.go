@@ -290,8 +290,8 @@ func (m Model) View() string {
 		panelStyle = panelStyle.BorderForeground(bellColor)
 	}
 	if m.width > 0 {
-		borderPaddingWidth := panelStyle.GetHorizontalFrameSize()
-		contentWidth := m.width - borderPaddingWidth
+		borderWidth := panelStyle.GetHorizontalBorderSize()
+		contentWidth := m.width - borderWidth
 		if contentWidth > 0 {
 			panelStyle = panelStyle.Width(contentWidth)
 		}
