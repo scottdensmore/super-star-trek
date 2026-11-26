@@ -3,7 +3,9 @@
 /**
  * Super Star Trek - WebAssembly User Journey Test Suite
  *
- * Tests the compiled WebAssembly binary (web/sst.wasm) and JavaScript bridge
+ * Tests the compiled WebAssembly build (web/pkg/sst_wasm_bg.wasm plus the
+ * wasm-bindgen glue web/pkg/sst_wasm.js, i.e. exactly what index.html loads)
+ * and its JavaScript bridge
  * across all major player journeys:
  *  1. Navigation & Movement (Sector maneuvering & Inter-quadrant warp)
  *  2. Tactical Combat (Shields, Phasers, Torpedoes, Return fire, Destruction)
@@ -12,24 +14,29 @@
  *  5. Scenario: Mutara Nebula (Zero shields ionization, tactical duel, victory)
  *  6. Scenario: Starbase Siege (Warp to Starbase 12, defense, victory)
  *  7. State Persistence (Save and Load serialization roundtrip)
- *  8. Audio Dispatching (Warp, Phaser, Torpedo, Shield, and Dock sound FX)
+ *  8. Audio Dispatching (Warp, Phaser, Torpedo, Shield, and Dock sound FX,
+ *     plus mute delegation to window.sstIsMuted)
  */
 
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
+const vm = require('vm');
 
 const rootDir = path.resolve(__dirname, '..');
-const wasmPath = path.join(rootDir, 'web', 'sst.wasm');
-const wasmExecPath = path.join(rootDir, 'web', 'wasm_exec.js');
+const pkgDir = process.env.SST_WASM_PKG_DIR || path.join(rootDir, 'web', 'pkg');
+const wasmPath = path.join(pkgDir, 'sst_wasm_bg.wasm');
+const gluePath = path.join(pkgDir, 'sst_wasm.js');
 
-if (!fs.existsSync(wasmPath)) {
-    console.error(`Error: WASM binary not found at ${wasmPath}. Run ./scripts/build-wasm.sh first.`);
+if (!fs.existsSync(wasmPath) || !fs.existsSync(gluePath)) {
+    console.error(`Error: WASM build not found in ${pkgDir}. Run ./scripts/build-wasm.sh first.`);
     process.exit(1);
 }
 
-// Load Go runtime support
-require(wasmExecPath);
+// Load the wasm-bindgen "no-modules" glue the same way index.html does: as a
+// classic script that declares the global `wasm_bindgen` initializer.
+vm.runInThisContext(fs.readFileSync(gluePath, 'utf8'), { filename: gluePath });
+const wasmBindgen = vm.runInThisContext('wasm_bindgen');
 
 // Audio telemetry tracking
 const soundsPlayed = [];
@@ -40,10 +47,8 @@ globalThis.sstSetMuted = function() {};
 globalThis.sstIsMuted = function() { return false; };
 
 async function initWasm() {
-    const go = new globalThis.Go();
-    const wasmBuffer = fs.readFileSync(wasmPath);
-    const { instance } = await WebAssembly.instantiate(wasmBuffer, go.importObject);
-    go.run(instance);
+    // The module's start function registers the sst* globals (Go: main()).
+    await wasmBindgen({ module_or_path: fs.readFileSync(wasmPath) });
 }
 
 function clearSounds() {
@@ -67,6 +72,7 @@ async function runJourneys() {
     assert.strictEqual(typeof globalThis.sstCommand, 'function', 'sstCommand must be registered on global');
     assert.strictEqual(typeof globalThis.sstSave, 'function', 'sstSave must be registered on global');
     assert.strictEqual(typeof globalThis.sstLoad, 'function', 'sstLoad must be registered on global');
+    assert.strictEqual(typeof globalThis.sstReset, 'function', 'sstReset must be registered on global');
 
     // ----------------------------------------------------
     // Journey 1: Exploration & Movement
@@ -206,10 +212,33 @@ async function runJourneys() {
     assert.strictEqual(loadSuccess, true, 'sstLoad must return true for valid save state');
     let postLoadSRS = globalThis.sstCommand('srs');
     assert(postLoadSRS.includes('Shields:    1500'), 'Restored game must reflect saved shield value 1500');
+    // Deliberate deviation from Go: Session.Load reseeds the PRNG, so entering
+    // a new quadrant (a random draw) works instead of crashing the runtime.
+    out = globalThis.sstCommand('nav q 1 1 6');
+    assert(out.includes('[WARP ENGINES ENGAGED]'), 'Warp after load must not crash the WASM runtime');
+    assert.strictEqual(globalThis.sstLoad('this is not valid json'), false, 'sstLoad must reject corrupted data');
     console.log('  ✔ Journey 7 Passed: Browser serialization roundtrip verified.\n');
 
+    // ----------------------------------------------------
+    // Journey 8: Audio bridge (mute, volume and reset)
+    // ----------------------------------------------------
+    console.log('▶ Running Journey 8: Audio Bridge...');
+    let jsMuted = true;
+    globalThis.sstIsMuted = function() { return jsMuted; };
+    globalThis.sstInit(12345, 'normal');
+    clearSounds();
+    globalThis.sstCommand('she 300');
+    assert.strictEqual(soundsPlayed.length, 0, 'No sounds may play while sstIsMuted() reports muted');
+    jsMuted = false;
+    globalThis.sstCommand('she 400');
+    assert(hasSound('shields'), 'Sounds must resume once sstIsMuted() reports unmuted');
+    out = globalThis.sstReset();
+    assert(out.includes('SHORT RANGE SENSOR SCAN'), 'sstReset must return a fresh short range scan');
+    assert.strictEqual(globalThis.sstCommand(), '', 'sstCommand without arguments must return an empty string');
+    console.log('  ✔ Journey 8 Passed: Mute delegation and reset verified.\n');
+
     console.log('====================================================');
-    console.log(' ★ ALL 7 WASM USER JOURNEYS PASSED SUCCESSFULLY! ★');
+    console.log(' ★ ALL 8 WASM USER JOURNEYS PASSED SUCCESSFULLY! ★');
     console.log('====================================================');
     process.exit(0);
 }

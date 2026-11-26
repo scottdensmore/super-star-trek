@@ -237,6 +237,8 @@ pub fn save_leaderboard(lb: &Leaderboard, path: &str) -> Result<(), EngineError>
         cleanup(&tmp_path);
         return Err(path_error("sync", &tmp_path, &e));
     }
+    // `File` has no `Drop` impl on wasm32-unknown-unknown.
+    #[allow(clippy::drop_non_drop)]
     drop(f);
     if let Err(e) = fs::rename(&tmp_path, path) {
         cleanup(&tmp_path);

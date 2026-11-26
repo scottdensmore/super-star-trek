@@ -184,13 +184,12 @@ if (soundBtn) {
     });
 }
 
-// Initialize Go WASM runtime
+// Initialize the WebAssembly module (Rust, wasm-bindgen "no-modules" build).
+// Its start function registers the sstInit/sstCommand/sstSave/sstLoad/sstReset globals.
 async function initWasm() {
     term.write('\x1b[33mInitializing Starfleet Computer Interface (WASM)...\x1b[0m\r\n');
-    const go = new Go();
     try {
-        const result = await WebAssembly.instantiateStreaming(fetch('sst.wasm'), go.importObject);
-        go.run(result.instance);
+        await wasm_bindgen({ module_or_path: 'pkg/sst_wasm_bg.wasm' });
         term.write('\x1b[32mInterface ready. Subspace radio link established.\x1b[0m\r\n\r\n');
         if (typeof window.sstInit === 'function') {
             term.write(window.sstInit());

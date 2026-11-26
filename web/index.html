@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
-    <script src="wasm_exec.js"></script>
+    <!-- wasm-bindgen "no-modules" glue (built by scripts/build-wasm.sh): defines wasm_bindgen() -->
+    <script src="pkg/sst_wasm.js"></script>
 </head>
 <body>
     <header>

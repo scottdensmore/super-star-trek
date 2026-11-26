@@ -234,7 +234,9 @@ build-*/
 # Git worktrees
 .worktrees/
 
-# WebAssembly build artifacts
+# WebAssembly build artifacts (scripts/build-wasm.sh writes the wasm-bindgen
+# output to web/pkg/; the two files below are the old Go build outputs)
+/web/pkg/
 web/sst.wasm
 web/wasm_exec.js
 
