@@ -1,0 +1,24 @@
+ ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
+┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
+│  1   2   3   4   5   6   7   8  ││ CONDITION GREEN   LOC: Q[3,4] S[2,6]    │  
+│1  .  [0m┌─ [F1] STARFLEET TECHNICAL MANUAL & LIBRARY COMPUTER ───────────┐0.0 │  
+│2  .  [0m│ CHAPTERS           │ CHAPTER 3: WEAPONS & COMBAT MATH… [01/31] │    │  
+│3  .  [0m│                    │ 1. PHOTON TORPEDOES                       │    │  
+│4  .  [0m│  [1] SYSTEMS       │ ───────────────────────────────────────── │    │  
+│5  .  [0m│  [2] NAVIGATION    │ Ballistic projectiles launched along an   │    │  
+│6  .  [0m│▶ [3] COMBAT        │ exact vector using 40-step ray tracing.   │    │  
+│7  .  [0m│  [4] SHIELDS       │ Torpedoes detonate upon collision with any│    │  
+│8  .  [0m│  [5] STARBASES     │ solid obstacle, vessel, or quadrant edge. │    │  
+└──────[0m│  [6] TACTICS       │                                           │    │  
+       [0m│  [7] SCORING       │ • Maximum complement: 10 torpedoes        │    │  
+       [0m│  [8] COMMANDS      │ • Damage: 800 - 1200 units (lethal hit)   │    │  
+       [0m│                    │ • Command syntax:                         │    │  
+       [0m│ ────────────────── │     tor <course>                          │    │  
+       [0m│ [Tab] Focus Reader │     tor <sect-row> <sect-col>             │────╯  
+╭──────[0m│ [1-8] Direct Jump  │                                           │──────╮
+│      [0m│                    │ 2. PHASER ARRAYS                          │      │
+│      [0m│                    │     ▲ [↑/↓, J/K to scroll 14 lines] ▼     │      │
+│ Super[0m└─ [Tab: Pane]  [↑/↓: Move]  [1-8: Jump]  [Esc/Q/F1: Close] ─────┘      │
+│ Type 'help' for commands, 'quit' to exit, F2 to cycle themes                 │
+│ COMMAND>                                                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯

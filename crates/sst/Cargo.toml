@@ -17,3 +17,7 @@ sst-engine = { path = "../sst-engine" }
 sst-audio = { path = "../sst-audio" }
 sst-tuikit = { path = "../sst-tuikit" }
 sst-tui = { path = "../sst-tui" }
+
+[lib]
+name = "super_star_trek"
+path = "src/lib.rs"
