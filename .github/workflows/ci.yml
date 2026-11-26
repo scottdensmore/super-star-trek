@@ -13,11 +13,14 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  go-test:
-    name: go-test (${{ matrix.os }})
+  rust:
+    name: rust (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 10
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -26,76 +29,52 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Set up Go
-        uses: actions/setup-go@v7
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          go-version: '1.26.x'
-          cache: true
+          components: rustfmt, clippy
 
-      - name: Run go vet
-        run: go vet ./...
+      - name: Check formatting
+        run: cargo fmt --all -- --check
 
-      - name: Run Go test suite with race detector
-        run: go test -v -race ./...
+      - name: Run clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
 
-  golangci-lint:
-    name: golangci-lint
+      - name: Build release
+        run: cargo build --workspace --release --locked
+
+      - name: Run test suite (incl. Go parity transcripts)
+        run: cargo test --workspace --release --locked
+
+  wasm:
+    name: wasm
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      - name: Set up Go
-        uses: actions/setup-go@v7
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          go-version: '1.26.x'
-          cache: true
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: latest
-
-  wasm-verify:
-    name: wasm-verify
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
-
-      - name: Set up Go
-        uses: actions/setup-go@v7
-        with:
-          go-version: '1.26.x'
-          cache: true
+          targets: wasm32-unknown-unknown
+          components: clippy
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
           node-version: '22'
 
-      - name: Verify WebAssembly compilation
-        run: GOOS=js GOARCH=wasm go build -o /dev/null ./cmd/wasm
-
-      - name: Verify build-wasm.sh script
-        run: bash scripts/build-wasm.sh
-
-      - name: Run WebAssembly tests via Node runner
+      - name: Install wasm-bindgen CLI
         run: |
-          goroot="$(go env GOROOT)"
-          node_exec=""
-          if [ -f "$goroot/lib/wasm/wasm_exec_node.js" ]; then
-            node_exec="$goroot/lib/wasm/wasm_exec_node.js"
-          elif [ -f "$goroot/misc/wasm/wasm_exec_node.js" ]; then
-            node_exec="$goroot/misc/wasm/wasm_exec_node.js"
-          fi
-          if [ -z "$node_exec" ]; then
-            echo "::error::wasm_exec_node.js not found in GOROOT"
-            exit 1
-          fi
-          GOOS=js GOARCH=wasm go test -v -exec="node $node_exec" ./cmd/wasm
+          version="$(awk '/^name = "wasm-bindgen"$/ { getline; gsub(/"/, "", $3); print $3; exit }' Cargo.lock)"
+          cargo install wasm-bindgen-cli --version "$version" --locked
+
+      - name: Run clippy for wasm32
+        run: cargo clippy -p sst-wasm --target wasm32-unknown-unknown --locked -- -D warnings
+
+      - name: Build web bundle and run WebAssembly journeys
+        run: bash scripts/test-wasm-journeys.sh
 
   c-matrix:
     name: c-matrix (${{ matrix.os }}, ${{ matrix.preset }})
@@ -204,18 +183,16 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     needs:
-      - go-test
-      - golangci-lint
-      - wasm-verify
+      - rust
+      - wasm
       - c-matrix
     steps:
       - name: Verify all matrix jobs succeeded
         run: |
           success=true
           for result in \
-            "${{ needs.go-test.result }}" \
-            "${{ needs.golangci-lint.result }}" \
-            "${{ needs.wasm-verify.result }}" \
+            "${{ needs.rust.result }}" \
+            "${{ needs.wasm.result }}" \
             "${{ needs.c-matrix.result }}"; do
             if [ "$result" != "success" ]; then
               echo "::error::Job dependency ended with status '$result'"

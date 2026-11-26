@@ -32,8 +32,8 @@
 
 ### **1978 Mainframe Strategy. Rebuilt for the Modern Terminal.**
 
-[![Go 1.26+](https://img.shields.io/badge/Go-1.26+-00ADD8?style=flat-square&logo=go)](https://golang.org)
-[![Charm TUI](https://img.shields.io/badge/TUI-Bubble_Tea_%26_Lipgloss-FF69B4?style=flat-square)](https://charm.sh)
+[![Rust stable](https://img.shields.io/badge/Rust-stable-DEA584?style=flat-square&logo=rust)](https://www.rust-lang.org)
+[![80x24 TUI](https://img.shields.io/badge/TUI-80%C3%9724_Elm--style_console-FF69B4?style=flat-square)](./crates/sst-tui)
 [![C17 / Ncurses](https://img.shields.io/badge/Classic_Edition-C17_%2B_ncurses-A8B9CC?style=flat-square)](./c)
 [![WebAssembly](https://img.shields.io/badge/Target-WASM_CRT_Browser-654FF0?style=flat-square)](./web)
 [![License: MIT / Public Domain](https://img.shields.io/badge/License-Public_Domain_%2F_MIT-2EA44F?style=flat-square)](#-license--heritage)
@@ -65,7 +65,7 @@ eliminate all hostile warships before time runs out.
 
 **Super Star Trek** is an authentic, supercharged reimagining of the legendary 1978 BASIC computer game popularized by David H. Ahl's *BASIC Computer Games*.
 
-Whether you want a **state-of-the-art 80×24 interactive terminal dashboard** with real-time ASCII weapon animations and procedural retro audio, a **multi-sector Starfleet career campaign**, or the **pure 1978 teletype printing-terminal experience**, everything ships in a single zero-dependency binary.
+Whether you want a **state-of-the-art 80×24 interactive terminal dashboard** with real-time ASCII weapon animations and procedural retro audio, a **multi-sector Starfleet career campaign**, or the **pure 1978 teletype printing-terminal experience** of the classic C edition, the modern console ships as a single self-contained Rust binary.
 
 ---
 
@@ -183,63 +183,71 @@ Progress through **4 escalating campaign sectors** (*Neutral Zone Patrol* $\to$ 
 ## `>> 60-SECOND FLIGHT CHECK (QUICK START)`
 
 ```bash
-# 0. Provision toolchain & linters (Go 1.26.6 + golangci-lint) via mise
-mise install
+# 0. Install the stable Rust toolchain (https://rustup.rs) if you have not already
+rustup toolchain install stable
 
 # 1. Launch the modern interactive TUI bridge console
-go run ./cmd/sst
+cargo run --release
 
 # 2. Launch with CRT amber phosphor theme, all enemy factions, and anomalies
-go run ./cmd/sst --theme crt --adversaries --anomalies
+cargo run --release -- --theme crt --adversaries --anomalies
 
 # 3. Embark on the multi-sector Starfleet Patrol Tour campaign
-go run ./cmd/sst --tour
+cargo run --release -- --tour
 
 # 4. Face the infamous Kobayashi Maru no-win simulation
-go run ./cmd/sst --scenario kobayashi-maru
+cargo run --release -- --scenario kobayashi-maru
 
-# 5. Experience pure 1978 teletype terminal mode
-go run ./cmd/sst --classic
+# 5. Print the plain-text teletype mission banner and opening ship status
+cargo run --release -- --classic
 ```
 
 ---
 
 ## `>> INSTALLATION`
 
-### Development & Toolchain Setup (`mise`)
-If building or contributing from source, run [`mise`](https://mise.jdx.dev) first to install the pinned Go toolchain (`1.26.6`) and `golangci-lint` defined in [`mise.toml`](./mise.toml):
+### From Source (macOS / Linux / Windows)
+Requires a stable [Rust toolchain](https://rustup.rs):
 ```bash
-mise install
-golangci-lint run
-go test -race ./...
+cargo install --git https://github.com/scottdensmore/super-star-trek super-star-trek
+sst --version
 ```
-
-### Go Toolchain (macOS / Linux / Windows)
-Requires [Go 1.26+](https://golang.org):
-```bash
-go install github.com/scottdensmore/super-star-trek/cmd/sst@latest
-```
-
-### Debian / Ubuntu (`.deb`)
-Download the `.deb` package from the [Releases page](https://github.com/scottdensmore/super-star-trek/releases):
-```bash
-sudo dpkg -i super-star-trek_2.0.0_linux_amd64.deb
-```
-
-### Fedora / RHEL (`.rpm`)
-Download the `.rpm` package from the [Releases page](https://github.com/scottdensmore/super-star-trek/releases):
-```bash
-sudo rpm -i super-star-trek_2.0.0_linux_amd64.rpm
-```
-
-### Standalone Pre-Compiled Binaries
-Zero-dependency binaries for **Linux** (`amd64`, `arm64`), **macOS** (Universal Apple Silicon & Intel), and **Windows** (`amd64`) are available on the [Releases page](https://github.com/scottdensmore/super-star-trek/releases).
+Or from a local checkout: `cargo install --path crates/sst`.
 
 ### WebAssembly CRT Browser Edition
-Play inside a retro CRT browser monitor! Download `super-star-trek_2.0.0_wasm.tar.gz` from the [Releases page](https://github.com/scottdensmore/super-star-trek/releases) (or build locally with `./scripts/build-wasm.sh`) and serve static files:
+Play inside a retro CRT browser monitor! Build the module with [`wasm-bindgen`](https://github.com/rustwasm/wasm-bindgen) (the CLI version must match the `wasm-bindgen` crate in `Cargo.lock`) and serve the static files:
 ```bash
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.130 --locked
+./scripts/build-wasm.sh                 # writes web/pkg/
 python3 -m http.server 8080 --directory web
 ```
+`./scripts/package-wasm.sh` produces a distributable `super-star-trek_<version>_wasm.tar.gz` / `.zip` in `build/dist/`.
+
+---
+
+## `>> DEVELOPMENT`
+
+The game is a Cargo workspace:
+
+| Crate | Role |
+| :--- | :--- |
+| `crates/sst-engine` | Pure game engine: galaxy generation, combat, factions, anomalies, scenarios, Patrol Tour, scoring, save files and the command parser. No terminal I/O. |
+| `crates/sst-tuikit` | Terminal toolkit: styled layout and colour-profile rendering, an Elm-style program runtime, text input and fuzzy list widgets. |
+| `crates/sst-tui` | The bridge console: themes, ASCII FX animations, modals, and the root model. |
+| `crates/sst-audio` | Procedural PCM synthesizer, native OS playback and terminal-bell fallback. |
+| `crates/sst` | The `sst` binary and command-line interface. |
+| `crates/sst-wasm` | WebAssembly bridge for the browser edition in `web/`. |
+
+```bash
+cargo build --release
+cargo test --workspace
+cargo clippy --workspace --all-targets -- -D warnings
+cargo fmt --all -- --check
+bash scripts/test-wasm-journeys.sh   # WebAssembly build + Node.js journeys
+```
+
+Gameplay is fully deterministic for a given `--seed`. The test suite replays recorded reference transcripts in `testdata/` (engine games, rendered console frames, browser sessions, CLI output and synthesized audio) byte for byte, so any behavioural change shows up as a failing test.
 
 ---
 
@@ -252,7 +260,7 @@ python3 -m http.server 8080 --directory web
 | :--- | :--- |
 | `F1` or `?` | **Starfleet Technical Manual & Codex** (8-chapter interactive guide) |
 | `F2` | **Cycle Visual Theme** (`MODERN` $\to$ `LCARS` $\to$ `CRT`) |
-| `Shift+F2` or `Ctrl+T` | **Cycle Luminance Mode** (`Auto` $\to$ `Dark` $\to$ `Light`) |
+| `Ctrl+T` | **Cycle Luminance Mode** (`Auto` $\to$ `Dark` $\to$ `Light`) |
 | `T` | **Tactical Target Lock HUD** (Auto-compute bearings, hit probability & fire) |
 | `C` or `Ctrl+G` | **Interactive Galactic Star Chart** (8×8 map, fog-of-war & one-key warp) |
 | `D` or `Ctrl+D` | **Damage Control Schematic** (ASCII starship cutaway & repair ETAs) |
@@ -290,7 +298,7 @@ Type classic or modern commands directly into the `COMMAND>` bar at the bottom o
 ```text
 Usage: sst [flags]
 
-  --classic               Run in authentic 1978 teletype plain-text mode
+  --classic               Print the teletype mission banner and ship status, then exit
   --theme <name>          Initial visual theme: modern (default), lcars, crt
   --mode <mode>           Color luminance mode: auto (default), dark, light
   --difficulty <level>    Profile: casual, normal (default), hardcore, nightmare, expert, emeritus
@@ -299,12 +307,14 @@ Usage: sst [flags]
   --list-scenarios        Display all registered tactical scenarios and exit
   --adversaries, -a       Enable Romulan and Tholian adversary factions in standard games
   --anomalies             Enable spatial anomalies & environmental hazards
+  --no-anomalies          Disable spatial anomalies (overrides the difficulty profile)
   --klingon-cloak         Enable Klingon commander tactical cloaking
   --surveillance <mode>   Starbase network coverage: full, classic, local, blackout
   --sensor-degradation    Enable two-tier sensor damage degradation curve (default: true)
   --repair-multiplier <f> Subsystem repair duration multiplier (default: 1.0)
   --sound / --no-sound    Enable or disable procedural retro audio FX (default: enabled)
   --volume <0-100>        Set audio synthesizer playback volume
+  --mute                  Mute all audio playback
   --audio-mode <mode>     Audio backend: auto, native, bell, off
   --seed <int>            Fixed PRNG seed for reproducible galaxies (0 = random)
   --version, -v           Print version telemetry and exit
@@ -345,7 +355,7 @@ bash c/tests/golden.sh ./build/debug/c/sst
 
 Released under **Public Domain / MIT**.
 
-Inspired by the original 1971–1978 **Star Trek** / **Super Star Trek** mainframe games by Mike Mayfield, Bob Leedom, and David H. Ahl (*BASIC Computer Games*, 1978), and Tom Almy's C port. Re-engineered for modern terminals with Go and [Charmbracelet](https://charm.sh).
+Inspired by the original 1971–1978 **Star Trek** / **Super Star Trek** mainframe games by Mike Mayfield, Bob Leedom, and David H. Ahl (*BASIC Computer Games*, 1978), and Tom Almy's C port. Re-engineered for modern terminals in Rust.
 
 <div align="center">
 
