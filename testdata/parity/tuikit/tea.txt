@@ -1,0 +1,7511 @@
+@op 9
+keystring
+@type 1
+0
+@alt 5
+false
+@out 6
+ctrl+@
+@typestr 6
+ctrl+@
+@@
+@op 9
+keystring
+@type 1
+0
+@alt 4
+true
+@out 10
+alt+ctrl+@
+@typestr 6
+ctrl+@
+@@
+@op 9
+keystring
+@type 1
+1
+@alt 5
+false
+@out 6
+ctrl+a
+@typestr 6
+ctrl+a
+@@
+@op 9
+keystring
+@type 1
+1
+@alt 4
+true
+@out 10
+alt+ctrl+a
+@typestr 6
+ctrl+a
+@@
+@op 9
+keystring
+@type 1
+2
+@alt 5
+false
+@out 6
+ctrl+b
+@typestr 6
+ctrl+b
+@@
+@op 9
+keystring
+@type 1
+2
+@alt 4
+true
+@out 10
+alt+ctrl+b
+@typestr 6
+ctrl+b
+@@
+@op 9
+keystring
+@type 1
+3
+@alt 5
+false
+@out 6
+ctrl+c
+@typestr 6
+ctrl+c
+@@
+@op 9
+keystring
+@type 1
+3
+@alt 4
+true
+@out 10
+alt+ctrl+c
+@typestr 6
+ctrl+c
+@@
+@op 9
+keystring
+@type 1
+4
+@alt 5
+false
+@out 6
+ctrl+d
+@typestr 6
+ctrl+d
+@@
+@op 9
+keystring
+@type 1
+4
+@alt 4
+true
+@out 10
+alt+ctrl+d
+@typestr 6
+ctrl+d
+@@
+@op 9
+keystring
+@type 1
+5
+@alt 5
+false
+@out 6
+ctrl+e
+@typestr 6
+ctrl+e
+@@
+@op 9
+keystring
+@type 1
+5
+@alt 4
+true
+@out 10
+alt+ctrl+e
+@typestr 6
+ctrl+e
+@@
+@op 9
+keystring
+@type 1
+6
+@alt 5
+false
+@out 6
+ctrl+f
+@typestr 6
+ctrl+f
+@@
+@op 9
+keystring
+@type 1
+6
+@alt 4
+true
+@out 10
+alt+ctrl+f
+@typestr 6
+ctrl+f
+@@
+@op 9
+keystring
+@type 1
+7
+@alt 5
+false
+@out 6
+ctrl+g
+@typestr 6
+ctrl+g
+@@
+@op 9
+keystring
+@type 1
+7
+@alt 4
+true
+@out 10
+alt+ctrl+g
+@typestr 6
+ctrl+g
+@@
+@op 9
+keystring
+@type 1
+8
+@alt 5
+false
+@out 6
+ctrl+h
+@typestr 6
+ctrl+h
+@@
+@op 9
+keystring
+@type 1
+8
+@alt 4
+true
+@out 10
+alt+ctrl+h
+@typestr 6
+ctrl+h
+@@
+@op 9
+keystring
+@type 1
+9
+@alt 5
+false
+@out 3
+tab
+@typestr 3
+tab
+@@
+@op 9
+keystring
+@type 1
+9
+@alt 4
+true
+@out 7
+alt+tab
+@typestr 3
+tab
+@@
+@op 9
+keystring
+@type 2
+10
+@alt 5
+false
+@out 6
+ctrl+j
+@typestr 6
+ctrl+j
+@@
+@op 9
+keystring
+@type 2
+10
+@alt 4
+true
+@out 10
+alt+ctrl+j
+@typestr 6
+ctrl+j
+@@
+@op 9
+keystring
+@type 2
+11
+@alt 5
+false
+@out 6
+ctrl+k
+@typestr 6
+ctrl+k
+@@
+@op 9
+keystring
+@type 2
+11
+@alt 4
+true
+@out 10
+alt+ctrl+k
+@typestr 6
+ctrl+k
+@@
+@op 9
+keystring
+@type 2
+12
+@alt 5
+false
+@out 6
+ctrl+l
+@typestr 6
+ctrl+l
+@@
+@op 9
+keystring
+@type 2
+12
+@alt 4
+true
+@out 10
+alt+ctrl+l
+@typestr 6
+ctrl+l
+@@
+@op 9
+keystring
+@type 2
+13
+@alt 5
+false
+@out 5
+enter
+@typestr 5
+enter
+@@
+@op 9
+keystring
+@type 2
+13
+@alt 4
+true
+@out 9
+alt+enter
+@typestr 5
+enter
+@@
+@op 9
+keystring
+@type 2
+14
+@alt 5
+false
+@out 6
+ctrl+n
+@typestr 6
+ctrl+n
+@@
+@op 9
+keystring
+@type 2
+14
+@alt 4
+true
+@out 10
+alt+ctrl+n
+@typestr 6
+ctrl+n
+@@
+@op 9
+keystring
+@type 2
+15
+@alt 5
+false
+@out 6
+ctrl+o
+@typestr 6
+ctrl+o
+@@
+@op 9
+keystring
+@type 2
+15
+@alt 4
+true
+@out 10
+alt+ctrl+o
+@typestr 6
+ctrl+o
+@@
+@op 9
+keystring
+@type 2
+16
+@alt 5
+false
+@out 6
+ctrl+p
+@typestr 6
+ctrl+p
+@@
+@op 9
+keystring
+@type 2
+16
+@alt 4
+true
+@out 10
+alt+ctrl+p
+@typestr 6
+ctrl+p
+@@
+@op 9
+keystring
+@type 2
+17
+@alt 5
+false
+@out 6
+ctrl+q
+@typestr 6
+ctrl+q
+@@
+@op 9
+keystring
+@type 2
+17
+@alt 4
+true
+@out 10
+alt+ctrl+q
+@typestr 6
+ctrl+q
+@@
+@op 9
+keystring
+@type 2
+18
+@alt 5
+false
+@out 6
+ctrl+r
+@typestr 6
+ctrl+r
+@@
+@op 9
+keystring
+@type 2
+18
+@alt 4
+true
+@out 10
+alt+ctrl+r
+@typestr 6
+ctrl+r
+@@
+@op 9
+keystring
+@type 2
+19
+@alt 5
+false
+@out 6
+ctrl+s
+@typestr 6
+ctrl+s
+@@
+@op 9
+keystring
+@type 2
+19
+@alt 4
+true
+@out 10
+alt+ctrl+s
+@typestr 6
+ctrl+s
+@@
+@op 9
+keystring
+@type 2
+20
+@alt 5
+false
+@out 6
+ctrl+t
+@typestr 6
+ctrl+t
+@@
+@op 9
+keystring
+@type 2
+20
+@alt 4
+true
+@out 10
+alt+ctrl+t
+@typestr 6
+ctrl+t
+@@
+@op 9
+keystring
+@type 2
+21
+@alt 5
+false
+@out 6
+ctrl+u
+@typestr 6
+ctrl+u
+@@
+@op 9
+keystring
+@type 2
+21
+@alt 4
+true
+@out 10
+alt+ctrl+u
+@typestr 6
+ctrl+u
+@@
+@op 9
+keystring
+@type 2
+22
+@alt 5
+false
+@out 6
+ctrl+v
+@typestr 6
+ctrl+v
+@@
+@op 9
+keystring
+@type 2
+22
+@alt 4
+true
+@out 10
+alt+ctrl+v
+@typestr 6
+ctrl+v
+@@
+@op 9
+keystring
+@type 2
+23
+@alt 5
+false
+@out 6
+ctrl+w
+@typestr 6
+ctrl+w
+@@
+@op 9
+keystring
+@type 2
+23
+@alt 4
+true
+@out 10
+alt+ctrl+w
+@typestr 6
+ctrl+w
+@@
+@op 9
+keystring
+@type 2
+24
+@alt 5
+false
+@out 6
+ctrl+x
+@typestr 6
+ctrl+x
+@@
+@op 9
+keystring
+@type 2
+24
+@alt 4
+true
+@out 10
+alt+ctrl+x
+@typestr 6
+ctrl+x
+@@
+@op 9
+keystring
+@type 2
+25
+@alt 5
+false
+@out 6
+ctrl+y
+@typestr 6
+ctrl+y
+@@
+@op 9
+keystring
+@type 2
+25
+@alt 4
+true
+@out 10
+alt+ctrl+y
+@typestr 6
+ctrl+y
+@@
+@op 9
+keystring
+@type 2
+26
+@alt 5
+false
+@out 6
+ctrl+z
+@typestr 6
+ctrl+z
+@@
+@op 9
+keystring
+@type 2
+26
+@alt 4
+true
+@out 10
+alt+ctrl+z
+@typestr 6
+ctrl+z
+@@
+@op 9
+keystring
+@type 2
+27
+@alt 5
+false
+@out 3
+esc
+@typestr 3
+esc
+@@
+@op 9
+keystring
+@type 2
+27
+@alt 4
+true
+@out 7
+alt+esc
+@typestr 3
+esc
+@@
+@op 9
+keystring
+@type 2
+28
+@alt 5
+false
+@out 6
+ctrl+\
+@typestr 6
+ctrl+\
+@@
+@op 9
+keystring
+@type 2
+28
+@alt 4
+true
+@out 10
+alt+ctrl+\
+@typestr 6
+ctrl+\
+@@
+@op 9
+keystring
+@type 2
+29
+@alt 5
+false
+@out 6
+ctrl+]
+@typestr 6
+ctrl+]
+@@
+@op 9
+keystring
+@type 2
+29
+@alt 4
+true
+@out 10
+alt+ctrl+]
+@typestr 6
+ctrl+]
+@@
+@op 9
+keystring
+@type 2
+30
+@alt 5
+false
+@out 6
+ctrl+^
+@typestr 6
+ctrl+^
+@@
+@op 9
+keystring
+@type 2
+30
+@alt 4
+true
+@out 10
+alt+ctrl+^
+@typestr 6
+ctrl+^
+@@
+@op 9
+keystring
+@type 2
+31
+@alt 5
+false
+@out 6
+ctrl+_
+@typestr 6
+ctrl+_
+@@
+@op 9
+keystring
+@type 2
+31
+@alt 4
+true
+@out 10
+alt+ctrl+_
+@typestr 6
+ctrl+_
+@@
+@op 9
+keystring
+@type 3
+127
+@alt 5
+false
+@out 9
+backspace
+@typestr 9
+backspace
+@@
+@op 9
+keystring
+@type 3
+127
+@alt 4
+true
+@out 13
+alt+backspace
+@typestr 9
+backspace
+@@
+@op 9
+keystring
+@type 2
+32
+@alt 5
+false
+@out 0
+
+@typestr 0
+
+@@
+@op 9
+keystring
+@type 2
+32
+@alt 4
+true
+@out 0
+
+@typestr 0
+
+@@
+@op 9
+keystring
+@type 3
+100
+@alt 5
+false
+@out 0
+
+@typestr 0
+
+@@
+@op 9
+keystring
+@type 3
+100
+@alt 4
+true
+@out 0
+
+@typestr 0
+
+@@
+@op 9
+keystring
+@type 3
+-54
+@alt 5
+false
+@out 0
+
+@typestr 0
+
+@@
+@op 9
+keystring
+@type 3
+-54
+@alt 4
+true
+@out 0
+
+@typestr 0
+
+@@
+@op 9
+keystring
+@type 4
+-100
+@alt 5
+false
+@out 0
+
+@typestr 0
+
+@@
+@op 9
+keystring
+@type 4
+-100
+@alt 4
+true
+@out 0
+
+@typestr 0
+
+@@
+@op 9
+keystring
+@type 2
+-1
+@alt 5
+false
+@out 0
+
+@typestr 5
+runes
+@@
+@op 9
+keystring
+@type 2
+-1
+@alt 4
+true
+@out 4
+alt+
+@typestr 5
+runes
+@@
+@op 9
+keystring
+@type 2
+-2
+@alt 5
+false
+@out 2
+up
+@typestr 2
+up
+@@
+@op 9
+keystring
+@type 2
+-2
+@alt 4
+true
+@out 6
+alt+up
+@typestr 2
+up
+@@
+@op 9
+keystring
+@type 2
+-3
+@alt 5
+false
+@out 4
+down
+@typestr 4
+down
+@@
+@op 9
+keystring
+@type 2
+-3
+@alt 4
+true
+@out 8
+alt+down
+@typestr 4
+down
+@@
+@op 9
+keystring
+@type 2
+-4
+@alt 5
+false
+@out 5
+right
+@typestr 5
+right
+@@
+@op 9
+keystring
+@type 2
+-4
+@alt 4
+true
+@out 9
+alt+right
+@typestr 5
+right
+@@
+@op 9
+keystring
+@type 2
+-5
+@alt 5
+false
+@out 4
+left
+@typestr 4
+left
+@@
+@op 9
+keystring
+@type 2
+-5
+@alt 4
+true
+@out 8
+alt+left
+@typestr 4
+left
+@@
+@op 9
+keystring
+@type 2
+-6
+@alt 5
+false
+@out 9
+shift+tab
+@typestr 9
+shift+tab
+@@
+@op 9
+keystring
+@type 2
+-6
+@alt 4
+true
+@out 13
+alt+shift+tab
+@typestr 9
+shift+tab
+@@
+@op 9
+keystring
+@type 2
+-7
+@alt 5
+false
+@out 4
+home
+@typestr 4
+home
+@@
+@op 9
+keystring
+@type 2
+-7
+@alt 4
+true
+@out 8
+alt+home
+@typestr 4
+home
+@@
+@op 9
+keystring
+@type 2
+-8
+@alt 5
+false
+@out 3
+end
+@typestr 3
+end
+@@
+@op 9
+keystring
+@type 2
+-8
+@alt 4
+true
+@out 7
+alt+end
+@typestr 3
+end
+@@
+@op 9
+keystring
+@type 2
+-9
+@alt 5
+false
+@out 4
+pgup
+@typestr 4
+pgup
+@@
+@op 9
+keystring
+@type 2
+-9
+@alt 4
+true
+@out 8
+alt+pgup
+@typestr 4
+pgup
+@@
+@op 9
+keystring
+@type 3
+-10
+@alt 5
+false
+@out 6
+pgdown
+@typestr 6
+pgdown
+@@
+@op 9
+keystring
+@type 3
+-10
+@alt 4
+true
+@out 10
+alt+pgdown
+@typestr 6
+pgdown
+@@
+@op 9
+keystring
+@type 3
+-11
+@alt 5
+false
+@out 9
+ctrl+pgup
+@typestr 9
+ctrl+pgup
+@@
+@op 9
+keystring
+@type 3
+-11
+@alt 4
+true
+@out 13
+alt+ctrl+pgup
+@typestr 9
+ctrl+pgup
+@@
+@op 9
+keystring
+@type 3
+-12
+@alt 5
+false
+@out 11
+ctrl+pgdown
+@typestr 11
+ctrl+pgdown
+@@
+@op 9
+keystring
+@type 3
+-12
+@alt 4
+true
+@out 15
+alt+ctrl+pgdown
+@typestr 11
+ctrl+pgdown
+@@
+@op 9
+keystring
+@type 3
+-13
+@alt 5
+false
+@out 6
+delete
+@typestr 6
+delete
+@@
+@op 9
+keystring
+@type 3
+-13
+@alt 4
+true
+@out 10
+alt+delete
+@typestr 6
+delete
+@@
+@op 9
+keystring
+@type 3
+-14
+@alt 5
+false
+@out 6
+insert
+@typestr 6
+insert
+@@
+@op 9
+keystring
+@type 3
+-14
+@alt 4
+true
+@out 10
+alt+insert
+@typestr 6
+insert
+@@
+@op 9
+keystring
+@type 3
+-15
+@alt 5
+false
+@out 1
+ 
+@typestr 1
+ 
+@@
+@op 9
+keystring
+@type 3
+-15
+@alt 4
+true
+@out 5
+alt+ 
+@typestr 1
+ 
+@@
+@op 9
+keystring
+@type 3
+-16
+@alt 5
+false
+@out 7
+ctrl+up
+@typestr 7
+ctrl+up
+@@
+@op 9
+keystring
+@type 3
+-16
+@alt 4
+true
+@out 11
+alt+ctrl+up
+@typestr 7
+ctrl+up
+@@
+@op 9
+keystring
+@type 3
+-17
+@alt 5
+false
+@out 9
+ctrl+down
+@typestr 9
+ctrl+down
+@@
+@op 9
+keystring
+@type 3
+-17
+@alt 4
+true
+@out 13
+alt+ctrl+down
+@typestr 9
+ctrl+down
+@@
+@op 9
+keystring
+@type 3
+-18
+@alt 5
+false
+@out 10
+ctrl+right
+@typestr 10
+ctrl+right
+@@
+@op 9
+keystring
+@type 3
+-18
+@alt 4
+true
+@out 14
+alt+ctrl+right
+@typestr 10
+ctrl+right
+@@
+@op 9
+keystring
+@type 3
+-19
+@alt 5
+false
+@out 9
+ctrl+left
+@typestr 9
+ctrl+left
+@@
+@op 9
+keystring
+@type 3
+-19
+@alt 4
+true
+@out 13
+alt+ctrl+left
+@typestr 9
+ctrl+left
+@@
+@op 9
+keystring
+@type 3
+-20
+@alt 5
+false
+@out 9
+ctrl+home
+@typestr 9
+ctrl+home
+@@
+@op 9
+keystring
+@type 3
+-20
+@alt 4
+true
+@out 13
+alt+ctrl+home
+@typestr 9
+ctrl+home
+@@
+@op 9
+keystring
+@type 3
+-21
+@alt 5
+false
+@out 8
+ctrl+end
+@typestr 8
+ctrl+end
+@@
+@op 9
+keystring
+@type 3
+-21
+@alt 4
+true
+@out 12
+alt+ctrl+end
+@typestr 8
+ctrl+end
+@@
+@op 9
+keystring
+@type 3
+-22
+@alt 5
+false
+@out 8
+shift+up
+@typestr 8
+shift+up
+@@
+@op 9
+keystring
+@type 3
+-22
+@alt 4
+true
+@out 12
+alt+shift+up
+@typestr 8
+shift+up
+@@
+@op 9
+keystring
+@type 3
+-23
+@alt 5
+false
+@out 10
+shift+down
+@typestr 10
+shift+down
+@@
+@op 9
+keystring
+@type 3
+-23
+@alt 4
+true
+@out 14
+alt+shift+down
+@typestr 10
+shift+down
+@@
+@op 9
+keystring
+@type 3
+-24
+@alt 5
+false
+@out 11
+shift+right
+@typestr 11
+shift+right
+@@
+@op 9
+keystring
+@type 3
+-24
+@alt 4
+true
+@out 15
+alt+shift+right
+@typestr 11
+shift+right
+@@
+@op 9
+keystring
+@type 3
+-25
+@alt 5
+false
+@out 10
+shift+left
+@typestr 10
+shift+left
+@@
+@op 9
+keystring
+@type 3
+-25
+@alt 4
+true
+@out 14
+alt+shift+left
+@typestr 10
+shift+left
+@@
+@op 9
+keystring
+@type 3
+-26
+@alt 5
+false
+@out 10
+shift+home
+@typestr 10
+shift+home
+@@
+@op 9
+keystring
+@type 3
+-26
+@alt 4
+true
+@out 14
+alt+shift+home
+@typestr 10
+shift+home
+@@
+@op 9
+keystring
+@type 3
+-27
+@alt 5
+false
+@out 9
+shift+end
+@typestr 9
+shift+end
+@@
+@op 9
+keystring
+@type 3
+-27
+@alt 4
+true
+@out 13
+alt+shift+end
+@typestr 9
+shift+end
+@@
+@op 9
+keystring
+@type 3
+-28
+@alt 5
+false
+@out 13
+ctrl+shift+up
+@typestr 13
+ctrl+shift+up
+@@
+@op 9
+keystring
+@type 3
+-28
+@alt 4
+true
+@out 17
+alt+ctrl+shift+up
+@typestr 13
+ctrl+shift+up
+@@
+@op 9
+keystring
+@type 3
+-29
+@alt 5
+false
+@out 15
+ctrl+shift+down
+@typestr 15
+ctrl+shift+down
+@@
+@op 9
+keystring
+@type 3
+-29
+@alt 4
+true
+@out 19
+alt+ctrl+shift+down
+@typestr 15
+ctrl+shift+down
+@@
+@op 9
+keystring
+@type 3
+-30
+@alt 5
+false
+@out 15
+ctrl+shift+left
+@typestr 15
+ctrl+shift+left
+@@
+@op 9
+keystring
+@type 3
+-30
+@alt 4
+true
+@out 19
+alt+ctrl+shift+left
+@typestr 15
+ctrl+shift+left
+@@
+@op 9
+keystring
+@type 3
+-31
+@alt 5
+false
+@out 16
+ctrl+shift+right
+@typestr 16
+ctrl+shift+right
+@@
+@op 9
+keystring
+@type 3
+-31
+@alt 4
+true
+@out 20
+alt+ctrl+shift+right
+@typestr 16
+ctrl+shift+right
+@@
+@op 9
+keystring
+@type 3
+-32
+@alt 5
+false
+@out 15
+ctrl+shift+home
+@typestr 15
+ctrl+shift+home
+@@
+@op 9
+keystring
+@type 3
+-32
+@alt 4
+true
+@out 19
+alt+ctrl+shift+home
+@typestr 15
+ctrl+shift+home
+@@
+@op 9
+keystring
+@type 3
+-33
+@alt 5
+false
+@out 14
+ctrl+shift+end
+@typestr 14
+ctrl+shift+end
+@@
+@op 9
+keystring
+@type 3
+-33
+@alt 4
+true
+@out 18
+alt+ctrl+shift+end
+@typestr 14
+ctrl+shift+end
+@@
+@op 9
+keystring
+@type 3
+-34
+@alt 5
+false
+@out 2
+f1
+@typestr 2
+f1
+@@
+@op 9
+keystring
+@type 3
+-34
+@alt 4
+true
+@out 6
+alt+f1
+@typestr 2
+f1
+@@
+@op 9
+keystring
+@type 3
+-35
+@alt 5
+false
+@out 2
+f2
+@typestr 2
+f2
+@@
+@op 9
+keystring
+@type 3
+-35
+@alt 4
+true
+@out 6
+alt+f2
+@typestr 2
+f2
+@@
+@op 9
+keystring
+@type 3
+-36
+@alt 5
+false
+@out 2
+f3
+@typestr 2
+f3
+@@
+@op 9
+keystring
+@type 3
+-36
+@alt 4
+true
+@out 6
+alt+f3
+@typestr 2
+f3
+@@
+@op 9
+keystring
+@type 3
+-37
+@alt 5
+false
+@out 2
+f4
+@typestr 2
+f4
+@@
+@op 9
+keystring
+@type 3
+-37
+@alt 4
+true
+@out 6
+alt+f4
+@typestr 2
+f4
+@@
+@op 9
+keystring
+@type 3
+-38
+@alt 5
+false
+@out 2
+f5
+@typestr 2
+f5
+@@
+@op 9
+keystring
+@type 3
+-38
+@alt 4
+true
+@out 6
+alt+f5
+@typestr 2
+f5
+@@
+@op 9
+keystring
+@type 3
+-39
+@alt 5
+false
+@out 2
+f6
+@typestr 2
+f6
+@@
+@op 9
+keystring
+@type 3
+-39
+@alt 4
+true
+@out 6
+alt+f6
+@typestr 2
+f6
+@@
+@op 9
+keystring
+@type 3
+-40
+@alt 5
+false
+@out 2
+f7
+@typestr 2
+f7
+@@
+@op 9
+keystring
+@type 3
+-40
+@alt 4
+true
+@out 6
+alt+f7
+@typestr 2
+f7
+@@
+@op 9
+keystring
+@type 3
+-41
+@alt 5
+false
+@out 2
+f8
+@typestr 2
+f8
+@@
+@op 9
+keystring
+@type 3
+-41
+@alt 4
+true
+@out 6
+alt+f8
+@typestr 2
+f8
+@@
+@op 9
+keystring
+@type 3
+-42
+@alt 5
+false
+@out 2
+f9
+@typestr 2
+f9
+@@
+@op 9
+keystring
+@type 3
+-42
+@alt 4
+true
+@out 6
+alt+f9
+@typestr 2
+f9
+@@
+@op 9
+keystring
+@type 3
+-43
+@alt 5
+false
+@out 3
+f10
+@typestr 3
+f10
+@@
+@op 9
+keystring
+@type 3
+-43
+@alt 4
+true
+@out 7
+alt+f10
+@typestr 3
+f10
+@@
+@op 9
+keystring
+@type 3
+-44
+@alt 5
+false
+@out 3
+f11
+@typestr 3
+f11
+@@
+@op 9
+keystring
+@type 3
+-44
+@alt 4
+true
+@out 7
+alt+f11
+@typestr 3
+f11
+@@
+@op 9
+keystring
+@type 3
+-45
+@alt 5
+false
+@out 3
+f12
+@typestr 3
+f12
+@@
+@op 9
+keystring
+@type 3
+-45
+@alt 4
+true
+@out 7
+alt+f12
+@typestr 3
+f12
+@@
+@op 9
+keystring
+@type 3
+-46
+@alt 5
+false
+@out 3
+f13
+@typestr 3
+f13
+@@
+@op 9
+keystring
+@type 3
+-46
+@alt 4
+true
+@out 7
+alt+f13
+@typestr 3
+f13
+@@
+@op 9
+keystring
+@type 3
+-47
+@alt 5
+false
+@out 3
+f14
+@typestr 3
+f14
+@@
+@op 9
+keystring
+@type 3
+-47
+@alt 4
+true
+@out 7
+alt+f14
+@typestr 3
+f14
+@@
+@op 9
+keystring
+@type 3
+-48
+@alt 5
+false
+@out 3
+f15
+@typestr 3
+f15
+@@
+@op 9
+keystring
+@type 3
+-48
+@alt 4
+true
+@out 7
+alt+f15
+@typestr 3
+f15
+@@
+@op 9
+keystring
+@type 3
+-49
+@alt 5
+false
+@out 3
+f16
+@typestr 3
+f16
+@@
+@op 9
+keystring
+@type 3
+-49
+@alt 4
+true
+@out 7
+alt+f16
+@typestr 3
+f16
+@@
+@op 9
+keystring
+@type 3
+-50
+@alt 5
+false
+@out 3
+f17
+@typestr 3
+f17
+@@
+@op 9
+keystring
+@type 3
+-50
+@alt 4
+true
+@out 7
+alt+f17
+@typestr 3
+f17
+@@
+@op 9
+keystring
+@type 3
+-51
+@alt 5
+false
+@out 3
+f18
+@typestr 3
+f18
+@@
+@op 9
+keystring
+@type 3
+-51
+@alt 4
+true
+@out 7
+alt+f18
+@typestr 3
+f18
+@@
+@op 9
+keystring
+@type 3
+-52
+@alt 5
+false
+@out 3
+f19
+@typestr 3
+f19
+@@
+@op 9
+keystring
+@type 3
+-52
+@alt 4
+true
+@out 7
+alt+f19
+@typestr 3
+f19
+@@
+@op 9
+keystring
+@type 3
+-53
+@alt 5
+false
+@out 3
+f20
+@typestr 3
+f20
+@@
+@op 9
+keystring
+@type 3
+-53
+@alt 4
+true
+@out 7
+alt+f20
+@typestr 3
+f20
+@@
+@op 8
+keyrunes
+@runes 1
+a
+@alt 5
+false
+@paste 5
+false
+@out 1
+a
+@@
+@op 8
+keyrunes
+@runes 1
+a
+@alt 5
+false
+@paste 4
+true
+@out 3
+[a]
+@@
+@op 8
+keyrunes
+@runes 1
+a
+@alt 4
+true
+@paste 5
+false
+@out 5
+alt+a
+@@
+@op 8
+keyrunes
+@runes 1
+a
+@alt 4
+true
+@paste 4
+true
+@out 7
+alt+[a]
+@@
+@op 8
+keyrunes
+@runes 1
+Z
+@alt 5
+false
+@paste 5
+false
+@out 1
+Z
+@@
+@op 8
+keyrunes
+@runes 1
+Z
+@alt 5
+false
+@paste 4
+true
+@out 3
+[Z]
+@@
+@op 8
+keyrunes
+@runes 1
+Z
+@alt 4
+true
+@paste 5
+false
+@out 5
+alt+Z
+@@
+@op 8
+keyrunes
+@runes 1
+Z
+@alt 4
+true
+@paste 4
+true
+@out 7
+alt+[Z]
+@@
+@op 8
+keyrunes
+@runes 2
+ab
+@alt 5
+false
+@paste 5
+false
+@out 2
+ab
+@@
+@op 8
+keyrunes
+@runes 2
+ab
+@alt 5
+false
+@paste 4
+true
+@out 4
+[ab]
+@@
+@op 8
+keyrunes
+@runes 2
+ab
+@alt 4
+true
+@paste 5
+false
+@out 6
+alt+ab
+@@
+@op 8
+keyrunes
+@runes 2
+ab
+@alt 4
+true
+@paste 4
+true
+@out 8
+alt+[ab]
+@@
+@op 8
+keyrunes
+@runes 1
+ 
+@alt 5
+false
+@paste 5
+false
+@out 1
+ 
+@@
+@op 8
+keyrunes
+@runes 1
+ 
+@alt 5
+false
+@paste 4
+true
+@out 3
+[ ]
+@@
+@op 8
+keyrunes
+@runes 1
+ 
+@alt 4
+true
+@paste 5
+false
+@out 5
+alt+ 
+@@
+@op 8
+keyrunes
+@runes 1
+ 
+@alt 4
+true
+@paste 4
+true
+@out 7
+alt+[ ]
+@@
+@op 8
+keyrunes
+@runes 6
+日本
+@alt 5
+false
+@paste 5
+false
+@out 6
+日本
+@@
+@op 8
+keyrunes
+@runes 6
+日本
+@alt 5
+false
+@paste 4
+true
+@out 8
+[日本]
+@@
+@op 8
+keyrunes
+@runes 6
+日本
+@alt 4
+true
+@paste 5
+false
+@out 10
+alt+日本
+@@
+@op 8
+keyrunes
+@runes 6
+日本
+@alt 4
+true
+@paste 4
+true
+@out 12
+alt+[日本]
+@@
+@op 8
+keyrunes
+@runes 0
+
+@alt 5
+false
+@paste 5
+false
+@out 0
+
+@@
+@op 8
+keyrunes
+@runes 0
+
+@alt 5
+false
+@paste 4
+true
+@out 2
+[]
+@@
+@op 8
+keyrunes
+@runes 0
+
+@alt 4
+true
+@paste 5
+false
+@out 4
+alt+
+@@
+@op 8
+keyrunes
+@runes 0
+
+@alt 4
+true
+@paste 4
+true
+@out 6
+alt+[]
+@@
+@op 8
+keyrunes
+@runes 3
+★
+@alt 5
+false
+@paste 5
+false
+@out 3
+★
+@@
+@op 8
+keyrunes
+@runes 3
+★
+@alt 5
+false
+@paste 4
+true
+@out 5
+[★]
+@@
+@op 8
+keyrunes
+@runes 3
+★
+@alt 4
+true
+@paste 5
+false
+@out 7
+alt+★
+@@
+@op 8
+keyrunes
+@runes 3
+★
+@alt 4
+true
+@paste 4
+true
+@out 9
+alt+[★]
+@@
+@op 8
+keyrunes
+@runes 1
+q
+@alt 5
+false
+@paste 5
+false
+@out 1
+q
+@@
+@op 8
+keyrunes
+@runes 1
+q
+@alt 5
+false
+@paste 4
+true
+@out 3
+[q]
+@@
+@op 8
+keyrunes
+@runes 1
+q
+@alt 4
+true
+@paste 5
+false
+@out 5
+alt+q
+@@
+@op 8
+keyrunes
+@runes 1
+q
+@alt 4
+true
+@paste 4
+true
+@out 7
+alt+[q]
+@@
+@op 8
+keyspace
+@out 1
+ 
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+0
+@mods 1
+0
+@out 7
+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+0
+@mods 1
+1
+@out 12
+ctrl+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+0
+@mods 1
+2
+@out 11
+alt+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+0
+@mods 1
+3
+@out 16
+ctrl+alt+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+0
+@mods 1
+4
+@out 13
+shift+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+0
+@mods 1
+5
+@out 18
+ctrl+shift+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+0
+@mods 1
+6
+@out 17
+alt+shift+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+0
+@mods 1
+7
+@out 22
+ctrl+alt+shift+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+1
+@mods 1
+0
+@out 7
+release
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+1
+@mods 1
+1
+@out 12
+ctrl+release
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+1
+@mods 1
+2
+@out 11
+alt+release
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+1
+@mods 1
+3
+@out 16
+ctrl+alt+release
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+1
+@mods 1
+4
+@out 13
+shift+release
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+1
+@mods 1
+5
+@out 18
+ctrl+shift+release
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+1
+@mods 1
+6
+@out 17
+alt+shift+release
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+1
+@mods 1
+7
+@out 22
+ctrl+alt+shift+release
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+2
+@mods 1
+0
+@out 6
+motion
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+2
+@mods 1
+1
+@out 11
+ctrl+motion
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+2
+@mods 1
+2
+@out 10
+alt+motion
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+2
+@mods 1
+3
+@out 15
+ctrl+alt+motion
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+2
+@mods 1
+4
+@out 12
+shift+motion
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+2
+@mods 1
+5
+@out 17
+ctrl+shift+motion
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+2
+@mods 1
+6
+@out 16
+alt+shift+motion
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+2
+@mods 1
+7
+@out 21
+ctrl+alt+shift+motion
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+3
+@mods 1
+0
+@out 7
+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+3
+@mods 1
+1
+@out 12
+ctrl+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+3
+@mods 1
+2
+@out 11
+alt+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+3
+@mods 1
+3
+@out 16
+ctrl+alt+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+3
+@mods 1
+4
+@out 13
+shift+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+3
+@mods 1
+5
+@out 18
+ctrl+shift+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+3
+@mods 1
+6
+@out 17
+alt+shift+unknown
+@@
+@op 11
+mousestring
+@b 1
+0
+@a 1
+3
+@mods 1
+7
+@out 22
+ctrl+alt+shift+unknown
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+0
+@mods 1
+0
+@out 10
+left press
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+0
+@mods 1
+1
+@out 15
+ctrl+left press
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+0
+@mods 1
+2
+@out 14
+alt+left press
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+0
+@mods 1
+3
+@out 19
+ctrl+alt+left press
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+0
+@mods 1
+4
+@out 16
+shift+left press
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+0
+@mods 1
+5
+@out 21
+ctrl+shift+left press
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+0
+@mods 1
+6
+@out 20
+alt+shift+left press
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+0
+@mods 1
+7
+@out 25
+ctrl+alt+shift+left press
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+1
+@mods 1
+0
+@out 12
+left release
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+1
+@mods 1
+1
+@out 17
+ctrl+left release
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+1
+@mods 1
+2
+@out 16
+alt+left release
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+1
+@mods 1
+3
+@out 21
+ctrl+alt+left release
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+1
+@mods 1
+4
+@out 18
+shift+left release
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+1
+@mods 1
+5
+@out 23
+ctrl+shift+left release
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+1
+@mods 1
+6
+@out 22
+alt+shift+left release
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+1
+@mods 1
+7
+@out 27
+ctrl+alt+shift+left release
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+2
+@mods 1
+0
+@out 11
+left motion
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+2
+@mods 1
+1
+@out 16
+ctrl+left motion
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+2
+@mods 1
+2
+@out 15
+alt+left motion
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+2
+@mods 1
+3
+@out 20
+ctrl+alt+left motion
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+2
+@mods 1
+4
+@out 17
+shift+left motion
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+2
+@mods 1
+5
+@out 22
+ctrl+shift+left motion
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+2
+@mods 1
+6
+@out 21
+alt+shift+left motion
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+2
+@mods 1
+7
+@out 26
+ctrl+alt+shift+left motion
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+3
+@mods 1
+0
+@out 4
+left
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+3
+@mods 1
+1
+@out 9
+ctrl+left
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+3
+@mods 1
+2
+@out 8
+alt+left
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+3
+@mods 1
+3
+@out 13
+ctrl+alt+left
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+3
+@mods 1
+4
+@out 10
+shift+left
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+3
+@mods 1
+5
+@out 15
+ctrl+shift+left
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+3
+@mods 1
+6
+@out 14
+alt+shift+left
+@@
+@op 11
+mousestring
+@b 1
+1
+@a 1
+3
+@mods 1
+7
+@out 19
+ctrl+alt+shift+left
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+0
+@mods 1
+0
+@out 12
+middle press
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+0
+@mods 1
+1
+@out 17
+ctrl+middle press
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+0
+@mods 1
+2
+@out 16
+alt+middle press
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+0
+@mods 1
+3
+@out 21
+ctrl+alt+middle press
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+0
+@mods 1
+4
+@out 18
+shift+middle press
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+0
+@mods 1
+5
+@out 23
+ctrl+shift+middle press
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+0
+@mods 1
+6
+@out 22
+alt+shift+middle press
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+0
+@mods 1
+7
+@out 27
+ctrl+alt+shift+middle press
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+1
+@mods 1
+0
+@out 14
+middle release
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+1
+@mods 1
+1
+@out 19
+ctrl+middle release
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+1
+@mods 1
+2
+@out 18
+alt+middle release
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+1
+@mods 1
+3
+@out 23
+ctrl+alt+middle release
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+1
+@mods 1
+4
+@out 20
+shift+middle release
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+1
+@mods 1
+5
+@out 25
+ctrl+shift+middle release
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+1
+@mods 1
+6
+@out 24
+alt+shift+middle release
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+1
+@mods 1
+7
+@out 29
+ctrl+alt+shift+middle release
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+2
+@mods 1
+0
+@out 13
+middle motion
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+2
+@mods 1
+1
+@out 18
+ctrl+middle motion
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+2
+@mods 1
+2
+@out 17
+alt+middle motion
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+2
+@mods 1
+3
+@out 22
+ctrl+alt+middle motion
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+2
+@mods 1
+4
+@out 19
+shift+middle motion
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+2
+@mods 1
+5
+@out 24
+ctrl+shift+middle motion
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+2
+@mods 1
+6
+@out 23
+alt+shift+middle motion
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+2
+@mods 1
+7
+@out 28
+ctrl+alt+shift+middle motion
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+3
+@mods 1
+0
+@out 6
+middle
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+3
+@mods 1
+1
+@out 11
+ctrl+middle
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+3
+@mods 1
+2
+@out 10
+alt+middle
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+3
+@mods 1
+3
+@out 15
+ctrl+alt+middle
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+3
+@mods 1
+4
+@out 12
+shift+middle
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+3
+@mods 1
+5
+@out 17
+ctrl+shift+middle
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+3
+@mods 1
+6
+@out 16
+alt+shift+middle
+@@
+@op 11
+mousestring
+@b 1
+2
+@a 1
+3
+@mods 1
+7
+@out 21
+ctrl+alt+shift+middle
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+0
+@mods 1
+0
+@out 11
+right press
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+0
+@mods 1
+1
+@out 16
+ctrl+right press
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+0
+@mods 1
+2
+@out 15
+alt+right press
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+0
+@mods 1
+3
+@out 20
+ctrl+alt+right press
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+0
+@mods 1
+4
+@out 17
+shift+right press
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+0
+@mods 1
+5
+@out 22
+ctrl+shift+right press
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+0
+@mods 1
+6
+@out 21
+alt+shift+right press
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+0
+@mods 1
+7
+@out 26
+ctrl+alt+shift+right press
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+1
+@mods 1
+0
+@out 13
+right release
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+1
+@mods 1
+1
+@out 18
+ctrl+right release
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+1
+@mods 1
+2
+@out 17
+alt+right release
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+1
+@mods 1
+3
+@out 22
+ctrl+alt+right release
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+1
+@mods 1
+4
+@out 19
+shift+right release
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+1
+@mods 1
+5
+@out 24
+ctrl+shift+right release
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+1
+@mods 1
+6
+@out 23
+alt+shift+right release
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+1
+@mods 1
+7
+@out 28
+ctrl+alt+shift+right release
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+2
+@mods 1
+0
+@out 12
+right motion
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+2
+@mods 1
+1
+@out 17
+ctrl+right motion
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+2
+@mods 1
+2
+@out 16
+alt+right motion
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+2
+@mods 1
+3
+@out 21
+ctrl+alt+right motion
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+2
+@mods 1
+4
+@out 18
+shift+right motion
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+2
+@mods 1
+5
+@out 23
+ctrl+shift+right motion
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+2
+@mods 1
+6
+@out 22
+alt+shift+right motion
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+2
+@mods 1
+7
+@out 27
+ctrl+alt+shift+right motion
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+3
+@mods 1
+0
+@out 5
+right
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+3
+@mods 1
+1
+@out 10
+ctrl+right
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+3
+@mods 1
+2
+@out 9
+alt+right
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+3
+@mods 1
+3
+@out 14
+ctrl+alt+right
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+3
+@mods 1
+4
+@out 11
+shift+right
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+3
+@mods 1
+5
+@out 16
+ctrl+shift+right
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+3
+@mods 1
+6
+@out 15
+alt+shift+right
+@@
+@op 11
+mousestring
+@b 1
+3
+@a 1
+3
+@mods 1
+7
+@out 20
+ctrl+alt+shift+right
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+0
+@mods 1
+0
+@out 8
+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+0
+@mods 1
+1
+@out 13
+ctrl+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+0
+@mods 1
+2
+@out 12
+alt+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+0
+@mods 1
+3
+@out 17
+ctrl+alt+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+0
+@mods 1
+4
+@out 14
+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+0
+@mods 1
+5
+@out 19
+ctrl+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+0
+@mods 1
+6
+@out 18
+alt+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+0
+@mods 1
+7
+@out 23
+ctrl+alt+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+1
+@mods 1
+0
+@out 8
+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+1
+@mods 1
+1
+@out 13
+ctrl+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+1
+@mods 1
+2
+@out 12
+alt+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+1
+@mods 1
+3
+@out 17
+ctrl+alt+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+1
+@mods 1
+4
+@out 14
+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+1
+@mods 1
+5
+@out 19
+ctrl+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+1
+@mods 1
+6
+@out 18
+alt+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+1
+@mods 1
+7
+@out 23
+ctrl+alt+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+2
+@mods 1
+0
+@out 8
+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+2
+@mods 1
+1
+@out 13
+ctrl+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+2
+@mods 1
+2
+@out 12
+alt+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+2
+@mods 1
+3
+@out 17
+ctrl+alt+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+2
+@mods 1
+4
+@out 14
+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+2
+@mods 1
+5
+@out 19
+ctrl+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+2
+@mods 1
+6
+@out 18
+alt+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+2
+@mods 1
+7
+@out 23
+ctrl+alt+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+3
+@mods 1
+0
+@out 8
+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+3
+@mods 1
+1
+@out 13
+ctrl+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+3
+@mods 1
+2
+@out 12
+alt+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+3
+@mods 1
+3
+@out 17
+ctrl+alt+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+3
+@mods 1
+4
+@out 14
+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+3
+@mods 1
+5
+@out 19
+ctrl+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+3
+@mods 1
+6
+@out 18
+alt+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+4
+@a 1
+3
+@mods 1
+7
+@out 23
+ctrl+alt+shift+wheel up
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+0
+@mods 1
+0
+@out 10
+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+0
+@mods 1
+1
+@out 15
+ctrl+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+0
+@mods 1
+2
+@out 14
+alt+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+0
+@mods 1
+3
+@out 19
+ctrl+alt+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+0
+@mods 1
+4
+@out 16
+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+0
+@mods 1
+5
+@out 21
+ctrl+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+0
+@mods 1
+6
+@out 20
+alt+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+0
+@mods 1
+7
+@out 25
+ctrl+alt+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+1
+@mods 1
+0
+@out 10
+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+1
+@mods 1
+1
+@out 15
+ctrl+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+1
+@mods 1
+2
+@out 14
+alt+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+1
+@mods 1
+3
+@out 19
+ctrl+alt+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+1
+@mods 1
+4
+@out 16
+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+1
+@mods 1
+5
+@out 21
+ctrl+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+1
+@mods 1
+6
+@out 20
+alt+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+1
+@mods 1
+7
+@out 25
+ctrl+alt+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+2
+@mods 1
+0
+@out 10
+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+2
+@mods 1
+1
+@out 15
+ctrl+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+2
+@mods 1
+2
+@out 14
+alt+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+2
+@mods 1
+3
+@out 19
+ctrl+alt+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+2
+@mods 1
+4
+@out 16
+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+2
+@mods 1
+5
+@out 21
+ctrl+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+2
+@mods 1
+6
+@out 20
+alt+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+2
+@mods 1
+7
+@out 25
+ctrl+alt+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+3
+@mods 1
+0
+@out 10
+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+3
+@mods 1
+1
+@out 15
+ctrl+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+3
+@mods 1
+2
+@out 14
+alt+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+3
+@mods 1
+3
+@out 19
+ctrl+alt+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+3
+@mods 1
+4
+@out 16
+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+3
+@mods 1
+5
+@out 21
+ctrl+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+3
+@mods 1
+6
+@out 20
+alt+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+5
+@a 1
+3
+@mods 1
+7
+@out 25
+ctrl+alt+shift+wheel down
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+0
+@mods 1
+0
+@out 10
+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+0
+@mods 1
+1
+@out 15
+ctrl+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+0
+@mods 1
+2
+@out 14
+alt+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+0
+@mods 1
+3
+@out 19
+ctrl+alt+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+0
+@mods 1
+4
+@out 16
+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+0
+@mods 1
+5
+@out 21
+ctrl+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+0
+@mods 1
+6
+@out 20
+alt+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+0
+@mods 1
+7
+@out 25
+ctrl+alt+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+1
+@mods 1
+0
+@out 10
+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+1
+@mods 1
+1
+@out 15
+ctrl+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+1
+@mods 1
+2
+@out 14
+alt+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+1
+@mods 1
+3
+@out 19
+ctrl+alt+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+1
+@mods 1
+4
+@out 16
+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+1
+@mods 1
+5
+@out 21
+ctrl+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+1
+@mods 1
+6
+@out 20
+alt+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+1
+@mods 1
+7
+@out 25
+ctrl+alt+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+2
+@mods 1
+0
+@out 10
+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+2
+@mods 1
+1
+@out 15
+ctrl+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+2
+@mods 1
+2
+@out 14
+alt+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+2
+@mods 1
+3
+@out 19
+ctrl+alt+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+2
+@mods 1
+4
+@out 16
+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+2
+@mods 1
+5
+@out 21
+ctrl+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+2
+@mods 1
+6
+@out 20
+alt+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+2
+@mods 1
+7
+@out 25
+ctrl+alt+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+3
+@mods 1
+0
+@out 10
+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+3
+@mods 1
+1
+@out 15
+ctrl+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+3
+@mods 1
+2
+@out 14
+alt+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+3
+@mods 1
+3
+@out 19
+ctrl+alt+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+3
+@mods 1
+4
+@out 16
+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+3
+@mods 1
+5
+@out 21
+ctrl+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+3
+@mods 1
+6
+@out 20
+alt+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+6
+@a 1
+3
+@mods 1
+7
+@out 25
+ctrl+alt+shift+wheel left
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+0
+@mods 1
+0
+@out 11
+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+0
+@mods 1
+1
+@out 16
+ctrl+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+0
+@mods 1
+2
+@out 15
+alt+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+0
+@mods 1
+3
+@out 20
+ctrl+alt+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+0
+@mods 1
+4
+@out 17
+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+0
+@mods 1
+5
+@out 22
+ctrl+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+0
+@mods 1
+6
+@out 21
+alt+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+0
+@mods 1
+7
+@out 26
+ctrl+alt+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+1
+@mods 1
+0
+@out 11
+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+1
+@mods 1
+1
+@out 16
+ctrl+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+1
+@mods 1
+2
+@out 15
+alt+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+1
+@mods 1
+3
+@out 20
+ctrl+alt+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+1
+@mods 1
+4
+@out 17
+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+1
+@mods 1
+5
+@out 22
+ctrl+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+1
+@mods 1
+6
+@out 21
+alt+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+1
+@mods 1
+7
+@out 26
+ctrl+alt+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+2
+@mods 1
+0
+@out 11
+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+2
+@mods 1
+1
+@out 16
+ctrl+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+2
+@mods 1
+2
+@out 15
+alt+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+2
+@mods 1
+3
+@out 20
+ctrl+alt+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+2
+@mods 1
+4
+@out 17
+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+2
+@mods 1
+5
+@out 22
+ctrl+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+2
+@mods 1
+6
+@out 21
+alt+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+2
+@mods 1
+7
+@out 26
+ctrl+alt+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+3
+@mods 1
+0
+@out 11
+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+3
+@mods 1
+1
+@out 16
+ctrl+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+3
+@mods 1
+2
+@out 15
+alt+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+3
+@mods 1
+3
+@out 20
+ctrl+alt+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+3
+@mods 1
+4
+@out 17
+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+3
+@mods 1
+5
+@out 22
+ctrl+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+3
+@mods 1
+6
+@out 21
+alt+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+7
+@a 1
+3
+@mods 1
+7
+@out 26
+ctrl+alt+shift+wheel right
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+0
+@mods 1
+0
+@out 14
+backward press
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+0
+@mods 1
+1
+@out 19
+ctrl+backward press
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+0
+@mods 1
+2
+@out 18
+alt+backward press
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+0
+@mods 1
+3
+@out 23
+ctrl+alt+backward press
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+0
+@mods 1
+4
+@out 20
+shift+backward press
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+0
+@mods 1
+5
+@out 25
+ctrl+shift+backward press
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+0
+@mods 1
+6
+@out 24
+alt+shift+backward press
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+0
+@mods 1
+7
+@out 29
+ctrl+alt+shift+backward press
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+1
+@mods 1
+0
+@out 16
+backward release
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+1
+@mods 1
+1
+@out 21
+ctrl+backward release
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+1
+@mods 1
+2
+@out 20
+alt+backward release
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+1
+@mods 1
+3
+@out 25
+ctrl+alt+backward release
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+1
+@mods 1
+4
+@out 22
+shift+backward release
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+1
+@mods 1
+5
+@out 27
+ctrl+shift+backward release
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+1
+@mods 1
+6
+@out 26
+alt+shift+backward release
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+1
+@mods 1
+7
+@out 31
+ctrl+alt+shift+backward release
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+2
+@mods 1
+0
+@out 15
+backward motion
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+2
+@mods 1
+1
+@out 20
+ctrl+backward motion
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+2
+@mods 1
+2
+@out 19
+alt+backward motion
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+2
+@mods 1
+3
+@out 24
+ctrl+alt+backward motion
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+2
+@mods 1
+4
+@out 21
+shift+backward motion
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+2
+@mods 1
+5
+@out 26
+ctrl+shift+backward motion
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+2
+@mods 1
+6
+@out 25
+alt+shift+backward motion
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+2
+@mods 1
+7
+@out 30
+ctrl+alt+shift+backward motion
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+3
+@mods 1
+0
+@out 8
+backward
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+3
+@mods 1
+1
+@out 13
+ctrl+backward
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+3
+@mods 1
+2
+@out 12
+alt+backward
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+3
+@mods 1
+3
+@out 17
+ctrl+alt+backward
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+3
+@mods 1
+4
+@out 14
+shift+backward
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+3
+@mods 1
+5
+@out 19
+ctrl+shift+backward
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+3
+@mods 1
+6
+@out 18
+alt+shift+backward
+@@
+@op 11
+mousestring
+@b 1
+8
+@a 1
+3
+@mods 1
+7
+@out 23
+ctrl+alt+shift+backward
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+0
+@mods 1
+0
+@out 13
+forward press
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+0
+@mods 1
+1
+@out 18
+ctrl+forward press
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+0
+@mods 1
+2
+@out 17
+alt+forward press
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+0
+@mods 1
+3
+@out 22
+ctrl+alt+forward press
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+0
+@mods 1
+4
+@out 19
+shift+forward press
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+0
+@mods 1
+5
+@out 24
+ctrl+shift+forward press
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+0
+@mods 1
+6
+@out 23
+alt+shift+forward press
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+0
+@mods 1
+7
+@out 28
+ctrl+alt+shift+forward press
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+1
+@mods 1
+0
+@out 15
+forward release
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+1
+@mods 1
+1
+@out 20
+ctrl+forward release
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+1
+@mods 1
+2
+@out 19
+alt+forward release
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+1
+@mods 1
+3
+@out 24
+ctrl+alt+forward release
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+1
+@mods 1
+4
+@out 21
+shift+forward release
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+1
+@mods 1
+5
+@out 26
+ctrl+shift+forward release
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+1
+@mods 1
+6
+@out 25
+alt+shift+forward release
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+1
+@mods 1
+7
+@out 30
+ctrl+alt+shift+forward release
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+2
+@mods 1
+0
+@out 14
+forward motion
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+2
+@mods 1
+1
+@out 19
+ctrl+forward motion
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+2
+@mods 1
+2
+@out 18
+alt+forward motion
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+2
+@mods 1
+3
+@out 23
+ctrl+alt+forward motion
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+2
+@mods 1
+4
+@out 20
+shift+forward motion
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+2
+@mods 1
+5
+@out 25
+ctrl+shift+forward motion
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+2
+@mods 1
+6
+@out 24
+alt+shift+forward motion
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+2
+@mods 1
+7
+@out 29
+ctrl+alt+shift+forward motion
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+3
+@mods 1
+0
+@out 7
+forward
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+3
+@mods 1
+1
+@out 12
+ctrl+forward
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+3
+@mods 1
+2
+@out 11
+alt+forward
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+3
+@mods 1
+3
+@out 16
+ctrl+alt+forward
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+3
+@mods 1
+4
+@out 13
+shift+forward
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+3
+@mods 1
+5
+@out 18
+ctrl+shift+forward
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+3
+@mods 1
+6
+@out 17
+alt+shift+forward
+@@
+@op 11
+mousestring
+@b 1
+9
+@a 1
+3
+@mods 1
+7
+@out 22
+ctrl+alt+shift+forward
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+0
+@mods 1
+0
+@out 15
+button 10 press
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+0
+@mods 1
+1
+@out 20
+ctrl+button 10 press
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+0
+@mods 1
+2
+@out 19
+alt+button 10 press
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+0
+@mods 1
+3
+@out 24
+ctrl+alt+button 10 press
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+0
+@mods 1
+4
+@out 21
+shift+button 10 press
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+0
+@mods 1
+5
+@out 26
+ctrl+shift+button 10 press
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+0
+@mods 1
+6
+@out 25
+alt+shift+button 10 press
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+0
+@mods 1
+7
+@out 30
+ctrl+alt+shift+button 10 press
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+1
+@mods 1
+0
+@out 17
+button 10 release
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+1
+@mods 1
+1
+@out 22
+ctrl+button 10 release
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+1
+@mods 1
+2
+@out 21
+alt+button 10 release
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+1
+@mods 1
+3
+@out 26
+ctrl+alt+button 10 release
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+1
+@mods 1
+4
+@out 23
+shift+button 10 release
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+1
+@mods 1
+5
+@out 28
+ctrl+shift+button 10 release
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+1
+@mods 1
+6
+@out 27
+alt+shift+button 10 release
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+1
+@mods 1
+7
+@out 32
+ctrl+alt+shift+button 10 release
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+2
+@mods 1
+0
+@out 16
+button 10 motion
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+2
+@mods 1
+1
+@out 21
+ctrl+button 10 motion
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+2
+@mods 1
+2
+@out 20
+alt+button 10 motion
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+2
+@mods 1
+3
+@out 25
+ctrl+alt+button 10 motion
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+2
+@mods 1
+4
+@out 22
+shift+button 10 motion
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+2
+@mods 1
+5
+@out 27
+ctrl+shift+button 10 motion
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+2
+@mods 1
+6
+@out 26
+alt+shift+button 10 motion
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+2
+@mods 1
+7
+@out 31
+ctrl+alt+shift+button 10 motion
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+3
+@mods 1
+0
+@out 9
+button 10
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+3
+@mods 1
+1
+@out 14
+ctrl+button 10
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+3
+@mods 1
+2
+@out 13
+alt+button 10
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+3
+@mods 1
+3
+@out 18
+ctrl+alt+button 10
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+3
+@mods 1
+4
+@out 15
+shift+button 10
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+3
+@mods 1
+5
+@out 20
+ctrl+shift+button 10
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+3
+@mods 1
+6
+@out 19
+alt+shift+button 10
+@@
+@op 11
+mousestring
+@b 2
+10
+@a 1
+3
+@mods 1
+7
+@out 24
+ctrl+alt+shift+button 10
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+0
+@mods 1
+0
+@out 15
+button 11 press
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+0
+@mods 1
+1
+@out 20
+ctrl+button 11 press
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+0
+@mods 1
+2
+@out 19
+alt+button 11 press
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+0
+@mods 1
+3
+@out 24
+ctrl+alt+button 11 press
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+0
+@mods 1
+4
+@out 21
+shift+button 11 press
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+0
+@mods 1
+5
+@out 26
+ctrl+shift+button 11 press
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+0
+@mods 1
+6
+@out 25
+alt+shift+button 11 press
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+0
+@mods 1
+7
+@out 30
+ctrl+alt+shift+button 11 press
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+1
+@mods 1
+0
+@out 17
+button 11 release
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+1
+@mods 1
+1
+@out 22
+ctrl+button 11 release
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+1
+@mods 1
+2
+@out 21
+alt+button 11 release
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+1
+@mods 1
+3
+@out 26
+ctrl+alt+button 11 release
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+1
+@mods 1
+4
+@out 23
+shift+button 11 release
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+1
+@mods 1
+5
+@out 28
+ctrl+shift+button 11 release
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+1
+@mods 1
+6
+@out 27
+alt+shift+button 11 release
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+1
+@mods 1
+7
+@out 32
+ctrl+alt+shift+button 11 release
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+2
+@mods 1
+0
+@out 16
+button 11 motion
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+2
+@mods 1
+1
+@out 21
+ctrl+button 11 motion
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+2
+@mods 1
+2
+@out 20
+alt+button 11 motion
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+2
+@mods 1
+3
+@out 25
+ctrl+alt+button 11 motion
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+2
+@mods 1
+4
+@out 22
+shift+button 11 motion
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+2
+@mods 1
+5
+@out 27
+ctrl+shift+button 11 motion
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+2
+@mods 1
+6
+@out 26
+alt+shift+button 11 motion
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+2
+@mods 1
+7
+@out 31
+ctrl+alt+shift+button 11 motion
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+3
+@mods 1
+0
+@out 9
+button 11
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+3
+@mods 1
+1
+@out 14
+ctrl+button 11
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+3
+@mods 1
+2
+@out 13
+alt+button 11
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+3
+@mods 1
+3
+@out 18
+ctrl+alt+button 11
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+3
+@mods 1
+4
+@out 15
+shift+button 11
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+3
+@mods 1
+5
+@out 20
+ctrl+shift+button 11
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+3
+@mods 1
+6
+@out 19
+alt+shift+button 11
+@@
+@op 11
+mousestring
+@b 2
+11
+@a 1
+3
+@mods 1
+7
+@out 24
+ctrl+alt+shift+button 11
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+0
+@mods 1
+0
+@out 6
+ press
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+0
+@mods 1
+1
+@out 11
+ctrl+ press
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+0
+@mods 1
+2
+@out 10
+alt+ press
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+0
+@mods 1
+3
+@out 15
+ctrl+alt+ press
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+0
+@mods 1
+4
+@out 12
+shift+ press
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+0
+@mods 1
+5
+@out 17
+ctrl+shift+ press
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+0
+@mods 1
+6
+@out 16
+alt+shift+ press
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+0
+@mods 1
+7
+@out 21
+ctrl+alt+shift+ press
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+1
+@mods 1
+0
+@out 8
+ release
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+1
+@mods 1
+1
+@out 13
+ctrl+ release
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+1
+@mods 1
+2
+@out 12
+alt+ release
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+1
+@mods 1
+3
+@out 17
+ctrl+alt+ release
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+1
+@mods 1
+4
+@out 14
+shift+ release
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+1
+@mods 1
+5
+@out 19
+ctrl+shift+ release
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+1
+@mods 1
+6
+@out 18
+alt+shift+ release
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+1
+@mods 1
+7
+@out 23
+ctrl+alt+shift+ release
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+2
+@mods 1
+0
+@out 7
+ motion
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+2
+@mods 1
+1
+@out 12
+ctrl+ motion
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+2
+@mods 1
+2
+@out 11
+alt+ motion
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+2
+@mods 1
+3
+@out 16
+ctrl+alt+ motion
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+2
+@mods 1
+4
+@out 13
+shift+ motion
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+2
+@mods 1
+5
+@out 18
+ctrl+shift+ motion
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+2
+@mods 1
+6
+@out 17
+alt+shift+ motion
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+2
+@mods 1
+7
+@out 22
+ctrl+alt+shift+ motion
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+3
+@mods 1
+0
+@out 0
+
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+3
+@mods 1
+1
+@out 5
+ctrl+
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+3
+@mods 1
+2
+@out 4
+alt+
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+3
+@mods 1
+3
+@out 9
+ctrl+alt+
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+3
+@mods 1
+4
+@out 6
+shift+
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+3
+@mods 1
+5
+@out 11
+ctrl+shift+
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+3
+@mods 1
+6
+@out 10
+alt+shift+
+@@
+@op 11
+mousestring
+@b 2
+12
+@a 1
+3
+@mods 1
+7
+@out 15
+ctrl+alt+shift+
+@@
+@op 6
+decode
+@in 1
+a
+@out 51
+key type=-1 runes="a" alt=false paste=false str="a"
+@@
+@op 6
+decode
+@in 3
+abc
+@out 55
+key type=-1 runes="abc" alt=false paste=false str="abc"
+@@
+@op 6
+decode
+@in 11
+hello world
+@out 172
+key type=-1 runes="hello" alt=false paste=false str="hello"
+key type=-15 runes=" " alt=false paste=false str=" "
+key type=-1 runes="world" alt=false paste=false str="world"
+@@
+@op 6
+decode
+@in 1
+ 
+@out 52
+key type=-15 runes=" " alt=false paste=false str=" "
+@@
+@op 6
+decode
+@in 2
+  
+@out 105
+key type=-15 runes=" " alt=false paste=false str=" "
+key type=-15 runes=" " alt=false paste=false str=" "
+@@
+@op 6
+decode
+@in 1
+
+@out 54
+key type=13 runes="" alt=false paste=false str="enter"
+@@
+@op 6
+decode
+@in 1
+
+
+@out 55
+key type=10 runes="" alt=false paste=false str="ctrl+j"
+@@
+@op 6
+decode
+@in 1
+	
+@out 51
+key type=9 runes="" alt=false paste=false str="tab"
+@@
+@op 6
+decode
+@in 1
+
+@out 59
+key type=127 runes="" alt=false paste=false str="backspace"
+@@
+@op 6
+decode
+@in 1
+
+@out 54
+key type=8 runes="" alt=false paste=false str="ctrl+h"
+@@
+@op 6
+decode
+@in 1
+
+@out 54
+key type=3 runes="" alt=false paste=false str="ctrl+c"
+@@
+@op 6
+decode
+@in 1
+ 
+@out 54
+key type=0 runes="" alt=false paste=false str="ctrl+@"
+@@
+@op 6
+decode
+@in 1
+
+@out 52
+key type=27 runes="" alt=false paste=false str="esc"
+@@
+@op 6
+decode
+@in 2
+
+@out 55
+key type=27 runes="" alt=true paste=false str="alt+esc"
+@@
+@op 6
+decode
+@in 2
+a
+@out 54
+key type=-1 runes="a" alt=true paste=false str="alt+a"
+@@
+@op 6
+decode
+@in 2
+ 
+@out 55
+key type=-15 runes=" " alt=true paste=false str="alt+ "
+@@
+@op 6
+decode
+@in 2
+
+@out 57
+key type=13 runes="" alt=true paste=false str="alt+enter"
+@@
+@op 6
+decode
+@in 2
+
+@out 62
+key type=127 runes="" alt=true paste=false str="alt+backspace"
+@@
+@op 6
+decode
+@in 3
+[A
+@out 51
+key type=-2 runes="" alt=false paste=false str="up"
+@@
+@op 6
+decode
+@in 3
+[B
+@out 53
+key type=-3 runes="" alt=false paste=false str="down"
+@@
+@op 6
+decode
+@in 3
+[C
+@out 54
+key type=-4 runes="" alt=false paste=false str="right"
+@@
+@op 6
+decode
+@in 3
+[D
+@out 53
+key type=-5 runes="" alt=false paste=false str="left"
+@@
+@op 6
+decode
+@in 6
+[1;5C
+@out 60
+key type=-18 runes="" alt=false paste=false str="ctrl+right"
+@@
+@op 6
+decode
+@in 3
+[Z
+@out 58
+key type=-6 runes="" alt=false paste=false str="shift+tab"
+@@
+@op 6
+decode
+@in 4
+[3~
+@out 56
+key type=-13 runes="" alt=false paste=false str="delete"
+@@
+@op 6
+decode
+@in 4
+[5~
+@out 53
+key type=-9 runes="" alt=false paste=false str="pgup"
+@@
+@op 6
+decode
+@in 4
+[6~
+@out 56
+key type=-10 runes="" alt=false paste=false str="pgdown"
+@@
+@op 6
+decode
+@in 3
+[H
+@out 53
+key type=-7 runes="" alt=false paste=false str="home"
+@@
+@op 6
+decode
+@in 3
+[F
+@out 52
+key type=-8 runes="" alt=false paste=false str="end"
+@@
+@op 6
+decode
+@in 4
+[1~
+@out 53
+key type=-7 runes="" alt=false paste=false str="home"
+@@
+@op 6
+decode
+@in 4
+[4~
+@out 52
+key type=-8 runes="" alt=false paste=false str="end"
+@@
+@op 6
+decode
+@in 3
+OP
+@out 52
+key type=-34 runes="" alt=false paste=false str="f1"
+@@
+@op 6
+decode
+@in 3
+OQ
+@out 52
+key type=-35 runes="" alt=false paste=false str="f2"
+@@
+@op 6
+decode
+@in 5
+[15~
+@out 52
+key type=-38 runes="" alt=false paste=false str="f5"
+@@
+@op 6
+decode
+@in 5
+[24~
+@out 53
+key type=-45 runes="" alt=false paste=false str="f12"
+@@
+@op 6
+decode
+@in 6
+[1;2Q
+@out 53
+key type=-47 runes="" alt=false paste=false str="f14"
+@@
+@op 6
+decode
+@in 6
+[1;3A
+@out 54
+key type=-2 runes="" alt=true paste=false str="alt+up"
+@@
+@op 6
+decode
+@in 4
+[A
+@out 54
+key type=-2 runes="" alt=true paste=false str="alt+up"
+@@
+@op 6
+decode
+@in 23
+[200~pasted text[201~
+@out 72
+key type=-1 runes="pasted text" alt=false paste=true str="[pasted text]"
+@@
+@op 6
+decode
+@in 28
+[200~multi
+line	paste[201~
+@out 86
+key type=-1 runes="multi\nline\tpaste" alt=false paste=true str="[multi\nline\tpaste]"
+@@
+@op 6
+decode
+@in 3
+[I
+@out 5
+focus
+@@
+@op 6
+decode
+@in 3
+[O
+@out 4
+blur
+@@
+@op 6
+decode
+@in 10
+[<0;10;5M
+@out 88
+mouse x=9 y=4 shift=false alt=false ctrl=false action=0 button=1 type=1 str="left press"
+@@
+@op 6
+decode
+@in 10
+[<0;10;5m
+@out 90
+mouse x=9 y=4 shift=false alt=false ctrl=false action=1 button=1 type=4 str="left release"
+@@
+@op 6
+decode
+@in 10
+[<64;1;1M
+@out 86
+mouse x=0 y=0 shift=false alt=false ctrl=false action=0 button=4 type=5 str="wheel up"
+@@
+@op 6
+decode
+@in 10
+[<65;2;3M
+@out 88
+mouse x=1 y=2 shift=false alt=false ctrl=false action=0 button=5 type=6 str="wheel down"
+@@
+@op 6
+decode
+@in 10
+[<32;5;5M
+@out 89
+mouse x=4 y=4 shift=false alt=false ctrl=false action=2 button=1 type=1 str="left motion"
+@@
+@op 6
+decode
+@in 10
+[<35;7;8M
+@out 85
+mouse x=6 y=7 shift=false alt=false ctrl=false action=2 button=0 type=11 str="motion"
+@@
+@op 6
+decode
+@in 9
+[<2;1;1M
+@out 89
+mouse x=0 y=0 shift=false alt=false ctrl=false action=0 button=3 type=2 str="right press"
+@@
+@op 6
+decode
+@in 9
+[<1;3;3M
+@out 90
+mouse x=2 y=2 shift=false alt=false ctrl=false action=0 button=2 type=3 str="middle press"
+@@
+@op 6
+decode
+@in 10
+[<16;4;4M
+@out 92
+mouse x=3 y=3 shift=false alt=false ctrl=true action=0 button=1 type=1 str="ctrl+left press"
+@@
+@op 6
+decode
+@in 9
+[<8;4;4M
+@out 91
+mouse x=3 y=3 shift=false alt=true ctrl=false action=0 button=1 type=1 str="alt+left press"
+@@
+@op 6
+decode
+@in 9
+[<4;4;4M
+@out 93
+mouse x=3 y=3 shift=true alt=false ctrl=false action=0 button=1 type=1 str="shift+left press"
+@@
+@op 6
+decode
+@in 11
+[<128;1;1M
+@out 92
+mouse x=0 y=0 shift=false alt=false ctrl=false action=0 button=8 type=9 str="backward press"
+@@
+@op 6
+decode
+@in 11
+[<129;1;1m
+@out 93
+mouse x=0 y=0 shift=false alt=false ctrl=false action=1 button=9 type=4 str="forward release"
+@@
+@op 6
+decode
+@in 6
+[M #!
+@out 88
+mouse x=2 y=0 shift=false alt=false ctrl=false action=0 button=1 type=1 str="left press"
+@@
+@op 6
+decode
+@in 6
+[M@$%
+@out 89
+mouse x=3 y=4 shift=false alt=false ctrl=false action=2 button=1 type=1 str="left motion"
+@@
+@op 6
+decode
+@in 6
+[Ma b
+@out 90
+mouse x=-1 y=65 shift=false alt=false ctrl=false action=0 button=5 type=6 str="wheel down"
+@@
+@op 6
+decode
+@in 5
+[99x
+@out 42
+tea.unknownCSISequenceMsg ?CSI[57 57 120]?
+@@
+@op 6
+decode
+@in 7
+[?1;2c
+@out 47
+tea.unknownCSISequenceMsg ?CSI[63 49 59 50 99]?
+@@
+@op 6
+decode
+@in 9
+日本語
+@out 67
+key type=-1 runes="日本語" alt=false paste=false str="日本語"
+@@
+@op 6
+decode
+@in 4
+★x
+@out 57
+key type=-1 runes="★x" alt=false paste=false str="★x"
+@@
+@op 6
+decode
+@in 3
+é
+@out 55
+key type=-1 runes="é" alt=false paste=false str="é"
+@@
+@op 6
+decode
+@in 9
+abc[Adef
+@out 163
+key type=-1 runes="abc" alt=false paste=false str="abc"
+key type=-2 runes="" alt=false paste=false str="up"
+key type=-1 runes="def" alt=false paste=false str="def"
+@@
+@op 6
+decode
+@in 3
+ab
+@out 158
+key type=-1 runes="a" alt=false paste=false str="a"
+key type=3 runes="" alt=false paste=false str="ctrl+c"
+key type=-1 runes="b" alt=false paste=false str="b"
+@@
+@op 6
+decode
+@in 11
+x[<0;1;1My
+@out 192
+key type=-1 runes="x" alt=false paste=false str="x"
+mouse x=0 y=0 shift=false alt=false ctrl=false action=0 button=1 type=1 str="left press"
+key type=-1 runes="y" alt=false paste=false str="y"
+@@
+@op 6
+decode
+@in 12
+[1;5A[1;5B
+@out 117
+key type=-16 runes="" alt=false paste=false str="ctrl+up"
+key type=-17 runes="" alt=false paste=false str="ctrl+down"
+@@
+@op 6
+decode
+@in 1
+�
+@out 30
+tea.unknownInputByteMsg ?0xff?
+@@
+@op 6
+decode
+@in 1
+�
+@out 30
+tea.unknownInputByteMsg ?0xc3?
+@@
+@op 6
+decode
+@in 3
+a�b
+@out 134
+key type=-1 runes="a" alt=false paste=false str="a"
+tea.unknownInputByteMsg ?0xff?
+key type=-1 runes="b" alt=false paste=false str="b"
+@@
+@op 6
+decode
+@in 2
+�
+@out 61
+tea.unknownInputByteMsg ?0x1b?
+tea.unknownInputByteMsg ?0xff?
+@@
+@op 6
+decode
+@in 3
+OA
+@out 51
+key type=-2 runes="" alt=false paste=false str="up"
+@@
+@op 6
+decode
+@in 3
+[a
+@out 58
+key type=-22 runes="" alt=false paste=false str="shift+up"
+@@
+@op 6
+decode
+@in 4
+[7^
+@out 59
+key type=-20 runes="" alt=false paste=false str="ctrl+home"
+@@
+@op 6
+decode
+@in 4
+[8@
+@out 64
+key type=-33 runes="" alt=false paste=false str="ctrl+shift+end"
+@@
+@op 6
+decode
+@in 4
+[[A
+@out 52
+key type=-34 runes="" alt=false paste=false str="f1"
+@@
+@op 6
+decode
+@in 4
+[2~
+@out 56
+key type=-14 runes="" alt=false paste=false str="insert"
+@@
+@op 6
+decode
+@in 6
+[3;3~
+@out 59
+key type=-13 runes="" alt=true paste=false str="alt+delete"
+@@
+@op 6
+decode
+@in 1
+
+@out 56
+key type=28 runes="" alt=false paste=false str="ctrl+\\"
+@@
+@op 6
+decode
+@in 1
+
+@out 55
+key type=31 runes="" alt=false paste=false str="ctrl+_"
+@@
+@op 6
+decode
+@in 1
+
+@out 0
+
+@@
+@op 6
+decode
+@in 10
+[<0;12;34
+@out 120
+key type=-1 runes="[" alt=true paste=false str="alt+["
+key type=-1 runes="<0;12;34" alt=false paste=false str="<0;12;34"
+@@
+@op 6
+decode
+@in 258
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx[A
+@out 611
+key type=-1 runes="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" alt=false paste=false str="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+key type=-2 runes="" alt=false paste=false str="up"
+@@
