@@ -51,3 +51,7 @@ c/tests/*.sh -text
 # likely a Word file, which wants `binary`, and inheriting `-text` for it
 # would be an accident rather than a decision.
 c/sst.doc -text
+
+# The Rust parity tests compare these reference transcripts byte for byte,
+# so git must never rewrite their line endings either.
+testdata/** -text
