@@ -1,0 +1,3540 @@
+case 0 muted=false
+ev ShieldTransfer
+sounds shields
+case 1 muted=false
+ev TorpedoFired
+sounds torpedo_launch
+case 2 muted=true
+ev TorpedoHit damage=100 destroyed=false
+sounds 
+case 3 muted=false
+ev PhaserFired
+sounds phaser
+case 4 muted=false
+ev PhaserHit damage=0.25 destroyed=true
+sounds explosion
+case 5 muted=false
+ev Docked
+sounds dock
+case 6 muted=true
+ev ShipMoved
+sounds 
+case 7 muted=false
+ev ObstacleEncountered
+sounds 
+case 8 muted=false
+ev ConditionChanged from=1 to=1
+sounds 
+case 9 muted=false
+ev GameOver reason=0
+sounds victory
+case 10 muted=false
+ev KlingonCounterAttack damage=0
+sounds 
+case 11 muted=false
+ev SubsystemDamaged
+sounds damage
+case 12 muted=false
+ev SubsystemRepaired
+sounds 
+case 13 muted=false
+ev LRScanCompleted
+sounds computer_beep
+case 14 muted=false
+ev StarbaseSurveillance
+sounds comm_chime
+case 15 muted=false
+ev KlingonCloakState cloaked=true
+sounds cloak
+case 16 muted=false
+ev HelpCalled
+sounds comm_chime
+case 17 muted=false
+ev HazardTriggered
+sounds 
+case 18 muted=false
+ev WormholeJump
+sounds warp
+case 19 muted=false
+ev SingularityAbsorption
+sounds 
+case 20 muted=false
+ev AnomalyDiscovered
+sounds red_alert
+case 21 muted=false
+ev KlingonScreening
+sounds 
+case 22 muted=false
+ev RomulanDecloak
+sounds decloak
+case 23 muted=false
+ev PlasmaLaunched
+sounds plasma_launch
+case 24 muted=false
+ev PlasmaMoved
+sounds 
+case 25 muted=false
+ev PlasmaImpact
+sounds plasma_impact
+case 26 muted=false
+ev PlasmaDissipated
+sounds 
+case 27 muted=false
+ev PlasmaIntercepted
+sounds point_defense
+case 28 muted=false
+ev EntityMove
+sounds 
+case 29 muted=false
+ev WebSegmentLaid
+sounds tholian_web
+case 30 muted=false
+ev WebBreached
+sounds web_breached
+case 31 muted=false
+ev WebCollapsed
+sounds web_breached
+case 32 muted=false
+ev KlingonCloakState cloaked=false
+ev KlingonCounterAttack damage=0
+ev KlingonCounterAttack damage=-0
+ev SubsystemDamaged
+ev WebBreached
+ev PlasmaLaunched
+ev AnomalyDiscovered
+ev RomulanDecloak
+ev GameOver reason=4
+ev TorpedoFired
+sounds decloak,damage,web_breached,plasma_launch,red_alert,decloak,defeat,torpedo_launch
+case 33 muted=false
+ev WebBreached
+ev AnomalyDiscovered
+ev WebBreached
+ev ConditionChanged from=3 to=2
+ev PhaserHit damage=1e-09 destroyed=true
+sounds web_breached,red_alert,web_breached,red_alert,explosion
+case 34 muted=false
+ev AnomalyDiscovered
+ev SubsystemRepaired
+ev ShieldTransfer
+ev HazardTriggered
+ev PhaserHit damage=100 destroyed=true
+ev WebSegmentLaid
+ev AnomalyDiscovered
+ev AnomalyDiscovered
+ev ConditionChanged from=1 to=1
+sounds red_alert,shields,explosion,tholian_web,red_alert,red_alert
+case 35 muted=false
+ev WebSegmentLaid
+ev TorpedoHit damage=-5 destroyed=false
+ev EntityMove
+ev HelpCalled
+ev KlingonScreening
+ev TorpedoFired
+ev ObstacleEncountered
+ev WebBreached
+ev WebSegmentLaid
+ev Docked
+ev RomulanDecloak
+sounds tholian_web,comm_chime,torpedo_launch,web_breached,tholian_web,dock,decloak
+case 36 muted=true
+ev SingularityAbsorption
+ev ShipMoved
+ev WebBreached
+ev RomulanDecloak
+ev EntityMove
+ev ShipMoved
+ev ObstacleEncountered
+ev WebCollapsed
+ev GameOver reason=0
+ev SingularityAbsorption
+ev EntityMove
+ev WebBreached
+ev PlasmaLaunched
+ev HazardTriggered
+sounds 
+case 37 muted=false
+ev KlingonCounterAttack damage=100
+ev PlasmaLaunched
+ev Docked
+ev StarbaseSurveillance
+ev PhaserHit damage=0.25 destroyed=false
+ev SubsystemRepaired
+ev SubsystemRepaired
+ev PlasmaLaunched
+ev ShieldTransfer
+ev PlasmaIntercepted
+sounds damage,plasma_launch,dock,comm_chime,explosion,plasma_launch,shields,point_defense
+case 38 muted=false
+ev WebBreached
+ev TorpedoFired
+ev TorpedoHit damage=-5 destroyed=true
+ev PlasmaDissipated
+ev PlasmaLaunched
+ev PhaserFired
+ev EntityMove
+ev LRScanCompleted
+ev SubsystemRepaired
+ev GameOver reason=0
+ev AnomalyDiscovered
+ev WebCollapsed
+ev ShipMoved
+ev HelpCalled
+sounds web_breached,torpedo_launch,explosion,plasma_launch,phaser,computer_beep,victory,red_alert,web_breached,warp,comm_chime
+case 39 muted=false
+ev WebCollapsed
+ev PlasmaDissipated
+ev Docked
+ev PlasmaMoved
+ev PlasmaMoved
+sounds web_breached,dock
+case 40 muted=false
+ev ObstacleEncountered
+ev PlasmaLaunched
+ev WebSegmentLaid
+ev Docked
+sounds plasma_launch,tholian_web,dock
+case 41 muted=false
+ev SubsystemDamaged
+ev KlingonScreening
+sounds damage
+case 42 muted=false
+ev WebBreached
+ev ShieldTransfer
+ev SubsystemRepaired
+ev KlingonScreening
+ev ShipMoved
+sounds web_breached,shields,warp
+case 43 muted=false
+ev PlasmaMoved
+ev RomulanDecloak
+ev WebBreached
+ev PlasmaMoved
+ev KlingonCounterAttack damage=0.25
+ev SubsystemDamaged
+ev StarbaseSurveillance
+ev TorpedoFired
+ev GameOver reason=3
+ev ShieldTransfer
+ev SubsystemRepaired
+ev PhaserHit damage=-0 destroyed=true
+ev LRScanCompleted
+sounds decloak,web_breached,damage,damage,comm_chime,torpedo_launch,defeat,shields,explosion,computer_beep
+case 44 muted=false
+ev Docked
+ev HelpCalled
+ev WebCollapsed
+ev ShieldTransfer
+ev ConditionChanged from=1 to=3
+ev PhaserFired
+ev ObstacleEncountered
+ev WebBreached
+ev PlasmaIntercepted
+ev WebBreached
+ev Docked
+ev SingularityAbsorption
+ev PlasmaDissipated
+sounds dock,comm_chime,web_breached,shields,phaser,web_breached,point_defense,web_breached,dock
+case 45 muted=false
+ev PhaserHit damage=1e-09 destroyed=true
+sounds explosion
+case 46 muted=false
+ev KlingonCounterAttack damage=100
+ev GameOver reason=5
+ev PlasmaLaunched
+ev KlingonCounterAttack damage=1e-09
+ev TorpedoFired
+ev PlasmaDissipated
+ev PhaserHit damage=1e-09 destroyed=true
+sounds damage,defeat,plasma_launch,damage,torpedo_launch,explosion
+case 47 muted=false
+ev TorpedoFired
+ev KlingonCloakState cloaked=false
+ev HazardTriggered
+ev PhaserHit damage=-0 destroyed=false
+ev TorpedoHit damage=-5 destroyed=false
+ev LRScanCompleted
+ev PlasmaImpact
+sounds torpedo_launch,decloak,computer_beep,plasma_impact
+case 48 muted=false
+ev WebCollapsed
+ev ObstacleEncountered
+ev WebSegmentLaid
+ev TorpedoHit damage=-5 destroyed=false
+ev RomulanDecloak
+ev KlingonScreening
+ev WebBreached
+ev PlasmaIntercepted
+ev TorpedoHit damage=0.25 destroyed=false
+ev StarbaseSurveillance
+ev TorpedoHit damage=0 destroyed=true
+sounds web_breached,tholian_web,decloak,web_breached,point_defense,explosion,comm_chime,explosion
+case 49 muted=false
+ev AnomalyDiscovered
+sounds red_alert
+case 50 muted=false
+ev PlasmaImpact
+ev ConditionChanged from=3 to=2
+ev KlingonCloakState cloaked=false
+ev HazardTriggered
+sounds plasma_impact,red_alert,decloak
+case 51 muted=false
+ev Docked
+ev PhaserFired
+ev SubsystemRepaired
+ev WebCollapsed
+ev Docked
+ev TorpedoFired
+ev HazardTriggered
+ev Docked
+ev StarbaseSurveillance
+ev SingularityAbsorption
+ev PlasmaDissipated
+ev KlingonCloakState cloaked=true
+ev SubsystemDamaged
+sounds dock,phaser,web_breached,dock,torpedo_launch,dock,comm_chime,cloak,damage
+case 52 muted=false
+ev KlingonScreening
+ev PlasmaMoved
+ev SubsystemDamaged
+ev TorpedoHit damage=-5 destroyed=false
+ev WormholeJump
+ev ShieldTransfer
+ev KlingonScreening
+ev TorpedoFired
+ev HelpCalled
+ev PhaserFired
+ev SubsystemDamaged
+ev KlingonCloakState cloaked=false
+ev HelpCalled
+sounds damage,warp,shields,torpedo_launch,comm_chime,phaser,damage,decloak,comm_chime
+case 53 muted=false
+ev WebCollapsed
+ev WebSegmentLaid
+sounds web_breached,tholian_web
+case 54 muted=false
+ev SubsystemDamaged
+ev HazardTriggered
+ev PlasmaImpact
+ev KlingonScreening
+sounds damage,plasma_impact
+case 55 muted=false
+ev HazardTriggered
+ev AnomalyDiscovered
+ev GameOver reason=5
+ev WebBreached
+ev ObstacleEncountered
+ev ShieldTransfer
+ev PlasmaIntercepted
+ev KlingonScreening
+ev TorpedoFired
+sounds red_alert,defeat,web_breached,shields,point_defense,torpedo_launch
+case 56 muted=false
+ev KlingonScreening
+ev ShipMoved
+ev PhaserFired
+ev SubsystemDamaged
+ev RomulanDecloak
+ev SubsystemRepaired
+sounds warp,phaser,damage,decloak
+case 57 muted=false
+ev PhaserHit damage=0.25 destroyed=false
+ev SubsystemRepaired
+ev PlasmaImpact
+ev Docked
+ev PhaserHit damage=1e-09 destroyed=true
+ev SubsystemRepaired
+ev HelpCalled
+ev PlasmaDissipated
+ev TorpedoFired
+sounds explosion,plasma_impact,dock,explosion,comm_chime,torpedo_launch
+case 58 muted=false
+ev SubsystemRepaired
+sounds 
+case 59 muted=false
+ev SubsystemDamaged
+ev PhaserHit damage=0 destroyed=false
+ev WormholeJump
+ev PlasmaDissipated
+ev TorpedoFired
+sounds damage,warp,torpedo_launch
+case 60 muted=false
+ev WebSegmentLaid
+sounds tholian_web
+case 61 muted=false
+ev EntityMove
+sounds 
+case 62 muted=false
+ev SubsystemDamaged
+ev ObstacleEncountered
+ev WebCollapsed
+ev ConditionChanged from=3 to=1
+ev WebSegmentLaid
+ev Docked
+ev AnomalyDiscovered
+ev StarbaseSurveillance
+ev ConditionChanged from=3 to=1
+ev PlasmaImpact
+ev Docked
+ev SubsystemDamaged
+ev AnomalyDiscovered
+sounds damage,web_breached,tholian_web,dock,red_alert,comm_chime,plasma_impact,dock,damage,red_alert
+case 63 muted=false
+ev SubsystemDamaged
+ev PlasmaLaunched
+ev LRScanCompleted
+ev PlasmaIntercepted
+sounds damage,plasma_launch,computer_beep,point_defense
+case 64 muted=false
+ev ShipMoved
+ev ConditionChanged from=2 to=0
+ev PhaserHit damage=1e-09 destroyed=false
+ev LRScanCompleted
+ev GameOver reason=1
+ev SubsystemDamaged
+ev ShieldTransfer
+ev PlasmaMoved
+ev ShipMoved
+ev WebCollapsed
+ev PlasmaDissipated
+ev ShipMoved
+sounds warp,explosion,computer_beep,defeat,damage,shields,warp,web_breached,warp
+case 65 muted=false
+ev WebCollapsed
+ev WebCollapsed
+ev ShipMoved
+sounds web_breached,web_breached,warp
+case 66 muted=false
+ev KlingonCloakState cloaked=false
+ev PhaserHit damage=1e-09 destroyed=true
+ev PlasmaIntercepted
+ev PlasmaDissipated
+ev RomulanDecloak
+ev KlingonScreening
+ev LRScanCompleted
+ev Docked
+sounds decloak,explosion,point_defense,decloak,computer_beep,dock
+case 67 muted=true
+ev PlasmaImpact
+ev RomulanDecloak
+ev StarbaseSurveillance
+ev GameOver reason=1
+sounds 
+case 68 muted=false
+ev KlingonCounterAttack damage=1e-09
+ev SubsystemRepaired
+ev Docked
+ev KlingonScreening
+ev ShipMoved
+ev TorpedoHit damage=-0 destroyed=true
+ev WebBreached
+sounds damage,dock,warp,explosion,web_breached
+case 69 muted=false
+ev KlingonCloakState cloaked=false
+ev Docked
+ev PlasmaDissipated
+ev TorpedoHit damage=0 destroyed=false
+sounds decloak,dock
+case 70 muted=false
+ev PlasmaMoved
+ev AnomalyDiscovered
+ev HelpCalled
+ev WebCollapsed
+ev KlingonScreening
+ev StarbaseSurveillance
+ev WebSegmentLaid
+sounds red_alert,comm_chime,web_breached,comm_chime,tholian_web
+case 71 muted=false
+ev WormholeJump
+ev PlasmaImpact
+ev SubsystemDamaged
+ev PhaserHit damage=100 destroyed=true
+ev ObstacleEncountered
+ev PlasmaImpact
+ev WebSegmentLaid
+ev PlasmaIntercepted
+ev WebSegmentLaid
+ev KlingonCounterAttack damage=100
+ev ShieldTransfer
+ev WebBreached
+ev KlingonCounterAttack damage=0.25
+sounds warp,plasma_impact,damage,explosion,plasma_impact,tholian_web,point_defense,tholian_web,damage,shields,web_breached,damage
+case 72 muted=false
+ev ConditionChanged from=3 to=0
+ev AnomalyDiscovered
+ev ConditionChanged from=3 to=3
+ev PlasmaDissipated
+sounds red_alert
+case 73 muted=true
+ev ObstacleEncountered
+ev PlasmaImpact
+ev PlasmaLaunched
+ev ObstacleEncountered
+sounds 
+case 74 muted=false
+ev PlasmaLaunched
+ev SubsystemRepaired
+ev ConditionChanged from=1 to=2
+ev SingularityAbsorption
+ev WebCollapsed
+ev ShieldTransfer
+ev KlingonCounterAttack damage=1e-09
+ev Docked
+sounds plasma_launch,red_alert,web_breached,shields,damage,dock
+case 75 muted=false
+ev PlasmaDissipated
+ev ObstacleEncountered
+ev ObstacleEncountered
+ev WebBreached
+ev WormholeJump
+ev PlasmaDissipated
+ev HazardTriggered
+ev SubsystemRepaired
+ev ShipMoved
+ev Docked
+ev WormholeJump
+sounds web_breached,warp,warp,dock,warp
+case 76 muted=false
+ev RomulanDecloak
+ev WebSegmentLaid
+ev AnomalyDiscovered
+sounds decloak,tholian_web,red_alert
+case 77 muted=false
+ev AnomalyDiscovered
+ev SubsystemRepaired
+ev WebCollapsed
+sounds red_alert,web_breached
+case 78 muted=false
+ev PlasmaImpact
+ev PhaserHit damage=-5 destroyed=false
+ev PlasmaLaunched
+ev WebCollapsed
+sounds plasma_impact,plasma_launch,web_breached
+case 79 muted=false
+ev KlingonScreening
+ev PlasmaIntercepted
+ev ConditionChanged from=0 to=2
+ev SubsystemDamaged
+ev KlingonScreening
+ev AnomalyDiscovered
+ev ShipMoved
+sounds point_defense,red_alert,damage,red_alert,warp
+case 80 muted=false
+ev KlingonCounterAttack damage=0
+ev SingularityAbsorption
+ev WebSegmentLaid
+ev PlasmaImpact
+ev TorpedoFired
+ev KlingonCounterAttack damage=1e-09
+ev StarbaseSurveillance
+ev PlasmaImpact
+ev SingularityAbsorption
+sounds tholian_web,plasma_impact,torpedo_launch,damage,comm_chime,plasma_impact
+case 81 muted=false
+ev LRScanCompleted
+ev RomulanDecloak
+ev KlingonCloakState cloaked=false
+ev PlasmaIntercepted
+ev WebCollapsed
+ev EntityMove
+ev HelpCalled
+ev KlingonScreening
+ev EntityMove
+sounds computer_beep,decloak,decloak,point_defense,web_breached,comm_chime
+case 82 muted=false
+ev SubsystemDamaged
+ev PlasmaDissipated
+ev ObstacleEncountered
+sounds damage
+case 83 muted=false
+ev ObstacleEncountered
+ev PlasmaMoved
+ev KlingonCloakState cloaked=false
+ev WebCollapsed
+sounds decloak,web_breached
+case 84 muted=false
+ev ObstacleEncountered
+ev SubsystemDamaged
+ev HelpCalled
+sounds damage,comm_chime
+case 85 muted=false
+ev ObstacleEncountered
+ev RomulanDecloak
+ev HazardTriggered
+ev Docked
+ev SubsystemDamaged
+ev TorpedoHit damage=-0 destroyed=false
+sounds decloak,dock,damage
+case 86 muted=true
+ev SingularityAbsorption
+ev KlingonCloakState cloaked=true
+ev TorpedoHit damage=100 destroyed=false
+ev PlasmaIntercepted
+ev HazardTriggered
+sounds 
+case 87 muted=false
+ev TorpedoFired
+ev SingularityAbsorption
+ev WebCollapsed
+ev Docked
+ev PlasmaIntercepted
+ev SingularityAbsorption
+sounds torpedo_launch,web_breached,dock,point_defense
+case 88 muted=false
+ev ConditionChanged from=1 to=2
+ev KlingonScreening
+ev AnomalyDiscovered
+ev Docked
+sounds red_alert,red_alert,dock
+case 89 muted=false
+ev StarbaseSurveillance
+sounds comm_chime
+case 90 muted=false
+ev Docked
+ev ConditionChanged from=0 to=2
+ev TorpedoHit damage=100 destroyed=false
+ev GameOver reason=2
+ev TorpedoFired
+ev PlasmaMoved
+ev TorpedoFired
+ev WebSegmentLaid
+ev SubsystemDamaged
+ev SubsystemRepaired
+sounds dock,red_alert,explosion,defeat,torpedo_launch,torpedo_launch,tholian_web,damage
+case 91 muted=false
+ev ObstacleEncountered
+ev KlingonCloakState cloaked=false
+ev ShipMoved
+ev ShieldTransfer
+sounds decloak,warp,shields
+case 92 muted=false
+ev PlasmaLaunched
+ev PhaserHit damage=0.25 destroyed=false
+ev TorpedoFired
+sounds plasma_launch,explosion,torpedo_launch
+case 93 muted=true
+ev SubsystemRepaired
+sounds 
+case 94 muted=false
+ev KlingonScreening
+ev KlingonCloakState cloaked=false
+ev PhaserHit damage=1e-09 destroyed=false
+ev SubsystemRepaired
+ev WebBreached
+ev EntityMove
+ev GameOver reason=5
+ev Docked
+ev GameOver reason=1
+ev KlingonCounterAttack damage=1e-09
+sounds decloak,explosion,web_breached,defeat,dock,defeat,damage
+case 95 muted=true
+ev TorpedoFired
+ev KlingonCounterAttack damage=0.25
+ev SingularityAbsorption
+ev WebCollapsed
+ev ObstacleEncountered
+ev ConditionChanged from=1 to=1
+ev PhaserFired
+sounds 
+case 96 muted=false
+ev WormholeJump
+ev HazardTriggered
+ev PlasmaIntercepted
+ev PhaserHit damage=0.25 destroyed=true
+ev WebCollapsed
+ev KlingonCloakState cloaked=true
+ev EntityMove
+ev ShipMoved
+ev TorpedoFired
+ev HazardTriggered
+sounds warp,point_defense,explosion,web_breached,cloak,warp,torpedo_launch
+case 97 muted=false
+ev HazardTriggered
+ev StarbaseSurveillance
+ev ConditionChanged from=0 to=0
+ev GameOver reason=5
+ev WebBreached
+ev ShieldTransfer
+ev TorpedoFired
+ev ConditionChanged from=0 to=0
+ev HelpCalled
+ev GameOver reason=5
+sounds comm_chime,defeat,web_breached,shields,torpedo_launch,comm_chime,defeat
+case 98 muted=false
+ev ConditionChanged from=3 to=2
+ev PlasmaImpact
+ev EntityMove
+ev KlingonScreening
+ev WormholeJump
+ev WebSegmentLaid
+ev WebCollapsed
+ev WebCollapsed
+ev SubsystemDamaged
+sounds red_alert,plasma_impact,warp,tholian_web,web_breached,web_breached,damage
+case 99 muted=false
+ev ShieldTransfer
+ev ShieldTransfer
+ev WebBreached
+sounds shields,shields,web_breached
+case 100 muted=false
+ev PlasmaMoved
+ev PlasmaDissipated
+ev Docked
+ev PlasmaIntercepted
+ev ShieldTransfer
+ev WebBreached
+ev SubsystemRepaired
+ev HazardTriggered
+ev PlasmaLaunched
+ev KlingonCounterAttack damage=1e-09
+ev WebSegmentLaid
+ev PlasmaIntercepted
+ev ShipMoved
+sounds dock,point_defense,shields,web_breached,plasma_launch,damage,tholian_web,point_defense,warp
+case 101 muted=false
+ev PlasmaImpact
+ev GameOver reason=5
+ev Docked
+sounds plasma_impact,defeat,dock
+case 102 muted=false
+ev ShipMoved
+sounds warp
+case 103 muted=false
+ev LRScanCompleted
+ev ConditionChanged from=2 to=2
+ev ShieldTransfer
+ev SingularityAbsorption
+ev SingularityAbsorption
+ev ShipMoved
+ev HazardTriggered
+sounds computer_beep,red_alert,shields,warp
+case 104 muted=false
+ev PlasmaIntercepted
+sounds point_defense
+case 105 muted=false
+ev HazardTriggered
+ev EntityMove
+ev PlasmaLaunched
+ev KlingonCounterAttack damage=1e-09
+ev GameOver reason=2
+sounds plasma_launch,damage,defeat
+case 106 muted=true
+ev TorpedoFired
+ev PlasmaDissipated
+ev WebCollapsed
+ev PlasmaMoved
+ev StarbaseSurveillance
+ev WebSegmentLaid
+ev KlingonScreening
+ev LRScanCompleted
+ev WebBreached
+sounds 
+case 107 muted=false
+ev WormholeJump
+sounds warp
+case 108 muted=false
+ev PlasmaLaunched
+ev SubsystemDamaged
+ev WebBreached
+ev SubsystemRepaired
+ev RomulanDecloak
+ev WebBreached
+ev ShipMoved
+ev SubsystemRepaired
+ev KlingonCounterAttack damage=0
+ev TorpedoFired
+ev Docked
+ev RomulanDecloak
+ev PlasmaImpact
+ev ObstacleEncountered
+sounds plasma_launch,damage,web_breached,decloak,web_breached,warp,torpedo_launch,dock,decloak,plasma_impact
+case 109 muted=true
+ev PlasmaLaunched
+ev SubsystemDamaged
+ev PhaserFired
+ev WebBreached
+ev ObstacleEncountered
+ev GameOver reason=2
+ev SingularityAbsorption
+ev RomulanDecloak
+ev ShieldTransfer
+ev WebCollapsed
+ev PlasmaIntercepted
+sounds 
+case 110 muted=false
+ev AnomalyDiscovered
+ev WebBreached
+ev WormholeJump
+ev ObstacleEncountered
+sounds red_alert,web_breached,warp
+case 111 muted=false
+ev PlasmaDissipated
+ev PhaserFired
+ev PlasmaImpact
+sounds phaser,plasma_impact
+case 112 muted=false
+ev Docked
+ev AnomalyDiscovered
+sounds dock,red_alert
+case 113 muted=false
+ev ShieldTransfer
+ev ShieldTransfer
+ev EntityMove
+ev WebBreached
+ev PlasmaIntercepted
+ev ConditionChanged from=3 to=1
+ev PlasmaMoved
+ev PlasmaMoved
+ev HelpCalled
+ev PhaserHit damage=1e-09 destroyed=true
+sounds shields,shields,web_breached,point_defense,comm_chime,explosion
+case 114 muted=false
+ev AnomalyDiscovered
+ev KlingonCounterAttack damage=0
+ev GameOver reason=2
+sounds red_alert,defeat
+case 115 muted=true
+ev KlingonCounterAttack damage=-0
+ev PhaserFired
+ev KlingonScreening
+ev AnomalyDiscovered
+ev PlasmaLaunched
+ev AnomalyDiscovered
+ev HazardTriggered
+ev PlasmaImpact
+ev HelpCalled
+ev AnomalyDiscovered
+ev TorpedoHit damage=-5 destroyed=false
+sounds 
+case 116 muted=false
+ev PlasmaDissipated
+ev PhaserHit damage=1e-09 destroyed=false
+ev AnomalyDiscovered
+ev HelpCalled
+ev HazardTriggered
+ev StarbaseSurveillance
+ev ShipMoved
+ev AnomalyDiscovered
+sounds explosion,red_alert,comm_chime,comm_chime,warp,red_alert
+case 117 muted=false
+ev WormholeJump
+ev PhaserFired
+ev HazardTriggered
+ev PlasmaLaunched
+ev GameOver reason=2
+ev SubsystemRepaired
+ev WormholeJump
+ev ShipMoved
+ev SingularityAbsorption
+ev HazardTriggered
+ev RomulanDecloak
+ev TorpedoHit damage=100 destroyed=true
+ev ShieldTransfer
+sounds warp,phaser,plasma_launch,defeat,warp,warp,decloak,explosion,shields
+case 118 muted=false
+ev ShipMoved
+ev PhaserHit damage=0 destroyed=false
+ev GameOver reason=2
+ev ShieldTransfer
+sounds warp,defeat,shields
+case 119 muted=false
+ev AnomalyDiscovered
+ev SingularityAbsorption
+sounds red_alert
+case 120 muted=false
+ev KlingonCloakState cloaked=true
+ev RomulanDecloak
+ev PlasmaImpact
+ev TorpedoHit damage=0.25 destroyed=false
+ev WormholeJump
+ev AnomalyDiscovered
+ev HelpCalled
+ev SubsystemRepaired
+ev ObstacleEncountered
+ev WebSegmentLaid
+ev PhaserHit damage=-5 destroyed=false
+ev ObstacleEncountered
+ev SubsystemDamaged
+ev PlasmaMoved
+sounds cloak,decloak,plasma_impact,explosion,warp,red_alert,comm_chime,tholian_web,damage
+case 121 muted=false
+ev KlingonScreening
+ev PhaserFired
+ev TorpedoFired
+ev KlingonCloakState cloaked=true
+ev SubsystemRepaired
+sounds phaser,torpedo_launch,cloak
+case 122 muted=false
+ev PlasmaMoved
+ev PlasmaMoved
+ev PhaserFired
+ev WebSegmentLaid
+ev SingularityAbsorption
+ev PlasmaImpact
+sounds phaser,tholian_web,plasma_impact
+case 123 muted=false
+ev HazardTriggered
+ev WebBreached
+ev PlasmaLaunched
+ev TorpedoHit damage=100 destroyed=true
+ev WebSegmentLaid
+ev SubsystemRepaired
+ev PhaserFired
+ev WebCollapsed
+ev SubsystemRepaired
+sounds web_breached,plasma_launch,explosion,tholian_web,phaser,web_breached
+case 124 muted=false
+ev ObstacleEncountered
+ev Docked
+ev PhaserHit damage=-0 destroyed=false
+ev Docked
+ev ShieldTransfer
+ev PlasmaDissipated
+ev ObstacleEncountered
+ev GameOver reason=2
+sounds dock,dock,shields,defeat
+case 125 muted=false
+ev PlasmaDissipated
+ev SubsystemDamaged
+ev SubsystemRepaired
+ev WebSegmentLaid
+ev HazardTriggered
+ev WebCollapsed
+sounds damage,tholian_web,web_breached
+case 126 muted=false
+ev ObstacleEncountered
+ev HazardTriggered
+sounds 
+case 127 muted=false
+ev KlingonScreening
+ev StarbaseSurveillance
+ev WormholeJump
+ev PlasmaIntercepted
+ev LRScanCompleted
+ev WebCollapsed
+ev RomulanDecloak
+sounds comm_chime,warp,point_defense,computer_beep,web_breached,decloak
+case 128 muted=false
+ev SubsystemDamaged
+ev PhaserFired
+ev ShipMoved
+ev PlasmaMoved
+ev WebCollapsed
+ev Docked
+ev Docked
+ev HazardTriggered
+ev PlasmaIntercepted
+ev TorpedoHit damage=-0 destroyed=false
+ev EntityMove
+ev WormholeJump
+ev KlingonScreening
+sounds damage,phaser,warp,web_breached,dock,dock,point_defense,warp
+case 129 muted=false
+ev HazardTriggered
+ev KlingonScreening
+ev HazardTriggered
+ev SubsystemRepaired
+ev PhaserHit damage=100 destroyed=true
+ev SingularityAbsorption
+ev RomulanDecloak
+ev PlasmaImpact
+sounds explosion,decloak,plasma_impact
+case 130 muted=false
+ev KlingonCounterAttack damage=-0
+ev ShieldTransfer
+ev KlingonCounterAttack damage=-5
+ev PlasmaMoved
+ev ShipMoved
+ev PlasmaDissipated
+ev KlingonScreening
+ev ObstacleEncountered
+ev GameOver reason=1
+ev Docked
+ev StarbaseSurveillance
+ev PlasmaLaunched
+ev ObstacleEncountered
+ev KlingonScreening
+sounds shields,warp,defeat,dock,comm_chime,plasma_launch
+case 131 muted=false
+ev GameOver reason=0
+ev WebBreached
+ev KlingonScreening
+ev KlingonCounterAttack damage=-0
+ev PhaserFired
+sounds victory,web_breached,phaser
+case 132 muted=false
+ev HazardTriggered
+ev RomulanDecloak
+ev WormholeJump
+sounds decloak,warp
+case 133 muted=true
+ev PlasmaMoved
+ev ObstacleEncountered
+ev Docked
+ev TorpedoHit damage=-0 destroyed=false
+ev KlingonCounterAttack damage=1e-09
+ev ConditionChanged from=3 to=1
+ev ObstacleEncountered
+ev PlasmaDissipated
+ev KlingonScreening
+ev EntityMove
+sounds 
+case 134 muted=false
+ev SubsystemRepaired
+ev StarbaseSurveillance
+ev SubsystemRepaired
+ev HazardTriggered
+ev Docked
+ev KlingonScreening
+ev PlasmaMoved
+ev KlingonCloakState cloaked=true
+sounds comm_chime,dock,cloak
+case 135 muted=false
+ev PhaserFired
+ev LRScanCompleted
+ev KlingonCloakState cloaked=true
+ev PlasmaIntercepted
+ev WebSegmentLaid
+ev WebCollapsed
+ev LRScanCompleted
+sounds phaser,computer_beep,cloak,point_defense,tholian_web,web_breached,computer_beep
+case 136 muted=false
+ev WebSegmentLaid
+ev TorpedoHit damage=1e-09 destroyed=false
+sounds tholian_web,explosion
+case 137 muted=false
+ev ConditionChanged from=2 to=1
+ev SubsystemRepaired
+ev ShipMoved
+ev ShipMoved
+ev EntityMove
+ev TorpedoHit damage=100 destroyed=false
+ev Docked
+ev WebCollapsed
+ev LRScanCompleted
+ev GameOver reason=0
+ev TorpedoHit damage=100 destroyed=false
+sounds warp,warp,explosion,dock,web_breached,computer_beep,victory,explosion
+case 138 muted=true
+ev PlasmaLaunched
+ev EntityMove
+ev PhaserFired
+sounds 
+case 139 muted=false
+ev AnomalyDiscovered
+ev PlasmaImpact
+ev PhaserHit damage=0.25 destroyed=false
+ev WormholeJump
+ev WebSegmentLaid
+ev PlasmaDissipated
+ev LRScanCompleted
+ev StarbaseSurveillance
+ev PlasmaIntercepted
+ev KlingonCounterAttack damage=-0
+sounds red_alert,plasma_impact,explosion,warp,tholian_web,computer_beep,comm_chime,point_defense
+case 140 muted=true
+ev ShieldTransfer
+ev ShieldTransfer
+ev SubsystemRepaired
+ev EntityMove
+sounds 
+case 141 muted=false
+ev KlingonCloakState cloaked=false
+ev KlingonCloakState cloaked=true
+ev ObstacleEncountered
+ev AnomalyDiscovered
+ev ShipMoved
+ev PhaserHit damage=0 destroyed=true
+ev WebSegmentLaid
+ev PlasmaLaunched
+ev PhaserFired
+ev SingularityAbsorption
+ev PlasmaIntercepted
+sounds decloak,cloak,red_alert,warp,explosion,tholian_web,plasma_launch,phaser,point_defense
+case 142 muted=false
+ev EntityMove
+ev ObstacleEncountered
+ev LRScanCompleted
+ev EntityMove
+sounds computer_beep
+case 143 muted=false
+ev GameOver reason=5
+ev WebBreached
+ev Docked
+ev KlingonCloakState cloaked=true
+ev HazardTriggered
+ev ConditionChanged from=0 to=3
+sounds defeat,web_breached,dock,cloak
+case 144 muted=false
+ev ObstacleEncountered
+ev PlasmaLaunched
+ev PhaserHit damage=0 destroyed=true
+ev ConditionChanged from=0 to=2
+ev TorpedoFired
+ev PhaserHit damage=-0 destroyed=true
+ev SingularityAbsorption
+ev PhaserHit damage=-0 destroyed=false
+ev AnomalyDiscovered
+ev ShieldTransfer
+ev GameOver reason=1
+ev TorpedoHit damage=0.25 destroyed=true
+ev SubsystemDamaged
+sounds plasma_launch,explosion,red_alert,torpedo_launch,explosion,red_alert,shields,defeat,explosion,damage
+case 145 muted=false
+ev SubsystemRepaired
+ev PlasmaIntercepted
+ev EntityMove
+ev GameOver reason=4
+ev GameOver reason=4
+ev TorpedoFired
+ev PlasmaLaunched
+ev ShieldTransfer
+ev WebSegmentLaid
+ev WebBreached
+ev PlasmaLaunched
+ev SubsystemRepaired
+sounds point_defense,defeat,defeat,torpedo_launch,plasma_launch,shields,tholian_web,web_breached,plasma_launch
+case 146 muted=true
+ev LRScanCompleted
+ev ShipMoved
+ev PlasmaLaunched
+ev KlingonScreening
+ev KlingonCloakState cloaked=true
+ev PlasmaIntercepted
+ev ObstacleEncountered
+ev ObstacleEncountered
+ev AnomalyDiscovered
+ev KlingonCounterAttack damage=0
+ev WormholeJump
+sounds 
+case 147 muted=false
+ev PhaserFired
+ev WebSegmentLaid
+ev ShipMoved
+ev StarbaseSurveillance
+sounds phaser,tholian_web,warp,comm_chime
+case 148 muted=false
+ev EntityMove
+ev Docked
+ev PlasmaLaunched
+ev PlasmaLaunched
+sounds dock,plasma_launch,plasma_launch
+case 149 muted=false
+ev WormholeJump
+ev SubsystemRepaired
+sounds warp
+case 150 muted=false
+ev SubsystemRepaired
+ev SubsystemRepaired
+ev WebCollapsed
+ev PlasmaDissipated
+ev WebBreached
+ev SubsystemDamaged
+ev GameOver reason=4
+ev PlasmaIntercepted
+ev WormholeJump
+ev HazardTriggered
+ev StarbaseSurveillance
+ev WormholeJump
+ev ShieldTransfer
+ev HelpCalled
+sounds web_breached,web_breached,damage,defeat,point_defense,warp,comm_chime,warp,shields,comm_chime
+case 151 muted=false
+ev PlasmaDissipated
+ev TorpedoHit damage=0 destroyed=false
+ev PlasmaDissipated
+ev PlasmaDissipated
+ev PlasmaLaunched
+ev GameOver reason=5
+ev WormholeJump
+ev PlasmaLaunched
+ev KlingonCounterAttack damage=1e-09
+ev PlasmaIntercepted
+ev PhaserHit damage=1e-09 destroyed=false
+ev TorpedoHit damage=0 destroyed=true
+ev WebBreached
+ev SubsystemRepaired
+sounds plasma_launch,defeat,warp,plasma_launch,damage,point_defense,explosion,explosion,web_breached
+case 152 muted=false
+ev TorpedoHit damage=-5 destroyed=false
+ev PlasmaImpact
+ev PlasmaMoved
+ev TorpedoHit damage=0.25 destroyed=false
+ev TorpedoHit damage=1e-09 destroyed=false
+ev Docked
+ev PlasmaMoved
+ev StarbaseSurveillance
+ev PlasmaDissipated
+ev PhaserFired
+ev PhaserHit damage=-5 destroyed=false
+ev WebBreached
+ev StarbaseSurveillance
+sounds plasma_impact,explosion,explosion,dock,comm_chime,phaser,web_breached,comm_chime
+case 153 muted=false
+ev ObstacleEncountered
+ev PlasmaImpact
+ev WebBreached
+ev PhaserFired
+ev ShieldTransfer
+ev ShipMoved
+ev ConditionChanged from=3 to=0
+ev ShieldTransfer
+ev WebBreached
+ev ShipMoved
+ev PlasmaMoved
+sounds plasma_impact,web_breached,phaser,shields,warp,shields,web_breached,warp
+case 154 muted=false
+ev PhaserHit damage=-0 destroyed=false
+ev GameOver reason=0
+sounds victory
+case 155 muted=false
+ev WormholeJump
+sounds warp
+case 156 muted=false
+ev ShipMoved
+ev HelpCalled
+ev PhaserHit damage=-5 destroyed=true
+ev EntityMove
+ev WebBreached
+ev ShipMoved
+ev KlingonCounterAttack damage=1e-09
+ev PhaserHit damage=1e-09 destroyed=false
+ev PlasmaIntercepted
+sounds warp,comm_chime,explosion,web_breached,warp,damage,explosion,point_defense
+case 157 muted=false
+ev SubsystemRepaired
+ev WebSegmentLaid
+ev HelpCalled
+ev RomulanDecloak
+ev WebCollapsed
+ev SubsystemRepaired
+ev PlasmaLaunched
+ev WebBreached
+ev LRScanCompleted
+sounds tholian_web,comm_chime,decloak,web_breached,plasma_launch,web_breached,computer_beep
+case 158 muted=false
+ev KlingonCloakState cloaked=false
+ev ObstacleEncountered
+ev PlasmaDissipated
+ev StarbaseSurveillance
+ev ShieldTransfer
+sounds decloak,comm_chime,shields
+case 159 muted=false
+ev SingularityAbsorption
+ev PhaserFired
+ev PlasmaDissipated
+ev TorpedoHit damage=0.25 destroyed=true
+ev PlasmaDissipated
+ev PlasmaDissipated
+ev ShieldTransfer
+ev PlasmaDissipated
+ev KlingonScreening
+ev GameOver reason=2
+ev PlasmaImpact
+sounds phaser,explosion,shields,defeat,plasma_impact
+case 160 muted=false
+ev RomulanDecloak
+ev KlingonCounterAttack damage=0.25
+ev WebCollapsed
+ev EntityMove
+ev LRScanCompleted
+ev RomulanDecloak
+ev PlasmaLaunched
+ev WormholeJump
+ev HazardTriggered
+ev PlasmaImpact
+ev ObstacleEncountered
+ev PlasmaIntercepted
+ev TorpedoFired
+sounds decloak,damage,web_breached,computer_beep,decloak,plasma_launch,warp,plasma_impact,point_defense,torpedo_launch
+case 161 muted=false
+ev LRScanCompleted
+ev TorpedoFired
+ev ShipMoved
+ev KlingonCloakState cloaked=true
+ev RomulanDecloak
+ev TorpedoFired
+sounds computer_beep,torpedo_launch,warp,cloak,decloak,torpedo_launch
+case 162 muted=true
+ev KlingonCloakState cloaked=true
+ev ShieldTransfer
+ev ObstacleEncountered
+ev WebCollapsed
+ev ObstacleEncountered
+ev PlasmaMoved
+ev AnomalyDiscovered
+sounds 
+case 163 muted=false
+ev WebSegmentLaid
+ev KlingonScreening
+ev AnomalyDiscovered
+ev PlasmaIntercepted
+ev WebSegmentLaid
+ev StarbaseSurveillance
+sounds tholian_web,red_alert,point_defense,tholian_web,comm_chime
+case 164 muted=false
+ev StarbaseSurveillance
+ev TorpedoFired
+ev EntityMove
+ev PlasmaIntercepted
+ev SubsystemRepaired
+ev WormholeJump
+ev ShipMoved
+ev ObstacleEncountered
+ev HazardTriggered
+ev ConditionChanged from=0 to=3
+ev ObstacleEncountered
+sounds comm_chime,torpedo_launch,point_defense,warp,warp
+case 165 muted=false
+ev WormholeJump
+ev WebBreached
+sounds warp,web_breached
+case 166 muted=false
+ev WormholeJump
+ev WebSegmentLaid
+ev PlasmaImpact
+ev WebSegmentLaid
+ev PhaserHit damage=0 destroyed=false
+ev KlingonCloakState cloaked=true
+ev WebBreached
+ev HelpCalled
+ev EntityMove
+ev WormholeJump
+ev GameOver reason=4
+ev WebBreached
+ev TorpedoFired
+sounds warp,tholian_web,plasma_impact,tholian_web,cloak,web_breached,comm_chime,warp,defeat,web_breached,torpedo_launch
+case 167 muted=false
+ev HelpCalled
+ev PlasmaDissipated
+ev TorpedoFired
+ev AnomalyDiscovered
+ev WebBreached
+ev PlasmaDissipated
+ev HelpCalled
+sounds comm_chime,torpedo_launch,red_alert,web_breached,comm_chime
+case 168 muted=false
+ev WebSegmentLaid
+ev WebSegmentLaid
+ev PlasmaIntercepted
+ev HelpCalled
+ev ShipMoved
+sounds tholian_web,tholian_web,point_defense,comm_chime,warp
+case 169 muted=false
+ev TorpedoHit damage=0.25 destroyed=true
+ev AnomalyDiscovered
+ev KlingonCloakState cloaked=false
+ev SubsystemDamaged
+ev EntityMove
+ev PhaserHit damage=100 destroyed=true
+ev AnomalyDiscovered
+ev PlasmaLaunched
+ev RomulanDecloak
+ev WebCollapsed
+sounds explosion,red_alert,decloak,damage,explosion,red_alert,plasma_launch,decloak,web_breached
+case 170 muted=false
+ev WebCollapsed
+ev PlasmaMoved
+ev ShipMoved
+ev PhaserFired
+ev AnomalyDiscovered
+ev LRScanCompleted
+ev PlasmaLaunched
+ev WebCollapsed
+ev PlasmaIntercepted
+ev SubsystemDamaged
+sounds web_breached,warp,phaser,red_alert,computer_beep,plasma_launch,web_breached,point_defense,damage
+case 171 muted=false
+ev KlingonCloakState cloaked=false
+sounds decloak
+case 172 muted=false
+ev LRScanCompleted
+ev SubsystemRepaired
+ev PlasmaMoved
+ev StarbaseSurveillance
+ev EntityMove
+ev PlasmaMoved
+ev PhaserFired
+ev Docked
+sounds computer_beep,comm_chime,phaser,dock
+case 173 muted=false
+ev WebCollapsed
+sounds web_breached
+case 174 muted=false
+ev PlasmaDissipated
+ev ShipMoved
+ev PlasmaDissipated
+sounds warp
+case 175 muted=false
+ev KlingonCounterAttack damage=100
+ev RomulanDecloak
+ev PlasmaDissipated
+ev WebCollapsed
+ev WebCollapsed
+ev LRScanCompleted
+ev StarbaseSurveillance
+ev StarbaseSurveillance
+ev Docked
+ev WormholeJump
+ev PhaserFired
+ev GameOver reason=5
+sounds damage,decloak,web_breached,web_breached,computer_beep,comm_chime,comm_chime,dock,warp,phaser,defeat
+case 176 muted=false
+ev PlasmaLaunched
+ev GameOver reason=0
+ev RomulanDecloak
+ev WebCollapsed
+ev PlasmaIntercepted
+sounds plasma_launch,victory,decloak,web_breached,point_defense
+case 177 muted=false
+ev WebCollapsed
+ev LRScanCompleted
+ev KlingonCloakState cloaked=true
+ev ObstacleEncountered
+ev SubsystemDamaged
+ev LRScanCompleted
+ev PhaserHit damage=100 destroyed=true
+ev PlasmaDissipated
+ev HelpCalled
+ev WormholeJump
+sounds web_breached,computer_beep,cloak,damage,computer_beep,explosion,comm_chime,warp
+case 178 muted=false
+ev ShieldTransfer
+ev StarbaseSurveillance
+ev WebCollapsed
+ev PhaserFired
+ev RomulanDecloak
+ev StarbaseSurveillance
+ev WebBreached
+ev PlasmaDissipated
+sounds shields,comm_chime,web_breached,phaser,decloak,comm_chime,web_breached
+case 179 muted=false
+ev TorpedoFired
+ev SubsystemDamaged
+ev HazardTriggered
+ev ObstacleEncountered
+sounds torpedo_launch,damage
+case 180 muted=false
+ev ShieldTransfer
+ev TorpedoHit damage=0 destroyed=true
+sounds shields,explosion
+case 181 muted=false
+ev KlingonScreening
+ev PlasmaMoved
+ev LRScanCompleted
+ev PlasmaMoved
+ev WormholeJump
+ev WormholeJump
+ev KlingonCounterAttack damage=-0
+ev SubsystemRepaired
+sounds computer_beep,warp,warp
+case 182 muted=false
+ev RomulanDecloak
+ev PlasmaLaunched
+ev HelpCalled
+sounds decloak,plasma_launch,comm_chime
+case 183 muted=false
+ev KlingonCounterAttack damage=0
+ev PhaserHit damage=100 destroyed=true
+ev PlasmaLaunched
+ev TorpedoFired
+ev GameOver reason=2
+ev AnomalyDiscovered
+sounds explosion,plasma_launch,torpedo_launch,defeat,red_alert
+case 184 muted=true
+ev StarbaseSurveillance
+ev TorpedoFired
+ev ConditionChanged from=1 to=3
+ev TorpedoFired
+ev AnomalyDiscovered
+ev KlingonCloakState cloaked=false
+ev TorpedoHit damage=-5 destroyed=true
+ev WebBreached
+ev AnomalyDiscovered
+ev WebCollapsed
+ev ObstacleEncountered
+ev PhaserHit damage=1e-09 destroyed=true
+ev WormholeJump
+sounds 
+case 185 muted=true
+ev SingularityAbsorption
+ev GameOver reason=0
+ev PhaserFired
+ev RomulanDecloak
+ev WebBreached
+ev StarbaseSurveillance
+ev SubsystemRepaired
+ev GameOver reason=5
+ev KlingonCloakState cloaked=true
+ev KlingonCounterAttack damage=1e-09
+ev ShipMoved
+ev StarbaseSurveillance
+ev PlasmaLaunched
+sounds 
+case 186 muted=false
+ev KlingonCloakState cloaked=true
+ev WebBreached
+ev ObstacleEncountered
+ev WebSegmentLaid
+ev SubsystemRepaired
+sounds cloak,web_breached,tholian_web
+case 187 muted=true
+ev SubsystemRepaired
+ev GameOver reason=1
+ev WebCollapsed
+ev KlingonCloakState cloaked=true
+ev ShieldTransfer
+ev TorpedoHit damage=100 destroyed=true
+ev LRScanCompleted
+ev TorpedoHit damage=0.25 destroyed=false
+ev WebCollapsed
+ev PlasmaLaunched
+sounds 
+case 188 muted=false
+ev PhaserHit damage=0.25 destroyed=false
+ev LRScanCompleted
+ev PlasmaDissipated
+ev TorpedoFired
+ev KlingonScreening
+ev KlingonCloakState cloaked=true
+ev EntityMove
+ev SingularityAbsorption
+ev PlasmaMoved
+ev AnomalyDiscovered
+sounds explosion,computer_beep,torpedo_launch,cloak,red_alert
+case 189 muted=false
+ev WebCollapsed
+ev SubsystemRepaired
+ev WormholeJump
+ev HelpCalled
+ev KlingonScreening
+ev WormholeJump
+ev WebCollapsed
+ev ConditionChanged from=1 to=2
+ev ShipMoved
+ev SubsystemDamaged
+ev AnomalyDiscovered
+ev KlingonCounterAttack damage=1e-09
+sounds web_breached,warp,comm_chime,warp,web_breached,red_alert,warp,damage,red_alert,damage
+case 190 muted=false
+ev PlasmaIntercepted
+ev SubsystemRepaired
+ev WormholeJump
+ev PlasmaLaunched
+sounds point_defense,warp,plasma_launch
+case 191 muted=false
+ev ObstacleEncountered
+sounds 
+case 192 muted=true
+ev StarbaseSurveillance
+ev PhaserHit damage=-0 destroyed=true
+sounds 
+case 193 muted=false
+ev LRScanCompleted
+ev PlasmaDissipated
+ev SubsystemDamaged
+sounds computer_beep,damage
+case 194 muted=false
+ev PlasmaImpact
+ev RomulanDecloak
+ev PhaserFired
+ev WormholeJump
+ev PhaserFired
+ev TorpedoFired
+ev SubsystemDamaged
+ev ConditionChanged from=1 to=0
+ev TorpedoFired
+ev WebSegmentLaid
+ev SubsystemRepaired
+sounds plasma_impact,decloak,phaser,warp,phaser,torpedo_launch,damage,torpedo_launch,tholian_web
+case 195 muted=false
+ev AnomalyDiscovered
+ev StarbaseSurveillance
+ev ConditionChanged from=1 to=1
+ev PhaserFired
+ev SubsystemRepaired
+ev PlasmaIntercepted
+sounds red_alert,comm_chime,phaser,point_defense
+case 196 muted=false
+ev PlasmaLaunched
+ev EntityMove
+ev SingularityAbsorption
+ev KlingonCounterAttack damage=-0
+ev WebBreached
+ev WebCollapsed
+ev SubsystemRepaired
+ev WebSegmentLaid
+ev ShipMoved
+ev ObstacleEncountered
+sounds plasma_launch,web_breached,web_breached,tholian_web,warp
+case 197 muted=true
+ev SubsystemDamaged
+ev KlingonScreening
+ev WebCollapsed
+ev PlasmaImpact
+ev WormholeJump
+sounds 
+case 198 muted=false
+ev PlasmaMoved
+ev KlingonScreening
+ev RomulanDecloak
+ev PlasmaImpact
+ev RomulanDecloak
+ev WebBreached
+ev PlasmaLaunched
+ev PlasmaLaunched
+ev TorpedoFired
+ev PhaserFired
+ev ConditionChanged from=3 to=0
+ev AnomalyDiscovered
+ev ShieldTransfer
+sounds decloak,plasma_impact,decloak,web_breached,plasma_launch,plasma_launch,torpedo_launch,phaser,red_alert,shields
+case 199 muted=false
+ev ShieldTransfer
+ev ShipMoved
+ev SubsystemRepaired
+ev TorpedoFired
+ev PlasmaMoved
+ev PhaserFired
+ev PhaserFired
+sounds shields,warp,torpedo_launch,phaser,phaser
+case 200 muted=false
+ev PhaserHit damage=1e-09 destroyed=true
+ev EntityMove
+ev SubsystemDamaged
+ev HelpCalled
+ev StarbaseSurveillance
+ev SubsystemDamaged
+ev PlasmaLaunched
+sounds explosion,damage,comm_chime,comm_chime,damage,plasma_launch
+case 201 muted=false
+ev HelpCalled
+ev GameOver reason=2
+ev TorpedoFired
+ev LRScanCompleted
+ev AnomalyDiscovered
+ev PlasmaIntercepted
+ev HazardTriggered
+ev PhaserFired
+ev ShipMoved
+ev AnomalyDiscovered
+ev PhaserHit damage=1e-09 destroyed=false
+ev PhaserHit damage=0.25 destroyed=false
+ev TorpedoFired
+sounds comm_chime,defeat,torpedo_launch,computer_beep,red_alert,point_defense,phaser,warp,red_alert,explosion,explosion,torpedo_launch
+case 202 muted=true
+ev PlasmaImpact
+ev TorpedoFired
+ev PlasmaLaunched
+ev StarbaseSurveillance
+ev Docked
+ev WebCollapsed
+ev KlingonCounterAttack damage=-5
+ev SubsystemDamaged
+ev TorpedoHit damage=-5 destroyed=true
+ev WormholeJump
+ev TorpedoHit damage=0.25 destroyed=true
+ev PlasmaMoved
+ev WebBreached
+ev AnomalyDiscovered
+sounds 
+case 203 muted=false
+ev Docked
+ev LRScanCompleted
+sounds dock,computer_beep
+case 204 muted=false
+ev PlasmaLaunched
+ev RomulanDecloak
+ev TorpedoHit damage=-0 destroyed=true
+ev Docked
+ev PlasmaMoved
+sounds plasma_launch,decloak,explosion,dock
+case 205 muted=false
+ev TorpedoHit damage=-0 destroyed=true
+ev SingularityAbsorption
+ev WormholeJump
+ev WebSegmentLaid
+ev ShipMoved
+ev KlingonCounterAttack damage=100
+ev SubsystemDamaged
+ev TorpedoHit damage=-0 destroyed=true
+sounds explosion,warp,tholian_web,warp,damage,damage,explosion
+case 206 muted=false
+ev KlingonScreening
+ev HelpCalled
+ev KlingonScreening
+ev WebBreached
+ev SingularityAbsorption
+ev WormholeJump
+ev WebBreached
+ev ShieldTransfer
+ev HelpCalled
+ev WebSegmentLaid
+ev SubsystemRepaired
+sounds comm_chime,web_breached,warp,web_breached,shields,comm_chime,tholian_web
+case 207 muted=false
+ev TorpedoFired
+ev LRScanCompleted
+sounds torpedo_launch,computer_beep
+case 208 muted=false
+ev SubsystemDamaged
+ev KlingonCloakState cloaked=true
+ev RomulanDecloak
+sounds damage,cloak,decloak
+case 209 muted=false
+ev ObstacleEncountered
+ev RomulanDecloak
+ev ObstacleEncountered
+ev LRScanCompleted
+ev SubsystemRepaired
+ev LRScanCompleted
+ev AnomalyDiscovered
+ev AnomalyDiscovered
+ev KlingonScreening
+sounds decloak,computer_beep,computer_beep,red_alert,red_alert
+case 210 muted=false
+ev ShipMoved
+ev EntityMove
+ev PlasmaMoved
+ev HazardTriggered
+ev PlasmaMoved
+ev WebCollapsed
+sounds warp,web_breached
+case 211 muted=false
+ev ObstacleEncountered
+ev KlingonCloakState cloaked=true
+ev SingularityAbsorption
+ev KlingonScreening
+ev ShipMoved
+ev ConditionChanged from=2 to=0
+ev PhaserHit damage=100 destroyed=true
+ev PlasmaDissipated
+ev PhaserHit damage=0 destroyed=true
+ev KlingonCloakState cloaked=true
+ev PlasmaDissipated
+ev Docked
+ev PlasmaIntercepted
+ev LRScanCompleted
+sounds cloak,warp,explosion,explosion,cloak,dock,point_defense,computer_beep
+case 212 muted=false
+ev KlingonScreening
+ev PhaserHit damage=-0 destroyed=false
+ev HazardTriggered
+ev WebCollapsed
+ev WebBreached
+ev PhaserHit damage=100 destroyed=true
+ev PhaserHit damage=100 destroyed=true
+ev HazardTriggered
+ev LRScanCompleted
+ev PlasmaLaunched
+sounds web_breached,web_breached,explosion,explosion,computer_beep,plasma_launch
+case 213 muted=false
+ev WebCollapsed
+ev ConditionChanged from=2 to=3
+sounds web_breached
+case 214 muted=true
+ev SubsystemRepaired
+ev SubsystemRepaired
+ev ObstacleEncountered
+sounds 
+case 215 muted=false
+ev KlingonScreening
+ev ConditionChanged from=3 to=3
+ev ObstacleEncountered
+ev AnomalyDiscovered
+ev KlingonCounterAttack damage=0.25
+ev WebCollapsed
+ev WebCollapsed
+ev WebCollapsed
+ev WormholeJump
+ev SubsystemRepaired
+sounds red_alert,damage,web_breached,web_breached,web_breached,warp
+case 216 muted=false
+ev HazardTriggered
+ev PhaserHit damage=-0 destroyed=true
+ev WebSegmentLaid
+ev ConditionChanged from=3 to=1
+ev LRScanCompleted
+ev WormholeJump
+ev TorpedoFired
+ev GameOver reason=4
+ev KlingonCloakState cloaked=true
+ev GameOver reason=3
+sounds explosion,tholian_web,computer_beep,warp,torpedo_launch,defeat,cloak,defeat
+case 217 muted=false
+ev HazardTriggered
+ev ShipMoved
+ev ShieldTransfer
+ev PhaserFired
+ev KlingonCounterAttack damage=1e-09
+ev PhaserFired
+ev WebCollapsed
+ev SubsystemRepaired
+ev RomulanDecloak
+ev ShipMoved
+ev TorpedoFired
+ev TorpedoHit damage=-5 destroyed=true
+ev PhaserFired
+ev KlingonCloakState cloaked=true
+sounds warp,shields,phaser,damage,phaser,web_breached,decloak,warp,torpedo_launch,explosion,phaser,cloak
+case 218 muted=true
+ev KlingonCounterAttack damage=0
+ev SingularityAbsorption
+ev GameOver reason=0
+ev WebBreached
+ev KlingonScreening
+ev LRScanCompleted
+ev SubsystemRepaired
+ev PhaserHit damage=0.25 destroyed=true
+ev WebSegmentLaid
+sounds 
+case 219 muted=false
+ev GameOver reason=3
+ev ObstacleEncountered
+ev Docked
+ev WormholeJump
+ev HazardTriggered
+ev KlingonCounterAttack damage=100
+sounds defeat,dock,warp,damage
+case 220 muted=false
+ev PlasmaDissipated
+ev WormholeJump
+ev Docked
+ev HazardTriggered
+ev TorpedoHit damage=-0 destroyed=false
+ev ObstacleEncountered
+ev PlasmaIntercepted
+sounds warp,dock,point_defense
+case 221 muted=false
+ev WebSegmentLaid
+ev LRScanCompleted
+ev KlingonCounterAttack damage=0.25
+ev WebCollapsed
+ev KlingonScreening
+ev WormholeJump
+ev LRScanCompleted
+ev LRScanCompleted
+ev SingularityAbsorption
+ev SubsystemRepaired
+ev TorpedoFired
+ev PhaserHit damage=0 destroyed=false
+ev ShieldTransfer
+ev TorpedoFired
+sounds tholian_web,computer_beep,damage,web_breached,warp,computer_beep,computer_beep,torpedo_launch,shields,torpedo_launch
+case 222 muted=false
+ev ConditionChanged from=1 to=1
+ev ShieldTransfer
+sounds shields
+case 223 muted=false
+ev AnomalyDiscovered
+sounds red_alert
+case 224 muted=false
+ev HelpCalled
+ev SubsystemRepaired
+ev WormholeJump
+ev WebBreached
+ev TorpedoFired
+ev ConditionChanged from=0 to=2
+sounds comm_chime,warp,web_breached,torpedo_launch,red_alert
+case 225 muted=true
+ev WebSegmentLaid
+ev SubsystemRepaired
+ev PlasmaIntercepted
+ev PlasmaLaunched
+sounds 
+case 226 muted=false
+ev KlingonCloakState cloaked=false
+ev PhaserFired
+sounds decloak,phaser
+case 227 muted=false
+ev PlasmaIntercepted
+ev GameOver reason=3
+ev SingularityAbsorption
+ev GameOver reason=4
+ev LRScanCompleted
+ev StarbaseSurveillance
+ev WebCollapsed
+ev PhaserHit damage=0.25 destroyed=false
+ev PlasmaImpact
+sounds point_defense,defeat,defeat,computer_beep,comm_chime,web_breached,explosion,plasma_impact
+case 228 muted=false
+ev PhaserFired
+ev WebCollapsed
+ev PlasmaIntercepted
+ev PlasmaMoved
+ev SubsystemDamaged
+ev TorpedoFired
+ev WebBreached
+ev PhaserFired
+ev SubsystemRepaired
+ev GameOver reason=3
+ev GameOver reason=4
+ev RomulanDecloak
+sounds phaser,web_breached,point_defense,damage,torpedo_launch,web_breached,phaser,defeat,defeat,decloak
+case 229 muted=false
+ev HelpCalled
+ev TorpedoFired
+ev ShieldTransfer
+ev PhaserHit damage=0 destroyed=true
+ev KlingonScreening
+ev HazardTriggered
+sounds comm_chime,torpedo_launch,shields,explosion
+case 230 muted=false
+ev TorpedoFired
+ev PlasmaIntercepted
+ev HazardTriggered
+ev TorpedoFired
+ev Docked
+ev PlasmaIntercepted
+ev KlingonCounterAttack damage=0
+ev ConditionChanged from=2 to=3
+ev KlingonScreening
+ev PlasmaImpact
+ev HazardTriggered
+ev StarbaseSurveillance
+ev WebBreached
+sounds torpedo_launch,point_defense,torpedo_launch,dock,point_defense,plasma_impact,comm_chime,web_breached
+case 231 muted=false
+ev WormholeJump
+ev TorpedoHit damage=-0 destroyed=false
+ev SubsystemRepaired
+ev PlasmaLaunched
+ev SubsystemRepaired
+ev PlasmaDissipated
+ev AnomalyDiscovered
+sounds warp,plasma_launch,red_alert
+case 232 muted=false
+ev PlasmaImpact
+ev KlingonCloakState cloaked=false
+ev WormholeJump
+ev WebCollapsed
+ev HazardTriggered
+ev PhaserHit damage=-0 destroyed=true
+ev PlasmaIntercepted
+ev KlingonCounterAttack damage=0
+ev PhaserHit damage=0.25 destroyed=false
+ev ShipMoved
+ev ObstacleEncountered
+ev SingularityAbsorption
+ev KlingonCounterAttack damage=-5
+sounds plasma_impact,decloak,warp,web_breached,explosion,point_defense,explosion,warp
+case 233 muted=false
+ev LRScanCompleted
+ev ConditionChanged from=0 to=1
+ev Docked
+ev PlasmaImpact
+ev PlasmaImpact
+ev SingularityAbsorption
+ev PlasmaMoved
+ev WebCollapsed
+ev PlasmaLaunched
+ev KlingonCloakState cloaked=false
+ev LRScanCompleted
+ev TorpedoHit damage=100 destroyed=false
+sounds computer_beep,dock,plasma_impact,plasma_impact,web_breached,plasma_launch,decloak,computer_beep,explosion
+case 234 muted=false
+ev PlasmaMoved
+ev WebCollapsed
+ev SubsystemRepaired
+ev SubsystemRepaired
+ev LRScanCompleted
+ev SubsystemDamaged
+ev PhaserHit damage=0 destroyed=false
+ev WebCollapsed
+ev GameOver reason=0
+ev ShipMoved
+ev Docked
+ev KlingonCloakState cloaked=true
+ev SubsystemDamaged
+ev HelpCalled
+sounds web_breached,computer_beep,damage,web_breached,victory,warp,dock,cloak,damage,comm_chime
+case 235 muted=false
+ev PlasmaIntercepted
+ev TorpedoFired
+ev SingularityAbsorption
+ev KlingonCloakState cloaked=false
+ev PhaserFired
+ev ShipMoved
+ev ShieldTransfer
+ev GameOver reason=0
+ev RomulanDecloak
+ev LRScanCompleted
+sounds point_defense,torpedo_launch,decloak,phaser,warp,shields,victory,decloak,computer_beep
+case 236 muted=false
+ev PlasmaIntercepted
+ev PhaserHit damage=-5 destroyed=true
+sounds point_defense,explosion
+case 237 muted=false
+ev LRScanCompleted
+ev EntityMove
+ev ObstacleEncountered
+ev PhaserHit damage=0.25 destroyed=false
+ev SubsystemRepaired
+sounds computer_beep,explosion
+case 238 muted=false
+ev ShipMoved
+ev HelpCalled
+ev WebBreached
+ev ShipMoved
+ev SingularityAbsorption
+ev ConditionChanged from=0 to=1
+ev WebCollapsed
+ev KlingonScreening
+ev WebBreached
+ev ShipMoved
+ev KlingonScreening
+ev HazardTriggered
+ev GameOver reason=0
+ev PlasmaDissipated
+sounds warp,comm_chime,web_breached,warp,web_breached,web_breached,warp,victory
+case 239 muted=false
+ev KlingonCounterAttack damage=100
+ev ObstacleEncountered
+ev WebSegmentLaid
+ev WebCollapsed
+ev HelpCalled
+ev ObstacleEncountered
+ev HelpCalled
+sounds damage,tholian_web,web_breached,comm_chime,comm_chime
+case 240 muted=false
+ev HazardTriggered
+ev KlingonCloakState cloaked=true
+ev StarbaseSurveillance
+ev ShieldTransfer
+ev EntityMove
+ev PlasmaLaunched
+ev TorpedoHit damage=0 destroyed=false
+sounds cloak,comm_chime,shields,plasma_launch
+case 241 muted=false
+ev WebCollapsed
+ev PlasmaDissipated
+ev SubsystemDamaged
+ev ConditionChanged from=3 to=0
+ev WebBreached
+ev TorpedoHit damage=-5 destroyed=false
+sounds web_breached,damage,web_breached
+case 242 muted=false
+ev PhaserHit damage=-5 destroyed=false
+ev RomulanDecloak
+sounds decloak
+case 243 muted=false
+ev SubsystemDamaged
+ev PlasmaDissipated
+ev PlasmaMoved
+sounds damage
+case 244 muted=false
+ev PhaserHit damage=0 destroyed=false
+ev WebCollapsed
+ev LRScanCompleted
+ev WebSegmentLaid
+ev SubsystemDamaged
+ev PhaserHit damage=0.25 destroyed=true
+ev PhaserFired
+ev ConditionChanged from=1 to=0
+ev RomulanDecloak
+sounds web_breached,computer_beep,tholian_web,damage,explosion,phaser,decloak
+case 245 muted=false
+ev PhaserFired
+ev PhaserFired
+ev ShieldTransfer
+ev KlingonScreening
+sounds phaser,phaser,shields
+case 246 muted=false
+ev AnomalyDiscovered
+ev KlingonCounterAttack damage=-5
+ev TorpedoHit damage=100 destroyed=false
+ev PhaserFired
+ev WebCollapsed
+ev KlingonCloakState cloaked=true
+ev PlasmaMoved
+sounds red_alert,explosion,phaser,web_breached,cloak
+case 247 muted=false
+ev PhaserFired
+ev WormholeJump
+ev GameOver reason=2
+ev ObstacleEncountered
+ev PlasmaDissipated
+ev SingularityAbsorption
+ev ShipMoved
+ev PlasmaLaunched
+ev RomulanDecloak
+ev KlingonCloakState cloaked=true
+ev PhaserFired
+ev KlingonCloakState cloaked=false
+sounds phaser,warp,defeat,warp,plasma_launch,decloak,cloak,phaser,decloak
+case 248 muted=false
+ev WebSegmentLaid
+ev WormholeJump
+ev PlasmaDissipated
+ev EntityMove
+ev PlasmaImpact
+ev PlasmaLaunched
+ev ShipMoved
+ev WormholeJump
+ev HazardTriggered
+ev KlingonScreening
+ev SingularityAbsorption
+sounds tholian_web,warp,plasma_impact,plasma_launch,warp,warp
+case 249 muted=false
+ev SubsystemDamaged
+ev StarbaseSurveillance
+ev WebSegmentLaid
+ev ShieldTransfer
+ev KlingonCloakState cloaked=true
+ev ConditionChanged from=3 to=1
+sounds damage,comm_chime,tholian_web,shields,cloak
+case 250 muted=false
+ev WebBreached
+ev KlingonScreening
+ev GameOver reason=2
+sounds web_breached,defeat
+case 251 muted=false
+ev RomulanDecloak
+ev WebSegmentLaid
+ev WebCollapsed
+ev ShieldTransfer
+ev ShieldTransfer
+ev ShipMoved
+ev ObstacleEncountered
+sounds decloak,tholian_web,web_breached,shields,shields,warp
+case 252 muted=false
+ev WebCollapsed
+ev StarbaseSurveillance
+ev PlasmaLaunched
+ev PlasmaLaunched
+ev SubsystemRepaired
+ev Docked
+ev StarbaseSurveillance
+ev KlingonCounterAttack damage=1e-09
+ev KlingonCounterAttack damage=100
+ev SingularityAbsorption
+ev SingularityAbsorption
+ev SubsystemDamaged
+sounds web_breached,comm_chime,plasma_launch,plasma_launch,dock,comm_chime,damage,damage,damage
+case 253 muted=true
+ev PhaserHit damage=100 destroyed=false
+ev SubsystemRepaired
+ev TorpedoFired
+ev RomulanDecloak
+ev WebBreached
+ev WebBreached
+ev ObstacleEncountered
+ev SubsystemRepaired
+sounds 
+case 254 muted=false
+ev WebSegmentLaid
+ev PlasmaDissipated
+ev KlingonScreening
+ev PlasmaLaunched
+ev WebCollapsed
+ev HazardTriggered
+ev HazardTriggered
+sounds tholian_web,plasma_launch,web_breached
+case 255 muted=false
+ev ObstacleEncountered
+ev PlasmaImpact
+ev GameOver reason=5
+ev ShieldTransfer
+ev PlasmaDissipated
+ev PlasmaDissipated
+sounds plasma_impact,defeat,shields
+case 256 muted=true
+ev PlasmaImpact
+ev PhaserHit damage=1e-09 destroyed=false
+ev KlingonCloakState cloaked=false
+ev EntityMove
+ev ShipMoved
+ev PlasmaLaunched
+ev KlingonScreening
+ev PlasmaIntercepted
+ev PlasmaDissipated
+ev WormholeJump
+ev EntityMove
+ev PhaserHit damage=-5 destroyed=true
+ev SubsystemDamaged
+ev HazardTriggered
+sounds 
+case 257 muted=false
+ev WebSegmentLaid
+ev WebCollapsed
+ev SubsystemRepaired
+ev WebCollapsed
+sounds tholian_web,web_breached,web_breached
+case 258 muted=false
+ev ObstacleEncountered
+ev PlasmaLaunched
+ev PlasmaDissipated
+ev PlasmaImpact
+ev Docked
+sounds plasma_launch,plasma_impact,dock
+case 259 muted=false
+ev KlingonScreening
+ev GameOver reason=0
+ev WebCollapsed
+ev PhaserHit damage=0 destroyed=true
+ev PhaserHit damage=0.25 destroyed=true
+ev PlasmaDissipated
+ev WebBreached
+ev PlasmaLaunched
+ev TorpedoHit damage=0 destroyed=true
+ev HelpCalled
+ev WormholeJump
+ev ShipMoved
+sounds victory,web_breached,explosion,explosion,web_breached,plasma_launch,explosion,comm_chime,warp,warp
+case 260 muted=false
+ev WebCollapsed
+ev PlasmaMoved
+ev TorpedoHit damage=100 destroyed=false
+ev HelpCalled
+ev WormholeJump
+ev KlingonCloakState cloaked=false
+ev PlasmaImpact
+ev TorpedoHit damage=-5 destroyed=false
+ev Docked
+sounds web_breached,explosion,comm_chime,warp,decloak,plasma_impact,dock
+case 261 muted=false
+ev KlingonCounterAttack damage=1e-09
+ev ObstacleEncountered
+ev StarbaseSurveillance
+ev WebSegmentLaid
+ev PlasmaMoved
+ev SubsystemRepaired
+ev WebSegmentLaid
+ev WebCollapsed
+sounds damage,comm_chime,tholian_web,tholian_web,web_breached
+case 262 muted=true
+ev AnomalyDiscovered
+ev ConditionChanged from=0 to=2
+ev AnomalyDiscovered
+ev KlingonCounterAttack damage=0
+ev ShipMoved
+ev ShipMoved
+ev ObstacleEncountered
+ev PlasmaMoved
+ev ConditionChanged from=1 to=2
+ev EntityMove
+ev TorpedoHit damage=100 destroyed=true
+ev EntityMove
+ev KlingonCounterAttack damage=0.25
+sounds 
+case 263 muted=false
+ev KlingonCloakState cloaked=true
+ev PhaserHit damage=-0 destroyed=true
+ev ShieldTransfer
+ev HelpCalled
+ev KlingonCounterAttack damage=0.25
+ev StarbaseSurveillance
+sounds cloak,explosion,shields,comm_chime,damage,comm_chime
+case 264 muted=false
+ev ShieldTransfer
+ev PlasmaIntercepted
+sounds shields,point_defense
+case 265 muted=false
+ev SingularityAbsorption
+ev LRScanCompleted
+ev PlasmaIntercepted
+ev PlasmaImpact
+ev PlasmaDissipated
+ev PhaserHit damage=1e-09 destroyed=false
+ev ShipMoved
+ev PlasmaIntercepted
+ev EntityMove
+ev KlingonCounterAttack damage=1e-09
+ev PlasmaImpact
+sounds computer_beep,point_defense,plasma_impact,explosion,warp,point_defense,damage,plasma_impact
+case 266 muted=false
+ev WebSegmentLaid
+ev RomulanDecloak
+ev Docked
+ev PhaserFired
+ev Docked
+ev WormholeJump
+ev LRScanCompleted
+ev WebSegmentLaid
+ev StarbaseSurveillance
+ev AnomalyDiscovered
+sounds tholian_web,decloak,dock,phaser,dock,warp,computer_beep,tholian_web,comm_chime,red_alert
+case 267 muted=false
+ev SingularityAbsorption
+ev PlasmaImpact
+ev ConditionChanged from=1 to=0
+ev LRScanCompleted
+ev ShipMoved
+ev SubsystemDamaged
+ev SingularityAbsorption
+ev StarbaseSurveillance
+ev SingularityAbsorption
+ev ConditionChanged from=1 to=1
+ev GameOver reason=0
+ev PlasmaMoved
+ev PhaserFired
+ev Docked
+sounds plasma_impact,computer_beep,warp,damage,comm_chime,victory,phaser,dock
+case 268 muted=false
+ev HelpCalled
+ev EntityMove
+ev PlasmaImpact
+ev TorpedoFired
+ev WebCollapsed
+ev ObstacleEncountered
+ev PhaserFired
+ev GameOver reason=1
+sounds comm_chime,plasma_impact,torpedo_launch,web_breached,phaser,defeat
+case 269 muted=false
+ev SingularityAbsorption
+ev SubsystemRepaired
+ev KlingonCloakState cloaked=false
+sounds decloak
+case 270 muted=false
+ev HelpCalled
+ev Docked
+ev WormholeJump
+ev TorpedoHit damage=1e-09 destroyed=true
+ev TorpedoFired
+ev StarbaseSurveillance
+ev PlasmaDissipated
+ev RomulanDecloak
+ev AnomalyDiscovered
+sounds comm_chime,dock,warp,explosion,torpedo_launch,comm_chime,decloak,red_alert
+case 271 muted=false
+ev KlingonScreening
+ev ShieldTransfer
+ev KlingonCounterAttack damage=-0
+ev PlasmaMoved
+ev AnomalyDiscovered
+ev PlasmaImpact
+sounds shields,red_alert,plasma_impact
+case 272 muted=false
+ev KlingonScreening
+ev PhaserFired
+ev StarbaseSurveillance
+ev KlingonCounterAttack damage=-5
+ev WebCollapsed
+ev PlasmaImpact
+ev PhaserHit damage=100 destroyed=false
+ev SingularityAbsorption
+sounds phaser,comm_chime,web_breached,plasma_impact,explosion
+case 273 muted=false
+ev HazardTriggered
+ev PlasmaDissipated
+ev ShipMoved
+sounds warp
+case 274 muted=false
+ev ObstacleEncountered
+ev PhaserFired
+ev LRScanCompleted
+ev ObstacleEncountered
+ev PlasmaDissipated
+ev SubsystemRepaired
+ev GameOver reason=3
+ev ConditionChanged from=3 to=2
+sounds phaser,computer_beep,defeat,red_alert
+case 275 muted=false
+ev WebBreached
+ev SubsystemRepaired
+ev PhaserFired
+ev ConditionChanged from=2 to=3
+ev WebCollapsed
+ev ObstacleEncountered
+ev PhaserFired
+ev WebSegmentLaid
+ev RomulanDecloak
+ev AnomalyDiscovered
+ev StarbaseSurveillance
+ev GameOver reason=0
+ev StarbaseSurveillance
+ev TorpedoHit damage=100 destroyed=false
+sounds web_breached,phaser,web_breached,phaser,tholian_web,decloak,red_alert,comm_chime,victory,comm_chime,explosion
+case 276 muted=false
+ev PhaserFired
+ev Docked
+ev ShieldTransfer
+ev ObstacleEncountered
+ev EntityMove
+ev LRScanCompleted
+ev KlingonScreening
+ev GameOver reason=5
+ev KlingonScreening
+ev ShieldTransfer
+ev ShipMoved
+sounds phaser,dock,shields,computer_beep,defeat,shields,warp
+case 277 muted=false
+ev ShieldTransfer
+ev PlasmaImpact
+ev PlasmaImpact
+ev WebSegmentLaid
+sounds shields,plasma_impact,plasma_impact,tholian_web
+case 278 muted=false
+ev SingularityAbsorption
+ev RomulanDecloak
+ev ShieldTransfer
+ev WebBreached
+ev HazardTriggered
+ev WebCollapsed
+ev HelpCalled
+ev WormholeJump
+ev ShieldTransfer
+sounds decloak,shields,web_breached,web_breached,comm_chime,warp,shields
+case 279 muted=true
+ev KlingonCloakState cloaked=false
+ev Docked
+ev PhaserHit damage=0.25 destroyed=false
+ev WormholeJump
+ev AnomalyDiscovered
+ev PhaserHit damage=1e-09 destroyed=true
+ev Docked
+ev PlasmaMoved
+ev LRScanCompleted
+sounds 
+case 280 muted=false
+ev KlingonCounterAttack damage=1e-09
+ev EntityMove
+ev TorpedoHit damage=-5 destroyed=true
+ev ShieldTransfer
+ev PlasmaLaunched
+ev PlasmaImpact
+ev WormholeJump
+ev StarbaseSurveillance
+ev WebCollapsed
+ev SingularityAbsorption
+ev ConditionChanged from=0 to=0
+ev KlingonScreening
+sounds damage,explosion,shields,plasma_launch,plasma_impact,warp,comm_chime,web_breached
+case 281 muted=false
+ev WebBreached
+ev WormholeJump
+ev ShipMoved
+ev SubsystemRepaired
+sounds web_breached,warp,warp
+case 282 muted=true
+ev ObstacleEncountered
+ev PhaserFired
+ev SubsystemDamaged
+ev ConditionChanged from=1 to=3
+ev PhaserHit damage=0.25 destroyed=false
+ev ObstacleEncountered
+ev KlingonScreening
+ev PlasmaIntercepted
+ev PlasmaMoved
+ev HazardTriggered
+ev SingularityAbsorption
+ev ConditionChanged from=0 to=3
+ev ShipMoved
+sounds 
+case 283 muted=false
+ev KlingonCloakState cloaked=true
+ev PlasmaImpact
+ev PhaserFired
+ev WormholeJump
+ev KlingonCloakState cloaked=true
+ev KlingonCloakState cloaked=false
+ev TorpedoHit damage=0 destroyed=false
+ev WebSegmentLaid
+sounds cloak,plasma_impact,phaser,warp,cloak,decloak,tholian_web
+case 284 muted=false
+ev ConditionChanged from=0 to=3
+ev PlasmaMoved
+ev WebBreached
+ev RomulanDecloak
+ev SubsystemRepaired
+ev PhaserHit damage=100 destroyed=true
+ev SubsystemDamaged
+sounds web_breached,decloak,explosion,damage
+case 285 muted=false
+ev GameOver reason=0
+ev GameOver reason=5
+ev KlingonScreening
+ev StarbaseSurveillance
+sounds victory,defeat,comm_chime
+case 286 muted=false
+ev SubsystemRepaired
+ev WebSegmentLaid
+ev PlasmaDissipated
+ev EntityMove
+ev KlingonCloakState cloaked=true
+ev HazardTriggered
+ev KlingonCloakState cloaked=true
+ev PlasmaIntercepted
+ev HazardTriggered
+ev StarbaseSurveillance
+ev WebBreached
+sounds tholian_web,cloak,cloak,point_defense,comm_chime,web_breached
+case 287 muted=false
+ev SubsystemDamaged
+ev WormholeJump
+ev EntityMove
+ev StarbaseSurveillance
+ev RomulanDecloak
+ev PlasmaLaunched
+ev SingularityAbsorption
+ev PlasmaLaunched
+ev TorpedoFired
+sounds damage,warp,comm_chime,decloak,plasma_launch,plasma_launch,torpedo_launch
+case 288 muted=false
+ev PhaserFired
+ev ShieldTransfer
+ev HazardTriggered
+ev ObstacleEncountered
+ev KlingonCloakState cloaked=true
+ev TorpedoHit damage=-5 destroyed=false
+ev PlasmaDissipated
+ev KlingonCounterAttack damage=0
+ev AnomalyDiscovered
+ev WebBreached
+ev PlasmaLaunched
+sounds phaser,shields,cloak,red_alert,web_breached,plasma_launch
+case 289 muted=false
+ev PlasmaImpact
+ev ShieldTransfer
+ev PlasmaImpact
+ev HelpCalled
+ev TorpedoHit damage=0 destroyed=false
+ev HelpCalled
+ev KlingonCounterAttack damage=-5
+ev PlasmaIntercepted
+ev HazardTriggered
+ev WebCollapsed
+ev Docked
+ev Docked
+ev AnomalyDiscovered
+ev PlasmaIntercepted
+sounds plasma_impact,shields,plasma_impact,comm_chime,comm_chime,point_defense,web_breached,dock,dock,red_alert,point_defense
+case 290 muted=false
+ev PlasmaMoved
+ev Docked
+ev PlasmaImpact
+ev LRScanCompleted
+ev PlasmaMoved
+ev PlasmaImpact
+ev PhaserHit damage=-0 destroyed=true
+ev HelpCalled
+ev ConditionChanged from=0 to=1
+ev PlasmaIntercepted
+ev AnomalyDiscovered
+ev ShieldTransfer
+ev ConditionChanged from=0 to=2
+sounds dock,plasma_impact,computer_beep,plasma_impact,explosion,comm_chime,point_defense,red_alert,shields,red_alert
+case 291 muted=false
+ev PlasmaIntercepted
+ev StarbaseSurveillance
+ev KlingonScreening
+ev ShipMoved
+ev RomulanDecloak
+ev KlingonCloakState cloaked=true
+ev KlingonCounterAttack damage=-5
+ev KlingonCloakState cloaked=true
+ev ObstacleEncountered
+ev RomulanDecloak
+ev EntityMove
+sounds point_defense,comm_chime,warp,decloak,cloak,cloak,decloak
+case 292 muted=false
+ev ObstacleEncountered
+ev SubsystemDamaged
+ev PlasmaLaunched
+ev PlasmaDissipated
+sounds damage,plasma_launch
+case 293 muted=false
+ev LRScanCompleted
+ev TorpedoFired
+ev PhaserHit damage=1e-09 destroyed=false
+ev StarbaseSurveillance
+sounds computer_beep,torpedo_launch,explosion,comm_chime
+case 294 muted=false
+ev ObstacleEncountered
+ev TorpedoFired
+ev PlasmaIntercepted
+ev HazardTriggered
+ev GameOver reason=2
+ev PlasmaIntercepted
+ev SingularityAbsorption
+ev KlingonCounterAttack damage=-0
+ev HazardTriggered
+sounds torpedo_launch,point_defense,defeat,point_defense
+case 295 muted=false
+ev TorpedoHit damage=0 destroyed=true
+ev KlingonCounterAttack damage=0
+ev KlingonScreening
+ev KlingonScreening
+sounds explosion
+case 296 muted=false
+ev PhaserFired
+ev ShieldTransfer
+ev RomulanDecloak
+ev SingularityAbsorption
+ev StarbaseSurveillance
+ev SubsystemDamaged
+ev KlingonCounterAttack damage=100
+ev StarbaseSurveillance
+ev HazardTriggered
+ev StarbaseSurveillance
+ev EntityMove
+ev GameOver reason=2
+ev KlingonScreening
+ev EntityMove
+sounds phaser,shields,decloak,comm_chime,damage,damage,comm_chime,comm_chime,defeat
+case 297 muted=false
+ev KlingonScreening
+ev PlasmaLaunched
+ev StarbaseSurveillance
+ev SubsystemDamaged
+ev PhaserFired
+ev ShipMoved
+ev ConditionChanged from=2 to=0
+ev PlasmaIntercepted
+ev SubsystemDamaged
+ev ConditionChanged from=3 to=1
+ev SubsystemRepaired
+ev PlasmaLaunched
+sounds plasma_launch,comm_chime,damage,phaser,warp,point_defense,damage,plasma_launch
+case 298 muted=false
+ev ConditionChanged from=3 to=2
+ev PhaserHit damage=-5 destroyed=true
+ev StarbaseSurveillance
+ev PhaserFired
+ev SubsystemDamaged
+ev SingularityAbsorption
+ev ObstacleEncountered
+ev WebBreached
+ev PlasmaIntercepted
+ev LRScanCompleted
+ev EntityMove
+ev RomulanDecloak
+ev HelpCalled
+ev Docked
+sounds red_alert,explosion,comm_chime,phaser,damage,web_breached,point_defense,computer_beep,decloak,comm_chime,dock
+case 299 muted=false
+ev PlasmaImpact
+ev PhaserHit damage=100 destroyed=false
+ev TorpedoHit damage=1e-09 destroyed=false
+ev PhaserFired
+ev PlasmaMoved
+ev LRScanCompleted
+ev AnomalyDiscovered
+sounds plasma_impact,explosion,explosion,phaser,computer_beep,red_alert
+case 300 muted=true
+ev PlasmaMoved
+ev WebBreached
+ev PhaserFired
+sounds 
+case 301 muted=false
+ev KlingonCounterAttack damage=0
+ev EntityMove
+ev TorpedoFired
+ev EntityMove
+ev RomulanDecloak
+ev ConditionChanged from=1 to=1
+sounds torpedo_launch,decloak
+case 302 muted=false
+ev SubsystemDamaged
+ev TorpedoFired
+ev KlingonScreening
+ev PlasmaLaunched
+ev SubsystemDamaged
+ev KlingonCounterAttack damage=-5
+ev PhaserHit damage=-0 destroyed=false
+ev ObstacleEncountered
+ev GameOver reason=0
+sounds damage,torpedo_launch,plasma_launch,damage,victory
+case 303 muted=false
+ev EntityMove
+ev EntityMove
+ev ConditionChanged from=1 to=0
+ev PlasmaLaunched
+ev HazardTriggered
+ev RomulanDecloak
+ev PlasmaDissipated
+ev Docked
+ev GameOver reason=5
+ev StarbaseSurveillance
+sounds plasma_launch,decloak,dock,defeat,comm_chime
+case 304 muted=false
+ev ObstacleEncountered
+ev PlasmaDissipated
+ev WebCollapsed
+ev ObstacleEncountered
+ev TorpedoHit damage=0.25 destroyed=true
+ev ObstacleEncountered
+sounds web_breached,explosion
+case 305 muted=false
+ev StarbaseSurveillance
+ev PlasmaLaunched
+ev KlingonScreening
+ev SingularityAbsorption
+ev TorpedoFired
+ev TorpedoFired
+ev PlasmaMoved
+ev WebBreached
+ev SingularityAbsorption
+ev KlingonCounterAttack damage=-0
+ev WebCollapsed
+ev RomulanDecloak
+sounds comm_chime,plasma_launch,torpedo_launch,torpedo_launch,web_breached,web_breached,decloak
+case 306 muted=false
+ev RomulanDecloak
+sounds decloak
+case 307 muted=false
+ev KlingonCloakState cloaked=false
+ev PlasmaDissipated
+ev PlasmaDissipated
+ev PlasmaImpact
+ev TorpedoFired
+sounds decloak,plasma_impact,torpedo_launch
+case 308 muted=false
+ev HelpCalled
+ev PhaserHit damage=-5 destroyed=true
+ev KlingonCounterAttack damage=100
+sounds comm_chime,explosion,damage
+case 309 muted=false
+ev ConditionChanged from=0 to=2
+ev AnomalyDiscovered
+ev SubsystemDamaged
+ev WebCollapsed
+ev PlasmaIntercepted
+ev RomulanDecloak
+ev PlasmaImpact
+ev PlasmaImpact
+ev GameOver reason=5
+ev SingularityAbsorption
+ev WormholeJump
+ev WebBreached
+ev PlasmaLaunched
+sounds red_alert,red_alert,damage,web_breached,point_defense,decloak,plasma_impact,plasma_impact,defeat,warp,web_breached,plasma_launch
+case 310 muted=false
+ev ShieldTransfer
+ev SubsystemRepaired
+ev TorpedoHit damage=0 destroyed=false
+ev StarbaseSurveillance
+ev KlingonScreening
+ev KlingonCloakState cloaked=false
+ev StarbaseSurveillance
+ev LRScanCompleted
+ev SingularityAbsorption
+ev WebSegmentLaid
+ev TorpedoFired
+ev RomulanDecloak
+ev Docked
+sounds shields,comm_chime,decloak,comm_chime,computer_beep,tholian_web,torpedo_launch,decloak,dock
+case 311 muted=false
+ev ShipMoved
+ev HazardTriggered
+ev KlingonCloakState cloaked=false
+ev ShieldTransfer
+ev ConditionChanged from=2 to=1
+ev PlasmaImpact
+ev TorpedoHit damage=-5 destroyed=true
+ev HelpCalled
+ev WormholeJump
+ev WebBreached
+ev AnomalyDiscovered
+sounds warp,decloak,shields,plasma_impact,explosion,comm_chime,warp,web_breached,red_alert
+case 312 muted=false
+ev RomulanDecloak
+ev WebSegmentLaid
+sounds decloak,tholian_web
+case 313 muted=false
+ev GameOver reason=3
+ev TorpedoFired
+ev ShipMoved
+ev PlasmaLaunched
+ev PlasmaImpact
+ev SubsystemRepaired
+ev PlasmaLaunched
+ev WormholeJump
+ev HelpCalled
+sounds defeat,torpedo_launch,warp,plasma_launch,plasma_impact,plasma_launch,warp,comm_chime
+case 314 muted=false
+ev KlingonScreening
+ev PlasmaMoved
+ev KlingonCounterAttack damage=1e-09
+ev PlasmaLaunched
+ev ConditionChanged from=3 to=1
+ev AnomalyDiscovered
+ev SingularityAbsorption
+ev WebSegmentLaid
+ev WormholeJump
+ev WebSegmentLaid
+ev PlasmaIntercepted
+sounds damage,plasma_launch,red_alert,tholian_web,warp,tholian_web,point_defense
+case 315 muted=false
+ev AnomalyDiscovered
+ev PlasmaIntercepted
+sounds red_alert,point_defense
+case 316 muted=false
+ev LRScanCompleted
+ev ConditionChanged from=0 to=1
+ev WebSegmentLaid
+ev PhaserFired
+sounds computer_beep,tholian_web,phaser
+case 317 muted=false
+ev GameOver reason=1
+ev ConditionChanged from=1 to=2
+ev HelpCalled
+ev WormholeJump
+ev ConditionChanged from=0 to=3
+sounds defeat,red_alert,comm_chime,warp
+case 318 muted=false
+ev PlasmaIntercepted
+ev SubsystemRepaired
+ev AnomalyDiscovered
+ev PlasmaDissipated
+ev PlasmaImpact
+ev PhaserHit damage=100 destroyed=true
+ev ObstacleEncountered
+ev AnomalyDiscovered
+sounds point_defense,red_alert,plasma_impact,explosion,red_alert
+case 319 muted=false
+ev PlasmaImpact
+ev HelpCalled
+ev LRScanCompleted
+ev PhaserFired
+ev Docked
+ev PhaserFired
+ev PhaserHit damage=-5 destroyed=true
+sounds plasma_impact,comm_chime,computer_beep,phaser,dock,phaser,explosion
+case 320 muted=false
+ev LRScanCompleted
+ev GameOver reason=1
+ev KlingonCloakState cloaked=true
+sounds computer_beep,defeat,cloak
+case 321 muted=false
+ev HelpCalled
+ev LRScanCompleted
+ev AnomalyDiscovered
+ev TorpedoHit damage=0.25 destroyed=true
+ev LRScanCompleted
+ev PlasmaImpact
+ev WebCollapsed
+sounds comm_chime,computer_beep,red_alert,explosion,computer_beep,plasma_impact,web_breached
+case 322 muted=false
+ev ObstacleEncountered
+ev ObstacleEncountered
+ev RomulanDecloak
+ev KlingonCloakState cloaked=false
+ev SubsystemRepaired
+ev HazardTriggered
+ev PlasmaIntercepted
+ev HazardTriggered
+ev KlingonCloakState cloaked=false
+sounds decloak,decloak,point_defense,decloak
+case 323 muted=false
+ev StarbaseSurveillance
+ev HelpCalled
+ev HazardTriggered
+ev PlasmaMoved
+ev WebSegmentLaid
+ev SingularityAbsorption
+ev PlasmaLaunched
+ev SubsystemDamaged
+ev AnomalyDiscovered
+ev StarbaseSurveillance
+ev Docked
+sounds comm_chime,comm_chime,tholian_web,plasma_launch,damage,red_alert,comm_chime,dock
+case 324 muted=false
+ev RomulanDecloak
+ev LRScanCompleted
+ev EntityMove
+ev RomulanDecloak
+ev WormholeJump
+ev WormholeJump
+ev PhaserFired
+ev ObstacleEncountered
+ev AnomalyDiscovered
+ev PlasmaImpact
+ev TorpedoFired
+ev ObstacleEncountered
+sounds decloak,computer_beep,decloak,warp,warp,phaser,red_alert,plasma_impact,torpedo_launch
+case 325 muted=false
+ev KlingonCounterAttack damage=0.25
+ev RomulanDecloak
+sounds damage,decloak
+case 326 muted=false
+ev PlasmaDissipated
+ev WormholeJump
+ev PlasmaImpact
+ev HelpCalled
+ev LRScanCompleted
+ev PlasmaImpact
+ev RomulanDecloak
+sounds warp,plasma_impact,comm_chime,computer_beep,plasma_impact,decloak
+case 327 muted=false
+ev LRScanCompleted
+ev RomulanDecloak
+ev PlasmaMoved
+ev PhaserHit damage=-5 destroyed=true
+ev ShipMoved
+ev SubsystemRepaired
+ev PlasmaImpact
+ev KlingonCounterAttack damage=1e-09
+ev GameOver reason=4
+ev TorpedoHit damage=0.25 destroyed=true
+ev StarbaseSurveillance
+sounds computer_beep,decloak,explosion,warp,plasma_impact,damage,defeat,explosion,comm_chime
+case 328 muted=false
+ev PlasmaDissipated
+ev HelpCalled
+ev PlasmaImpact
+ev LRScanCompleted
+ev AnomalyDiscovered
+ev ShipMoved
+ev StarbaseSurveillance
+ev WormholeJump
+ev PhaserFired
+ev StarbaseSurveillance
+sounds comm_chime,plasma_impact,computer_beep,red_alert,warp,comm_chime,warp,phaser,comm_chime
+case 329 muted=false
+ev ObstacleEncountered
+ev WebCollapsed
+ev HazardTriggered
+ev WebBreached
+ev WebCollapsed
+ev AnomalyDiscovered
+ev RomulanDecloak
+ev PhaserFired
+ev ShipMoved
+ev PlasmaMoved
+ev AnomalyDiscovered
+sounds web_breached,web_breached,web_breached,red_alert,decloak,phaser,warp,red_alert
+case 330 muted=false
+ev HazardTriggered
+ev AnomalyDiscovered
+ev StarbaseSurveillance
+ev LRScanCompleted
+ev PlasmaDissipated
+ev TorpedoHit damage=-5 destroyed=true
+ev PlasmaImpact
+ev KlingonCounterAttack damage=0.25
+sounds red_alert,comm_chime,computer_beep,explosion,plasma_impact,damage
+case 331 muted=false
+ev HelpCalled
+ev PhaserHit damage=0 destroyed=true
+sounds comm_chime,explosion
+case 332 muted=false
+ev PlasmaIntercepted
+ev PhaserHit damage=-5 destroyed=false
+ev HazardTriggered
+ev SingularityAbsorption
+ev SubsystemDamaged
+ev WebCollapsed
+ev ObstacleEncountered
+ev ShieldTransfer
+ev WebCollapsed
+sounds point_defense,damage,web_breached,shields,web_breached
+case 333 muted=true
+ev PhaserHit damage=100 destroyed=false
+ev TorpedoFired
+ev PhaserHit damage=-5 destroyed=false
+ev HazardTriggered
+ev KlingonCounterAttack damage=1e-09
+ev ConditionChanged from=3 to=0
+ev Docked
+ev ObstacleEncountered
+ev TorpedoFired
+ev PlasmaIntercepted
+ev LRScanCompleted
+ev KlingonCloakState cloaked=true
+ev ShieldTransfer
+ev AnomalyDiscovered
+sounds 
+case 334 muted=false
+ev WebBreached
+ev PhaserHit damage=-5 destroyed=false
+ev SubsystemDamaged
+ev WebCollapsed
+ev KlingonCounterAttack damage=0.25
+sounds web_breached,damage,web_breached,damage
+case 335 muted=true
+ev SingularityAbsorption
+ev WebBreached
+ev WebSegmentLaid
+ev PhaserFired
+ev AnomalyDiscovered
+ev SingularityAbsorption
+ev PlasmaImpact
+ev TorpedoFired
+ev KlingonScreening
+ev AnomalyDiscovered
+sounds 
+case 336 muted=false
+ev PlasmaDissipated
+ev WormholeJump
+ev WebCollapsed
+ev PhaserHit damage=0.25 destroyed=true
+ev StarbaseSurveillance
+ev Docked
+ev TorpedoHit damage=1e-09 destroyed=true
+ev SubsystemRepaired
+ev TorpedoHit damage=1e-09 destroyed=false
+ev StarbaseSurveillance
+sounds warp,web_breached,explosion,comm_chime,dock,explosion,explosion,comm_chime
+case 337 muted=false
+ev WebBreached
+ev LRScanCompleted
+ev StarbaseSurveillance
+ev KlingonCloakState cloaked=true
+ev WebSegmentLaid
+ev HazardTriggered
+ev AnomalyDiscovered
+ev PhaserHit damage=100 destroyed=true
+ev KlingonCounterAttack damage=0.25
+ev Docked
+ev WebBreached
+ev PhaserFired
+sounds web_breached,computer_beep,comm_chime,cloak,tholian_web,red_alert,explosion,damage,dock,web_breached,phaser
+case 338 muted=false
+ev PlasmaIntercepted
+ev SubsystemDamaged
+sounds point_defense,damage
+case 339 muted=false
+ev PlasmaDissipated
+ev PlasmaImpact
+ev LRScanCompleted
+ev SubsystemRepaired
+ev PlasmaImpact
+ev LRScanCompleted
+ev GameOver reason=1
+ev EntityMove
+ev ObstacleEncountered
+ev RomulanDecloak
+ev TorpedoHit damage=0 destroyed=false
+ev StarbaseSurveillance
+sounds plasma_impact,computer_beep,plasma_impact,computer_beep,defeat,decloak,comm_chime
+case 340 muted=false
+ev HazardTriggered
+sounds 
+case 341 muted=false
+ev ConditionChanged from=1 to=3
+ev KlingonScreening
+sounds 
+case 342 muted=false
+ev WebBreached
+ev PlasmaMoved
+ev ShieldTransfer
+ev PlasmaLaunched
+ev SubsystemRepaired
+ev Docked
+sounds web_breached,shields,plasma_launch,dock
+case 343 muted=false
+ev Docked
+ev GameOver reason=1
+ev PhaserHit damage=1e-09 destroyed=false
+ev ConditionChanged from=3 to=0
+ev HelpCalled
+ev ConditionChanged from=1 to=2
+sounds dock,defeat,explosion,comm_chime,red_alert
+case 344 muted=false
+ev WormholeJump
+ev KlingonScreening
+ev SubsystemRepaired
+ev WebCollapsed
+sounds warp,web_breached
+case 345 muted=false
+ev SingularityAbsorption
+ev PlasmaMoved
+ev PlasmaIntercepted
+ev PlasmaLaunched
+ev PlasmaMoved
+ev TorpedoHit damage=0 destroyed=true
+ev PlasmaIntercepted
+ev ObstacleEncountered
+ev PlasmaMoved
+sounds point_defense,plasma_launch,explosion,point_defense
+case 346 muted=true
+ev WebSegmentLaid
+ev TorpedoFired
+ev ShipMoved
+ev AnomalyDiscovered
+ev RomulanDecloak
+ev HelpCalled
+ev KlingonCounterAttack damage=-0
+ev RomulanDecloak
+ev PhaserHit damage=-0 destroyed=false
+ev EntityMove
+sounds 
+case 347 muted=false
+ev HelpCalled
+ev PlasmaDissipated
+ev EntityMove
+ev WebSegmentLaid
+ev RomulanDecloak
+ev PlasmaIntercepted
+ev WebCollapsed
+ev PhaserHit damage=100 destroyed=false
+ev KlingonScreening
+ev Docked
+ev TorpedoFired
+ev PlasmaDissipated
+sounds comm_chime,tholian_web,decloak,point_defense,web_breached,explosion,dock,torpedo_launch
+case 348 muted=false
+ev HazardTriggered
+ev ConditionChanged from=0 to=3
+ev WebCollapsed
+ev PlasmaDissipated
+ev AnomalyDiscovered
+ev KlingonScreening
+ev EntityMove
+ev PlasmaDissipated
+ev PlasmaIntercepted
+ev WebSegmentLaid
+ev LRScanCompleted
+sounds web_breached,red_alert,point_defense,tholian_web,computer_beep
+case 349 muted=false
+ev PlasmaIntercepted
+ev PhaserFired
+ev HazardTriggered
+sounds point_defense,phaser
+case 350 muted=false
+ev ShipMoved
+ev Docked
+ev TorpedoHit damage=100 destroyed=true
+ev SingularityAbsorption
+sounds warp,dock,explosion
+case 351 muted=false
+ev LRScanCompleted
+sounds computer_beep
+case 352 muted=false
+ev ConditionChanged from=2 to=2
+ev TorpedoHit damage=-5 destroyed=false
+ev PlasmaDissipated
+ev LRScanCompleted
+ev TorpedoHit damage=-5 destroyed=false
+sounds red_alert,computer_beep
+case 353 muted=false
+ev SubsystemDamaged
+ev PlasmaMoved
+ev WormholeJump
+ev PlasmaLaunched
+ev LRScanCompleted
+ev PlasmaLaunched
+ev LRScanCompleted
+ev ShipMoved
+ev Docked
+ev WebCollapsed
+ev SingularityAbsorption
+ev TorpedoHit damage=-5 destroyed=true
+ev TorpedoFired
+sounds damage,warp,plasma_launch,computer_beep,plasma_launch,computer_beep,warp,dock,web_breached,explosion,torpedo_launch
+case 354 muted=false
+ev PlasmaImpact
+ev TorpedoFired
+ev PlasmaMoved
+ev ShipMoved
+ev GameOver reason=2
+ev KlingonScreening
+sounds plasma_impact,torpedo_launch,warp,defeat
+case 355 muted=false
+ev RomulanDecloak
+ev HazardTriggered
+ev HelpCalled
+ev EntityMove
+ev EntityMove
+ev TorpedoFired
+ev LRScanCompleted
+ev KlingonCloakState cloaked=true
+ev StarbaseSurveillance
+ev WebCollapsed
+ev AnomalyDiscovered
+ev LRScanCompleted
+sounds decloak,comm_chime,torpedo_launch,computer_beep,cloak,comm_chime,web_breached,red_alert,computer_beep
+case 356 muted=false
+ev PlasmaIntercepted
+ev HazardTriggered
+ev WormholeJump
+ev TorpedoHit damage=0.25 destroyed=true
+ev HelpCalled
+sounds point_defense,warp,explosion,comm_chime
+case 357 muted=false
+ev StarbaseSurveillance
+ev StarbaseSurveillance
+ev WebCollapsed
+ev PhaserFired
+ev PhaserFired
+ev HazardTriggered
+ev PhaserHit damage=0 destroyed=false
+sounds comm_chime,comm_chime,web_breached,phaser,phaser
+case 358 muted=true
+ev ConditionChanged from=2 to=0
+ev PlasmaDissipated
+ev GameOver reason=0
+ev EntityMove
+ev EntityMove
+ev HazardTriggered
+sounds 
+case 359 muted=false
+ev Docked
+ev HelpCalled
+ev AnomalyDiscovered
+ev PhaserHit damage=0.25 destroyed=false
+ev AnomalyDiscovered
+ev KlingonScreening
+ev PhaserFired
+ev PlasmaMoved
+ev TorpedoHit damage=-5 destroyed=true
+ev Docked
+ev AnomalyDiscovered
+ev PlasmaIntercepted
+ev LRScanCompleted
+ev PhaserHit damage=1e-09 destroyed=false
+sounds dock,comm_chime,red_alert,explosion,red_alert,phaser,explosion,dock,red_alert,point_defense,computer_beep,explosion
+case 360 muted=false
+ev SubsystemRepaired
+ev AnomalyDiscovered
+ev GameOver reason=1
+ev KlingonScreening
+ev PlasmaMoved
+ev WebBreached
+ev WebBreached
+sounds red_alert,defeat,web_breached,web_breached
+case 361 muted=false
+ev TorpedoHit damage=100 destroyed=true
+ev GameOver reason=2
+ev ConditionChanged from=2 to=3
+ev RomulanDecloak
+ev Docked
+ev TorpedoHit damage=-0 destroyed=true
+ev SubsystemDamaged
+ev AnomalyDiscovered
+ev PlasmaMoved
+ev PhaserHit damage=-5 destroyed=true
+sounds explosion,defeat,decloak,dock,explosion,damage,red_alert,explosion
+case 362 muted=false
+ev StarbaseSurveillance
+ev Docked
+ev AnomalyDiscovered
+ev ObstacleEncountered
+ev PlasmaDissipated
+ev ShieldTransfer
+ev KlingonCounterAttack damage=1e-09
+ev PlasmaDissipated
+sounds comm_chime,dock,red_alert,shields,damage
+case 363 muted=false
+ev ShieldTransfer
+ev Docked
+ev SubsystemDamaged
+ev AnomalyDiscovered
+ev KlingonCloakState cloaked=true
+sounds shields,dock,damage,red_alert,cloak
+case 364 muted=false
+ev EntityMove
+ev LRScanCompleted
+ev KlingonCounterAttack damage=1e-09
+sounds computer_beep,damage
+case 365 muted=false
+ev PlasmaLaunched
+ev HazardTriggered
+ev ShieldTransfer
+ev WormholeJump
+ev PlasmaImpact
+ev PlasmaMoved
+sounds plasma_launch,shields,warp,plasma_impact
+case 366 muted=false
+ev AnomalyDiscovered
+sounds red_alert
+case 367 muted=false
+ev PlasmaImpact
+ev SubsystemRepaired
+ev SubsystemRepaired
+sounds plasma_impact
+case 368 muted=false
+ev ShipMoved
+ev StarbaseSurveillance
+ev RomulanDecloak
+ev KlingonCounterAttack damage=100
+ev WebBreached
+ev LRScanCompleted
+ev KlingonCounterAttack damage=100
+ev TorpedoHit damage=-5 destroyed=false
+ev RomulanDecloak
+ev ShipMoved
+ev SubsystemDamaged
+ev TorpedoFired
+ev PlasmaIntercepted
+sounds warp,comm_chime,decloak,damage,web_breached,computer_beep,damage,decloak,warp,damage,torpedo_launch,point_defense
+case 369 muted=false
+ev WebSegmentLaid
+ev GameOver reason=0
+ev PlasmaMoved
+ev SingularityAbsorption
+ev LRScanCompleted
+ev KlingonCloakState cloaked=true
+ev HazardTriggered
+ev PlasmaImpact
+ev KlingonCounterAttack damage=100
+sounds tholian_web,victory,computer_beep,cloak,plasma_impact,damage
+case 370 muted=false
+ev StarbaseSurveillance
+ev WormholeJump
+ev LRScanCompleted
+ev KlingonCloakState cloaked=false
+ev SubsystemDamaged
+ev WebCollapsed
+ev HelpCalled
+ev ShieldTransfer
+ev PhaserFired
+ev PlasmaMoved
+sounds comm_chime,warp,computer_beep,decloak,damage,web_breached,comm_chime,shields,phaser
+case 371 muted=false
+ev SubsystemDamaged
+ev PlasmaDissipated
+ev PlasmaMoved
+ev StarbaseSurveillance
+ev HelpCalled
+ev TorpedoFired
+ev WebCollapsed
+ev SingularityAbsorption
+ev Docked
+ev SubsystemDamaged
+ev WebCollapsed
+sounds damage,comm_chime,comm_chime,torpedo_launch,web_breached,dock,damage,web_breached
+case 372 muted=false
+ev PlasmaIntercepted
+ev ShieldTransfer
+ev SingularityAbsorption
+ev ConditionChanged from=3 to=3
+ev HazardTriggered
+ev WormholeJump
+ev PlasmaImpact
+ev AnomalyDiscovered
+ev PlasmaImpact
+ev PhaserFired
+ev KlingonCounterAttack damage=1e-09
+ev LRScanCompleted
+ev WebCollapsed
+ev TorpedoHit damage=-0 destroyed=true
+sounds point_defense,shields,warp,plasma_impact,red_alert,plasma_impact,phaser,damage,computer_beep,web_breached,explosion
+case 373 muted=false
+ev WebCollapsed
+ev PhaserFired
+ev EntityMove
+ev ShieldTransfer
+ev PhaserHit damage=0 destroyed=false
+sounds web_breached,phaser,shields
+case 374 muted=false
+ev SubsystemDamaged
+ev ConditionChanged from=3 to=3
+ev PhaserFired
+ev PlasmaIntercepted
+ev PhaserFired
+ev RomulanDecloak
+ev PlasmaImpact
+ev ShipMoved
+ev ConditionChanged from=3 to=1
+ev SubsystemRepaired
+ev ShieldTransfer
+ev ConditionChanged from=3 to=2
+ev KlingonScreening
+ev PlasmaLaunched
+sounds damage,phaser,point_defense,phaser,decloak,plasma_impact,warp,shields,red_alert,plasma_launch
+case 375 muted=true
+ev WormholeJump
+ev KlingonScreening
+ev PlasmaImpact
+ev PlasmaIntercepted
+ev LRScanCompleted
+ev PlasmaDissipated
+ev EntityMove
+ev AnomalyDiscovered
+ev Docked
+ev ShipMoved
+ev PlasmaIntercepted
+ev WebBreached
+ev PhaserFired
+sounds 
+case 376 muted=false
+ev PhaserFired
+ev WebBreached
+ev PlasmaDissipated
+sounds phaser,web_breached
+case 377 muted=false
+ev HazardTriggered
+ev ShipMoved
+ev SubsystemDamaged
+ev SingularityAbsorption
+ev WebSegmentLaid
+ev GameOver reason=4
+ev AnomalyDiscovered
+ev SubsystemRepaired
+ev EntityMove
+ev WebBreached
+sounds warp,damage,tholian_web,defeat,red_alert,web_breached
+case 378 muted=false
+ev SubsystemDamaged
+ev ShieldTransfer
+ev TorpedoFired
+ev StarbaseSurveillance
+ev Docked
+ev PlasmaMoved
+ev SingularityAbsorption
+ev ShieldTransfer
+ev PhaserHit damage=0 destroyed=true
+ev HelpCalled
+ev SingularityAbsorption
+sounds damage,shields,torpedo_launch,comm_chime,dock,shields,explosion,comm_chime
+case 379 muted=false
+ev PlasmaLaunched
+ev PlasmaLaunched
+sounds plasma_launch,plasma_launch
+case 380 muted=true
+ev ShieldTransfer
+ev TorpedoHit damage=0 destroyed=false
+ev ShipMoved
+ev ObstacleEncountered
+ev PhaserFired
+ev TorpedoFired
+ev ConditionChanged from=2 to=1
+ev ObstacleEncountered
+ev ConditionChanged from=1 to=1
+sounds 
+case 381 muted=false
+ev GameOver reason=1
+ev ShipMoved
+sounds defeat,warp
+case 382 muted=false
+ev Docked
+ev PlasmaIntercepted
+ev KlingonCloakState cloaked=true
+ev GameOver reason=5
+ev SingularityAbsorption
+sounds dock,point_defense,cloak,defeat
+case 383 muted=true
+ev PlasmaLaunched
+ev AnomalyDiscovered
+ev SubsystemRepaired
+ev PlasmaMoved
+ev SubsystemRepaired
+ev TorpedoHit damage=100 destroyed=true
+ev ShipMoved
+sounds 
+case 384 muted=false
+ev SubsystemRepaired
+ev PlasmaMoved
+ev HelpCalled
+ev ConditionChanged from=3 to=1
+ev AnomalyDiscovered
+ev PlasmaIntercepted
+ev PhaserFired
+ev HazardTriggered
+ev WormholeJump
+ev PlasmaImpact
+ev KlingonCounterAttack damage=100
+ev KlingonCloakState cloaked=false
+ev ConditionChanged from=1 to=2
+sounds comm_chime,red_alert,point_defense,phaser,warp,plasma_impact,damage,decloak,red_alert
+case 385 muted=false
+ev SubsystemRepaired
+ev HelpCalled
+sounds comm_chime
+case 386 muted=false
+ev HazardTriggered
+ev WebSegmentLaid
+ev WebSegmentLaid
+ev WebBreached
+sounds tholian_web,tholian_web,web_breached
+case 387 muted=false
+ev AnomalyDiscovered
+ev WebSegmentLaid
+ev Docked
+ev PlasmaMoved
+ev KlingonScreening
+ev WebCollapsed
+ev PlasmaDissipated
+sounds red_alert,tholian_web,dock,web_breached
+case 388 muted=false
+ev WormholeJump
+ev ShipMoved
+ev RomulanDecloak
+ev ObstacleEncountered
+ev PlasmaDissipated
+ev ShipMoved
+ev KlingonScreening
+ev WormholeJump
+ev PlasmaIntercepted
+ev PlasmaIntercepted
+ev KlingonScreening
+ev SingularityAbsorption
+ev GameOver reason=2
+ev WebCollapsed
+sounds warp,warp,decloak,warp,warp,point_defense,point_defense,defeat,web_breached
+case 389 muted=false
+ev KlingonCounterAttack damage=100
+ev StarbaseSurveillance
+ev PhaserFired
+ev PlasmaImpact
+ev ObstacleEncountered
+ev HazardTriggered
+ev SubsystemRepaired
+ev PlasmaIntercepted
+ev HazardTriggered
+ev PlasmaLaunched
+ev HelpCalled
+sounds damage,comm_chime,phaser,plasma_impact,point_defense,plasma_launch,comm_chime
+case 390 muted=false
+ev SubsystemDamaged
+ev PhaserHit damage=-0 destroyed=true
+ev PhaserHit damage=100 destroyed=false
+ev WebBreached
+ev PlasmaLaunched
+ev TorpedoFired
+ev AnomalyDiscovered
+ev PlasmaImpact
+ev PlasmaImpact
+ev AnomalyDiscovered
+ev KlingonCloakState cloaked=true
+sounds damage,explosion,explosion,web_breached,plasma_launch,torpedo_launch,red_alert,plasma_impact,plasma_impact,red_alert,cloak
+case 391 muted=false
+ev ConditionChanged from=1 to=3
+ev SubsystemDamaged
+ev KlingonCloakState cloaked=true
+sounds damage,cloak
+case 392 muted=false
+ev HazardTriggered
+ev HazardTriggered
+ev PlasmaDissipated
+sounds 
+case 393 muted=false
+ev WebBreached
+ev GameOver reason=2
+ev WormholeJump
+ev GameOver reason=1
+ev Docked
+ev LRScanCompleted
+sounds web_breached,defeat,warp,defeat,dock,computer_beep
+case 394 muted=false
+ev ConditionChanged from=2 to=3
+ev PlasmaDissipated
+ev PhaserHit damage=-0 destroyed=false
+ev AnomalyDiscovered
+ev SingularityAbsorption
+sounds red_alert
+case 395 muted=false
+ev SubsystemDamaged
+sounds damage
+case 396 muted=false
+ev ShipMoved
+ev WebCollapsed
+ev SubsystemRepaired
+sounds warp,web_breached
+case 397 muted=false
+ev WebCollapsed
+ev ShipMoved
+ev GameOver reason=3
+ev SingularityAbsorption
+ev RomulanDecloak
+ev Docked
+ev LRScanCompleted
+ev KlingonScreening
+ev ShipMoved
+ev SubsystemDamaged
+ev PhaserHit damage=0 destroyed=true
+ev PlasmaImpact
+ev WebSegmentLaid
+sounds web_breached,warp,defeat,decloak,dock,computer_beep,warp,damage,explosion,plasma_impact,tholian_web
+case 398 muted=false
+ev StarbaseSurveillance
+ev WebCollapsed
+ev SubsystemRepaired
+sounds comm_chime,web_breached
+case 399 muted=true
+ev PhaserFired
+ev EntityMove
+ev KlingonCounterAttack damage=0
+sounds 

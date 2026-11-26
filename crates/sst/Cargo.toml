@@ -1,0 +1,19 @@
+[package]
+name = "super-star-trek"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish.workspace = true
+description = "Super Star Trek: 1978 mainframe strategy, rebuilt for the modern terminal"
+default-run = "sst"
+
+[[bin]]
+name = "sst"
+path = "src/main.rs"
+
+[dependencies]
+sst-engine = { path = "../sst-engine" }
+sst-audio = { path = "../sst-audio" }
+sst-tuikit = { path = "../sst-tuikit" }
+sst-tui = { path = "../sst-tui" }

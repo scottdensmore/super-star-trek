@@ -1,0 +1,9 @@
+"" err $HOME is not defined
+"/home/u" ok /home/u/.super-star-trek/config.json
+"/home/u/" ok /home/u/.super-star-trek/config.json
+"/a//b/./c/../d" ok /a/b/d/.super-star-trek/config.json
+"rel/dir" ok rel/dir/.super-star-trek/config.json
+"." ok .super-star-trek/config.json
+"/" ok /.super-star-trek/config.json
+"~" ok ~/.super-star-trek/config.json
+"/x y/z" ok /x y/z/.super-star-trek/config.json

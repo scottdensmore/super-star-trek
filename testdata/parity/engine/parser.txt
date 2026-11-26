@@ -1,0 +1,826 @@
+in 
+P {"Action":null,"Special":"","Error":"no command entered"}
+in 202020
+P {"Action":null,"Special":"","Error":"no command entered"}
+in 6e6176
+P {"Action":null,"Special":"","Error":"usage: nav q \u003cr\u003e \u003cc\u003e (quadrant), nav s \u003cr\u003e \u003cc\u003e (sector), or nav \u003ccourse\u003e \u003cwarp\u003e. Type 'help nav' for guide"}
+in 6e61762031
+P {"Action":null,"Special":"","Error":"usage: nav q \u003cr\u003e \u003cc\u003e (quadrant), nav s \u003cr\u003e \u003cc\u003e (sector), or nav \u003ccourse\u003e \u003cwarp\u003e. Type 'help nav' for guide"}
+in 6e617620322035
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":1,"DestSector":[2,5],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 6e617620392039
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":9,"Warp":9,"DestSector":[0,0],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 6e617620302033
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":3,"DestSector":[0,0],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 6e617620322e302035
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":2,"Warp":5,"DestSector":[0,0],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 6e617620312e353720302e35
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":1.57,"Warp":0.5,"DestSector":[0,0],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 6e61762033202d31
+P {"Action":null,"Special":"","Error":"warp factor must be positive"}
+in 6e6176207120332034
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":1,"DestSector":[0,0],"DestQuad":[3,4]}},"Special":"","Error":null}
+in 6e617620512033203420322e35
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":2.5,"DestSector":[0,0],"DestQuad":[3,4]}},"Special":"","Error":null}
+in 6e61762071756164203820382030
+P {"Action":null,"Special":"","Error":"warp factor must be positive"}
+in 6e6176207175616472616e7420312031202d31
+P {"Action":null,"Special":"","Error":"warp factor must be positive"}
+in 6e6176207120392031
+P {"Action":null,"Special":"","Error":"quadrant coordinates must be between 1 and 8"}
+in 6e6176207120612062
+P {"Action":null,"Special":"","Error":"invalid quadrant parameters: expected integer row and column"}
+in 6e6176207320322033
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":1,"DestSector":[2,3],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 6e61762073656320392039
+P {"Action":null,"Special":"","Error":"sector coordinates must be between 1 and 8"}
+in 6e617620736563746f7220782031
+P {"Action":null,"Special":"","Error":"invalid sector parameters: expected integer row and column"}
+in 6e6176206320312e352032
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":1.5,"Warp":2,"DestSector":[0,0],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 6e617620636f7572736520302030
+P {"Action":null,"Special":"","Error":"warp factor must be positive"}
+in 6e6176206320782079
+P {"Action":null,"Special":"","Error":"invalid course/warp parameters: expected numbers"}
+in 6e6176207820312032
+P {"Action":null,"Special":"","Error":"usage: nav q \u003cr\u003e \u003cc\u003e (quadrant), nav s \u003cr\u003e \u003cc\u003e (sector), or nav \u003ccourse\u003e \u003cwarp\u003e. Type 'help nav' for guide"}
+in 6e617620312032203320342035
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":1,"DestSector":[1,2],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 6d6f766520342034
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":1,"DestSector":[4,4],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 5741525020302e352031
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0.5,"Warp":1,"DestSector":[0,0],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 6e6176206e616e2031
+P {"Action":ERR json: unsupported value: NaN,"Special":"","Error":null}
+in 6e61762031206e616e
+P {"Action":ERR json: unsupported value: NaN,"Special":"","Error":null}
+in 6e617620696e662031
+P {"Action":ERR json: unsupported value: +Inf,"Special":"","Error":null}
+in 6e6176203120696e66
+P {"Action":ERR json: unsupported value: +Inf,"Special":"","Error":null}
+in 6e61762031653430302031
+P {"Action":null,"Special":"","Error":"invalid navigation parameters: expected numbers"}
+in 6e617620343239343936373239372031
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":4294967297,"Warp":1,"DestSector":[0,0],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 6e617620315f302032
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":10,"Warp":2,"DestSector":[0,0],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 746f72
+P {"Action":null,"Special":"","Error":"usage: tor \u003ccourse\u003e or tor \u003crow\u003e \u003ccol\u003e"}
+in 746f7220342035
+P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[4,5],"Angle":0,"Direction":0}},"Special":"","Error":null}
+in 746f7220302035
+P {"Action":null,"Special":"","Error":"torpedo target sector coordinates must be between 1 and 8"}
+in 746f7220332e3134
+P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[0,0],"Angle":3.14,"Direction":0}},"Special":"","Error":null}
+in 746f722078
+P {"Action":null,"Special":"","Error":"invalid torpedo course: x"}
+in 746f7220632033
+P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[0,0],"Angle":0,"Direction":3}},"Special":"","Error":null}
+in 746f72206320302e35
+P {"Action":null,"Special":"","Error":"torpedo course must be between 1.0 and 9.0 (1=E, 3=N, 5=W, 7=S)"}
+in 746f7220632039
+P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[0,0],"Angle":0,"Direction":9}},"Special":"","Error":null}
+in 746f7220636f7572736520392e35
+P {"Action":null,"Special":"","Error":"torpedo course must be between 1.0 and 9.0 (1=E, 3=N, 5=W, 7=S)"}
+in 746f7220632078
+P {"Action":null,"Special":"","Error":"torpedo course must be between 1.0 and 9.0 (1=E, 3=N, 5=W, 7=S)"}
+in 746f7220612062
+P {"Action":null,"Special":"","Error":"invalid torpedo target: a b"}
+in 746f727065646f20312031
+P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[1,1],"Angle":0,"Direction":0}},"Special":"","Error":null}
+in 746f72203120322033
+P {"Action":null,"Special":"","Error":"usage: tor \u003ccourse\u003e or tor \u003crow\u003e \u003ccol\u003e"}
+in 746f72206e616e
+P {"Action":ERR json: unsupported value: NaN,"Special":"","Error":null}
+in 746f722063206e616e
+P {"Action":ERR json: unsupported value: NaN,"Special":"","Error":null}
+in 746f7220312e352032
+P {"Action":null,"Special":"","Error":"invalid torpedo target: 1.5 2"}
+in 706861
+P {"Action":null,"Special":"","Error":"usage: pha \u003cenergy\u003e or pha \u003cenergy\u003e \u003crow\u003e \u003ccol\u003e"}
+in 70686120333030
+P {"Action":{"Type":"engine.ActionFirePhasers","Data":{"Energy":300,"ManualAllocation":null}},"Special":"","Error":null}
+in 706861202d35
+P {"Action":null,"Special":"","Error":"phaser energy must be positive"}
+in 7068612030
+P {"Action":null,"Special":"","Error":"phaser energy must be positive"}
+in 7068612078
+P {"Action":null,"Special":"","Error":"invalid phaser energy: x"}
+in 7068612032303020332c34
+P {"Action":{"Type":"engine.ActionPhaserDirect","Data":{"TargetSector":[3,4],"Energy":200}},"Special":"","Error":null}
+in 7068612032303020332c2034
+P {"Action":null,"Special":"","Error":"phaser target sector coordinates must be between 1 and 8"}
+in 7068612032303020392c39
+P {"Action":null,"Special":"","Error":"phaser target sector coordinates must be between 1 and 8"}
+in 706861203230302033
+P {"Action":null,"Special":"","Error":"usage: pha \u003cenergy\u003e or pha \u003cenergy\u003e \u003crow\u003e \u003ccol\u003e"}
+in 7068612031303020342035
+P {"Action":{"Type":"engine.ActionPhaserDirect","Data":{"TargetSector":[4,5],"Energy":100}},"Special":"","Error":null}
+in 7068612031303020342078
+P {"Action":null,"Special":"","Error":"phaser target sector coordinates must be between 1 and 8"}
+in 706861207820342035
+P {"Action":null,"Special":"","Error":"invalid phaser energy: x"}
+in 706861203130203120322033
+P {"Action":null,"Special":"","Error":"usage: pha \u003cenergy\u003e or pha \u003cenergy\u003e \u003crow\u003e \u003ccol\u003e"}
+in 7068617365727320316533
+P {"Action":{"Type":"engine.ActionFirePhasers","Data":{"Energy":1000,"ManualAllocation":null}},"Special":"","Error":null}
+in 706861206e616e
+P {"Action":ERR json: unsupported value: NaN,"Special":"","Error":null}
+in 70686120696e66
+P {"Action":ERR json: unsupported value: +Inf,"Special":"","Error":null}
+in 736865
+P {"Action":null,"Special":"","Error":"usage: she \u003camount\u003e"}
+in 73686520353030
+P {"Action":{"Type":"engine.ActionShields","Data":{"Amount":500}},"Special":"","Error":null}
+in 736865202d323030
+P {"Action":{"Type":"engine.ActionShields","Data":{"Amount":-200}},"Special":"","Error":null}
+in 7368652078
+P {"Action":null,"Special":"","Error":"invalid shield amount: x"}
+in 73686520312032
+P {"Action":null,"Special":"","Error":"usage: she \u003camount\u003e"}
+in 736869656c64732030
+P {"Action":{"Type":"engine.ActionShields","Data":{"Amount":0}},"Special":"","Error":null}
+in 64656620316533
+P {"Action":{"Type":"engine.ActionShields","Data":{"Amount":1000}},"Special":"","Error":null}
+in 736865206e616e
+P {"Action":ERR json: unsupported value: NaN,"Special":"","Error":null}
+in 646f63
+P {"Action":{"Type":"engine.ActionDock","Data":{}},"Special":"","Error":null}
+in 444f434b
+P {"Action":{"Type":"engine.ActionDock","Data":{}},"Special":"","Error":null}
+in 6f707473
+P {"Action":null,"Special":"options","Error":null}
+in 6f7074696f6e73
+P {"Action":null,"Special":"options","Error":null}
+in 73657474696e6773
+P {"Action":null,"Special":"options","Error":null}
+in 7363656e6172696f73
+P {"Action":null,"Special":"scenarios","Error":null}
+in 7363656e
+P {"Action":null,"Special":"scenarios","Error":null}
+in 746f7572
+P {"Action":null,"Special":"tour","Error":null}
+in 6f7264657273
+P {"Action":null,"Special":"orders","Error":null}
+in 544f5552
+P {"Action":null,"Special":"tour","Error":null}
+in 7468656d65
+P {"Action":null,"Special":"theme","Error":null}
+in 7468656d6520416d626572
+P {"Action":null,"Special":"theme amber","Error":null}
+in 7468656d6520612062
+P {"Action":null,"Special":"theme a","Error":null}
+in 68656c70
+P {"Action":null,"Special":"help","Error":null}
+in 3f
+P {"Action":null,"Special":"help","Error":null}
+in 636f6d6d616e6473
+P {"Action":null,"Special":"help","Error":null}
+in 68656c70206e6176
+P {"Action":null,"Special":"help nav","Error":null}
+in 68656c7020544f525045444f
+P {"Action":null,"Special":"help tor","Error":null}
+in 68656c702072657469636c65
+P {"Action":null,"Special":"help tor","Error":null}
+in 68656c7020706861
+P {"Action":null,"Special":"help pha","Error":null}
+in 68656c7020736869656c6473
+P {"Action":null,"Special":"help she","Error":null}
+in 68656c7020646f636b
+P {"Action":null,"Special":"help doc","Error":null}
+in 68656c70206d6170
+P {"Action":null,"Special":"help chart","Error":null}
+in 68656c7020667265657a65
+P {"Action":null,"Special":"help saves","Error":null}
+in 68656c702073657474696e6773
+P {"Action":null,"Special":"help options","Error":null}
+in 68656c702078797a
+P {"Action":null,"Special":"help xyz","Error":null}
+in 68656c7020466f6f20626172
+P {"Action":null,"Special":"help foo","Error":null}
+in 71756974
+P {"Action":null,"Special":"quit","Error":null}
+in 65786974
+P {"Action":null,"Special":"quit","Error":null}
+in 71
+P {"Action":null,"Special":"quit","Error":null}
+in 51
+P {"Action":null,"Special":"quit","Error":null}
+in 6c727363616e
+P {"Action":null,"Special":"","Error":"unknown command: \"lrscan\" (type 'help' for commands)"}
+in 73727363616e
+P {"Action":null,"Special":"","Error":"unknown command: \"srscan\" (type 'help' for commands)"}
+in 78797a7a79
+P {"Action":null,"Special":"","Error":"unknown command: \"xyzzy\" (type 'help' for commands)"}
+in 2271756f74656422
+P {"Action":null,"Special":"","Error":"unknown command: \"\\\"quoted\\\"\" (type 'help' for commands)"}
+in e697a5e69cac
+P {"Action":null,"Special":"","Error":"unknown command: \"日本\" (type 'help' for commands)"}
+in 6e617609320935
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":1,"DestSector":[2,5],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 20207368652020203130302020
+P {"Action":{"Type":"engine.ActionShields","Data":{"Amount":100}},"Special":"","Error":null}
+in c2a07368652031
+P {"Action":{"Type":"engine.ActionShields","Data":{"Amount":1}},"Special":"","Error":null}
+in 6e617620322035e38080
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":1,"DestSector":[2,5],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 736865207820332c342031653220646f63
+P {"Action":null,"Special":"","Error":"usage: she \u003camount\u003e"}
+in 332c342039203920322e35
+P {"Action":null,"Special":"","Error":"unknown command: \"3,4\" (type 'help' for commands)"}
+in 746f72
+P {"Action":null,"Special":"","Error":"usage: tor \u003ccourse\u003e or tor \u003crow\u003e \u003ccol\u003e"}
+in 31
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 31207120332c342063
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 6e6176
+P {"Action":null,"Special":"","Error":"usage: nav q \u003cr\u003e \u003cc\u003e (quadrant), nav s \u003cr\u003e \u003cc\u003e (sector), or nav \u003ccourse\u003e \u003cwarp\u003e. Type 'help nav' for guide"}
+in 7820392031653220302e35
+P {"Action":null,"Special":"","Error":"unknown command: \"x\" (type 'help' for commands)"}
+in 6320646f63
+P {"Action":null,"Special":"","Error":"unknown command: \"c\" (type 'help' for commands)"}
+in 68656c70
+P {"Action":null,"Special":"help","Error":null}
+in 71
+P {"Action":null,"Special":"quit","Error":null}
+in 2e20736865
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 68656c70
+P {"Action":null,"Special":"help","Error":null}
+in 2e
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 63203120646f63
+P {"Action":null,"Special":"","Error":"unknown command: \"c\" (type 'help' for commands)"}
+in 7120322e35202d31
+P {"Action":null,"Special":"quit","Error":null}
+in 2c20382070686120736865
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 63207468656d6520312039
+P {"Action":null,"Special":"","Error":"unknown command: \"c\" (type 'help' for commands)"}
+in 7320646f6320322e3520736865206e6176
+P {"Action":null,"Special":"","Error":"unknown command: \"s\" (type 'help' for commands)"}
+in 39203420646f63206e61762073
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 332c342068656c7020646f6320332c34206e6176
+P {"Action":null,"Special":"","Error":"unknown command: \"3,4\" (type 'help' for commands)"}
+in 73
+P {"Action":null,"Special":"","Error":"unknown command: \"s\" (type 'help' for commands)"}
+in 2e20302071
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 2c2031
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 6e6176202e20732073
+P {"Action":null,"Special":"","Error":"usage: nav q \u003cr\u003e \u003cc\u003e (quadrant), nav s \u003cr\u003e \u003cc\u003e (sector), or nav \u003ccourse\u003e \u003cwarp\u003e. Type 'help nav' for guide"}
+in 39
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 30206e6176207468656d6520736865
+P {"Action":null,"Special":"","Error":"unknown command: \"0\" (type 'help' for commands)"}
+in 7468656d6520746f72
+P {"Action":null,"Special":"theme tor","Error":null}
+in 2c
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 3920382031653220732038
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 2d3120322e352031
+P {"Action":null,"Special":"","Error":"unknown command: \"-1\" (type 'help' for commands)"}
+in 2e2068656c702030
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 7320322e35203120736865
+P {"Action":null,"Special":"","Error":"unknown command: \"s\" (type 'help' for commands)"}
+in 646f63202e
+P {"Action":{"Type":"engine.ActionDock","Data":{}},"Special":"","Error":null}
+in 2e
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 73686520746f72203920302e35
+P {"Action":null,"Special":"","Error":"usage: she \u003camount\u003e"}
+in 7468656d65202d312078
+P {"Action":null,"Special":"theme -1","Error":null}
+in 34203820646f63207120316532
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 73686520706861
+P {"Action":null,"Special":"","Error":"invalid shield amount: pha"}
+in 2d312078
+P {"Action":null,"Special":"","Error":"unknown command: \"-1\" (type 'help' for commands)"}
+in 342068656c7020302e3520322e352078
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 6e6176203165322030
+P {"Action":null,"Special":"","Error":"warp factor must be positive"}
+in 68656c7020302e35207468656d65
+P {"Action":null,"Special":"help 0.5","Error":null}
+in 2c2034203820746f72
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 706861
+P {"Action":null,"Special":"","Error":"usage: pha \u003cenergy\u003e or pha \u003cenergy\u003e \u003crow\u003e \u003ccol\u003e"}
+in 6e6176
+P {"Action":null,"Special":"","Error":"usage: nav q \u003cr\u003e \u003cc\u003e (quadrant), nav s \u003cr\u003e \u003cc\u003e (sector), or nav \u003ccourse\u003e \u003cwarp\u003e. Type 'help nav' for guide"}
+in 746f722031
+P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[0,0],"Angle":1,"Direction":0}},"Special":"","Error":null}
+in 2c20332c3420736865
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 646f632031653220736865
+P {"Action":{"Type":"engine.ActionDock","Data":{}},"Special":"","Error":null}
+in 736865
+P {"Action":null,"Special":"","Error":"usage: she \u003camount\u003e"}
+in 2c20302e3520706861
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 2e20732030
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 332c34207120302e35
+P {"Action":null,"Special":"","Error":"unknown command: \"3,4\" (type 'help' for commands)"}
+in 316532
+P {"Action":null,"Special":"","Error":"unknown command: \"1e2\" (type 'help' for commands)"}
+in 646f632078202c
+P {"Action":{"Type":"engine.ActionDock","Data":{}},"Special":"","Error":null}
+in 732068656c702063202d31202e
+P {"Action":null,"Special":"","Error":"unknown command: \"s\" (type 'help' for commands)"}
+in 2e
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 2c20746f72
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 39
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 68656c70203920746f7220322e3520646f63
+P {"Action":null,"Special":"help 9","Error":null}
+in 3920646f63
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 746f7220332c342068656c70
+P {"Action":null,"Special":"","Error":"invalid torpedo target: 3,4 help"}
+in 392034
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 302e35
+P {"Action":null,"Special":"","Error":"unknown command: \"0.5\" (type 'help' for commands)"}
+in 38
+P {"Action":null,"Special":"","Error":"unknown command: \"8\" (type 'help' for commands)"}
+in 302e35206320322e35207368652039
+P {"Action":null,"Special":"","Error":"unknown command: \"0.5\" (type 'help' for commands)"}
+in 6e6176202c
+P {"Action":null,"Special":"","Error":"usage: nav q \u003cr\u003e \u003cc\u003e (quadrant), nav s \u003cr\u003e \u003cc\u003e (sector), or nav \u003ccourse\u003e \u003cwarp\u003e. Type 'help nav' for guide"}
+in 302e352073
+P {"Action":null,"Special":"","Error":"unknown command: \"0.5\" (type 'help' for commands)"}
+in 382068656c702034
+P {"Action":null,"Special":"","Error":"unknown command: \"8\" (type 'help' for commands)"}
+in 7468656d65207468656d6520316532
+P {"Action":null,"Special":"theme theme","Error":null}
+in 73202d312078
+P {"Action":null,"Special":"","Error":"unknown command: \"s\" (type 'help' for commands)"}
+in 302e3520316532207120736865
+P {"Action":null,"Special":"","Error":"unknown command: \"0.5\" (type 'help' for commands)"}
+in 2e
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 39207120342063
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 2d3120382034
+P {"Action":null,"Special":"","Error":"unknown command: \"-1\" (type 'help' for commands)"}
+in 30203420746f72203165322071
+P {"Action":null,"Special":"","Error":"unknown command: \"0\" (type 'help' for commands)"}
+in 3420646f63206320706861206e6176
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 322e3520712073
+P {"Action":null,"Special":"","Error":"unknown command: \"2.5\" (type 'help' for commands)"}
+in 302e3520746f72207320746f722034
+P {"Action":null,"Special":"","Error":"unknown command: \"0.5\" (type 'help' for commands)"}
+in 746f72
+P {"Action":null,"Special":"","Error":"usage: tor \u003ccourse\u003e or tor \u003crow\u003e \u003ccol\u003e"}
+in 342078
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 322e35
+P {"Action":null,"Special":"","Error":"unknown command: \"2.5\" (type 'help' for commands)"}
+in 646f63207820332c3420712030
+P {"Action":{"Type":"engine.ActionDock","Data":{}},"Special":"","Error":null}
+in 2e202e
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 3020302e3520302e35206320322e35
+P {"Action":null,"Special":"","Error":"unknown command: \"0\" (type 'help' for commands)"}
+in 39202c2030
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 7320392034
+P {"Action":null,"Special":"","Error":"unknown command: \"s\" (type 'help' for commands)"}
+in 322e35207120332c34
+P {"Action":null,"Special":"","Error":"unknown command: \"2.5\" (type 'help' for commands)"}
+in 6e6176206e6176
+P {"Action":null,"Special":"","Error":"usage: nav q \u003cr\u003e \u003cc\u003e (quadrant), nav s \u003cr\u003e \u003cc\u003e (sector), or nav \u003ccourse\u003e \u003cwarp\u003e. Type 'help nav' for guide"}
+in 6e6176
+P {"Action":null,"Special":"","Error":"usage: nav q \u003cr\u003e \u003cc\u003e (quadrant), nav s \u003cr\u003e \u003cc\u003e (sector), or nav \u003ccourse\u003e \u003cwarp\u003e. Type 'help nav' for guide"}
+in 2d3120632071202c2038
+P {"Action":null,"Special":"","Error":"unknown command: \"-1\" (type 'help' for commands)"}
+in 746f72202d312068656c702063
+P {"Action":null,"Special":"","Error":"usage: tor \u003ccourse\u003e or tor \u003crow\u003e \u003ccol\u003e"}
+in 7820316532
+P {"Action":null,"Special":"","Error":"unknown command: \"x\" (type 'help' for commands)"}
+in 71207468656d65
+P {"Action":null,"Special":"quit","Error":null}
+in 7468656d652030
+P {"Action":null,"Special":"theme 0","Error":null}
+in 7320646f632073
+P {"Action":null,"Special":"","Error":"unknown command: \"s\" (type 'help' for commands)"}
+in 31653220342073686520632030
+P {"Action":null,"Special":"","Error":"unknown command: \"1e2\" (type 'help' for commands)"}
+in 706861203020782071
+P {"Action":null,"Special":"","Error":"phaser energy must be positive"}
+in 39203920712078202e
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 31202d31
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 736865
+P {"Action":null,"Special":"","Error":"usage: she \u003camount\u003e"}
+in 732039202c207468656d652068656c70
+P {"Action":null,"Special":"","Error":"unknown command: \"s\" (type 'help' for commands)"}
+in 7468656d6520322e3520302e35
+P {"Action":null,"Special":"theme 2.5","Error":null}
+in 332c342030
+P {"Action":null,"Special":"","Error":"unknown command: \"3,4\" (type 'help' for commands)"}
+in 322e3520302e35202e207068612039
+P {"Action":null,"Special":"","Error":"unknown command: \"2.5\" (type 'help' for commands)"}
+in 2d3120312039
+P {"Action":null,"Special":"","Error":"unknown command: \"-1\" (type 'help' for commands)"}
+in 2c
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 7820712068656c70
+P {"Action":null,"Special":"","Error":"unknown command: \"x\" (type 'help' for commands)"}
+in 2d312031
+P {"Action":null,"Special":"","Error":"unknown command: \"-1\" (type 'help' for commands)"}
+in 71207368652038202c
+P {"Action":null,"Special":"quit","Error":null}
+in 3820302e352063
+P {"Action":null,"Special":"","Error":"unknown command: \"8\" (type 'help' for commands)"}
+in 70686120646f63
+P {"Action":null,"Special":"","Error":"invalid phaser energy: doc"}
+in 68656c702070686120746f7220736865
+P {"Action":null,"Special":"help pha","Error":null}
+in 332c3420646f632071203920316532
+P {"Action":null,"Special":"","Error":"unknown command: \"3,4\" (type 'help' for commands)"}
+in 316532207068612068656c70
+P {"Action":null,"Special":"","Error":"unknown command: \"1e2\" (type 'help' for commands)"}
+in 3420332c342031653220322e35202d31
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 3820646f63
+P {"Action":null,"Special":"","Error":"unknown command: \"8\" (type 'help' for commands)"}
+in 7120736865206e6176207468656d652039
+P {"Action":null,"Special":"quit","Error":null}
+in 7368652034202c
+P {"Action":null,"Special":"","Error":"usage: she \u003camount\u003e"}
+in 782068656c70206e6176
+P {"Action":null,"Special":"","Error":"unknown command: \"x\" (type 'help' for commands)"}
+in 2d3120732068656c702031
+P {"Action":null,"Special":"","Error":"unknown command: \"-1\" (type 'help' for commands)"}
+in 3120392031653220732071
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 302e352073
+P {"Action":null,"Special":"","Error":"unknown command: \"0.5\" (type 'help' for commands)"}
+in 746f72
+P {"Action":null,"Special":"","Error":"usage: tor \u003ccourse\u003e or tor \u003crow\u003e \u003ccol\u003e"}
+in 3420736865202c2034
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 7468656d65
+P {"Action":null,"Special":"theme","Error":null}
+in 2e2068656c70
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 34
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 2e2073
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 34202d3120712068656c70
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 312031202c20382068656c70
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 73686520322e3520736865
+P {"Action":null,"Special":"","Error":"usage: she \u003camount\u003e"}
+in 78
+P {"Action":null,"Special":"","Error":"unknown command: \"x\" (type 'help' for commands)"}
+in 746f72202c
+P {"Action":null,"Special":"","Error":"invalid torpedo course: ,"}
+in 31
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 2d31
+P {"Action":null,"Special":"","Error":"unknown command: \"-1\" (type 'help' for commands)"}
+in 322e35206320782071
+P {"Action":null,"Special":"","Error":"unknown command: \"2.5\" (type 'help' for commands)"}
+in 2c2063
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 646f63
+P {"Action":{"Type":"engine.ActionDock","Data":{}},"Special":"","Error":null}
+in 322e35206e617620392030
+P {"Action":null,"Special":"","Error":"unknown command: \"2.5\" (type 'help' for commands)"}
+in 68656c70
+P {"Action":null,"Special":"help","Error":null}
+in 7468656d65
+P {"Action":null,"Special":"theme","Error":null}
+in 646f63
+P {"Action":{"Type":"engine.ActionDock","Data":{}},"Special":"","Error":null}
+in 3420332c34
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 316532202c206e6176
+P {"Action":null,"Special":"","Error":"unknown command: \"1e2\" (type 'help' for commands)"}
+in 7068612068656c70203120746f72
+P {"Action":null,"Special":"","Error":"invalid phaser energy: help"}
+in 7368652039
+P {"Action":{"Type":"engine.ActionShields","Data":{"Amount":9}},"Special":"","Error":null}
+in 38202d312068656c7020746f722078
+P {"Action":null,"Special":"","Error":"unknown command: \"8\" (type 'help' for commands)"}
+in 2e20746f722063
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 2d3120736865202c
+P {"Action":null,"Special":"","Error":"unknown command: \"-1\" (type 'help' for commands)"}
+in 322e35206e617620322e35
+P {"Action":null,"Special":"","Error":"unknown command: \"2.5\" (type 'help' for commands)"}
+in 632073203165322030
+P {"Action":null,"Special":"","Error":"unknown command: \"c\" (type 'help' for commands)"}
+in 39202e2068656c7020746f72
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 7068612063202e
+P {"Action":null,"Special":"","Error":"invalid phaser energy: c"}
+in 322e3520706861
+P {"Action":null,"Special":"","Error":"unknown command: \"2.5\" (type 'help' for commands)"}
+in 68656c7020706861
+P {"Action":null,"Special":"help pha","Error":null}
+in 2c207468656d65
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 38202d312071203420736865
+P {"Action":null,"Special":"","Error":"unknown command: \"8\" (type 'help' for commands)"}
+in 6e617620392063
+P {"Action":null,"Special":"","Error":"invalid navigation parameters: expected numbers"}
+in 302068656c70207468656d65
+P {"Action":null,"Special":"","Error":"unknown command: \"0\" (type 'help' for commands)"}
+in 322e35
+P {"Action":null,"Special":"","Error":"unknown command: \"2.5\" (type 'help' for commands)"}
+in 7468656d65207468656d6520316532207120322e35
+P {"Action":null,"Special":"theme theme","Error":null}
+in 322e35203820646f63
+P {"Action":null,"Special":"","Error":"unknown command: \"2.5\" (type 'help' for commands)"}
+in 316532
+P {"Action":null,"Special":"","Error":"unknown command: \"1e2\" (type 'help' for commands)"}
+in 63202d312063202e2038
+P {"Action":null,"Special":"","Error":"unknown command: \"c\" (type 'help' for commands)"}
+in 34206e617620782063
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 7120302039
+P {"Action":null,"Special":"quit","Error":null}
+in 31
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 7468656d652073
+P {"Action":null,"Special":"theme s","Error":null}
+in 71
+P {"Action":null,"Special":"quit","Error":null}
+in 3820736865
+P {"Action":null,"Special":"","Error":"unknown command: \"8\" (type 'help' for commands)"}
+in 706861206e6176
+P {"Action":null,"Special":"","Error":"invalid phaser energy: nav"}
+in 746f722073686520322e35
+P {"Action":null,"Special":"","Error":"invalid torpedo target: she 2.5"}
+in 706861202e20322e3520706861
+P {"Action":null,"Special":"","Error":"invalid phaser energy: ."}
+in 2c20332c34206320332c34
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 342031
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 7320342068656c70202e
+P {"Action":null,"Special":"","Error":"unknown command: \"s\" (type 'help' for commands)"}
+in 302070686120746f7220322e35
+P {"Action":null,"Special":"","Error":"unknown command: \"0\" (type 'help' for commands)"}
+in 2c20312068656c7020316532
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 6e6176203920322e35
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":9,"Warp":2.5,"DestSector":[0,0],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 332c342073203820646f63
+P {"Action":null,"Special":"","Error":"unknown command: \"3,4\" (type 'help' for commands)"}
+in 38
+P {"Action":null,"Special":"","Error":"unknown command: \"8\" (type 'help' for commands)"}
+in 332c34202c206320646f63
+P {"Action":null,"Special":"","Error":"unknown command: \"3,4\" (type 'help' for commands)"}
+in 2c20302e35206e6176206e6176
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 646f6320302038206e6176
+P {"Action":{"Type":"engine.ActionDock","Data":{}},"Special":"","Error":null}
+in 73
+P {"Action":null,"Special":"","Error":"unknown command: \"s\" (type 'help' for commands)"}
+in 3120736865
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 73686520332c34
+P {"Action":null,"Special":"","Error":"invalid shield amount: 3,4"}
+in 34203820646f63
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 342034
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 2e20302e3520316532
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 38202d3120332c34
+P {"Action":null,"Special":"","Error":"unknown command: \"8\" (type 'help' for commands)"}
+in 3120316532206e617620736865
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 2c20322e352030207068612038
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 6e617620342038
+P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":1,"DestSector":[4,8],"DestQuad":[0,0]}},"Special":"","Error":null}
+in 7368652068656c702031653220646f63
+P {"Action":null,"Special":"","Error":"usage: she \u003camount\u003e"}
+in 39207068612030207068612073
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 746f7220302e35
+P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[0,0],"Angle":0.5,"Direction":0}},"Special":"","Error":null}
+in 322e352068656c702031653220322e35202d31
+P {"Action":null,"Special":"","Error":"unknown command: \"2.5\" (type 'help' for commands)"}
+in 71207820646f63203420316532
+P {"Action":null,"Special":"quit","Error":null}
+in 73686520342034206e6176
+P {"Action":null,"Special":"","Error":"usage: she \u003camount\u003e"}
+in 39
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 73207820732078
+P {"Action":null,"Special":"","Error":"unknown command: \"s\" (type 'help' for commands)"}
+in 3820302e35202c20706861
+P {"Action":null,"Special":"","Error":"unknown command: \"8\" (type 'help' for commands)"}
+in 38202c2031
+P {"Action":null,"Special":"","Error":"unknown command: \"8\" (type 'help' for commands)"}
+in 712071
+P {"Action":null,"Special":"quit","Error":null}
+in 2d3120732030
+P {"Action":null,"Special":"","Error":"unknown command: \"-1\" (type 'help' for commands)"}
+in 3420736865
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 34
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 7120736865
+P {"Action":null,"Special":"quit","Error":null}
+in 302e3520302e35
+P {"Action":null,"Special":"","Error":"unknown command: \"0.5\" (type 'help' for commands)"}
+in 302e35202d31207468656d652078
+P {"Action":null,"Special":"","Error":"unknown command: \"0.5\" (type 'help' for commands)"}
+in 71206e6176202c203920302e35
+P {"Action":null,"Special":"quit","Error":null}
+in 7468656d6520302039202c
+P {"Action":null,"Special":"theme 0","Error":null}
+in 6e617620782039202c2071
+P {"Action":null,"Special":"","Error":"usage: nav q \u003cr\u003e \u003cc\u003e (quadrant), nav s \u003cr\u003e \u003cc\u003e (sector), or nav \u003ccourse\u003e \u003cwarp\u003e. Type 'help nav' for guide"}
+in 6e617620392030202d31
+P {"Action":null,"Special":"","Error":"usage: nav q \u003cr\u003e \u003cc\u003e (quadrant), nav s \u003cr\u003e \u003cc\u003e (sector), or nav \u003ccourse\u003e \u003cwarp\u003e. Type 'help nav' for guide"}
+in 646f63202c
+P {"Action":{"Type":"engine.ActionDock","Data":{}},"Special":"","Error":null}
+in 646f63
+P {"Action":{"Type":"engine.ActionDock","Data":{}},"Special":"","Error":null}
+in 71203820302e35
+P {"Action":null,"Special":"quit","Error":null}
+in 7468656d652068656c7020302e35203120646f63
+P {"Action":null,"Special":"theme help","Error":null}
+in 706861202c
+P {"Action":null,"Special":"","Error":"invalid phaser energy: ,"}
+in 712030
+P {"Action":null,"Special":"quit","Error":null}
+in 3420332c34
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 7120322e35
+P {"Action":null,"Special":"quit","Error":null}
+in 6320646f63203920736865
+P {"Action":null,"Special":"","Error":"unknown command: \"c\" (type 'help' for commands)"}
+in 6e617620332c34207468656d65
+P {"Action":null,"Special":"","Error":"invalid navigation parameters: expected numbers"}
+in 31202c20746f72
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 736865206e61762038206e6176
+P {"Action":null,"Special":"","Error":"usage: she \u003camount\u003e"}
+in 70686120646f632034
+P {"Action":null,"Special":"","Error":"invalid phaser energy: doc"}
+in 71
+P {"Action":null,"Special":"quit","Error":null}
+in 63
+P {"Action":null,"Special":"","Error":"unknown command: \"c\" (type 'help' for commands)"}
+in 2c2068656c70202e
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 2e20342030207468656d65207468656d65
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 316532
+P {"Action":null,"Special":"","Error":"unknown command: \"1e2\" (type 'help' for commands)"}
+in 316532203020316532
+P {"Action":null,"Special":"","Error":"unknown command: \"1e2\" (type 'help' for commands)"}
+in 746f72
+P {"Action":null,"Special":"","Error":"usage: tor \u003ccourse\u003e or tor \u003crow\u003e \u003ccol\u003e"}
+in 70686120322e35
+P {"Action":{"Type":"engine.ActionFirePhasers","Data":{"Energy":2.5,"ManualAllocation":null}},"Special":"","Error":null}
+in 646f6320302e3520316532207468656d6520736865
+P {"Action":{"Type":"engine.ActionDock","Data":{}},"Special":"","Error":null}
+in 746f72
+P {"Action":null,"Special":"","Error":"usage: tor \u003ccourse\u003e or tor \u003crow\u003e \u003ccol\u003e"}
+in 312071
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 646f632063
+P {"Action":{"Type":"engine.ActionDock","Data":{}},"Special":"","Error":null}
+in 6e6176
+P {"Action":null,"Special":"","Error":"usage: nav q \u003cr\u003e \u003cc\u003e (quadrant), nav s \u003cr\u003e \u003cc\u003e (sector), or nav \u003ccourse\u003e \u003cwarp\u003e. Type 'help nav' for guide"}
+in 302e352073207820342071
+P {"Action":null,"Special":"","Error":"unknown command: \"0.5\" (type 'help' for commands)"}
+in 392068656c70202e
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 31206320746f72
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 746f722038
+P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[0,0],"Angle":8,"Direction":0}},"Special":"","Error":null}
+in 312078202d31202d31
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 78207120332c342030
+P {"Action":null,"Special":"","Error":"unknown command: \"x\" (type 'help' for commands)"}
+in 632034
+P {"Action":null,"Special":"","Error":"unknown command: \"c\" (type 'help' for commands)"}
+in 31207468656d65
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 3420322e3520322e35
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 31
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 68656c702038
+P {"Action":null,"Special":"help 8","Error":null}
+in 316532
+P {"Action":null,"Special":"","Error":"unknown command: \"1e2\" (type 'help' for commands)"}
+in 3820302034207468656d6520316532
+P {"Action":null,"Special":"","Error":"unknown command: \"8\" (type 'help' for commands)"}
+in 7068612034
+P {"Action":{"Type":"engine.ActionFirePhasers","Data":{"Energy":4,"ManualAllocation":null}},"Special":"","Error":null}
+in 6e61762031653220332c34
+P {"Action":null,"Special":"","Error":"invalid navigation parameters: expected numbers"}
+in 73202c20322e3520736865202d31
+P {"Action":null,"Special":"","Error":"unknown command: \"s\" (type 'help' for commands)"}
+in 2d312038
+P {"Action":null,"Special":"","Error":"unknown command: \"-1\" (type 'help' for commands)"}
+in 7368652039
+P {"Action":{"Type":"engine.ActionShields","Data":{"Amount":9}},"Special":"","Error":null}
+in 342034202c20746f722031
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 7068612034202c
+P {"Action":null,"Special":"","Error":"phaser target sector coordinates must be between 1 and 8"}
+in 7068612063
+P {"Action":null,"Special":"","Error":"invalid phaser energy: c"}
+in 7320312031202c
+P {"Action":null,"Special":"","Error":"unknown command: \"s\" (type 'help' for commands)"}
+in 2e
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 34202e20746f72
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 302073686520322e35
+P {"Action":null,"Special":"","Error":"unknown command: \"0\" (type 'help' for commands)"}
+in 6e6176202e
+P {"Action":null,"Special":"","Error":"usage: nav q \u003cr\u003e \u003cc\u003e (quadrant), nav s \u003cr\u003e \u003cc\u003e (sector), or nav \u003ccourse\u003e \u003cwarp\u003e. Type 'help nav' for guide"}
+in 34202c203120332c342068656c70
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 782030
+P {"Action":null,"Special":"","Error":"unknown command: \"x\" (type 'help' for commands)"}
+in 38206e6176
+P {"Action":null,"Special":"","Error":"unknown command: \"8\" (type 'help' for commands)"}
+in 63
+P {"Action":null,"Special":"","Error":"unknown command: \"c\" (type 'help' for commands)"}
+in 2d31207468656d6520646f632068656c702034
+P {"Action":null,"Special":"","Error":"unknown command: \"-1\" (type 'help' for commands)"}
+in 3920322e35
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 7468656d65207820706861
+P {"Action":null,"Special":"theme x","Error":null}
+in 71
+P {"Action":null,"Special":"quit","Error":null}
+in 332c34202e
+P {"Action":null,"Special":"","Error":"unknown command: \"3,4\" (type 'help' for commands)"}
+in 746f7220746f722063207120332c34
+P {"Action":null,"Special":"","Error":"usage: tor \u003ccourse\u003e or tor \u003crow\u003e \u003ccol\u003e"}
+in 736865203920316532
+P {"Action":null,"Special":"","Error":"usage: she \u003camount\u003e"}
+in 2d31202e
+P {"Action":null,"Special":"","Error":"unknown command: \"-1\" (type 'help' for commands)"}
+in 706861
+P {"Action":null,"Special":"","Error":"usage: pha \u003cenergy\u003e or pha \u003cenergy\u003e \u003crow\u003e \u003ccol\u003e"}
+in 6e61762078
+P {"Action":null,"Special":"","Error":"usage: nav q \u003cr\u003e \u003cc\u003e (quadrant), nav s \u003cr\u003e \u003cc\u003e (sector), or nav \u003ccourse\u003e \u003cwarp\u003e. Type 'help nav' for guide"}
+in 2c20312034
+P {"Action":null,"Special":"","Error":"unknown command: \",\" (type 'help' for commands)"}
+in 30206e6176207468656d6520736865
+P {"Action":null,"Special":"","Error":"unknown command: \"0\" (type 'help' for commands)"}
+in 392070686120332c34
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 2d3120332c342071
+P {"Action":null,"Special":"","Error":"unknown command: \"-1\" (type 'help' for commands)"}
+in 31
+P {"Action":null,"Special":"","Error":"unknown command: \"1\" (type 'help' for commands)"}
+in 7468656d65207368652073686520646f63202c
+P {"Action":null,"Special":"theme she","Error":null}
+in 2e
+P {"Action":null,"Special":"","Error":"unknown command: \".\" (type 'help' for commands)"}
+in 71207468656d65
+P {"Action":null,"Special":"quit","Error":null}
+in 302e35
+P {"Action":null,"Special":"","Error":"unknown command: \"0.5\" (type 'help' for commands)"}
+in 68656c70202e
+P {"Action":null,"Special":"help .","Error":null}
+in 31653220632031
+P {"Action":null,"Special":"","Error":"unknown command: \"1e2\" (type 'help' for commands)"}
+in 34203020382031
+P {"Action":null,"Special":"","Error":"unknown command: \"4\" (type 'help' for commands)"}
+in 3920646f63207068612030
+P {"Action":null,"Special":"","Error":"unknown command: \"9\" (type 'help' for commands)"}
+in 646f6320316532
+P {"Action":{"Type":"engine.ActionDock","Data":{}},"Special":"","Error":null}
+in 71203020712030
+P {"Action":null,"Special":"quit","Error":null}
+in 332c3420342071202d31
+P {"Action":null,"Special":"","Error":"unknown command: \"3,4\" (type 'help' for commands)"}
+in 302e35206e6176
+P {"Action":null,"Special":"","Error":"unknown command: \"0.5\" (type 'help' for commands)"}
+in 302e35202d3120322e35
+P {"Action":null,"Special":"","Error":"unknown command: \"0.5\" (type 'help' for commands)"}
+in 712073
+P {"Action":null,"Special":"quit","Error":null}

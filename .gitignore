@@ -241,3 +241,4 @@ web/wasm_exec.js
 # GoReleaser build artifacts
 dist/
 
+/target/
