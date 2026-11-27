@@ -148,20 +148,32 @@ impl GoTime {
     }
 
     /// Go `time.Parse(time.RFC3339, s)` (what Go 1.27's JSON decoder uses),
-    /// including Go's error messages.
+    /// with error messages that describe the expected format.
     pub fn parse_rfc3339(s: &str) -> Result<GoTime, String> {
-        const LAYOUT: &str = "2006-01-02T15:04:05Z07:00";
         let q = crate::gofmt::quote;
+        // Go named its layout string ("2006-01-02T15:04:05Z07:00") and
+        // layout elements ("2006", "Z07:00"); say what was expected instead.
         let elem_err = |value: &str, elem: &str| {
+            let what = match elem {
+                "2006" => "a four-digit year",
+                "01" => "a two-digit month",
+                "02" => "a two-digit day",
+                "T" => "the date/time separator \"T\"",
+                "15" => "a two-digit hour",
+                "04" => "two-digit minutes",
+                "05" => "two-digit seconds",
+                "Z07:00" => "a time zone (\"Z\" or \"+hh:mm\")",
+                "-" | ":" => "a separator",
+                _ => "the timestamp",
+            };
             format!(
-                "parsing time {} as {}: cannot parse {} as {}",
+                "invalid timestamp {} (expected RFC 3339, e.g. \"2006-01-02T15:04:05Z\"): cannot read {} as {}",
                 q(s),
-                q(LAYOUT),
                 q(value),
-                q(elem)
+                what
             )
         };
-        let range_err = |what: &str| format!("parsing time {}: {} out of range", q(s), what);
+        let range_err = |what: &str| format!("invalid timestamp {}: {} out of range", q(s), what);
         let is_digit = |v: &str, i: usize| v.as_bytes().get(i).is_some_and(|c| c.is_ascii_digit());
         // getnum(s, fixed)
         let getnum = |v: &str, fixed: bool| -> Option<(u32, usize)> {
@@ -279,7 +291,7 @@ impl GoTime {
             v = &v[6..];
         }
         if !v.is_empty() {
-            return Err(format!("parsing time {}: extra text: {}", q(s), q(v)));
+            return Err(format!("invalid timestamp {}: extra text: {}", q(s), q(v)));
         }
         if day < 1 || day > days_in_month(year, month) {
             return Err(range_err("day"));
@@ -294,7 +306,7 @@ impl GoJson for GoTime {
         if !(0..=9999).contains(&y) {
             if e.err.is_none() {
                 e.err = Some(JsonError::Other(
-                    "json: error calling MarshalJSON for type time.Time: Time.MarshalJSON: year outside of range [0,9999]".into(),
+                    "json: cannot encode timestamp: year outside of range [0,9999]".into(),
                 ));
             }
             e.null();

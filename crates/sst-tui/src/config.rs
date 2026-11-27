@@ -802,12 +802,13 @@ fn fold_name(key: &str) -> String {
 }
 
 const FIELDS: [&str; 5] = ["volume", "muted", "audio_mode", "theme", "anim_speed"];
-const FIELD_TYPES: [&str; 5] = ["int", "bool", "config.AudioMode", "string", "string"];
+const FIELD_TYPES: [&str; 5] = ["int", "bool", "string", "string", "string"];
 
 fn type_err(value: &str, field: usize) -> ConfigError {
-    ConfigError::Type(format!(
-        "json: cannot unmarshal {value} into struct field Config.{} of type {}",
-        FIELDS[field], FIELD_TYPES[field]
+    ConfigError::Type(sst_engine::json::type_error_text(
+        value,
+        Some(&format!("Config.{}", FIELDS[field])),
+        FIELD_TYPES[field],
     ))
 }
 
@@ -837,9 +838,10 @@ pub fn decode_config(data: &[u8]) -> Result<Config, ConfigError> {
         b'n' => return Ok(cfg),
         b'{' => {}
         c => {
-            return Err(ConfigError::Type(format!(
-                "json: cannot unmarshal {} into value of type config.Config",
-                value_kind(c)
+            return Err(ConfigError::Type(sst_engine::json::type_error_text(
+                value_kind(c),
+                None,
+                "config.Config",
             )))
         }
     }
@@ -1163,11 +1165,8 @@ mod tests {
         assert_eq!(msg("{} x"), "invalid character 'x' after top-level value");
         assert_eq!(
             msg("{\"volume\":\"1\"}"),
-            "json: cannot unmarshal string into struct field Config.volume of type int"
+            "json: Config.volume: expected an integer, found string"
         );
-        assert_eq!(
-            msg("[]"),
-            "json: cannot unmarshal array into value of type config.Config"
-        );
+        assert_eq!(msg("[]"), "json: expected a Config, found array");
     }
 }

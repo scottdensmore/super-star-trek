@@ -217,6 +217,19 @@ Regression tests are in `crates/sst-engine/tests/bug_fixes.rs` unless noted.
     raises a flag that the console turns into the command-bar flash on its
     next update (`crates/sst-tui/tests/go_model_b.rs`).
 
+17. **JSON errors describe types for users.** Type errors still used Go's
+    wording and Go type names ("json: cannot unmarshal number 1.5 into
+    struct field GameState.Skill of type engine.SkillLevel"), timestamp errors
+    named Go's reference layout ("parsing time "bad" as
+    "2006-01-02T15:04:05Z07:00": cannot parse "bad" as "2006""), and a
+    timestamp outside 0-9999 named `time.Time.MarshalJSON`. They now read
+    "json: GameState.Skill: 1.5 is not a valid SkillLevel", "json:
+    GameState.Stardate: expected a number, found string", "invalid timestamp
+    "bad" (expected RFC 3339, e.g. "2006-01-02T15:04:05Z"): cannot read "bad"
+    as a four-digit year" and "json: cannot encode timestamp: year outside of
+    range [0,9999]"; the console's config decoder uses the same wording
+    (`json::type_error_text`, unit tests in `json.rs` and `config.rs`).
+
 Re-recorded cases:
 
 | Transcript | Cases | Cause |
@@ -231,3 +244,4 @@ Re-recorded cases:
 | `wasm/sessions.txt` | `random-2-expert`, `random-7-emeritus`, `smart-scenario-siege-1` | 13 |
 | `wasm/events.txt` | 24 of the 600 synthetic event lists (torpedo hits on non-Klingon targets) | 13 |
 | `cli/cli.txt` | 48 `classic-eq-false` (now a console launch) and 49 `classic-eq-false-seed` (now the seeded console launch, the same facts and view as 58 `tui-seed`) | 14 |
+| `engine/save.txt`, `engine/score.txt` | the JSON type-error and timestamp-error messages (the same lines as fix 7) | 17 |

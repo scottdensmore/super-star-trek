@@ -709,29 +709,24 @@ impl Decoder {
         }
     }
 
-    /// Records an `UnmarshalTypeError` (only the first error is kept).
+    /// Records a type error (only the first error is kept), worded by
+    /// [`type_error_text`].
     pub fn type_error(&mut self, value: &str, go_type: &str) {
         if self.saved.is_some() {
             return;
         }
-        let msg = if self.path.is_empty() {
-            format!(
-                "json: cannot unmarshal {} into value of type {}",
-                value, go_type
-            )
+        let location = if self.path.is_empty() {
+            None
+        } else if self.root.is_empty() {
+            Some(self.path.join("."))
         } else {
-            let last = self.path.last().unwrap();
-            let numeric = !last.is_empty() && last.bytes().all(|c| c.is_ascii_digit());
-            format!(
-                "json: cannot unmarshal {} into {}{}.{} of type {}",
-                value,
-                if numeric { "" } else { "struct field " },
-                self.root,
-                self.path.join("."),
-                go_type
-            )
+            Some(format!("{}.{}", self.root, self.path.join(".")))
         };
-        self.saved = Some(JsonError::Type(msg));
+        self.saved = Some(JsonError::Type(type_error_text(
+            value,
+            location.as_deref(),
+            go_type,
+        )));
     }
 
     /// Records a non-type error (e.g. from `UnmarshalJSON`); decoding continues.
@@ -760,6 +755,70 @@ impl Decoder {
     pub fn pop(&mut self) {
         self.path.pop();
     }
+}
+
+/// The message for a JSON value of the wrong kind: `value` is what was
+/// found (`string`, `number 1.5`, ...), `location` the field path
+/// (`GameState.Enterprise.Energy`) and `go_type` the expected type's Go name,
+/// described by [`friendly_type_name`]. Go's wording ("json: cannot unmarshal
+/// number 1.5 into struct field GameState.Skill of type engine.SkillLevel")
+/// named Go types.
+pub fn type_error_text(value: &str, location: Option<&str>, go_type: &str) -> String {
+    // A number of the right kind that does not fit (1.5 for an integer,
+    // 1e400 for a float).
+    if let Some(n) = value.strip_prefix("number ") {
+        let want = friendly_type_name(go_type);
+        let want = want.split_once(' ').map_or(want.as_str(), |w| w.1);
+        return match location {
+            Some(at) => format!("json: {at}: {n} is not a valid {want}"),
+            None => format!("json: {n} is not a valid {want}"),
+        };
+    }
+    match location {
+        Some(at) => format!(
+            "json: {at}: expected {}, found {value}",
+            friendly_type_name(go_type)
+        ),
+        None => format!(
+            "json: expected {}, found {value}",
+            friendly_type_name(go_type)
+        ),
+    }
+}
+
+/// Describes a Go type name for users: `an integer`, `a number`,
+/// `a timestamp`, `a list of EnemyVessel`, `a SkillLevel`, ...
+pub fn friendly_type_name(go_type: &str) -> String {
+    fn bare(t: &str) -> String {
+        let t = t.trim_start_matches('*');
+        if let Some(elem) = t.strip_prefix("[]") {
+            return format!("list of {}", bare(elem));
+        }
+        if t.starts_with("map[") {
+            return "object".into();
+        }
+        if let Some(rest) = t.strip_prefix('[') {
+            if let Some((_, elem)) = rest.split_once(']') {
+                return format!("array of {}", bare(elem));
+            }
+        }
+        match t {
+            "int" | "int8" | "int16" | "int32" | "int64" | "uint" | "uint8" | "uint16"
+            | "uint32" | "uint64" => "integer".into(),
+            "float32" | "float64" => "number".into(),
+            "bool" => "boolean".into(),
+            "string" => "string".into(),
+            "time.Time" => "timestamp".into(),
+            other => other.rsplit('.').next().unwrap_or(other).to_string(),
+        }
+    }
+    let b = bare(go_type);
+    let article = if b.starts_with(['a', 'e', 'i', 'o', 'u', 'A', 'E', 'I', 'O', 'U']) {
+        "an"
+    } else {
+        "a"
+    };
+    format!("{article} {b}")
 }
 
 /// Go `json.Unmarshal(data, v)`.
@@ -1385,6 +1444,24 @@ mod tests {
         assert_eq!(
             out,
             "{\n  \"a\": [],\n  \"b\": {},\n  \"c\": [\n    1,\n    2\n  ],\n  \"d\": \"x,{\"\n}"
+        );
+    }
+
+    #[test]
+    fn type_errors_name_rust_friendly_types() {
+        assert_eq!(friendly_type_name("engine.SkillLevel"), "a SkillLevel");
+        assert_eq!(friendly_type_name("int"), "an integer");
+        assert_eq!(friendly_type_name("float64"), "a number");
+        assert_eq!(friendly_type_name("time.Time"), "a timestamp");
+        assert_eq!(
+            friendly_type_name("[]*engine.EnemyVessel"),
+            "a list of EnemyVessel"
+        );
+        assert_eq!(friendly_type_name("map[string]int"), "an object");
+        let mut v = 0i32;
+        assert_eq!(
+            unmarshal(b"\"x\"", &mut v).unwrap_err().to_string(),
+            "json: expected an integer, found string"
         );
     }
 
