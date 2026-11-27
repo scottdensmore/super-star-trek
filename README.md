@@ -206,13 +206,36 @@ cargo run --release -- --classic
 
 ## `>> INSTALLATION`
 
-### From Source (macOS / Linux / Windows)
+### Prebuilt Downloads (macOS / Linux / Windows)
+Every [release](https://github.com/scottdensmore/super-star-trek/releases/latest) ships a ready-to-run `sst` binary for each platform, packaged with this README, the license and the original 1978 manual (`sst.doc`). Archives are named `super-star-trek-<version>-<os>-<arch>`:
+
+| Platform | x86_64 | aarch64 (ARM64) |
+| :--- | :--- | :--- |
+| macOS | `super-star-trek-<version>-macos-x86_64.tar.gz` | `super-star-trek-<version>-macos-aarch64.tar.gz` |
+| Linux (glibc) | `super-star-trek-<version>-linux-x86_64.tar.gz` | `super-star-trek-<version>-linux-aarch64.tar.gz` |
+| Windows | `super-star-trek-<version>-windows-x86_64.zip` | `super-star-trek-<version>-windows-aarch64.zip` |
+
+```bash
+# macOS / Linux: download from the latest release, verify, unpack and run
+tar -xzf super-star-trek-<version>-linux-x86_64.tar.gz
+cd super-star-trek-<version>-linux-x86_64 && ./sst --version
+```
+`SHA256SUMS.txt` on the release page lists the checksum of every file (`shasum -a 256 -c SHA256SUMS.txt --ignore-missing`). The macOS binaries are not notarized; if Gatekeeper blocks the first launch, run `xattr -d com.apple.quarantine ./sst`.
+
+Debian/Ubuntu and Fedora/RHEL packages are attached to the release as well:
+```bash
+sudo dpkg -i super-star-trek-<version>-linux-x86_64.deb    # or ...-linux-aarch64.deb
+sudo rpm -i super-star-trek-<version>-linux-x86_64.rpm     # or ...-linux-aarch64.rpm
+```
+The browser edition is attached as `super-star-trek-<version>-wasm.tar.gz` / `.zip` (serve the unpacked directory with any static web server).
+
+### From Source with Cargo (macOS / Linux / Windows)
 Requires a stable [Rust toolchain](https://rustup.rs):
 ```bash
-cargo install --git https://github.com/scottdensmore/super-star-trek super-star-trek
+cargo install --locked --git https://github.com/scottdensmore/super-star-trek super-star-trek
 sst --version
 ```
-Or from a local checkout: `cargo install --path crates/sst`.
+Or from a local checkout: `cargo install --locked --path crates/sst`.
 
 ### WebAssembly CRT Browser Edition
 Play inside a retro CRT browser monitor! Build the module with [`wasm-bindgen`](https://github.com/rustwasm/wasm-bindgen) (the CLI version must match the `wasm-bindgen` crate in `Cargo.lock`) and serve the static files:
@@ -247,7 +270,10 @@ cargo fmt --all -- --check
 bash scripts/test-wasm-journeys.sh   # WebAssembly build + Node.js journeys
 ```
 
-Gameplay is fully deterministic for a given `--seed`. The test suite replays recorded reference transcripts in `testdata/` (engine games, rendered console frames, browser sessions, CLI output and synthesized audio) byte for byte, so any behavioural change shows up as a failing test.
+Gameplay is fully deterministic for a given `--seed`. The test suite replays recorded reference transcripts in `testdata/` (engine games, rendered console frames, browser sessions, CLI output and synthesized audio) byte for byte, so any behavioural change shows up as a failing test. Intentional changes are re-recorded case by case and listed in [`testdata/README.md`](testdata/README.md).
+
+### Releasing
+Bump `version` under `[workspace.package]` in `Cargo.toml`, then push a matching tag (`git tag v2.1.0 && git push origin v2.1.0`). The [Release workflow](.github/workflows/release.yml) tests, builds the six platform archives, the `.deb`/`.rpm` packages and the WebAssembly bundle, and publishes them with `SHA256SUMS.txt` as a GitHub Release. Running the workflow manually on a branch builds the same files as workflow artifacts without publishing. To package a local build into `dist/`: `cargo build --release --locked -p super-star-trek && bash scripts/package-release.sh host <version>`.
 
 ---
 
@@ -353,7 +379,7 @@ bash c/tests/golden.sh ./build/debug/c/sst
 
 ## `>> LICENSE & HERITAGE`
 
-Released under **Public Domain / MIT**.
+Released under **Public Domain / MIT** (see [`LICENSE`](LICENSE)).
 
 Inspired by the original 1971–1978 **Star Trek** / **Super Star Trek** mainframe games by Mike Mayfield, Bob Leedom, and David H. Ahl (*BASIC Computer Games*, 1978), and Tom Almy's C port. Re-engineered for modern terminals in Rust.
 

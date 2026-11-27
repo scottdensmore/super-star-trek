@@ -21,3 +21,32 @@ sst-tui = { path = "../sst-tui" }
 [lib]
 name = "super_star_trek"
 path = "src/lib.rs"
+
+# Linux packages built by .github/workflows/release.yml (cargo-deb and
+# cargo-generate-rpm, from the binary the workflow already built).
+[package.metadata.deb]
+name = "super-star-trek"
+maintainer = "Scott Densmore <scottdensmore@users.noreply.github.com>"
+copyright = "2022-2026 Scott Densmore"
+license-file = ["../../LICENSE", "0"]
+extended-description = """\
+The 1978 mainframe strategy game Super Star Trek, rebuilt for the modern \
+terminal: an interactive bridge console with themes, mouse targeting, retro \
+audio, scenarios and a multi-sector patrol tour."""
+section = "games"
+priority = "optional"
+assets = [
+    ["target/release/sst", "usr/bin/", "755"],
+    ["../../README.md", "usr/share/doc/super-star-trek/README.md", "644"],
+    ["../../c/sst.doc", "usr/share/doc/super-star-trek/sst.doc", "644"],
+]
+
+[package.metadata.generate-rpm]
+name = "super-star-trek"
+license = "MIT"
+assets = [
+    { source = "target/release/sst", dest = "/usr/bin/sst", mode = "755" },
+    { source = "../../README.md", dest = "/usr/share/doc/super-star-trek/README.md", mode = "644", doc = true },
+    { source = "../../LICENSE", dest = "/usr/share/licenses/super-star-trek/LICENSE", mode = "644", doc = true },
+    { source = "../../c/sst.doc", dest = "/usr/share/doc/super-star-trek/sst.doc", mode = "644", doc = true },
+]
