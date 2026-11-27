@@ -355,7 +355,11 @@ impl TourState {
         let Some(sec) = self.current_sector() else {
             return (false, false, 0);
         };
-        if g.klingons_remaining <= 0
+        // A won game clears the sector even if the hostile counters were not
+        // driven to zero (Go only looked at the counters).
+        let won = g.game_won || (g.game_over && g.game_over_reason == GameOverReason::Won);
+        if won
+            || g.klingons_remaining <= 0
             || g.remaining_klingons <= 0
             || (g.current_quad.enemies.is_empty() && g.current_quad.klingons.is_empty())
         {

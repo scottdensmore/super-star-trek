@@ -7,7 +7,9 @@ use crate::actions::{ActionFireTorpedo, EngineError};
 use crate::events::*;
 use crate::gomath;
 use crate::refits::calculate_shield_damage_absorption;
-use crate::state::{cell, cell_mut, Enterprise, GameState, Klingon, KlingonRef, QuadrantState};
+use crate::state::{
+    cell, cell_mut, remove_enemy_klingon, Enterprise, GameState, Klingon, KlingonRef, QuadrantState,
+};
 use crate::types::*;
 
 /// Go `ComputePhaserDamage`.
@@ -205,6 +207,7 @@ pub fn move_klingon(g: &mut GameState, k: &KlingonRef, dest: Coord) -> Vec<Event
         if let Some(i) = pos {
             g.current_quad.klingons.remove(i);
         }
+        remove_enemy_klingon(&mut g.current_quad, kid);
         if g.remaining_klingons > 0 {
             g.remaining_klingons -= 1;
         }
@@ -251,9 +254,9 @@ pub fn klingon_turn(g: &mut GameState) -> Vec<Event> {
     let list = g.current_quad.klingons.to_vec();
     for k in list.iter() {
         let Some(k) = k else { continue };
-        let (sector, is_commander) = {
+        let (sector, is_commander, kid) = {
             let kb = k.borrow();
-            (kb.sector, kb.is_commander)
+            (kb.sector, kb.is_commander, kb.id)
         };
         if sector[0] >= 1
             && sector[0] <= 8
@@ -261,6 +264,7 @@ pub fn klingon_turn(g: &mut GameState) -> Vec<Event> {
             && sector[1] <= 8
             && cell(&g.current_quad.grid, sector) == EntityType::BlackHole
         {
+            remove_enemy_klingon(&mut g.current_quad, kid);
             if g.remaining_klingons > 0 {
                 g.remaining_klingons -= 1;
             }

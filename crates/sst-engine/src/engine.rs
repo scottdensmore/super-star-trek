@@ -1,7 +1,7 @@
 //! Dispatch and turn advancement (port of `pkg/engine/engine.go`), plus the
 //! post-action adversary turn used by the TUI and the WASM session.
 
-use crate::actions::{Action, ActionResult};
+use crate::actions::{evaluate_victory, events_destroy_hostile, Action, ActionResult};
 use crate::combat::{cloak_klingon, klingon_turn};
 use crate::events::Event;
 use crate::state::GameState;
@@ -85,10 +85,14 @@ pub fn execute_klingon_turn_if_active(g: &mut GameState, action: &Action, events
             || !g.current_quad.web_segments.is_empty()
         {
             let k = unified_adversary_turn(g);
+            let killed = events_destroy_hostile(&k);
             events.extend(k);
+            evaluate_victory(g, killed, events);
         } else if !g.current_quad.klingons.is_empty() {
             let k = klingon_turn(g);
+            let killed = events_destroy_hostile(&k);
             events.extend(k);
+            evaluate_victory(g, killed, events);
         }
     }
 }
@@ -113,6 +117,8 @@ pub fn session_counter_attack(g: &mut GameState, action: &Action, events: &mut V
     };
     if should_attack {
         let k = klingon_turn(g);
+        let killed = events_destroy_hostile(&k);
         events.extend(k);
+        evaluate_victory(g, killed, events);
     }
 }

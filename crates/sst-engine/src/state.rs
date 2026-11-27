@@ -192,6 +192,52 @@ pub fn sync_quadrant_enemies(quad: &mut QuadrantState) {
     quad.klingons = legacy;
 }
 
+/// Writes the legacy Klingon list back into `Enemies` (the reverse of
+/// [`sync_quadrant_enemies`]).
+///
+/// Phasers, torpedoes, `KlingonTurn` and cloaking act on the legacy
+/// `Klingons` list, while the adversary turn acts on `Enemies` and then
+/// rebuilds `Klingons` from it. Go never copied the legacy list back, so with
+/// adversaries active the rebuild restored damaged Klingons to full energy.
+/// This copies each Klingon's energy, shields, position and cloak into its
+/// `Enemies` entry (matched by ID); entries without a legacy counterpart are
+/// left alone (kills remove theirs through [`remove_enemy_klingon`]).
+pub fn sync_enemies_from_klingons(quad: &mut QuadrantState) {
+    for e in quad.enemies.iter().flatten() {
+        let (faction, id) = {
+            let eb = e.borrow();
+            (eb.faction, eb.id)
+        };
+        if faction != FactionType::Klingon {
+            continue;
+        }
+        if let Some(k) = quad.klingons.iter().flatten().find(|k| k.borrow().id == id) {
+            let k = k.borrow();
+            let mut eb = e.borrow_mut();
+            eb.energy = k.energy;
+            eb.shields = k.shields;
+            eb.sector = k.sector;
+            eb.is_cloaked = k.is_cloaked;
+            eb.is_commander = k.is_commander;
+        }
+    }
+}
+
+/// Removes the Klingon with `id` from `Enemies` when it is destroyed on the
+/// legacy list. Go left it there, so the next adversary turn (which rebuilds
+/// the legacy list from `Enemies`) brought the destroyed Klingon back.
+pub fn remove_enemy_klingon(quad: &mut QuadrantState, id: i32) {
+    let pos = quad.enemies.iter().position(|e| {
+        e.as_ref().is_some_and(|e| {
+            let e = e.borrow();
+            e.faction == FactionType::Klingon && e.id == id
+        })
+    });
+    if let Some(i) = pos {
+        quad.enemies.remove(i);
+    }
+}
+
 /// Go `GameMetrics`.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct GameMetrics {

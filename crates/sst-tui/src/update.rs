@@ -1058,6 +1058,11 @@ impl Model {
             .is_some_and(|t| !t.borrow().in_drydock && t.borrow().active)
         {
             self.evaluate_tour_sector();
+            // A won sector goes straight to the drydock (Go never cleared a
+            // sector on a win, so the Hall of Fame always opened here).
+            if self.tour.as_ref().is_some_and(|t| t.borrow().in_drydock) {
+                return None;
+            }
         }
         self.open_hall_of_fame(qualifies)
     }

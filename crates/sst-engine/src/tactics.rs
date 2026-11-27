@@ -1,13 +1,15 @@
 //! Unified adversary turn and targeted phasers (port of `pkg/engine/tactics.go`).
 
-use crate::actions::{ActionResult, EngineError};
+use crate::actions::{dec_galaxy_klingons, evaluate_victory, ActionResult, EngineError};
 use crate::combat::{compute_phaser_damage, klingon_counter_attack, temp_klingon};
 use crate::events::*;
 use crate::geometry::distance;
 use crate::json::GoVec;
 use crate::klingon_pack::{calculate_pack_damage_multiplier, execute_commander_screening};
 use crate::romulan::{advance_plasma_torpedoes, intercept_plasma_torpedo, romulan_turn};
-use crate::state::{cell, cell_mut, sync_quadrant_enemies, GameState, Klingon};
+use crate::state::{
+    cell, cell_mut, sync_enemies_from_klingons, sync_quadrant_enemies, GameState, Klingon,
+};
 use crate::tholian::{damage_web_segment, tholian_turn};
 use crate::types::*;
 
@@ -19,6 +21,9 @@ pub fn compute_distance(c1: Coord, c2: Coord) -> f64 {
 /// Go `UnifiedAdversaryTurn`: plasma torpedoes, Klingon screening and
 /// crossfire, Romulans, Tholians, then a legacy-list resync.
 pub fn unified_adversary_turn(g: &mut GameState) -> Vec<Event> {
+    // Carry phaser/torpedo damage and kills on the legacy Klingon list over
+    // to Enemies before acting on (and finally resyncing from) Enemies.
+    sync_enemies_from_klingons(&mut g.current_quad);
     let mut events = Vec::new();
     events.extend(advance_plasma_torpedoes(g));
     events.extend(execute_commander_screening(g));
@@ -60,6 +65,16 @@ pub fn unified_adversary_turn(g: &mut GameState) -> Vec<Event> {
 
     events.extend(tholian_turn(g));
     sync_quadrant_enemies(&mut g.current_quad);
+    // Go never checked for the Enterprise's destruction here, so Romulan,
+    // plasma and pack fire could drive its energy negative without ending the
+    // game; end it the way KlingonTurn does.
+    if g.enterprise.energy <= 0.0 {
+        g.enterprise.energy = 0.0;
+        events.push(Event::GameOver(EventGameOver {
+            reason: GameOverReason::Lost,
+            score: 0.0,
+        }));
+    }
     events
 }
 
@@ -83,6 +98,7 @@ impl ActionPhaserDirect {
             return Err(EngineError::new("target sector out of bounds"));
         }
         g.enterprise.energy -= self.energy;
+        sync_enemies_from_klingons(&mut g.current_quad);
         let mut events = Vec::new();
         match cell(&g.current_quad.grid, t) {
             EntityType::PlasmaTorpedo => {
@@ -110,6 +126,7 @@ impl ActionPhaserDirect {
                     if !hit {
                         continue;
                     }
+                    let energy_before = e.borrow().energy;
                     let dead = {
                         let mut eb = e.borrow_mut();
                         eb.shields -= dmg;
@@ -124,11 +141,30 @@ impl ActionPhaserDirect {
                             false
                         }
                     };
+                    let (sector, faction, id, is_cmd) = {
+                        let eb = e.borrow();
+                        (eb.sector, eb.faction, eb.id, eb.is_commander)
+                    };
+                    if faction == FactionType::Klingon {
+                        // Go left the legacy Klingon list (which phasers,
+                        // torpedoes and KlingonTurn use) untouched here, and
+                        // never counted a Klingon kill.
+                        events.push(Event::PhaserHit(EventPhaserHit {
+                            target: sector,
+                            klingon_id: id,
+                            damage: if dead { energy_before } else { dmg },
+                            destroyed: dead,
+                        }));
+                        if dead {
+                            if is_cmd {
+                                g.metrics.commanders_killed += 1;
+                            } else {
+                                g.metrics.klingons_killed += 1;
+                            }
+                            dec_galaxy_klingons(g);
+                        }
+                    }
                     if dead {
-                        let (sector, faction, id) = {
-                            let eb = e.borrow();
-                            (eb.sector, eb.faction, eb.id)
-                        };
                         *cell_mut(&mut g.current_quad.grid, sector) = EntityType::Empty;
                         if faction == FactionType::Romulan {
                             g.metrics.romulans_killed += 1;
@@ -146,6 +182,9 @@ impl ActionPhaserDirect {
                             g.remaining_klingons -= 1;
                         }
                         g.klingons_remaining = g.remaining_klingons;
+                        evaluate_victory(g, true, &mut events);
+                    } else if faction == FactionType::Klingon {
+                        sync_quadrant_enemies(&mut g.current_quad);
                     }
                     break;
                 }

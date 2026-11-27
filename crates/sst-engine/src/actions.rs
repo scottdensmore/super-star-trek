@@ -13,7 +13,9 @@ use crate::json::GoVec;
 use crate::refits::{calculate_torpedo_damage, RefitID};
 use crate::scenarios::{get_scenario, ScenarioID};
 use crate::score::compute_score;
-use crate::state::{cell, cell_mut, sync_quadrant_enemies, GameState, KlingonRef};
+use crate::state::{
+    cell, cell_mut, remove_enemy_klingon, sync_quadrant_enemies, GameState, KlingonRef,
+};
 use crate::tactics::ActionPhaserDirect;
 use crate::types::*;
 use crate::{romulan, tholian};
@@ -118,7 +120,7 @@ fn in_nebula(g: &GameState) -> bool {
     g.quadrant_env[q[0] as usize][q[1] as usize] == EnvironmentType::Nebula
 }
 
-fn dec_galaxy_klingons(g: &mut GameState) {
+pub(crate) fn dec_galaxy_klingons(g: &mut GameState) {
     let (qr, qc) = (g.enterprise.quad[0], g.enterprise.quad[1]);
     if (1..=8).contains(&qr)
         && (1..=8).contains(&qc)
@@ -308,8 +310,7 @@ impl ActionFireTorpedo {
             angle,
         })];
 
-        let (hit_coord, hit_entity, hit) =
-            trace_torpedo_path(g.enterprise.sector, angle, Some(&g.current_quad));
+        let (hit_coord, hit_entity, hit) = trace_torpedo_with_cloaked(g, angle);
         if !hit {
             if g.rules.klingon_cloak {
                 cloak_all_commanders(g, &mut events, None);
@@ -366,8 +367,10 @@ impl ActionFireTorpedo {
                         destroyed = true;
                         damage = t.energy;
                         t.energy = 0.0;
+                        let id = t.id;
                         drop(t);
                         g.current_quad.klingons.remove(target_index);
+                        remove_enemy_klingon(&mut g.current_quad, id);
                     } else {
                         t.energy -= effective;
                     }
@@ -426,9 +429,16 @@ impl ActionFireTorpedo {
                 }
                 if let Some(te) = &target {
                     if te.borrow().is_cloaked {
-                        te.borrow_mut().is_cloaked = false;
+                        let id = {
+                            let mut tb = te.borrow_mut();
+                            tb.is_cloaked = false;
+                            tb.id
+                        };
+                        // The hit reveals the ship (it stays visible until it
+                        // cloaks again on its turn).
+                        *cell_mut(&mut g.current_quad.grid, hit_coord) = EntityType::Romulan;
                         events.push(Event::RomulanDecloak(EventRomulanDecloak {
-                            romulan_id: 0,
+                            romulan_id: id,
                             sector: hit_coord,
                         }));
                     }
@@ -515,6 +525,41 @@ impl ActionFireTorpedo {
     }
 }
 
+/// Traces a torpedo from the Enterprise, treating cloaked Romulans as solid.
+///
+/// A cloaked Romulan leaves its sector empty on the grid, so Go's trace flew
+/// straight through it and the decloak-on-hit handling below was dead code: a
+/// cloaked Romulan could only be hit during the single turn it was visible.
+/// Like a cloaked Klingon commander (which keeps its grid cell), a cloaked
+/// Romulan cannot be target-locked but blind fire along its line hits it.
+fn trace_torpedo_with_cloaked(g: &GameState, angle: f64) -> (Coord, EntityType, bool) {
+    let cloaked: Vec<Coord> = g
+        .current_quad
+        .enemies
+        .iter()
+        .flatten()
+        .filter_map(|e| {
+            let e = e.borrow();
+            let s = e.sector;
+            (e.faction == FactionType::Romulan
+                && e.is_cloaked
+                && e.energy > 0.0
+                && (1..=8).contains(&s[0])
+                && (1..=8).contains(&s[1])
+                && cell(&g.current_quad.grid, s) == EntityType::Empty)
+                .then_some(s)
+        })
+        .collect();
+    if cloaked.is_empty() {
+        return trace_torpedo_path(g.enterprise.sector, angle, Some(&g.current_quad));
+    }
+    let mut view = g.current_quad.clone();
+    for s in cloaked {
+        *cell_mut(&mut view.grid, s) = EntityType::Romulan;
+    }
+    trace_torpedo_path(g.enterprise.sector, angle, Some(&view))
+}
+
 /// Go `ActionFirePhasers`. `manual_allocation` (Go `map[int]float64`) is
 /// iterated in key order; Go's random map order only affects the float sum
 /// of the total energy (never produced by the parser).
@@ -594,10 +639,11 @@ impl ActionFirePhasers {
                 }
             }
             if destroyed {
-                let (sector, is_cmd) = {
+                let (sector, is_cmd, id) = {
                     let kb = k.borrow();
-                    (kb.sector, kb.is_commander)
+                    (kb.sector, kb.is_commander, kb.id)
                 };
+                remove_enemy_klingon(&mut g.current_quad, id);
                 *cell_mut(&mut g.current_quad.grid, sector) = EntityType::Empty;
                 if g.remaining_klingons > 0 {
                     g.remaining_klingons -= 1;
@@ -981,9 +1027,57 @@ fn enter_nebula(g: &mut GameState, to_quad: Coord, events: &mut Vec<Event>) {
     }
 }
 
-/// Go `evaluateScenario`: applies an active scenario's win/loss evaluation.
+/// True when `events` record the destruction of a hostile ship (torpedo or
+/// phaser kill, or a Klingon swallowed by a singularity).
+pub fn events_destroy_hostile(events: &[Event]) -> bool {
+    events.iter().any(|e| match e {
+        Event::TorpedoHit(h) => {
+            h.destroyed
+                && matches!(
+                    h.entity,
+                    EntityType::Klingon
+                        | EntityType::Commander
+                        | EntityType::SuperCommander
+                        | EntityType::Romulan
+                        | EntityType::Tholian
+                )
+        }
+        Event::PhaserHit(h) => h.destroyed,
+        Event::SingularityAbsorption(a) => matches!(
+            a.target,
+            EntityType::Klingon | EntityType::Commander | EntityType::SuperCommander
+        ),
+        _ => false,
+    })
+}
+
+/// Classic victory check for games without a scenario (the Go engine had
+/// none, so destroying every Klingon never ended a normal game): when
+/// `killed` reports that this turn destroyed a hostile and no hostiles remain,
+/// the game is won and a `GameOver(Won)` with the classic score (including
+/// the skill-based win bonus) is appended. Scenario games keep their own
+/// evaluation; a turn that already ended the game is left alone.
+pub fn evaluate_victory(g: &mut GameState, killed: bool, events: &mut Vec<Event>) {
+    if g.scenario != ScenarioID::none() || g.game_over || !killed || g.remaining_klingons > 0 {
+        return;
+    }
+    if events.iter().any(|e| matches!(e, Event::GameOver(_))) {
+        return;
+    }
+    g.game_won = true;
+    let score = compute_score(Some(g), true).total_score as f64;
+    events.push(Event::GameOver(EventGameOver {
+        reason: GameOverReason::Won,
+        score,
+    }));
+}
+
+/// Go `evaluateScenario`: applies an active scenario's win/loss evaluation
+/// (for games without a scenario, the classic victory check).
 pub fn evaluate_scenario(g: &mut GameState, mut events: Vec<Event>) -> Vec<Event> {
     if g.scenario == ScenarioID::none() {
+        let killed = events_destroy_hostile(&events);
+        evaluate_victory(g, killed, &mut events);
         return events;
     }
     let Some(s) = get_scenario(&g.scenario) else {

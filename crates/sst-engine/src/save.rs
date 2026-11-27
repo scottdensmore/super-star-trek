@@ -172,9 +172,10 @@ pub fn decode_inspect_save(
 
 /// Decoding half of Go `LoadTourGame`.
 ///
-/// Note (Go behaviour, preserved): the envelope's `"RNG": {}` decodes into a
-/// non-nil PRNG with a nil source, so `RNG == nil` is false and the PRNG is
-/// *not* rebuilt; drawing from it later panics.
+/// The PRNG is always reseeded from the stardate, exactly like
+/// [`decode_load_game`]. (Go only rebuilt it when `RNG == nil`, but the
+/// envelope's `"RNG": {}` decodes into a non-nil PRNG with a nil source, so
+/// a loaded tour kept a broken generator and the next random draw panicked.)
 pub fn decode_tour_game(
     data: &[u8],
     filename: &str,
@@ -211,10 +212,8 @@ pub fn decode_tour_game(
         if gs.rules.profile.as_str().is_empty() {
             gs.rules = default_rules_for_profile(&DifficultyProfile::normal());
         }
-        if gs.rng.is_none() {
-            let sd = gs.stardate as i64;
-            gs.rng = Some(PRNG::new(sd));
-        }
+        let sd = gs.stardate as i64;
+        gs.rng = Some(PRNG::new(sd));
         sync_quadrant_enemies(&mut gs.current_quad);
     }
     Ok((env.game_state, env.tour_state))
