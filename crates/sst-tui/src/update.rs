@@ -422,19 +422,12 @@ impl Model {
         if !tour.borrow().in_drydock {
             return;
         }
-        let res = tour.borrow_mut().disembark_to_next_sector();
+        let res = tour.borrow_mut().disembark_and_enter_next_sector();
         match res {
             Err(e) => self
                 .command_bar
                 .add_message(&format!("Disembark error: {}", e)),
             Ok(Some(new_game)) => {
-                {
-                    let mut g = new_game.borrow_mut();
-                    if g.current_quad.enemies.is_empty() {
-                        let (q, s) = (g.enterprise.quad, g.enterprise.sector);
-                        g.populate_quadrant(q, s);
-                    }
-                }
                 self.game = Some(new_game);
                 self.selected_sector = [0, 0];
                 let sec = tour.borrow().current_sector().cloned();

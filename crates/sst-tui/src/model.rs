@@ -310,18 +310,16 @@ pub fn new_model_with_tour(tour: Option<TourRef>, th: impl Into<Option<Theme>>) 
         return new_model(None, th);
     };
 
+    // A tour that already holds a game (a tour save, or a sector already
+    // started) resumes it exactly as saved, like the console's thaw: Go
+    // repopulated the quadrant whenever its enemy list was empty, which
+    // brought a new fleet into a sector whose hostiles were all destroyed.
+    // Only a fresh entry into the current sector populates it.
     let existing = tour.borrow().current_game_state.clone();
     let game = match existing {
         Some(g) => Some(g),
-        None => tour.borrow_mut().start_current_sector(None).ok(),
+        None => tour.borrow_mut().enter_current_sector(None).ok(),
     };
-    if let Some(g) = &game {
-        let mut gs = g.borrow_mut();
-        if gs.current_quad.enemies.is_empty() {
-            let (q, s) = (gs.enterprise.quad, gs.enterprise.sector);
-            gs.populate_quadrant(q, s);
-        }
-    }
 
     let mut m = new_model(game, th);
     m.tour = Some(tour.clone());

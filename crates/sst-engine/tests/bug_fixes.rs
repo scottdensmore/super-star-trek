@@ -836,3 +836,32 @@ fn mutara_briefing_and_refusals_hint_at_blind_torpedo_fire() {
     .unwrap_err();
     assert_eq!(err.0, "TARGET LOCK FAILED: CLOAKED VESSEL");
 }
+
+// 20. Only a fresh entry into a tour sector populates its quadrant.
+#[test]
+fn only_a_fresh_tour_sector_is_populated() {
+    // A scripted sector keeps its fleet...
+    let mut t = TourState::new_at(4242, 0);
+    let g = t.enter_current_sector(Some(2)).unwrap();
+    assert_eq!(g.borrow().current_quad.enemies.len(), 3);
+    // ...and a sector without one is populated from the chart.
+    let mut extra = t.sectors[3].clone();
+    extra.index = 5;
+    t.sectors.push(extra);
+    let fresh = t.start_current_sector(Some(4)).unwrap();
+    let mut want = fresh.borrow().clone();
+    let (q, s) = (want.enterprise.quad, want.enterprise.sector);
+    want.populate_quadrant(q, s);
+    let g = t.enter_current_sector(Some(4)).unwrap();
+    assert_eq!(
+        encode_session(&g.borrow()).unwrap(),
+        encode_session(&want).unwrap()
+    );
+    t.in_drydock = true;
+    t.current_sector_index = 3;
+    let g = t.disembark_and_enter_next_sector().unwrap().unwrap();
+    assert_eq!(
+        encode_session(&g.borrow()).unwrap(),
+        encode_session(&want).unwrap()
+    );
+}

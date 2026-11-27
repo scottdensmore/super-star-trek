@@ -340,6 +340,26 @@ impl TourState {
         Ok(gr)
     }
 
+    /// Starts the current sector as a genuine fresh entry: the scripted
+    /// fleet of [`Self::start_current_sector`], or a populated quadrant for a
+    /// sector without one ([`populate_fresh_sector`]). Never use it to
+    /// restore a saved sector: a saved state is resumed exactly as saved.
+    pub fn enter_current_sector(&mut self, index: Option<i32>) -> Result<GameRef, EngineError> {
+        let g = self.start_current_sector(index)?;
+        populate_fresh_sector(&mut g.borrow_mut());
+        Ok(g)
+    }
+
+    /// [`Self::disembark_to_next_sector`] as a fresh entry into the next
+    /// sector ([`populate_fresh_sector`]).
+    pub fn disembark_and_enter_next_sector(&mut self) -> Result<Option<GameRef>, EngineError> {
+        let next = self.disembark_to_next_sector()?;
+        if let Some(g) = &next {
+            populate_fresh_sector(&mut g.borrow_mut());
+        }
+        Ok(next)
+    }
+
     /// Go `TourState.EvaluateSector`: (cleared, failed, bounty).
     pub fn evaluate_sector(&mut self) -> (bool, bool, i32) {
         let Some(gr) = self.current_game_state.clone() else {
@@ -399,5 +419,21 @@ impl TourState {
         }
         self.current_sector_index += 1;
         self.start_current_sector(None).map(Some)
+    }
+}
+
+/// Populates the quadrant of a tour sector that was just entered and has no
+/// scripted fleet (no Klingons, Romulans or Tholians).
+///
+/// Only for a genuine fresh entry ([`TourState::enter_current_sector`],
+/// [`TourState::disembark_and_enter_next_sector`]): a sector whose hostiles
+/// were all destroyed has the same empty lists, and repopulating a restored
+/// save would bring a new fleet into a cleared sector. (The console did
+/// that when it started from a tour save; its thaw path already resumed the
+/// saved state as it was.)
+pub fn populate_fresh_sector(g: &mut GameState) {
+    if g.current_quad.enemies.is_empty() && g.current_quad.klingons.is_empty() {
+        let (q, s) = (g.enterprise.quad, g.enterprise.sector);
+        g.populate_quadrant(q, s);
     }
 }

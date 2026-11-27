@@ -10,7 +10,9 @@ use sst_engine::{
     game_ref, persist, ptr, ConditionType, Coord, DeviceID, EntityType, GameLength, GameRef,
     GameState, Klingon, SkillLevel,
 };
-use sst_tui::components::{commandbar, commandpalette, galacticchart, savebrowser, targetlock};
+use sst_tui::components::{
+    commandbar, commandpalette, drydockmodal, galacticchart, savebrowser, targetlock,
+};
 use sst_tui::theme::{self, CrtTheme, LcarsTheme, ModernTheme, Theme};
 use sst_tui::*;
 use sst_tuikit::lipgloss;
@@ -783,6 +785,108 @@ fn freeze_writes_a_save_that_thaws_back() {
     m2 = up(&m2, submit(&format!("thaw {dir}/TOUR.TRK")));
     assert!(m2.tour.is_some());
     drop(m);
+}
+
+/// A tour sector with every hostile destroyed (the state a save of a
+/// cleared sector holds).
+fn clear_sector(g: &GameRef) {
+    let mut g = g.borrow_mut();
+    for cell in g.current_quad.grid.iter_mut().flatten() {
+        if matches!(
+            *cell,
+            EntityType::Klingon
+                | EntityType::Commander
+                | EntityType::SuperCommander
+                | EntityType::Romulan
+                | EntityType::Tholian
+        ) {
+            *cell = EntityType::Empty;
+        }
+    }
+    g.current_quad.enemies = Default::default();
+    g.current_quad.klingons = Default::default();
+    g.remaining_klingons = 0;
+    g.klingons_remaining = 0;
+}
+
+/// Starting the console from a tour save restores the saved sector as it
+/// was: a cleared sector stays clear (the console repopulated the quadrant
+/// whenever its enemy list was empty, as the thaw path no longer does).
+#[test]
+fn starting_from_a_tour_save_keeps_a_cleared_sector_clear() {
+    let e = env();
+    let dir = e.dir("clearedtour");
+    for sector in 0..4 {
+        let (t, g) = tour_at_sector(4242, sector);
+        clear_sector(&g);
+        let want = sst_engine::encode_session(&g.borrow()).unwrap();
+        let path = format!("{dir}/CLEARED{sector}.TRK");
+        persist::save_tour_game(&path, Some(&g), Some(&t)).unwrap();
+
+        let (_, lt) = persist::load_tour_game(&path).unwrap();
+        let m = new_model_with_tour(lt, dt());
+        let game = m.game.clone().expect("restored game");
+        let got = game.borrow();
+        assert!(got.current_quad.enemies.is_empty(), "sector {sector}");
+        assert!(got.current_quad.klingons.is_empty(), "sector {sector}");
+        assert_eq!(
+            sst_engine::encode_session(&got).unwrap(),
+            want,
+            "sector {sector}: the restored state changed"
+        );
+    }
+}
+
+/// A tour with a fifth sector that has no scripted fleet.
+fn tour_with_open_sector(seed: i64) -> sst_engine::TourState {
+    let mut t = sst_engine::TourState::new_at(seed, 0);
+    let mut extra = t.sectors[3].clone();
+    extra.index = 5;
+    extra.name = "Deep Patrol".into();
+    t.sectors.push(extra);
+    t
+}
+
+/// Disembarking into a sector without a scripted fleet still populates its
+/// quadrant (a genuine fresh entry).
+#[test]
+fn disembark_into_a_new_sector_populates_it() {
+    let _e = env();
+    // A tour whose open sector starts in a quadrant the chart says holds
+    // Klingons.
+    let seed = (1..1000)
+        .find(|&seed| {
+            let g = tour_with_open_sector(seed)
+                .start_current_sector(Some(4))
+                .unwrap();
+            let g = g.borrow();
+            let q = g.enterprise.quad;
+            g.galaxy_chart[q[0] as usize][q[1] as usize] >= 100
+        })
+        .expect("a seed with Klingons in the open sector");
+    let t = sst_engine::tour_ref(tour_with_open_sector(seed));
+    let g = t.borrow_mut().start_current_sector(Some(3)).unwrap();
+    clear_sector(&g);
+    t.borrow_mut().advance_to_drydock(0);
+    let mut m = new_model_with_tour(Some(t.clone()), dt());
+    m = up(&m, tea::msg(drydockmodal::DisembarkMsg));
+    assert_eq!(t.borrow().current_sector_index, 4);
+    let game = m.game.clone().expect("new sector");
+    assert!(!Rc::ptr_eq(&game, &g), "a fresh game for the new sector");
+    let fresh = game.borrow();
+    let (q, s) = (fresh.enterprise.quad, fresh.enterprise.sector);
+    let expected = tour_with_open_sector(seed)
+        .start_current_sector(Some(4))
+        .unwrap();
+    let chart = expected.borrow().galaxy_chart[q[0] as usize][q[1] as usize];
+    expected.borrow_mut().populate_quadrant(q, s);
+    assert_eq!(
+        sst_engine::encode_session(&fresh).unwrap(),
+        sst_engine::encode_session(&expected.borrow()).unwrap(),
+        "the new sector's quadrant is populated"
+    );
+    assert_eq!(fresh.current_quad.klingons.len() as i32, chart / 100);
+    assert!(!fresh.current_quad.klingons.is_empty());
 }
 
 #[test]

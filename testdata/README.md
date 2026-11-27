@@ -285,6 +285,21 @@ Re-recorded cases:
     command handler from the same start and compares the state after every
     command.
 
+20. **Starting from a tour save keeps a cleared sector clear.**
+    `NewModelWithTour` and the drydock's disembark repopulated the quadrant
+    whenever its enemy list was empty, which is also the state of a sector
+    whose hostiles were all destroyed: starting the console from the save of
+    a cleared sector rebuilt the quadrant (a new fleet from the galaxy chart,
+    stars moved). Now only a genuine fresh entry populates: the new
+    `TourState::enter_current_sector` and
+    `TourState::disembark_and_enter_next_sector` start a sector and populate
+    its quadrant when it has no scripted fleet (`populate_fresh_sector`),
+    and a tour that already holds a game resumes it exactly as saved, like
+    the console's thaw (fix 15). The four default sectors all have scripted
+    fleets, so a fresh tour behaves as before
+    (`crates/sst-tui/tests/go_model_a.rs`). No transcript starts from a
+    cleared tour save, so none moved.
+
 Re-recorded cases:
 
 | Transcript | Cases | Cause |
