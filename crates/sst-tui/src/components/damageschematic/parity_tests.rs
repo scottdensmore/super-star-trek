@@ -19,13 +19,14 @@ const DATA: &str = include_str!(concat!(
 fn render(
     th: Theme,
     w: i32,
-    h: i32,
+    // The recorded Go cases vary the (unused) height too.
+    _h: i32,
     devs: [f64; 8],
     cond: &str,
     docked: bool,
     mult: f64,
 ) -> String {
-    let mut m = new(Some(th), w, h);
+    let mut m = new(Some(th), w);
     let ent = EnterpriseState {
         devices: devs,
         ..Default::default()
@@ -134,18 +135,18 @@ fn generate() -> Vec<String> {
         });
     }
     o.lite("settheme-nil", |th| {
-        let mut m = new(Some(th), 66, 18);
+        let mut m = new(Some(th), 66);
         m.set_theme(None);
         m.view()
     });
     o.lite("settheme", |th| {
-        let mut m = new(Some(pg::variants()[5].1), 66, 18);
+        let mut m = new(Some(pg::variants()[5].1), 66);
         m.set_theme(Some(th));
         m.view()
     });
-    o.lite("unset", |th| new(Some(th), 66, 18).view());
+    o.lite("unset", |th| new(Some(th), 66).view());
 
-    let mut m = new(Some(pg::variants()[0].1), 66, 18);
+    let mut m = new(Some(pg::variants()[0].1), 66);
     for k in [
         "esc", "enter", "q", "Q", "d", "D", " ", "space", "x", "tab", "up", "ctrl+a", "alt+b",
         "f2", "dd",

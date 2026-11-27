@@ -31,7 +31,7 @@ fn assert_dims(view: &str) {
 #[test]
 fn nominal_dimensions_and_content() {
     setup();
-    let mut m = new(dt(), 66, 18);
+    let mut m = new(dt(), 66);
     let ent = EnterpriseState {
         energy: 5000.0,
         shields: 2500.0,
@@ -49,7 +49,7 @@ fn nominal_dimensions_and_content() {
 #[test]
 fn damaged_subsystems() {
     setup();
-    let mut m = new(dt(), 66, 18);
+    let mut m = new(dt(), 66);
     let mut ent = EnterpriseState::default();
     ent.devices[dev(DeviceID::Computer)] = 2.1;
     ent.devices[dev(DeviceID::PhotonTubes)] = 1.4;
@@ -71,7 +71,7 @@ fn damaged_subsystems() {
 #[test]
 fn repair_multiplier_and_docked() {
     setup();
-    let mut m = new(dt(), 66, 18);
+    let mut m = new(dt(), 66);
     let mut ent = EnterpriseState::default();
     ent.devices[dev(DeviceID::Warp)] = 2.0;
     m.set_state(&ent, "RED", false, 1.5);
@@ -83,7 +83,7 @@ fn repair_multiplier_and_docked() {
 #[test]
 fn set_theme() {
     setup();
-    let mut m = new(None, 0, 0);
+    let mut m = new(None, 0);
     m.set_theme(Some(theme::get_theme("lcars")));
     assert_dims(&m.view());
 }
@@ -91,7 +91,7 @@ fn set_theme() {
 #[test]
 fn docked_and_overflow_devices() {
     setup();
-    let mut m = new(dt(), 66, 18);
+    let mut m = new(dt(), 66);
     let mut ent = EnterpriseState::default();
     for d in [
         DeviceID::Warp,
@@ -111,7 +111,7 @@ fn docked_and_overflow_devices() {
 #[test]
 fn update_dismiss_keys() {
     setup();
-    let mut m = new(dt(), 66, 18);
+    let mut m = new(dt(), 66);
     let keys = [
         KeyMsg::new(KEY_ESC),
         KeyMsg::new(KEY_ENTER),
@@ -140,7 +140,7 @@ fn update_dismiss_keys() {
 #[test]
 fn damage_control_subsystem_impact() {
     setup();
-    let mut m = new(dt(), 66, 18);
+    let mut m = new(dt(), 66);
     let mut ent = EnterpriseState::default();
     ent.devices[dev(DeviceID::DamageControl)] = 1.0;
     m.set_state(&ent, "GREEN", false, 1.0);

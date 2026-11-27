@@ -71,9 +71,6 @@ pub struct CloseModalMsg;
 #[derive(Clone, Debug, Default)]
 pub struct Model {
     width: i32,
-    /// Stored but unused by the Go view (kept for parity).
-    #[allow(dead_code)]
-    height: i32,
     theme: Option<Theme>,
     devices: [f64; NUM_DEVICES],
     condition: String,
@@ -97,11 +94,12 @@ fn get_schematic_styles(th: Option<Theme>) -> SchematicStyles {
     }
 }
 
-/// `New`: non-positive sizes default to 66x18; nil theme to the default.
-pub fn new(th: Option<Theme>, width: i32, height: i32) -> Model {
+/// `New`: a non-positive width defaults to 66; nil theme to the default.
+/// (Go also stored a height that its view never used; the schematic sizes
+/// itself to its rows.)
+pub fn new(th: Option<Theme>, width: i32) -> Model {
     Model {
         width: if width <= 0 { 66 } else { width },
-        height: if height <= 0 { 18 } else { height },
         theme: Some(th.unwrap_or_else(theme::default_theme)),
         repair_mult: 1.0,
         ..Default::default()

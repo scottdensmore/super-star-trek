@@ -278,7 +278,7 @@ pub fn new_model(g: Option<GameRef>, th: impl Into<Option<Theme>>) -> Model {
         command_palette: commandpalette::new(th, 56, 16),
         save_browser: savebrowser::new(th, "."),
         galactic_chart: galacticchart::new(Some(th), 64, 18),
-        damage_schematic: damageschematic::new(Some(th), 66, 18),
+        damage_schematic: damageschematic::new(Some(th), 66),
         hall_of_fame: hall,
         manual: manual::new(th, 66, 18),
         scenario_modal: scenariomodal::new_model(th),
