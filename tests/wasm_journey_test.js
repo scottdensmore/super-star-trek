@@ -171,7 +171,13 @@ async function runJourneys() {
     status = globalThis.sstCommand('srs');
     assert(status.includes('Shields:    0'), 'Shields must remain 0 inside Mutara Nebula');
 
-    // Duel the Super-Commander
+    // Duel the Super-Commander: phasers cannot lock on while it is cloaked...
+    out = globalThis.sstCommand('pha 800');
+    assert(out.includes('cannot lock on to a cloaked vessel'), 'Phasers refuse a cloaked target');
+    // ...but a blind torpedo along its line hits and decloaks it.
+    const commander = JSON.parse(globalThis.sstSave()).CurrentQuad.klingons[0];
+    out = globalThis.sstCommand(`tor ${commander.Sector[0]} ${commander.Sector[1]}`);
+    assert(out.includes('Torpedo hit') || out.includes('DESTROYED'), 'Torpedo hits the cloaked commander');
     out = globalThis.sstCommand('pha 800');
     assert(out.includes('[PHASERS FIRED]'), 'Phasers fire inside nebula');
     console.log('  ✔ Journey 5 Passed: Mutara Nebula ionization and combat verified.\n');
