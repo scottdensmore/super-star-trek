@@ -440,7 +440,7 @@ tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
 [31;1m[RETURN FIRE][0m Klingon returns fire: 133 units damage
 [31;1m[RETURN FIRE][0m Klingon returns fire: 121 units damage
 
-cmd 22 386
+cmd 22 513
 scenario mutara-nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -448,6 +448,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -464,14 +465,15 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 60
+cmd 7 132
 pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
 [31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -479,6 +481,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -495,14 +498,15 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 60
+cmd 7 132
 pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
 [31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
-cmd 15 386
+cmd 15 513
 scenario nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -510,6 +514,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -526,8 +531,9 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 60
+cmd 7 132
 pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
@@ -665,7 +671,7 @@ tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
 [31;1m[RETURN FIRE][0m Klingon returns fire: 133 units damage
 [31;1m[RETURN FIRE][0m Klingon returns fire: 121 units damage
 
-cmd 16 386
+cmd 16 513
 scenario  Mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -673,6 +679,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -689,8 +696,9 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 60
+cmd 7 132
 pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
@@ -1181,7 +1189,7 @@ tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
 [31;1m[RETURN FIRE][0m Klingon returns fire: 133 units damage
 [31;1m[RETURN FIRE][0m Klingon returns fire: 121 units damage
 
-cmd 22 386
+cmd 22 513
 scenario mutara-nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -1189,6 +1197,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -1205,14 +1214,15 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 60
+cmd 7 132
 pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
 [31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -1220,6 +1230,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -1236,14 +1247,15 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 60
+cmd 7 132
 pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
 [31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
-cmd 15 386
+cmd 15 513
 scenario nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -1251,6 +1263,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -1267,8 +1280,9 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 60
+cmd 7 132
 pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
@@ -1406,7 +1420,7 @@ tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
 [31;1m[RETURN FIRE][0m Klingon returns fire: 133 units damage
 [31;1m[RETURN FIRE][0m Klingon returns fire: 121 units damage
 
-cmd 16 386
+cmd 16 513
 scenario  Mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -1414,6 +1428,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -1430,8 +1445,9 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 60
+cmd 7 132
 pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
@@ -1922,7 +1938,7 @@ tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
 [31;1m[RETURN FIRE][0m Klingon returns fire: 133 units damage
 [31;1m[RETURN FIRE][0m Klingon returns fire: 121 units damage
 
-cmd 22 386
+cmd 22 513
 scenario mutara-nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -1930,6 +1946,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -1946,14 +1963,15 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 60
+cmd 7 132
 pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
 [31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -1961,6 +1979,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -1977,14 +1996,15 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 60
+cmd 7 132
 pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
 [31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
-cmd 15 386
+cmd 15 513
 scenario nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -1992,6 +2012,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -2008,8 +2029,9 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 60
+cmd 7 132
 pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
@@ -2147,7 +2169,7 @@ tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
 [31;1m[RETURN FIRE][0m Klingon returns fire: 133 units damage
 [31;1m[RETURN FIRE][0m Klingon returns fire: 121 units damage
 
-cmd 16 386
+cmd 16 513
 scenario  Mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -2155,6 +2177,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -2171,8 +2194,9 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 60
+cmd 7 132
 pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
@@ -9002,7 +9026,7 @@ chart[36m=== GALACTIC STAR CHART ===[0m
 8 |...|...|...|...|...|...|...|...|
   ---------------------------------
 
-cmd 15 386
+cmd 15 513
 scenario nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -9010,6 +9034,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 7 700
@@ -13434,7 +13459,7 @@ Torpedo absorbed by star at [4,5]
 cmd 4 117
 helpCOMMANDS: nav, srs, lrs, pha, tor, she, dam, chart, com, scenario [list|<id>], save [slot], load [slot], help, quit
 
-cmd 22 386
+cmd 22 513
 scenario mutara-nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -13442,6 +13467,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 7 158
@@ -14588,7 +14614,7 @@ pha 54Cannot execute: no enemy ships in quadrant
 cmd 7 58
 tor 5 2[33m[TORPEDO TRACK][0m Fired on course 3.61 from [4,4]
 
-cmd 16 386
+cmd 16 513
 scenario  Mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -14596,14 +14622,16 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 save 0 2712
 {"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[5,5],"Sector":[4,4],"Energy":5000,"Shields":0,"Torpedoes":10,"Condition":2,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,6,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,4,6,6],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[7,7],[7,8],[5,1]],"klingons":[{"ID":1,"Sector":[7,6],"Energy":1200,"Shields":0,"IsCommander":true,"IsCloaked":true}]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,4,1,8,1,3,7,9,6],[0,5,5,4,7,3,9,8,7],[0,7,5,6,8,2,1,7,8],[0,2,2,9,9,4,4,2,1],[0,1,9,2,5,103,2,5,5],[0,2,7,9,8,3,3,4,6],[0,1,5,3,3,3,6,1,6],[0,7,8,8,5,2,1,8,8]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2192,"InitialStardate":2192,"TimeRemaining":30,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 load 5 2
 @lastok
-cmd 8 60
+cmd 8 132
 pha 1005Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 save 0 2712
 {"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[5,5],"Sector":[4,4],"Energy":5000,"Shields":0,"Torpedoes":10,"Condition":2,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,6,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,4,6,6],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[7,7],[7,8],[5,1]],"klingons":[{"ID":1,"Sector":[7,6],"Energy":1200,"Shields":0,"IsCommander":true,"IsCloaked":true}]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,4,1,8,1,3,7,9,6],[0,5,5,4,7,3,9,8,7],[0,7,5,6,8,2,1,7,8],[0,2,2,9,9,4,4,2,1],[0,1,9,2,5,103,2,5,5],[0,2,7,9,8,3,3,4,6],[0,1,5,3,3,3,6,1,6],[0,7,8,8,5,2,1,8,8]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2192,"InitialStardate":2192,"TimeRemaining":30,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
@@ -16368,7 +16396,7 @@ save 0 2859
 {"RNG":{},"rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":false,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[8,5],"Sector":[4,4],"Energy":0,"Shields":0,"Torpedoes":4,"Condition":2,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,6,0,0,0],[0,0,0,6,1,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,2,0,2,0,0,0,6,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,6,0,6]],"enemies":null,"stars":[[3,5],[8,6],[8,8],[4,3],[6,7]],"klingons":[{"ID":1,"Sector":[6,3],"Energy":67.07376253645552,"Shields":0,"IsCommander":false,"IsCloaked":false},{"ID":2,"Sector":[6,1],"Energy":89.98346681646579,"Shields":0,"IsCommander":false,"IsCloaked":false}]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,102,7,1,1,7,5,2,5],[0,2,7,107,5,2,3,4,9],[0,3,7,3,6,109,12,2,9],[0,7,6,203,7,6,9,7,5],[0,9,2,9,2,102,6,4,14],[0,105,1,6,6,5,107,7,6],[0,5,5,116,1,209,2,6,1],[0,8,2,4,3,205,106,4,5]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,true,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,false],[false,false,false,true,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":14,"RemainingStarbases":3,"Stardate":2805.253968253968,"InitialStardate":2802,"TimeRemaining":26.746031746031743,"metrics":{"klingons_killed":1,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":35,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":14,"score":0,"options":{"difficulty":""}}
 load 5 2
 @lastok
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -16376,13 +16404,15 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 8 111
 she 1842Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 60
+cmd 7 132
 pha 389Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 3 607
 srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
@@ -19796,7 +19826,7 @@ chart[36m=== GALACTIC STAR CHART ===[0m
 cmd 8 57
 she 1791Cannot execute: insufficient energy for shield transfer
 
-cmd 22 386
+cmd 22 513
 scenario mutara-nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -19804,6 +19834,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 9 123
@@ -21903,7 +21934,7 @@ tor 8 4[33m[TORPEDO TRACK][0m Fired on course 5.70 from [6,1]
 cmd 7 44
 pha 829Cannot execute: no enemy ships in quadrant
 
-cmd 16 386
+cmd 16 513
 scenario  Mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -21911,6 +21942,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 5 711
@@ -23237,7 +23269,7 @@ nav q 2 7 6[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [2,7] sector [4,4
 cmd 4 53
 dockCannot execute: enterprise not adjacent to starbase
 
-cmd 16 386
+cmd 16 513
 scenario  Mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -23245,6 +23277,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 11 718
@@ -25709,7 +25742,7 @@ srs[36m=== SHORT RANGE SENSOR SCAN [7,8] ===[0m
 cmd 8 57
 she 2464Cannot execute: insufficient energy for shield transfer
 
-cmd 15 386
+cmd 15 513
 scenario nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -25717,6 +25750,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 9 729
@@ -32878,7 +32912,7 @@ srs[36m=== SHORT RANGE SENSOR SCAN [8,5] ===[0m
 cmd 11 55
 nav q 5 1 6Cannot execute: insufficient energy for warp movement
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -32886,6 +32920,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 191
@@ -33103,7 +33138,7 @@ nav c 4.91 1.5[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [6,3] sector [
 [2m7[0m  .  [32m * [0m  .  [36m<E>[0m  .   .   .   .    Klingons:   15
 [2m8[0m [32m * [0m [32m * [0m  .   .   .   .   .  [32m * [0m   Starbases:  3
 
-cmd 22 386
+cmd 22 513
 scenario mutara-nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -33111,6 +33146,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 7 158
@@ -34610,7 +34646,7 @@ nav 8.5 0.9[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [1,1] sector [6,8
 cmd 7 48
 she 695Deflector Shields: 2195  |  Total energy: 4303
 
-cmd 15 386
+cmd 15 513
 scenario nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -34618,6 +34654,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 9 123
@@ -39860,7 +39897,7 @@ nav c 3.44 6.4Cannot execute: insufficient energy for warp movement
 cmd 4 117
 helpCOMMANDS: nav, srs, lrs, pha, tor, she, dam, chart, com, scenario [list|<id>], save [slot], load [slot], help, quit
 
-cmd 16 386
+cmd 16 513
 scenario  Mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -39868,6 +39905,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 49
@@ -47030,7 +47068,7 @@ new 11 644
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -47038,6 +47076,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -47054,7 +47093,7 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 9 51
 nav s 7 0Error: sector coordinates must be between 1 and 8
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -47062,6 +47101,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -47365,7 +47405,7 @@ new 11 588
 [2m7[0m  .   .   .   .   .   .  [32m * [0m  .    Klingons:   15
 [2m8[0m  .   .   .  [36m<E>[0m  .   .   .   .    Starbases:  3
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -47373,6 +47413,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 11 736
@@ -47706,7 +47747,7 @@ new 13 597
 [2m7[0m  .   .  [32m * [0m [32m * [0m  .   .   .   .    Klingons:   15
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -47714,13 +47755,16 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
-cmd 7 60
+cmd 7 132
 pha 346Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
-cmd 7 60
+cmd 7 132
 pha 418Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 14 727
 nav c 4.11 6.7[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [8,1] sector [8,5]
@@ -48024,7 +48068,7 @@ new 14 597
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -48032,6 +48076,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 3 607
@@ -48454,7 +48499,7 @@ new 11 624
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
 [2m8[0m  .  [33m>B<[0m  .   .  [32m * [0m [32m * [0m  .   .    Starbases:  3
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -48462,6 +48507,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 11 745
@@ -48790,7 +48836,7 @@ tor c 9.7Error: torpedo course must be between 1.0 and 9.0 (1=E, 3=N, 5=W, 7=S)
 cmd 7 53
 pha 329Cannot execute: insufficient energy to fire phasers
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -48798,6 +48844,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 7 123
@@ -48824,7 +48871,7 @@ new 13 624
 [2m7[0m [32m * [0m  .   .   .   .   .   .   .    Klingons:   15
 [2m8[0m  .   .  [32m * [0m  .   .   .   .   .    Starbases:  3
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -48832,6 +48879,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 8 111
@@ -65483,7 +65531,7 @@ new 8 606
 [2m7[0m  .   .  [32m * [0m  .   .   .   .   .    Klingons:   15
 [2m8[0m  .   .   .   .  [32m * [0m  .   .   .    Starbases:  3
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -65491,10 +65539,12 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
-cmd 7 60
+cmd 7 132
 pha 540Cannot execute: phasers cannot lock on to a cloaked vessel
+Fire photon torpedoes along its last bearing to force it out of cloak.
 
 cmd 7 171
 tor 2 5[33m[TORPEDO TRACK][0m Fired on course 1.11 from [4,4]
@@ -66034,7 +66084,7 @@ new 9 633
 [2m7[0m  .   .   .  [32m * [0m  .   .   .   .    Klingons:   15
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -66042,6 +66092,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 7 172
@@ -66445,7 +66496,7 @@ new 10 633
 [2m7[0m  .   .   .   .   .  [36m<E>[0m  .   .    Klingons:   15
 [2m8[0m  .   .   .   .   .   .   .  [32m * [0m   Starbases:  3
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -66453,6 +66504,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 7 171
@@ -66867,7 +66919,7 @@ new 10 651
 [2m7[0m [32m * [0m  .   .   .   .   .   .   .    Klingons:   15
 [2m8[0m  .  [32m * [0m [36m<E>[0m  .   .   .   .   .    Starbases:  3
 
-cmd 15 386
+cmd 15 513
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
 [33mBlind Tactical Duel[0m
 
@@ -66875,6 +66927,7 @@ TACTICAL BRIEFING: MUTARA SECTOR (IONIZED GAS CLOUD)
 A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.
 High electrostatic discharge has disabled defensive shields and blinded long-range sensors.
 Locate and destroy the enemy commander before your ship is compromised.
+Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.
 
 
 cmd 7 172

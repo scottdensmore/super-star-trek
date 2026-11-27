@@ -98,8 +98,8 @@ fn operational_constraints(id: &ScenarioID) -> &'static [&'static str] {
         ]
     } else if *id == ScenarioID::mutara_nebula() {
         &[
-            "• Shields completely offline (0.0 energy)",
-            "• LRS blinded; cloaked Klingon flagship hunting",
+            "• Shields offline; cloaked flagship hunting",
+            "• No sensor lock: torpedo its last bearing",
         ]
     } else if *id == ScenarioID::starbase_siege() {
         &[

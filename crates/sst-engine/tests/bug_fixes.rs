@@ -686,7 +686,10 @@ fn spread_phasers_skip_cloaked_ships_and_refuse_when_none_is_visible() {
     })
     .execute(&mut g)
     .unwrap_err();
-    assert_eq!(err.0, "phasers cannot lock on to a cloaked vessel");
+    assert_eq!(
+        err.0,
+        format!("phasers cannot lock on to a cloaked vessel\n{CLOAK_HINT}")
+    );
 }
 
 // 12. Focused phasers and target lock refuse cloaked ships.
@@ -705,13 +708,14 @@ fn focused_phasers_refuse_a_cloaked_ship() {
     ]);
     for target in [[4, 7], [6, 4]] {
         let err = phaser_at(&mut g, target, 500.0).unwrap_err();
-        assert_eq!(err.0, "TARGET LOCK FAILED: CLOAKED VESSEL");
+        let refusal = format!("TARGET LOCK FAILED: CLOAKED VESSEL\n{CLOAK_HINT}");
+        assert_eq!(err.0, refusal);
         let err = Action::TorpedoDirect(ActionTorpedoDirect {
             target_sector: target,
         })
         .execute(&mut g)
         .unwrap_err();
-        assert_eq!(err.0, "TARGET LOCK FAILED: CLOAKED VESSEL");
+        assert_eq!(err.0, refusal);
     }
     assert_eq!(g.enterprise.energy, 5000.0);
     assert_eq!(g.enterprise.torpedoes, 10);
@@ -772,4 +776,63 @@ fn torpedo_hit_reports_damage_after_shields() {
         (h.damage, h.shield_damage, h.destroyed),
         (150.0, 100.0, true)
     );
+}
+
+// 18. The Mutara Nebula tells the captain how to fight a cloaked commander.
+const CLOAK_HINT: &str = "Fire photon torpedoes along its last bearing to force it out of cloak.";
+
+#[test]
+fn mutara_briefing_and_refusals_hint_at_blind_torpedo_fire() {
+    let sc = get_scenario(&ScenarioID::mutara_nebula()).unwrap();
+    assert_eq!(
+        sc.briefing.last().map(String::as_str),
+        Some(
+            "Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along \
+             its last known bearing to force it out of cloak."
+        )
+    );
+
+    let mut g = sc.build(4242);
+    let cmd = g.current_quad.klingons[0].as_ref().unwrap().borrow().sector;
+    let err = Action::FirePhasers(ActionFirePhasers {
+        energy: 400.0,
+        ..Default::default()
+    })
+    .execute(&mut g)
+    .unwrap_err();
+    assert_eq!(
+        err.0,
+        format!("phasers cannot lock on to a cloaked vessel\n{CLOAK_HINT}")
+    );
+    for action in [
+        Action::TorpedoDirect(ActionTorpedoDirect { target_sector: cmd }),
+        Action::PhaserDirect(ActionPhaserDirect {
+            target_sector: cmd,
+            energy: 400.0,
+        }),
+    ] {
+        let err = action.execute(&mut g).unwrap_err();
+        assert_eq!(
+            err.0,
+            format!("TARGET LOCK FAILED: CLOAKED VESSEL\n{CLOAK_HINT}")
+        );
+    }
+    assert_eq!(g.enterprise.torpedoes, 10);
+    assert_eq!(g.enterprise.energy, 5000.0);
+
+    // With a visible ship left to fight, the target-lock refusal stays short.
+    let mut g = quadrant_game(vec![
+        enemy(1, FactionType::Klingon, [4, 6], 500.0, 0.0),
+        EnemyVessel {
+            is_commander: true,
+            is_cloaked: true,
+            ..enemy(2, FactionType::Klingon, [6, 4], 1200.0, 0.0)
+        },
+    ]);
+    let err = Action::TorpedoDirect(ActionTorpedoDirect {
+        target_sector: [6, 4],
+    })
+    .execute(&mut g)
+    .unwrap_err();
+    assert_eq!(err.0, "TARGET LOCK FAILED: CLOAKED VESSEL");
 }

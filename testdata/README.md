@@ -32,6 +32,8 @@ just the cases whose output changed and copy every other case byte for byte:
 | `parity/engine/<file>.txt` | `SST_PARITY_RECORD=/tmp/<file>.txt cargo test --release -p sst-engine --test parity_<harness>` |
 | `parity/tui/*.txt` | `SST_PARITY_RECORD=/tmp/tui cargo test --release -p sst-tui --test tui_parity` (writes every file into the directory) |
 | `parity/wasm/sessions.txt` | `SST_PARITY_RECORD=/tmp/sessions.txt cargo test --release -p sst-wasm --test parity parity_sessions` |
+| `parity/wasm/states.txt` | `SST_PARITY_RECORD=/tmp/states.txt cargo test --release -p sst-wasm --test parity parity_states_and_scenarios` |
+| `parity/components/scenariomodal.txt` | `SST_PARITY_RECORD=/tmp/scenariomodal.txt cargo test --release -p sst-tui --lib scenariomodal_parity` |
 
 Copy the result over the reference, check with `git diff` that only the
 cases you expect moved, and add an entry below. (`SST_PARITY_RECORD_FULL=1`
@@ -245,3 +247,35 @@ Re-recorded cases:
 | `wasm/events.txt` | 24 of the 600 synthetic event lists (torpedo hits on non-Klingon targets) | 13 |
 | `cli/cli.txt` | 48 `classic-eq-false` (now a console launch) and 49 `classic-eq-false-seed` (now the seeded console launch, the same facts and view as 58 `tui-seed`) | 14 |
 | `engine/save.txt`, `engine/score.txt` | the JSON type-error and timestamp-error messages (the same lines as fix 7) | 17 |
+
+## Third round of fixes
+
+18. **The Mutara Nebula says how to fight a cloaked commander.** The
+    scenario's commander starts cloaked, so spread phasers and target lock
+    refuse it until a blind torpedo along its line hits and decloaks it
+    (fixes 2, 11 and 12), but nothing in the game said so. The briefing has
+    a fifth line ("Sensors cannot lock on to the cloaked commander. Fire
+    photon torpedoes along its last known bearing to force it out of
+    cloak."), shown by the browser's `scenario mutara`; the console's
+    scenario modal, which shows only the first four briefing lines, lists it
+    under the operational constraints ("No sensor lock: torpedo its last
+    bearing", replacing a line that was cut off at the modal's width). When
+    no visible hostile is left, the phaser refusal ("phasers cannot lock on
+    to a cloaked vessel") and the target-lock refusal ("TARGET LOCK FAILED:
+    CLOAKED VESSEL", also used by focused phasers) gain a second line, "Fire
+    photon torpedoes along its last bearing to force it out of cloak."; the
+    console logs it as its own line and the browser ends it with `\r\n`. A
+    target-lock refusal with a visible ship still in the quadrant is
+    unchanged. The scenario modal and the browser formatter transcript gained
+    record modes (commands above).
+
+Re-recorded cases:
+
+| Transcript | Cases | Cause |
+| :--- | :--- | :--- |
+| `engine/scenarios.txt` | the Mutara Nebula `meta` line (the briefing) | 18 |
+| `engine/games.txt` | the refusal hashes (`X` lines) of 18 TUI games (5, 7, 21, 37, 43, 45, 60, 69, 70, 73, 77, 84, 91-93, 112, 118, 125), 6 scenario games (146, 151, 152, 155, 157, 160), 12 tour games (182, 183, 186-188, 192-194, 197, 198, 200, 201) and 7 browser sessions (204, 208, 216, 233, 236, 249, 257) | 18 |
+| `wasm/states.txt` | the Mutara Nebula `briefing` record | 18 |
+| `wasm/sessions.txt` | the briefing and phaser refusals of the 10 Mutara sessions (`scenario-mutara-0` to `-5`, `smart-scenario-mutara-0` to `-3`) and of 15 sessions that launch it (`fixed-casual`, `fixed-normal`, `fixed-hardcore`, `random--12345-expert`, `random-1-nightmare`, `random-2024-normal`, `random-42-normal`, `random-7-expert`, `random-7-normal`, `random-777-casual`, `random-777-nightmare`, `random-99-hardcore`, `random-99999-custom`, `random-99999-hardcore`, `random-99999-nightmare`) | 18 |
+| `tui/scenarios.txt` | `scenario_modal` (the Mutara constraints) and `scenario_mutara-nebula` (the refusal hint), both profiles | 18 |
+| `components/scenariomodal.txt` | the 48 views with the Mutara Nebula selected | 18 |

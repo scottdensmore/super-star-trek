@@ -614,9 +614,10 @@ impl ActionFirePhasers {
                 .flatten()
                 .any(|k| k.borrow().is_cloaked)
             {
-                return Err(EngineError::new(
-                    "phasers cannot lock on to a cloaked vessel",
-                ));
+                return Err(EngineError::new(format!(
+                    "phasers cannot lock on to a cloaked vessel\n{}",
+                    crate::tactics::CLOAK_HINT
+                )));
             }
             return Err(EngineError::new("no enemy ships in quadrant"));
         }

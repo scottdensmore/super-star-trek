@@ -82,10 +82,33 @@ pub fn unified_adversary_turn(g: &mut GameState) -> Vec<Event> {
     events
 }
 
+/// The hint added to a weapons refusal when every hostile in the quadrant is
+/// cloaked: a torpedo fired along a line still hits a cloaked ship (and
+/// decloaks it), which is the only way to fight it.
+pub const CLOAK_HINT: &str =
+    "Fire photon torpedoes along its last bearing to force it out of cloak.";
+
+/// Whether no hostile in the current quadrant is visible: every Klingon on
+/// the legacy list and every surviving ship in `Enemies` is cloaked.
+pub fn only_cloaked_hostiles(g: &GameState) -> bool {
+    let klingons = g
+        .current_quad
+        .klingons
+        .iter()
+        .flatten()
+        .all(|k| k.borrow().is_cloaked);
+    let enemies = g.current_quad.enemies.iter().flatten().all(|e| {
+        let e = e.borrow();
+        e.is_cloaked || e.energy <= 0.0
+    });
+    klingons && enemies
+}
+
 /// The target-lock refusal for a cloaked ship at `t` (a cloaked Klingon
 /// commander or Romulan), shared by focused phasers and
-/// [`crate::combat::ActionTorpedoDirect`].
-pub fn cloaked_at(g: &GameState, t: Coord) -> Option<&'static str> {
+/// [`crate::combat::ActionTorpedoDirect`]. When no visible ship is left to
+/// fight it carries [`CLOAK_HINT`] on a second line.
+pub fn cloaked_at(g: &GameState, t: Coord) -> Option<String> {
     let klingon = g
         .current_quad
         .klingons
@@ -96,7 +119,15 @@ pub fn cloaked_at(g: &GameState, t: Coord) -> Option<&'static str> {
         let e = e.borrow();
         e.sector == t && e.is_cloaked && e.energy > 0.0
     });
-    (klingon || enemy).then_some("TARGET LOCK FAILED: CLOAKED VESSEL")
+    if !(klingon || enemy) {
+        return None;
+    }
+    let why = "TARGET LOCK FAILED: CLOAKED VESSEL";
+    Some(if only_cloaked_hostiles(g) {
+        format!("{why}\n{CLOAK_HINT}")
+    } else {
+        why.to_string()
+    })
 }
 
 /// The visible ship at `t` for focused phasers: a Klingon on the legacy

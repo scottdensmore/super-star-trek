@@ -352,6 +352,12 @@ fn parity_combat_events() {
 #[test]
 fn parity_states_and_scenarios() {
     let (mut cases, mut bytes) = (0, 0);
+    // SST_PARITY_RECORD=<path> (with this test selected) re-records the
+    // transcript: each output becomes what the formatters now produce.
+    let record = std::env::var("SST_PARITY_RECORD")
+        .ok()
+        .filter(|p| !p.is_empty());
+    let mut rec: Vec<u8> = Vec::new();
     for item in parse(&read("states.txt")) {
         let Item::Rec { op, arg, out } = item else {
             continue;
@@ -374,6 +380,13 @@ fn parity_states_and_scenarios() {
             }
             other => panic!("unknown op {other}"),
         };
+        if record.is_some() {
+            rec.extend_from_slice(
+                format!("{op} {} {}\n{arg}{got}\n", arg.len(), got.len()).as_bytes(),
+            );
+            cases += 1;
+            continue;
+        }
         assert!(
             got == out,
             "{op} {}\n--- go ---\n{out:?}\n--- rust ---\n{got:?}",
@@ -381,6 +394,10 @@ fn parity_states_and_scenarios() {
         );
         cases += 1;
         bytes += out.len();
+    }
+    if let Some(path) = record {
+        std::fs::write(&path, &rec).unwrap();
+        eprintln!("recorded {cases} state/scenario records to {path}");
     }
     eprintln!("wasm formatter parity: {cases} states/scenario records, {bytes} bytes compared");
     assert!(cases >= 100);

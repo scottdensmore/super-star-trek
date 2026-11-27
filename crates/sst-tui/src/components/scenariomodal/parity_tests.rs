@@ -150,6 +150,18 @@ fn generate() -> Vec<String> {
 #[test]
 fn scenariomodal_parity() {
     crate::theme::detect::set_fixed_detection(true);
+    // SST_PARITY_RECORD=<path> re-records the reference after an
+    // intentional change (every line is regenerated; `git diff` shows which
+    // moved).
+    if let Some(path) = std::env::var("SST_PARITY_RECORD")
+        .ok()
+        .filter(|p| !p.is_empty())
+    {
+        let mut out = generate().join("\n");
+        out.push('\n');
+        std::fs::write(&path, out).unwrap();
+        return;
+    }
     let (lines, bytes) = compare(&generate(), DATA);
     eprintln!("scenariomodal parity: {lines} lines, {bytes} bytes");
 }

@@ -84,6 +84,9 @@ fn view_rendering() {
     let v2 = m.view();
     assert!(v2.contains("MUTARA NEBULA"));
     assert!(v2.contains("Admiral James T. Kirk"));
+    // The cloaked commander cannot be locked on to; the constraints say how
+    // to fight it.
+    assert!(v2.contains("No sensor lock: torpedo its last bearing"));
     let _ = m.update(&key(tea::KEY_DOWN));
     let v3 = m.view();
     assert!(v3.contains("STARBASE"));

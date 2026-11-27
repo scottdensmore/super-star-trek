@@ -3063,7 +3063,7 @@ frame 2734
 │ COMMAND> pha 300                                                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 49 key 13 "" 0
-= 8a2e044f3882d603 pend=9 quit=0
+= 9e6e1b21cf5e7a5a pend=9 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
@@ -3083,14 +3083,14 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
 │ Short-range scan updated.                                                    │
 │ Ship status nominal.                                                         │
 │ phasers cannot lock on to a cloaked vessel                                   │
+│ Fire photon torpedoes along its last bearing to force it out of cloak.       │
 │ COMMAND>                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 50 tick
-= 8a2e044f3882d603 pend=2 quit=0
+= 9e6e1b21cf5e7a5a pend=2 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
@@ -3110,16 +3110,16 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
 │ Short-range scan updated.                                                    │
 │ Ship status nominal.                                                         │
 │ phasers cannot lock on to a cloaked vessel                                   │
+│ Fire photon torpedoes along its last bearing to force it out of cloak.       │
 │ COMMAND>                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 51 tick
-= 8a2e044f3882d603 pend=2 quit=0
+= 9e6e1b21cf5e7a5a pend=2 quit=0
 step 52 tick
-= 8a2e044f3882d603 pend=2 quit=0
+= 9e6e1b21cf5e7a5a pend=2 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
@@ -3139,14 +3139,14 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
 │ Short-range scan updated.                                                    │
 │ Ship status nominal.                                                         │
 │ phasers cannot lock on to a cloaked vessel                                   │
+│ Fire photon torpedoes along its last bearing to force it out of cloak.       │
 │ COMMAND>                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 53 tick
-= 8a2e044f3882d603 pend=2 quit=0
+= 9e6e1b21cf5e7a5a pend=2 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
@@ -3166,14 +3166,14 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
 │ Short-range scan updated.                                                    │
 │ Ship status nominal.                                                         │
 │ phasers cannot lock on to a cloaked vessel                                   │
+│ Fire photon torpedoes along its last bearing to force it out of cloak.       │
 │ COMMAND>                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 54 key -1 "s" 0
-= 39ef95ec20b55d30 pend=3 quit=0
+= c61be20a7b1e68c9 pend=3 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
@@ -3193,14 +3193,14 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
 │ Short-range scan updated.                                                    │
 │ Ship status nominal.                                                         │
 │ phasers cannot lock on to a cloaked vessel                                   │
+│ Fire photon torpedoes along its last bearing to force it out of cloak.       │
 │ COMMAND> s                                                                   │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 55 key -1 "h" 0
-= 9132f6eb6fb754c8 pend=4 quit=0
+= f38ed5a2a2a7bc01 pend=4 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
@@ -3220,14 +3220,14 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
 │ Short-range scan updated.                                                    │
 │ Ship status nominal.                                                         │
 │ phasers cannot lock on to a cloaked vessel                                   │
+│ Fire photon torpedoes along its last bearing to force it out of cloak.       │
 │ COMMAND> sh                                                                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 56 key -1 "e" 0
-= 1eccb74735476b75 pend=5 quit=0
+= b928364db6a8887c pend=5 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
@@ -3247,16 +3247,16 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
 │ Short-range scan updated.                                                    │
 │ Ship status nominal.                                                         │
 │ phasers cannot lock on to a cloaked vessel                                   │
+│ Fire photon torpedoes along its last bearing to force it out of cloak.       │
 │ COMMAND> she                                                                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 57 key -15 " " 0
-= 1eccb74735476b75 pend=6 quit=0
+= b928364db6a8887c pend=6 quit=0
 step 58 key -1 "4" 0
-= f668ab3423696579 pend=7 quit=0
+= c493606d90d46cd0 pend=7 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
@@ -3276,14 +3276,14 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
 │ Short-range scan updated.                                                    │
 │ Ship status nominal.                                                         │
 │ phasers cannot lock on to a cloaked vessel                                   │
+│ Fire photon torpedoes along its last bearing to force it out of cloak.       │
 │ COMMAND> she 4                                                               │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 59 key -1 "0" 0
-= 678edbaaa48357e9 pend=8 quit=0
+= 208985a2deedd020 pend=8 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
@@ -3303,14 +3303,14 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
 │ Short-range scan updated.                                                    │
 │ Ship status nominal.                                                         │
 │ phasers cannot lock on to a cloaked vessel                                   │
+│ Fire photon torpedoes along its last bearing to force it out of cloak.       │
 │ COMMAND> she 40                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 60 key -1 "0" 0
-= f069e1995785c359 pend=9 quit=0
+= 739189ca553c7a70 pend=9 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
@@ -3330,14 +3330,14 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
 │ Short-range scan updated.                                                    │
 │ Ship status nominal.                                                         │
 │ phasers cannot lock on to a cloaked vessel                                   │
+│ Fire photon torpedoes along its last bearing to force it out of cloak.       │
 │ COMMAND> she 400                                                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 61 key 13 "" 0
-= f64b1a88e0e887f6 pend=9 quit=0
+= 69dc5874343eae52 pend=9 quit=0
 frame 2819
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
@@ -3357,19 +3357,19 @@ frame 2819
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Short-range scan updated.                                                    │
 │ Ship status nominal.                                                         │
 │ phasers cannot lock on to a cloaked vessel                                   │
+│ Fire photon torpedoes along its last bearing to force it out of cloak.       │
 │ sensors indicate extreme particle ionization: shields cannot hold cohesive   │
 │ geometry in nebula                                                           │
 │ COMMAND>                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 62 tick
-= f64b1a88e0e887f6 pend=2 quit=0
+= 69dc5874343eae52 pend=2 quit=0
 step 63 tick
-= f64b1a88e0e887f6 pend=2 quit=0
+= 69dc5874343eae52 pend=2 quit=0
 step 64 tick
-= f64b1a88e0e887f6 pend=2 quit=0
+= 69dc5874343eae52 pend=2 quit=0
 step 65 submit "tor 3 5"
 = 58a62f785a820c70 pend=4 quit=0
 frame 2734
@@ -3598,37 +3598,37 @@ step 47 key -1 "0" 0
 step 48 key -1 "0" 0
 = bc273ae123c717da pend=9 quit=0
 step 49 key 13 "" 0
-= 9ac690a012c6f9d6 pend=9 quit=0
+= 55d4e1a187799b99 pend=9 quit=0
 step 50 tick
-= 57b710e9841d78dc pend=2 quit=0
+= dbda80fa0434546f pend=2 quit=0
 step 51 tick
-= 9ac690a012c6f9d6 pend=2 quit=0
+= 55d4e1a187799b99 pend=2 quit=0
 step 52 tick
-= 57b710e9841d78dc pend=2 quit=0
+= dbda80fa0434546f pend=2 quit=0
 step 53 tick
-= 9ac690a012c6f9d6 pend=2 quit=0
+= 55d4e1a187799b99 pend=2 quit=0
 step 54 key -1 "s" 0
-= 77b0fd1985d26f17 pend=3 quit=0
+= 8f14c37bb85ce054 pend=3 quit=0
 step 55 key -1 "h" 0
-= 333d6c62291ebc07 pend=4 quit=0
+= 2b58ddda61a62e24 pend=4 quit=0
 step 56 key -1 "e" 0
-= df08be6ecdcf7170 pend=5 quit=0
+= cdb3941799425563 pend=5 quit=0
 step 57 key -15 " " 0
-= ac4429485c51fcb8 pend=6 quit=0
+= c7ea359f55f16a2b pend=6 quit=0
 step 58 key -1 "4" 0
-= 5030c33d0d94069c pend=7 quit=0
+= 0904ba9c32a320ff pend=7 quit=0
 step 59 key -1 "0" 0
-= 102293c9df91b934 pend=8 quit=0
+= 0a63b8c25c1396d7 pend=8 quit=0
 step 60 key -1 "0" 0
-= d0a936b6816e873c pend=9 quit=0
+= 74cd9e7a988ce19f pend=9 quit=0
 step 61 key 13 "" 0
-= 7e47e1f295f66353 pend=9 quit=0
+= 46d06e1b81cdcb41 pend=9 quit=0
 step 62 tick
-= 19d6ec73eb2afccb pend=2 quit=0
+= 0b89db141c16671d pend=2 quit=0
 step 63 tick
-= 7e47e1f295f66353 pend=2 quit=0
+= 46d06e1b81cdcb41 pend=2 quit=0
 step 64 tick
-= 19d6ec73eb2afccb pend=2 quit=0
+= 0b89db141c16671d pend=2 quit=0
 step 65 submit "tor 3 5"
 = af4eec65e7cf0af4 pend=4 quit=0
 step 66 tick
@@ -5849,7 +5849,7 @@ frame 2955
 │ COMMAND>                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 11 key -3 "" 0
-= a4b63e7e6176dcb2 pend=11 quit=0
+= 83709f3cbec05cc5 pend=11 quit=0
 frame 2955
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
@@ -5865,8 +5865,8 @@ frame 2955
 └───[0m│                         │ Locate and destroy the enemy commander befo│ │  
     [0m│   Starbase Under Siege  │ ────────────────────────────────────────── │ │  
     [0m│   [CHALLENGE]           │ OPERATIONAL CONSTRAINTS:                   │ │  
-    [0m│                         │ • Shields completely offline (0.0 energy)  │ │  
-    [0m│                         │ • LRS blinded; cloaked Klingon flagship hun│ │  
+    [0m│                         │ • Shields offline; cloaked flagship hunting│ │  
+    [0m│                         │ • No sensor lock: torpedo its last bearing │ │  
     [0m│                         │ ────────────────────────────────────────── │─╯  
 ╭───[0m│                         │ TOP LEADERBOARD RECORD:                    │───╮
 │   [0m│                         │ Admiral James T. Kirk  1500 pts            │   │
@@ -6773,7 +6773,7 @@ frame 2955
 │ COMMAND>                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 48 key -3 "" 0
-= 3bd2e846a29018f7 pend=12 quit=0
+= 93bc77608a022ed4 pend=12 quit=0
 frame 2955
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
@@ -6789,8 +6789,8 @@ frame 2955
 └───[0m│                         │ Locate and destroy the enemy commander befo│ │  
     [0m│   Starbase Under Siege  │ ────────────────────────────────────────── │ │  
     [0m│   [CHALLENGE]           │ OPERATIONAL CONSTRAINTS:                   │ │  
-    [0m│                         │ • Shields completely offline (0.0 energy)  │ │  
-    [0m│                         │ • LRS blinded; cloaked Klingon flagship hun│ │  
+    [0m│                         │ • Shields offline; cloaked flagship hunting│ │  
+    [0m│                         │ • No sensor lock: torpedo its last bearing │ │  
     [0m│                         │ ────────────────────────────────────────── │─╯  
 ╭───[0m│                         │ TOP LEADERBOARD RECORD:                    │───╮
 │   [0m│                         │ Admiral James T. Kirk  1500 pts            │   │
@@ -7001,7 +7001,7 @@ step 60 key -1 "s" 0
 step 61 key 13 "" 0
 = 5f5588e2852def07 pend=13 quit=0
 step 62 key -3 "" 0
-= 1bd2e42ff273d189 pend=13 quit=0
+= b7ea0fbb672406ba pend=13 quit=0
 step 63 key -3 "" 0
 = f085deb36b031f8c pend=13 quit=0
 step 64 key 13 "" 0
@@ -7165,7 +7165,7 @@ step 9 key -1 "s" 0
 step 10 key 13 "" 0
 = b3cd6b67db887d2d pend=11 quit=0
 step 11 key -3 "" 0
-= e20e0e78b3de3441 pend=11 quit=0
+= 0e95b67a68115b1a pend=11 quit=0
 step 12 key -3 "" 0
 = cbf019a42fed92a3 pend=11 quit=0
 step 13 key -3 "" 0
@@ -7239,7 +7239,7 @@ step 46 key -1 "s" 0
 step 47 key 13 "" 0
 = 0c032b41784d5b86 pend=12 quit=0
 step 48 key -3 "" 0
-= 824f1c54da0680e2 pend=12 quit=0
+= 119266e94f1f813b pend=12 quit=0
 step 49 key 13 "" 0
 = 211705cd902f4ac0 pend=14 quit=0
 step 50 tick
@@ -7267,7 +7267,7 @@ step 60 key -1 "s" 0
 step 61 key 13 "" 0
 = 13beeb87428f329a pend=13 quit=0
 step 62 key -3 "" 0
-= f37278d94d130c8a pend=13 quit=0
+= e14accdf19fe8c3b pend=13 quit=0
 step 63 key -3 "" 0
 = 81df8bbf80aac850 pend=13 quit=0
 step 64 key 13 "" 0

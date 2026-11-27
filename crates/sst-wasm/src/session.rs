@@ -115,7 +115,8 @@ impl Session {
         if let Some(action) = parsed.action {
             let mut events = match self.game.dispatch(&action) {
                 Ok(ev) => ev,
-                Err(err) => return format!("Cannot execute: {err}\r\n"),
+                // A refusal may carry a hint on a second line.
+                Err(err) => return format!("Cannot execute: {}\r\n", err.0.replace('\n', "\r\n")),
             };
             // Surviving Klingons counter-attack on turn-consuming actions.
             session_counter_attack(&mut self.game, &action, &mut events);

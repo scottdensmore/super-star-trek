@@ -165,6 +165,8 @@ async function runJourneys() {
     console.log('▶ Running Journey 5: Scenario - Mutara Nebula...');
     out = globalThis.sstCommand('scenario mutara');
     assert(out.includes('MUTARA NEBULA'), 'Briefing must display Mutara Nebula');
+    assert(out.includes('Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.'),
+        'Briefing must explain how to fight the cloaked commander');
 
     // Shields must remain 0 in Mutara Nebula
     out = globalThis.sstCommand('she 1000');
@@ -173,7 +175,8 @@ async function runJourneys() {
 
     // Duel the Super-Commander: phasers cannot lock on while it is cloaked...
     out = globalThis.sstCommand('pha 800');
-    assert(out.includes('cannot lock on to a cloaked vessel'), 'Phasers refuse a cloaked target');
+    assert(out.includes('cannot lock on to a cloaked vessel\r\nFire photon torpedoes along its last bearing to force it out of cloak.'),
+        'Phasers refuse a cloaked target and hint at blind torpedo fire');
     // ...but a blind torpedo along its line hits and decloaks it.
     const commander = JSON.parse(globalThis.sstSave()).CurrentQuad.klingons[0];
     out = globalThis.sstCommand(`tor ${commander.Sector[0]} ${commander.Sector[1]}`);

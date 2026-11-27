@@ -209,6 +209,7 @@ fn builtin_scenarios() -> Vec<Scenario> {
                 "A rogue Klingon Super-Commander has lured the Enterprise into the Mutara Nebula.",
                 "High electrostatic discharge has disabled defensive shields and blinded long-range sensors.",
                 "Locate and destroy the enemy commander before your ship is compromised.",
+                "Sensors cannot lock on to the cloaked commander. Fire photon torpedoes along its last known bearing to force it out of cloak.",
             ]),
             aliases: strs(&["mutara", "nebula"]),
             build: Some(mn::build_mutara_nebula),
