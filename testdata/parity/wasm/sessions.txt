@@ -464,14 +464,12 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 154
-pha 200[33m[PHASERS FIRED][0m Allocated 200 units
-Phaser beam hit target at [6,3]: 89 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 746 units damage
+cmd 7 60
+pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
-[31;1m[RETURN FIRE][0m Klingon returns fire: 557 units damage
+[31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
 cmd 15 386
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
@@ -497,14 +495,12 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 154
-pha 200[33m[PHASERS FIRED][0m Allocated 200 units
-Phaser beam hit target at [6,3]: 89 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 746 units damage
+cmd 7 60
+pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
-[31;1m[RETURN FIRE][0m Klingon returns fire: 557 units damage
+[31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
 cmd 15 386
 scenario nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
@@ -530,14 +526,12 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 154
-pha 200[33m[PHASERS FIRED][0m Allocated 200 units
-Phaser beam hit target at [6,3]: 89 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 746 units damage
+cmd 7 60
+pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
-[31;1m[RETURN FIRE][0m Klingon returns fire: 557 units damage
+[31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
 cmd 23 364
 scenario starbase-siege[36m=== MISSION BRIEFING: STARBASE UNDER SIEGE ===[0m
@@ -695,14 +689,12 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 154
-pha 200[33m[PHASERS FIRED][0m Allocated 200 units
-Phaser beam hit target at [6,3]: 89 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 746 units damage
+cmd 7 60
+pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
-[31;1m[RETURN FIRE][0m Klingon returns fire: 557 units damage
+[31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
 cmd 14 364
 scenario Siege[36m=== MISSION BRIEFING: STARBASE UNDER SIEGE ===[0m
@@ -1213,14 +1205,12 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 154
-pha 200[33m[PHASERS FIRED][0m Allocated 200 units
-Phaser beam hit target at [6,3]: 89 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 746 units damage
+cmd 7 60
+pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
-[31;1m[RETURN FIRE][0m Klingon returns fire: 557 units damage
+[31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
 cmd 15 386
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
@@ -1246,14 +1236,12 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 154
-pha 200[33m[PHASERS FIRED][0m Allocated 200 units
-Phaser beam hit target at [6,3]: 89 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 746 units damage
+cmd 7 60
+pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
-[31;1m[RETURN FIRE][0m Klingon returns fire: 557 units damage
+[31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
 cmd 15 386
 scenario nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
@@ -1279,14 +1267,12 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 154
-pha 200[33m[PHASERS FIRED][0m Allocated 200 units
-Phaser beam hit target at [6,3]: 89 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 746 units damage
+cmd 7 60
+pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
-[31;1m[RETURN FIRE][0m Klingon returns fire: 557 units damage
+[31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
 cmd 23 364
 scenario starbase-siege[36m=== MISSION BRIEFING: STARBASE UNDER SIEGE ===[0m
@@ -1444,14 +1430,12 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 154
-pha 200[33m[PHASERS FIRED][0m Allocated 200 units
-Phaser beam hit target at [6,3]: 89 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 746 units damage
+cmd 7 60
+pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
-[31;1m[RETURN FIRE][0m Klingon returns fire: 557 units damage
+[31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
 cmd 14 364
 scenario Siege[36m=== MISSION BRIEFING: STARBASE UNDER SIEGE ===[0m
@@ -1962,14 +1946,12 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 154
-pha 200[33m[PHASERS FIRED][0m Allocated 200 units
-Phaser beam hit target at [6,3]: 89 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 746 units damage
+cmd 7 60
+pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
-[31;1m[RETURN FIRE][0m Klingon returns fire: 557 units damage
+[31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
 cmd 15 386
 scenario mutara[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
@@ -1995,14 +1977,12 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 154
-pha 200[33m[PHASERS FIRED][0m Allocated 200 units
-Phaser beam hit target at [6,3]: 89 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 746 units damage
+cmd 7 60
+pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
-[31;1m[RETURN FIRE][0m Klingon returns fire: 557 units damage
+[31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
 cmd 15 386
 scenario nebula[36m=== MISSION BRIEFING: MUTARA NEBULA ===[0m
@@ -2028,14 +2008,12 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 154
-pha 200[33m[PHASERS FIRED][0m Allocated 200 units
-Phaser beam hit target at [6,3]: 89 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 746 units damage
+cmd 7 60
+pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
-[31;1m[RETURN FIRE][0m Klingon returns fire: 557 units damage
+[31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
 cmd 23 364
 scenario starbase-siege[36m=== MISSION BRIEFING: STARBASE UNDER SIEGE ===[0m
@@ -2193,14 +2171,12 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 cmd 7 111
 she 300Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 154
-pha 200[33m[PHASERS FIRED][0m Allocated 200 units
-Phaser beam hit target at [6,3]: 89 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 746 units damage
+cmd 7 60
+pha 200Cannot execute: phasers cannot lock on to a cloaked vessel
 
 cmd 7 124
 tor 4 4[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,4]
-[31;1m[RETURN FIRE][0m Klingon returns fire: 557 units damage
+[31;1m[RETURN FIRE][0m Klingon returns fire: 806 units damage
 
 cmd 14 364
 scenario Siege[36m=== MISSION BRIEFING: STARBASE UNDER SIEGE ===[0m
@@ -14626,23 +14602,21 @@ save 0 2712
 {"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[5,5],"Sector":[4,4],"Energy":5000,"Shields":0,"Torpedoes":10,"Condition":2,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,6,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,4,6,6],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[7,7],[7,8],[5,1]],"klingons":[{"ID":1,"Sector":[7,6],"Energy":1200,"Shields":0,"IsCommander":true,"IsCloaked":true}]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,4,1,8,1,3,7,9,6],[0,5,5,4,7,3,9,8,7],[0,7,5,6,8,2,1,7,8],[0,2,2,9,9,4,4,2,1],[0,1,9,2,5,103,2,5,5],[0,2,7,9,8,3,3,4,6],[0,1,5,3,3,3,6,1,6],[0,7,8,8,5,2,1,8,8]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2192,"InitialStardate":2192,"TimeRemaining":30,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 load 5 2
 @lastok
-cmd 8 156
-pha 1005[33m[PHASERS FIRED][0m Allocated 1005 units
-Phaser beam hit target at [7,6]: 279 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 433 units damage
+cmd 8 60
+pha 1005Cannot execute: phasers cannot lock on to a cloaked vessel
 
-save 0 2726
-{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[5,5],"Sector":[4,4],"Energy":3562,"Shields":0,"Torpedoes":10,"Condition":2,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,6,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,4,6,6],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[7,7],[7,8],[5,1]],"klingons":[{"ID":1,"Sector":[7,6],"Energy":690.9473635476168,"Shields":0,"IsCommander":true,"IsCloaked":false}]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,4,1,8,1,3,7,9,6],[0,5,5,4,7,3,9,8,7],[0,7,5,6,8,2,1,7,8],[0,2,2,9,9,4,4,2,1],[0,1,9,2,5,103,2,5,5],[0,2,7,9,8,3,3,4,6],[0,1,5,3,3,3,6,1,6],[0,7,8,8,5,2,1,8,8]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2192,"InitialStardate":2192,"TimeRemaining":30,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":9,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+save 0 2712
+{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[5,5],"Sector":[4,4],"Energy":5000,"Shields":0,"Torpedoes":10,"Condition":2,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,6,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,4,6,6],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[7,7],[7,8],[5,1]],"klingons":[{"ID":1,"Sector":[7,6],"Energy":1200,"Shields":0,"IsCommander":true,"IsCloaked":true}]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,4,1,8,1,3,7,9,6],[0,5,5,4,7,3,9,8,7],[0,7,5,6,8,2,1,7,8],[0,2,2,9,9,4,4,2,1],[0,1,9,2,5,103,2,5,5],[0,2,7,9,8,3,3,4,6],[0,1,5,3,3,3,6,1,6],[0,7,8,8,5,2,1,8,8]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2192,"InitialStardate":2192,"TimeRemaining":30,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 load 5 2
 @lastok
-cmd 11 728
+cmd 11 727
 nav 8.0 1.0[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [4,5] sector [4,3]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -9)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [4,5] ===[0m
 [2m1[0m  .   .   .   .   .   .   .  [32m * [0m   Stardate:   2202.0
 [2m2[0m  .  [32m * [0m  .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .  [32m * [0m  .    Sector:     [4,3]
-[2m4[0m  .   .  [36m<E>[0m  .   .   .   .   .    Energy:     3561 / 5000
+[2m4[0m  .   .  [36m<E>[0m  .   .   .   .   .    Energy:     4999 / 5000
 [2m5[0m  .   .   .   .   .  [32m * [0m  .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  10
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
@@ -14696,14 +14670,14 @@ chart[36m=== GALACTIC STAR CHART ===[0m
 8 |...|...|...|...|...|...|...|...|
   ---------------------------------
 
-cmd 11 754
+cmd 11 753
 nav q 3 1 6[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [3,1] sector [4,4]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -9)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [3,1] ===[0m
 [2m1[0m  .   .   .   .   .   .   .  [32m * [0m   Stardate:   2203.7
 [2m2[0m  .   .   .   .   .  [32m * [0m  .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .  [32m * [0m [36m<E>[0m  .  [32m * [0m  .   .    Energy:     2265 / 5000
+[2m4[0m  .   .  [32m * [0m [36m<E>[0m  .  [32m * [0m  .   .    Energy:     3703 / 5000
 [2m5[0m  .   .   .   .  [32m * [0m  .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  9
 [2m7[0m  .  [32m * [0m  .   .  [32m * [0m  .   .   .    Klingons:   1
@@ -14715,8 +14689,8 @@ tor 6 4[33m[TORPEDO TRACK][0m Fired on course 4.71 from [4,4]
 cmd 7 44
 pha 400Cannot execute: no enemy ships in quadrant
 
-cmd 8 47
-she 2038Deflector Shields: 2038  |  Total energy: 227
+cmd 8 48
+she 2038Deflector Shields: 2038  |  Total energy: 1665
 
 cmd 7 44
 pha 181Cannot execute: no enemy ships in quadrant
@@ -14724,24 +14698,24 @@ pha 181Cannot execute: no enemy ships in quadrant
 cmd 7 58
 tor 7 1[33m[TORPEDO TRACK][0m Fired on course 3.93 from [4,4]
 
-cmd 8 53
-pha 1361Cannot execute: insufficient energy to fire phasers
+cmd 8 44
+pha 1361Cannot execute: no enemy ships in quadrant
 
-cmd 3 633
+cmd 3 634
 srs[36m=== SHORT RANGE SENSOR SCAN [3,1] ===[0m
 [2m1[0m  .   .   .   .   .   .   .  [32m * [0m   Stardate:   2203.7
 [2m2[0m  .   .   .   .   .  [32m * [0m  .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .  [32m * [0m [36m<E>[0m  .  [32m * [0m  .   .    Energy:     227 / 5000
+[2m4[0m  .   .  [32m * [0m [36m<E>[0m  .  [32m * [0m  .   .    Energy:     1665 / 5000
 [2m5[0m  .   .   .   .  [32m * [0m  .   .   .    Shields:    2038 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  7
 [2m7[0m  .  [32m * [0m  .   .  [32m * [0m  .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
-cmd 7 144
+cmd 7 143
 tor 9.9[33m[TORPEDO TRACK][0m Fired on course 9.90 from [4,4]
 Torpedo absorbed by star at [4,3]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -9)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 
 cmd 3 191
 lrs[36m=== LONG RANGE SENSOR SCAN ===[0m
@@ -14755,40 +14729,40 @@ lrs[36m=== LONG RANGE SENSOR SCAN ===[0m
 
 cmd 11 702
 nav q 1 2 2[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [1,2] sector [4,4]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -9)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [1,2] ===[0m
 [2m1[0m  .   .   .  [32m * [0m  .   .   .   .    Stardate:   2208.7
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     195 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1633 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    2038 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  6
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
-cmd 3 579
+cmd 3 580
 srs[36m=== SHORT RANGE SENSOR SCAN [1,2] ===[0m
 [2m1[0m  .   .   .  [32m * [0m  .   .   .   .    Stardate:   2208.7
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     195 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1633 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    2038 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  6
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
-save 0 2629
-{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[1,2],"Sector":[4,4],"Energy":195,"Shields":2038,"Torpedoes":6,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,6,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[1,4]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,4,1,8,1,3,7,9,6],[0,5,5,4,7,3,9,8,7],[0,7,5,6,8,2,1,7,8],[0,2,2,9,9,4,4,2,1],[0,1,9,2,5,103,2,5,5],[0,2,7,9,8,3,3,4,6],[0,1,5,3,3,3,6,1,6],[0,7,8,8,5,2,1,8,8]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,true,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,true,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2208.6666666666665,"InitialStardate":2192,"TimeRemaining":13.333333333333332,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":9,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+save 0 2630
+{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[1,2],"Sector":[4,4],"Energy":1633,"Shields":2038,"Torpedoes":6,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,6,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[1,4]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,4,1,8,1,3,7,9,6],[0,5,5,4,7,3,9,8,7],[0,7,5,6,8,2,1,7,8],[0,2,2,9,9,4,4,2,1],[0,1,9,2,5,103,2,5,5],[0,2,7,9,8,3,3,4,6],[0,1,5,3,3,3,6,1,6],[0,7,8,8,5,2,1,8,8]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,true,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,true,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2208.6666666666665,"InitialStardate":2192,"TimeRemaining":13.333333333333332,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 load 5 2
 @lastok
 cmd 9 687
 nav s 1 1[32m[WARP ENGINES ENGAGED][0m Arrived at sector [1,1]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -9)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [1,2] ===[0m
 [2m1[0m [36m<E>[0m  .   .  [32m * [0m  .   .   .   .    Stardate:   2218.7
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [1,1]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     193 / 5000
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1631 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    2038 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  6
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
@@ -14796,12 +14770,12 @@ nav s 1 1[32m[WARP ENGINES ENGAGED][0m Arrived at sector [1,1]
 
 cmd 7 687
 nav 6 7[32m[WARP ENGINES ENGAGED][0m Arrived at sector [6,7]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -9)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [1,2] ===[0m
 [2m1[0m  .   .   .  [32m * [0m  .   .   .   .    Stardate:   2228.7
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [6,7]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     191 / 5000
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1629 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    2038 / 2500
 [2m6[0m  .   .   .   .   .   .  [36m<E>[0m  .    Torpedoes:  6
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
@@ -14816,18 +14790,18 @@ tor 2 1[33m[TORPEDO TRACK][0m Fired on course 2.55 from [6,7]
 cmd 7 44
 pha 116Cannot execute: no enemy ships in quadrant
 
-save 0 2629
-{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[1,2],"Sector":[6,7],"Energy":191,"Shields":2038,"Torpedoes":5,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,6,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[1,4]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,4,1,8,1,3,7,9,6],[0,5,5,4,7,3,9,8,7],[0,7,5,6,8,2,1,7,8],[0,2,2,9,9,4,4,2,1],[0,1,9,2,5,103,2,5,5],[0,2,7,9,8,3,3,4,6],[0,1,5,3,3,3,6,1,6],[0,7,8,8,5,2,1,8,8]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,true,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,true,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2228.6666666666665,"InitialStardate":2192,"TimeRemaining":-6.666666666666668,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":9,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+save 0 2630
+{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[1,2],"Sector":[6,7],"Energy":1629,"Shields":2038,"Torpedoes":5,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,6,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,1,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[1,4]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,4,1,8,1,3,7,9,6],[0,5,5,4,7,3,9,8,7],[0,7,5,6,8,2,1,7,8],[0,2,2,9,9,4,4,2,1],[0,1,9,2,5,103,2,5,5],[0,2,7,9,8,3,3,4,6],[0,1,5,3,3,3,6,1,6],[0,7,8,8,5,2,1,8,8]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,true,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,true,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2228.6666666666665,"InitialStardate":2192,"TimeRemaining":-6.666666666666668,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 load 5 2
 @lastok
-cmd 11 710
+cmd 11 711
 nav 4.7 2.8[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [4,2] sector [4,7]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -9)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [4,2] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2232.2
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,7]
-[2m4[0m  .   .   .   .   .   .  [36m<E>[0m  .    Energy:     68 / 5000
+[2m4[0m  .   .   .   .   .   .  [36m<E>[0m  .    Energy:     1506 / 5000
 [2m5[0m  .   .  [32m * [0m  .   .   .   .   .    Shields:    2038 / 2500
 [2m6[0m  .  [32m * [0m  .   .   .   .   .   .    Torpedoes:  5
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
@@ -14844,18 +14818,18 @@ Damage Control         : [32mOPERATIONAL[0m
 Shield Control         : [32mOPERATIONAL[0m
 Library Computer       : [32mOPERATIONAL[0m
 
-cmd 7 57
-she 119Cannot execute: insufficient energy for shield transfer
+cmd 7 48
+she 119Deflector Shields: 2157  |  Total energy: 1387
 
-cmd 7 695
+cmd 7 696
 nav 7 6[32m[WARP ENGINES ENGAGED][0m Arrived at sector [7,6]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -9)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [4,2] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2242.2
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [7,6]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     66 / 5000
-[2m5[0m  .   .  [32m * [0m  .   .   .   .   .    Shields:    2038 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1385 / 5000
+[2m5[0m  .   .  [32m * [0m  .   .   .   .   .    Shields:    2157 / 2500
 [2m6[0m  .  [32m * [0m  .   .   .   .   .   .    Torpedoes:  5
 [2m7[0m  .   .   .   .   .  [36m<E>[0m  .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
@@ -14863,19 +14837,19 @@ nav 7 6[32m[WARP ENGINES ENGAGED][0m Arrived at sector [7,6]
 cmd 8 57
 she 1642Cannot execute: insufficient energy for shield transfer
 
-cmd 3 587
+cmd 3 589
 srs[36m=== SHORT RANGE SENSOR SCAN [4,2] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2242.2
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [7,6]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     66 / 5000
-[2m5[0m  .   .  [32m * [0m  .   .   .   .   .    Shields:    2038 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1385 / 5000
+[2m5[0m  .   .  [32m * [0m  .   .   .   .   .    Shields:    2157 / 2500
 [2m6[0m  .  [32m * [0m  .   .   .   .   .   .    Torpedoes:  5
 [2m7[0m  .   .   .   .   .  [36m<E>[0m  .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
-save 0 2647
-{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[4,2],"Sector":[7,6],"Energy":66.06880000000004,"Shields":2038,"Torpedoes":5,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,6,0,0,0,0,0],[0,0,6,0,0,0,0,0,0],[0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[6,2],[5,3]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,4,1,8,1,3,7,9,6],[0,5,5,4,7,3,9,8,7],[0,7,5,6,8,2,1,7,8],[0,2,2,9,9,4,4,2,1],[0,1,9,2,5,103,2,5,5],[0,2,7,9,8,3,3,4,6],[0,1,5,3,3,3,6,1,6],[0,7,8,8,5,2,1,8,8]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,true,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,true,false,false,false,false,false,false,false],[false,false,true,false,false,true,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2242.238095238095,"InitialStardate":2192,"TimeRemaining":-20.23809523809524,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":9,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+save 0 2639
+{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[4,2],"Sector":[7,6],"Energy":1385.0688,"Shields":2157,"Torpedoes":5,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,6,0,0,0,0,0],[0,0,6,0,0,0,0,0,0],[0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[6,2],[5,3]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,4,1,8,1,3,7,9,6],[0,5,5,4,7,3,9,8,7],[0,7,5,6,8,2,1,7,8],[0,2,2,9,9,4,4,2,1],[0,1,9,2,5,103,2,5,5],[0,2,7,9,8,3,3,4,6],[0,1,5,3,3,3,6,1,6],[0,7,8,8,5,2,1,8,8]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,true,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,true,false,false,false,false,false,false,false],[false,false,true,false,false,true,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2242.238095238095,"InitialStardate":2192,"TimeRemaining":-20.23809523809524,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 load 5 2
 @lastok
 cmd 11 55
@@ -14916,13 +14890,13 @@ chart[36m=== GALACTIC STAR CHART ===[0m
 cmd 3 49
 docCannot execute: no starbase in current quadrant
 
-cmd 3 587
+cmd 3 589
 srs[36m=== SHORT RANGE SENSOR SCAN [4,2] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2242.2
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [7,6]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     66 / 5000
-[2m5[0m  .   .  [32m * [0m  .   .   .   .   .    Shields:    2038 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1385 / 5000
+[2m5[0m  .   .  [32m * [0m  .   .   .   .   .    Shields:    2157 / 2500
 [2m6[0m  .  [32m * [0m  .   .   .   .   .   .    Torpedoes:  5
 [2m7[0m  .   .   .   .   .  [36m<E>[0m  .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
@@ -14938,8 +14912,8 @@ Damage Control         : [32mOPERATIONAL[0m
 Shield Control         : [32mOPERATIONAL[0m
 Library Computer       : [32mOPERATIONAL[0m
 
-save 0 2647
-{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[4,2],"Sector":[7,6],"Energy":66.06880000000004,"Shields":2038,"Torpedoes":5,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,6,0,0,0,0,0],[0,0,6,0,0,0,0,0,0],[0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[6,2],[5,3]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,4,1,8,1,3,7,9,6],[0,5,5,4,7,3,9,8,7],[0,7,5,6,8,2,1,7,8],[0,2,2,9,9,4,4,2,1],[0,1,9,2,5,103,2,5,5],[0,2,7,9,8,3,3,4,6],[0,1,5,3,3,3,6,1,6],[0,7,8,8,5,2,1,8,8]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,true,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,true,false,false,false,false,false,false,false],[false,false,true,false,false,true,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2242.238095238095,"InitialStardate":2192,"TimeRemaining":-20.23809523809524,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":9,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+save 0 2639
+{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[4,2],"Sector":[7,6],"Energy":1385.0688,"Shields":2157,"Torpedoes":5,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,6,0,0,0,0,0],[0,0,6,0,0,0,0,0,0],[0,0,0,0,0,0,1,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[6,2],[5,3]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,4,1,8,1,3,7,9,6],[0,5,5,4,7,3,9,8,7],[0,7,5,6,8,2,1,7,8],[0,2,2,9,9,4,4,2,1],[0,1,9,2,5,103,2,5,5],[0,2,7,9,8,3,3,4,6],[0,1,5,3,3,3,6,1,6],[0,7,8,8,5,2,1,8,8]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,true,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,true,false,false,false,false,false,false,false],[false,false,true,false,false,true,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2242.238095238095,"InitialStardate":2192,"TimeRemaining":-20.23809523809524,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 END
 CASE random-7-emeritus 1
 new 10 606
@@ -16407,17 +16381,15 @@ Locate and destroy the enemy commander before your ship is compromised.
 cmd 8 111
 she 1842Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 155
-pha 389[33m[PHASERS FIRED][0m Allocated 389 units
-Phaser beam hit target at [5,4]: 389 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 667 units damage
+cmd 7 60
+pha 389Cannot execute: phasers cannot lock on to a cloaked vessel
 
 cmd 3 607
 srs[36m=== SHORT RANGE SENSOR SCAN [5,5] ===[0m
 [2m1[0m  .   .   .   .   .  [32m * [0m  .   .    Stardate:   2802.0
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [31;1mRED[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     3944 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     5000 / 5000
 [2m5[0m  .   .   .  [31;1m+K+[0m  .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .  [32m * [0m  .   .   .   .   .   .    Torpedoes:  10
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
@@ -16434,8 +16406,8 @@ Damage Control         : [32mOPERATIONAL[0m
 Shield Control         : [32mOPERATIONAL[0m
 Library Computer       : [32mOPERATIONAL[0m
 
-save 0 2716
-{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[5,5],"Sector":[4,4],"Energy":3944,"Shields":0,"Torpedoes":10,"Condition":2,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,6,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,4,0,0,0,0],[0,0,6,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,6,0,0,0,0,0]],"enemies":null,"stars":[[8,3],[1,6],[6,2]],"klingons":[{"ID":1,"Sector":[5,4],"Energy":608.25,"Shields":0,"IsCommander":true,"IsCloaked":false}]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,2,7,1,1,7,5,2,5],[0,2,7,7,5,2,3,4,9],[0,3,7,3,6,9,2,2,9],[0,7,6,3,7,6,9,7,5],[0,9,2,9,2,103,6,4,4],[0,5,1,6,6,5,7,7,6],[0,5,5,6,1,9,2,6,1],[0,8,2,4,3,5,6,4,5]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2802,"InitialStardate":2802,"TimeRemaining":30,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":14,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+save 0 2712
+{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[5,5],"Sector":[4,4],"Energy":5000,"Shields":0,"Torpedoes":10,"Condition":2,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,6,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,4,0,0,0,0],[0,0,6,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,6,0,0,0,0,0]],"enemies":null,"stars":[[8,3],[1,6],[6,2]],"klingons":[{"ID":1,"Sector":[5,4],"Energy":1200,"Shields":0,"IsCommander":true,"IsCloaked":true}]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,2,7,1,1,7,5,2,5],[0,2,7,7,5,2,3,4,9],[0,3,7,3,6,9,2,2,9],[0,7,6,3,7,6,9,7,5],[0,9,2,9,2,103,6,4,4],[0,5,1,6,6,5,7,7,6],[0,5,5,6,1,9,2,6,1],[0,8,2,4,3,5,6,4,5]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2802,"InitialStardate":2802,"TimeRemaining":30,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 END
 CASE random-42-hardcore 1
 new 11 615
@@ -24327,8 +24299,9 @@ nav 1.7 0.1[32m[WARP ENGINES ENGAGED][0m Arrived at sector [1,8]
 [2m7[0m  .   .   .   .   .   .   .  [32m * [0m   Klingons:   15
 [2m8[0m  .   .   .  [32m * [0m  .   .   .   .    Starbases:  3
 
-cmd 7 44
-pha 165Cannot execute: no enemy ships in quadrant
+cmd 7 89
+pha 165[33m[PHASERS FIRED][0m Allocated 165 units
+Phaser beam hit target at [1,3]: 33 units
 
 cmd 11 694
 nav q 5 8 8[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [5,8] sector [4,4]
@@ -24336,7 +24309,7 @@ nav q 5 8 8[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [5,8] sector [4,4
 [2m1[0m  .   .  [32m * [0m  .   .   .   .   .    Stardate:   2137.2
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     904 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     739 / 5000
 [2m5[0m  .   .   .   .   .   .   .  [32m * [0m   Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  9
 [2m7[0m [32m * [0m  .   .  [32m * [0m  .   .  [32m * [0m  .    Klingons:   15
@@ -24362,7 +24335,7 @@ srs[36m=== SHORT RANGE SENSOR SCAN [5,8] ===[0m
 [2m1[0m  .   .  [32m * [0m  .   .   .   .   .    Stardate:   2137.2
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     904 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     739 / 5000
 [2m5[0m  .   .   .   .   .   .   .  [32m * [0m   Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  8
 [2m7[0m [32m * [0m  .   .  [32m * [0m  .   .  [32m * [0m  .    Klingons:   15
@@ -24396,7 +24369,7 @@ cmd 7 58
 tor 7 5[33m[TORPEDO TRACK][0m Fired on course 5.03 from [4,4]
 
 save 0 2645
-{"RNG":{},"rules":{"profile":"emeritus","surveillance":"blackout","sensor_degradation":true,"repair_multiplier":2,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.6,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[5,8],"Sector":[4,4],"Energy":903.8999999999996,"Shields":0,"Torpedoes":7,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,6,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,0,0,0,0,0,0,0],[0,6,0,0,6,0,0,6,0],[0,0,6,0,0,0,0,0,0]],"enemies":null,"stars":[[7,1],[7,4],[7,7],[1,3],[5,8],[8,2]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,1,7,4,103,109,3,9,8],[0,4,102,5,7,104,6,18,8],[0,8,1,1,8,3,7,5,9],[0,7,17,2,7,1,3,1,9],[0,9,209,15,6,303,1,9,6],[0,2,6,5,6,9,6,1,1],[0,201,106,6,303,9,5,6,1],[0,9,9,2,6,1,7,9,4]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,true,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,2],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,0,0,0,0,0,2],[0,0,0,0,0,0,2,0,0],[0,0,0,0,0,0,0,0,1]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2137.25,"InitialStardate":2135,"TimeRemaining":15.75,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":18,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+{"RNG":{},"rules":{"profile":"emeritus","surveillance":"blackout","sensor_degradation":true,"repair_multiplier":2,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.6,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[5,8],"Sector":[4,4],"Energy":738.8999999999996,"Shields":0,"Torpedoes":7,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,6,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,0,0,0,0,0,0,0],[0,6,0,0,6,0,0,6,0],[0,0,6,0,0,0,0,0,0]],"enemies":null,"stars":[[7,1],[7,4],[7,7],[1,3],[5,8],[8,2]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,1,7,4,103,109,3,9,8],[0,4,102,5,7,104,6,18,8],[0,8,1,1,8,3,7,5,9],[0,7,17,2,7,1,3,1,9],[0,9,209,15,6,303,1,9,6],[0,2,6,5,6,9,6,1,1],[0,201,106,6,303,9,5,6,1],[0,9,9,2,6,1,7,9,4]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,true,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,2],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,0,0,0,0,0,2],[0,0,0,0,0,0,2,0,0],[0,0,0,0,0,0,0,0,1]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2137.25,"InitialStardate":2135,"TimeRemaining":15.75,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":18,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 load 5 2
 @lastok
 cmd 8 57
@@ -24414,7 +24387,7 @@ nav q 2 5[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [2,5] sector [4,4]
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2147.2
 [2m2[0m  .   .   .   .   .   .   .  [32m * [0m   CONDITION:  [31;1mRED[0m
 [2m3[0m  .   .   .  [32m * [0m  .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     903 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     738 / 5000
 [2m5[0m  .   .   .   .   .   .  [32m * [0m [32m * [0m   Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  7
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
@@ -24429,14 +24402,14 @@ nav 5 6[32m[WARP ENGINES ENGAGED][0m Arrived at sector [5,6]
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2157.2
 [2m2[0m  .   .   .   .   .   .   .  [32m * [0m   CONDITION:  [31;1mRED[0m
 [2m3[0m  .   .   .  [32m * [0m  .   .   .   .    Sector:     [5,6]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     902 / 5000
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     737 / 5000
 [2m5[0m  .   .   .   .   .  [36m<E>[0m [32m * [0m [32m * [0m   Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  7
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
 save 0 2784
-{"RNG":{},"rules":{"profile":"emeritus","surveillance":"blackout","sensor_degradation":true,"repair_multiplier":2,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.6,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[2,5],"Sector":[5,6],"Energy":901.8999999999996,"Shields":0,"Torpedoes":7,"Condition":2,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,0,0,6,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,6,6],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":[{"id":1,"faction":1,"sector":[6,7],"energy":1000,"shields":400,"max_energy":1000,"is_commander":false,"is_cloaked":true,"cloak_turns":2,"special_state":0}],"stars":[[2,8],[5,8],[5,7],[3,4]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,1,7,4,103,109,3,9,8],[0,4,102,5,7,104,6,18,8],[0,8,1,1,8,3,7,5,9],[0,7,17,2,7,1,3,1,9],[0,9,209,15,6,303,1,9,6],[0,2,6,5,6,9,6,1,1],[0,201,106,6,303,9,5,6,1],[0,9,9,2,6,1,7,9,4]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,true,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,2],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,0,0,0,0,0,2],[0,0,0,0,0,0,2,0,0],[0,0,0,0,0,0,0,0,1]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2157.25,"InitialStardate":2135,"TimeRemaining":-4.25,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":18,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+{"RNG":{},"rules":{"profile":"emeritus","surveillance":"blackout","sensor_degradation":true,"repair_multiplier":2,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.6,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[2,5],"Sector":[5,6],"Energy":736.8999999999996,"Shields":0,"Torpedoes":7,"Condition":2,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,0,0,6,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1,6,6],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":[{"id":1,"faction":1,"sector":[6,7],"energy":1000,"shields":400,"max_energy":1000,"is_commander":false,"is_cloaked":true,"cloak_turns":2,"special_state":0}],"stars":[[2,8],[5,8],[5,7],[3,4]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,1,7,4,103,109,3,9,8],[0,4,102,5,7,104,6,18,8],[0,8,1,1,8,3,7,5,9],[0,7,17,2,7,1,3,1,9],[0,9,209,15,6,303,1,9,6],[0,2,6,5,6,9,6,1,1],[0,201,106,6,303,9,5,6,1],[0,9,9,2,6,1,7,9,4]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,true,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,2],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,0,0,0,0,0,2],[0,0,0,0,0,0,2,0,0],[0,0,0,0,0,0,0,0,1]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2157.25,"InitialStardate":2135,"TimeRemaining":-4.25,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":18,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 load 5 2
 @lastok
 cmd 9 661
@@ -24445,7 +24418,7 @@ nav s 3 2[32m[WARP ENGINES ENGAGED][0m Arrived at sector [3,2]
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2167.2
 [2m2[0m  .   .   .   .   .   .   .  [32m * [0m   CONDITION:  [31;1mRED[0m
 [2m3[0m  .  [36m<E>[0m  .  [32m * [0m  .   .   .   .    Sector:     [3,2]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     901 / 5000
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     736 / 5000
 [2m5[0m  .   .   .   .   .   .  [32m * [0m [32m * [0m   Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  7
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
@@ -24485,11 +24458,11 @@ cmd 11 55
 nav q 5 7 6Cannot execute: insufficient energy for warp movement
 
 save 0 2785
-{"RNG":{},"rules":{"profile":"emeritus","surveillance":"blackout","sensor_degradation":true,"repair_multiplier":2,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.6,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[2,5],"Sector":[3,2],"Energy":900.8999999999996,"Shields":0,"Torpedoes":7,"Condition":2,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,1,0,6,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,6,6],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":[{"id":1,"faction":1,"sector":[6,7],"energy":1000,"shields":400,"max_energy":1000,"is_commander":false,"is_cloaked":true,"cloak_turns":2,"special_state":0}],"stars":[[2,8],[5,8],[5,7],[3,4]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,1,7,4,103,109,3,9,8],[0,4,102,5,7,104,6,18,8],[0,8,1,1,8,3,7,5,9],[0,7,17,2,7,1,3,1,9],[0,9,209,15,6,303,1,9,6],[0,2,6,5,6,9,6,1,1],[0,201,106,6,303,9,5,6,1],[0,9,9,2,6,1,7,9,4]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,true,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,2],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,0,0,0,0,0,2],[0,0,0,0,0,0,2,0,0],[0,0,0,0,0,0,0,0,1]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2167.25,"InitialStardate":2135,"TimeRemaining":-14.25,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":18,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+{"RNG":{},"rules":{"profile":"emeritus","surveillance":"blackout","sensor_degradation":true,"repair_multiplier":2,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.6,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[2,5],"Sector":[3,2],"Energy":735.8999999999996,"Shields":0,"Torpedoes":7,"Condition":2,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,1,0,6,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,6,6],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":[{"id":1,"faction":1,"sector":[6,7],"energy":1000,"shields":400,"max_energy":1000,"is_commander":false,"is_cloaked":true,"cloak_turns":2,"special_state":0}],"stars":[[2,8],[5,8],[5,7],[3,4]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,1,7,4,103,109,3,9,8],[0,4,102,5,7,104,6,18,8],[0,8,1,1,8,3,7,5,9],[0,7,17,2,7,1,3,1,9],[0,9,209,15,6,303,1,9,6],[0,2,6,5,6,9,6,1,1],[0,201,106,6,303,9,5,6,1],[0,9,9,2,6,1,7,9,4]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,true,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,2],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,0,0,0,0,0,2],[0,0,0,0,0,0,2,0,0],[0,0,0,0,0,0,0,0,1]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2167.25,"InitialStardate":2135,"TimeRemaining":-14.25,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":18,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 load 5 2
 @lastok
 save 0 2785
-{"RNG":{},"rules":{"profile":"emeritus","surveillance":"blackout","sensor_degradation":true,"repair_multiplier":2,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.6,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[2,5],"Sector":[3,2],"Energy":900.8999999999996,"Shields":0,"Torpedoes":7,"Condition":2,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,1,0,6,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,6,6],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":[{"id":1,"faction":1,"sector":[6,7],"energy":1000,"shields":400,"max_energy":1000,"is_commander":false,"is_cloaked":true,"cloak_turns":2,"special_state":0}],"stars":[[2,8],[5,8],[5,7],[3,4]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,1,7,4,103,109,3,9,8],[0,4,102,5,7,104,6,18,8],[0,8,1,1,8,3,7,5,9],[0,7,17,2,7,1,3,1,9],[0,9,209,15,6,303,1,9,6],[0,2,6,5,6,9,6,1,1],[0,201,106,6,303,9,5,6,1],[0,9,9,2,6,1,7,9,4]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,true,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,2],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,0,0,0,0,0,2],[0,0,0,0,0,0,2,0,0],[0,0,0,0,0,0,0,0,1]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2167.25,"InitialStardate":2135,"TimeRemaining":-14.25,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":18,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+{"RNG":{},"rules":{"profile":"emeritus","surveillance":"blackout","sensor_degradation":true,"repair_multiplier":2,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.6,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[2,5],"Sector":[3,2],"Energy":735.8999999999996,"Shields":0,"Torpedoes":7,"Condition":2,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,1,0,6,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,6,6],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":[{"id":1,"faction":1,"sector":[6,7],"energy":1000,"shields":400,"max_energy":1000,"is_commander":false,"is_cloaked":true,"cloak_turns":2,"special_state":0}],"stars":[[2,8],[5,8],[5,7],[3,4]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,1,7,4,103,109,3,9,8],[0,4,102,5,7,104,6,18,8],[0,8,1,1,8,3,7,5,9],[0,7,17,2,7,1,3,1,9],[0,9,209,15,6,303,1,9,6],[0,2,6,5,6,9,6,1,1],[0,201,106,6,303,9,5,6,1],[0,9,9,2,6,1,7,9,4]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,true,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,2],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,0,0,0,0,0,2],[0,0,0,0,0,0,2,0,0],[0,0,0,0,0,0,0,0,1]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2167.25,"InitialStardate":2135,"TimeRemaining":-14.25,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":18,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 load 5 2
 @lastok
 cmd 3 49
@@ -24501,7 +24474,7 @@ nav 3 8[32m[WARP ENGINES ENGAGED][0m Arrived at sector [3,8]
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2177.2
 [2m2[0m  .   .   .   .   .   .   .  [32m * [0m   CONDITION:  [31;1mRED[0m
 [2m3[0m  .   .   .  [32m * [0m  .   .   .  [36m<E>[0m   Sector:     [3,8]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     900 / 5000
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     735 / 5000
 [2m5[0m  .   .   .   .   .   .  [32m * [0m [32m * [0m   Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  7
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
@@ -24512,7 +24485,7 @@ srs[36m=== SHORT RANGE SENSOR SCAN [2,5] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2177.2
 [2m2[0m  .   .   .   .   .   .   .  [32m * [0m   CONDITION:  [31;1mRED[0m
 [2m3[0m  .   .   .  [32m * [0m  .   .   .  [36m<E>[0m   Sector:     [3,8]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     900 / 5000
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     735 / 5000
 [2m5[0m  .   .   .   .   .   .  [32m * [0m [32m * [0m   Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  7
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
@@ -24521,8 +24494,8 @@ srs[36m=== SHORT RANGE SENSOR SCAN [2,5] ===[0m
 cmd 6 44
 pha 67Cannot execute: no enemy ships in quadrant
 
-cmd 7 44
-pha 765Cannot execute: no enemy ships in quadrant
+cmd 7 53
+pha 765Cannot execute: insufficient energy to fire phasers
 
 cmd 8 57
 she 1881Cannot execute: insufficient energy for shield transfer
@@ -24532,14 +24505,14 @@ srs[36m=== SHORT RANGE SENSOR SCAN [2,5] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2177.2
 [2m2[0m  .   .   .   .   .   .   .  [32m * [0m   CONDITION:  [31;1mRED[0m
 [2m3[0m  .   .   .  [32m * [0m  .   .   .  [36m<E>[0m   Sector:     [3,8]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     900 / 5000
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     735 / 5000
 [2m5[0m  .   .   .   .   .   .  [32m * [0m [32m * [0m   Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  7
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
-cmd 7 46
-she 761Deflector Shields: 761  |  Total energy: 139
+cmd 7 57
+she 761Cannot execute: insufficient energy for shield transfer
 
 cmd 7 55
 nav 9 9Cannot execute: insufficient energy for warp movement
@@ -24547,40 +24520,40 @@ nav 9 9Cannot execute: insufficient energy for warp movement
 cmd 8 53
 pha 1007Cannot execute: insufficient energy to fire phasers
 
-cmd 7 663
+cmd 7 661
 nav 1 7[32m[WARP ENGINES ENGAGED][0m Arrived at sector [1,7]
 [36m=== SHORT RANGE SENSOR SCAN [2,5] ===[0m
 [2m1[0m  .   .   .   .   .   .  [36m<E>[0m  .    Stardate:   2187.2
 [2m2[0m  .   .   .   .   .   .   .  [32m * [0m   CONDITION:  [31;1mRED[0m
 [2m3[0m  .   .   .  [32m * [0m  .   .   .   .    Sector:     [1,7]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     137 / 5000
-[2m5[0m  .   .   .   .   .   .  [32m * [0m [32m * [0m   Shields:    761 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     734 / 5000
+[2m5[0m  .   .   .   .   .   .  [32m * [0m [32m * [0m   Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  7
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
-cmd 7 53
-pha 731Cannot execute: insufficient energy to fire phasers
+cmd 7 44
+pha 731Cannot execute: no enemy ships in quadrant
 
-cmd 3 606
+cmd 3 604
 srs[36m=== SHORT RANGE SENSOR SCAN [2,5] ===[0m
 [2m1[0m  .   .   .   .   .   .  [36m<E>[0m  .    Stardate:   2187.2
 [2m2[0m  .   .   .   .   .   .   .  [32m * [0m   CONDITION:  [31;1mRED[0m
 [2m3[0m  .   .   .  [32m * [0m  .   .   .   .    Sector:     [1,7]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     137 / 5000
-[2m5[0m  .   .   .   .   .   .  [32m * [0m [32m * [0m   Shields:    761 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     734 / 5000
+[2m5[0m  .   .   .   .   .   .  [32m * [0m [32m * [0m   Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  7
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
-cmd 11 669
+cmd 11 667
 nav 4.2 1.1[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [3,5] sector [1,3]
 [36m=== SHORT RANGE SENSOR SCAN [3,5] ===[0m
 [2m1[0m  .   .  [36m<E>[0m  .   .   .   .   .    Stardate:   2196.3
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [1,3]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     134 / 5000
-[2m5[0m  .   .   .   .  [32m * [0m [32m * [0m [32m * [0m  .    Shields:    761 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     732 / 5000
+[2m5[0m  .   .   .   .  [32m * [0m [32m * [0m [32m * [0m  .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  7
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
@@ -24673,24 +24646,24 @@ chart[36m=== GALACTIC STAR CHART ===[0m
 8 |...|...|...|...|...|...|...|...|
   ---------------------------------
 
-cmd 3 597
+cmd 3 595
 srs[36m=== SHORT RANGE SENSOR SCAN [3,5] ===[0m
 [2m1[0m  .   .  [36m<E>[0m  .   .   .   .   .    Stardate:   2196.3
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [1,3]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     134 / 5000
-[2m5[0m  .   .   .   .  [32m * [0m [32m * [0m [32m * [0m  .    Shields:    761 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     732 / 5000
+[2m5[0m  .   .   .   .  [32m * [0m [32m * [0m [32m * [0m  .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  3
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
-cmd 3 597
+cmd 3 595
 srs[36m=== SHORT RANGE SENSOR SCAN [3,5] ===[0m
 [2m1[0m  .   .  [36m<E>[0m  .   .   .   .   .    Stardate:   2196.3
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [1,3]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     134 / 5000
-[2m5[0m  .   .   .   .  [32m * [0m [32m * [0m [32m * [0m  .    Shields:    761 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     732 / 5000
+[2m5[0m  .   .   .   .  [32m * [0m [32m * [0m [32m * [0m  .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  3
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
@@ -24706,8 +24679,8 @@ Damage Control         : [32mOPERATIONAL[0m
 Shield Control         : [32mOPERATIONAL[0m
 Library Computer       : [32mOPERATIONAL[0m
 
-save 0 2651
-{"RNG":{},"rules":{"profile":"emeritus","surveillance":"blackout","sensor_degradation":true,"repair_multiplier":2,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.6,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[3,5],"Sector":[1,3],"Energy":133.97179999999963,"Shields":761,"Torpedoes":3,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,1,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,6,6,6,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[5,7],[5,5],[5,6]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,1,7,4,103,109,3,9,8],[0,4,102,5,7,104,6,18,8],[0,8,1,1,8,3,7,5,9],[0,7,17,2,7,1,3,1,9],[0,9,209,15,6,303,1,9,6],[0,2,6,5,6,9,6,1,1],[0,201,106,6,303,9,5,6,1],[0,9,9,2,6,1,7,9,4]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,true,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,2],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,0,0,0,0,0,2],[0,0,0,0,0,0,2,0,0],[0,0,0,0,0,0,0,0,1]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2196.340909090909,"InitialStardate":2135,"TimeRemaining":-43.34090909090909,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":18,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+save 0 2648
+{"RNG":{},"rules":{"profile":"emeritus","surveillance":"blackout","sensor_degradation":true,"repair_multiplier":2,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.6,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[3,5],"Sector":[1,3],"Energy":732.4358999999996,"Shields":0,"Torpedoes":3,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,1,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,6,6,6,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[5,7],[5,5],[5,6]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,1,7,4,103,109,3,9,8],[0,4,102,5,7,104,6,18,8],[0,8,1,1,8,3,7,5,9],[0,7,17,2,7,1,3,1,9],[0,9,209,15,6,303,1,9,6],[0,2,6,5,6,9,6,1,1],[0,201,106,6,303,9,5,6,1],[0,9,9,2,6,1,7,9,4]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,true,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,2],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,1,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,0,0,0,0,0,2],[0,0,0,0,0,0,2,0,0],[0,0,0,0,0,0,0,0,1]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2196.340909090909,"InitialStardate":2135,"TimeRemaining":-43.34090909090909,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":18,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 END
 CASE random-777-custom 1
 new 10 608
@@ -36724,8 +36697,9 @@ nav c 1.09 7.0[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [1,8] sector [
 [2m7[0m  .  [32m * [0m  .   .   .   .   .   .    Klingons:   15
 [2m8[0m  .   .   .  [32m * [0m  .  [32m * [0m  .  [32m * [0m   Starbases:  3
 
-cmd 7 44
-pha 214Cannot execute: no enemy ships in quadrant
+cmd 7 89
+pha 214[33m[PHASERS FIRED][0m Allocated 214 units
+Phaser beam hit target at [5,1]: 30 units
 
 cmd 11 714
 nav q 2 8 6[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [2,8] sector [4,4]
@@ -36733,7 +36707,7 @@ nav q 2 8 6[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [2,8] sector [4,4
 [2m1[0m  .   .  [32m * [0m  .   .   .   .   .    Stardate:   2707.1
 [2m2[0m  .   .   .  [32m * [0m  .   .  [32m * [0m [32m * [0m   CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1302 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1088 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  10
 [2m7[0m  .   .   .   .   .  [32m * [0m [32m * [0m [32m * [0m   Klingons:   15
@@ -36744,72 +36718,57 @@ srs[36m=== SHORT RANGE SENSOR SCAN [2,8] ===[0m
 [2m1[0m  .   .  [32m * [0m  .   .   .   .   .    Stardate:   2707.1
 [2m2[0m  .   .   .  [32m * [0m  .   .  [32m * [0m [32m * [0m   CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1302 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1088 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  10
 [2m7[0m  .   .   .   .   .  [32m * [0m [32m * [0m [32m * [0m   Klingons:   15
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
-cmd 11 675
-nav q 2 1 6[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [2,1] sector [4,4]
-[36m=== SHORT RANGE SENSOR SCAN [2,1] ===[0m
-[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2708.8
-[2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
-[2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m [32m * [0m  .   .   .    Energy:     6 / 5000
-[2m5[0m  .   .   .   .   .   .   .  [32m * [0m   Shields:    0 / 2500
-[2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  10
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
-[2m8[0m  .   .   .   .  [32m * [0m  .   .   .    Starbases:  3
+cmd 11 55
+nav q 2 1 6Cannot execute: insufficient energy for warp movement
 
-cmd 7 660
+cmd 7 699
 nav 1 4[32m[WARP ENGINES ENGAGED][0m Arrived at sector [1,4]
-[36m=== SHORT RANGE SENSOR SCAN [2,1] ===[0m
-[2m1[0m  .   .   .  [36m<E>[0m  .   .   .   .    Stardate:   2718.8
-[2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
+[36m=== SHORT RANGE SENSOR SCAN [2,8] ===[0m
+[2m1[0m  .   .  [32m * [0m [36m<E>[0m  .   .   .   .    Stardate:   2717.1
+[2m2[0m  .   .   .  [32m * [0m  .   .  [32m * [0m [32m * [0m   CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [1,4]
-[2m4[0m  .   .   .   .  [32m * [0m  .   .   .    Energy:     5 / 5000
-[2m5[0m  .   .   .   .   .   .   .  [32m * [0m   Shields:    0 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1087 / 5000
+[2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  10
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
-[2m8[0m  .   .   .   .  [32m * [0m  .   .   .    Starbases:  3
+[2m7[0m  .   .   .   .   .  [32m * [0m [32m * [0m [32m * [0m   Klingons:   15
+[2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
-cmd 7 53
-pha 883Cannot execute: insufficient energy to fire phasers
+cmd 7 44
+pha 883Cannot execute: no enemy ships in quadrant
 
-cmd 9 60
+cmd 9 95
 tor 172.9[33m[TORPEDO TRACK][0m Fired on course 172.90 from [1,4]
+Torpedo absorbed by star at [1,3]
 
-cmd 7 58
+cmd 7 93
 tor 4 6[33m[TORPEDO TRACK][0m Fired on course 5.30 from [1,4]
+Torpedo absorbed by star at [2,4]
 
-cmd 9 58
+cmd 9 93
 tor c 5.4[33m[TORPEDO TRACK][0m Fired on course 3.46 from [1,4]
+Torpedo absorbed by star at [1,3]
 
 cmd 3 191
 lrs[36m=== LONG RANGE SENSOR SCAN ===[0m
 -------------------
-: *** : 007 : 005 : 
+: 106 : 107 : *** : 
 -------------------
-: *** : 004 : 004 : 
+: 004 : 008 : *** : 
 -------------------
-: *** : 007 : 008 : 
+: 007 : 009 : *** : 
 -------------------
 
 cmd 11 55
 nav q 3 5 6Cannot execute: insufficient energy for warp movement
 
-cmd 9 659
-nav s 7 6[32m[WARP ENGINES ENGAGED][0m Arrived at sector [7,6]
-[36m=== SHORT RANGE SENSOR SCAN [2,1] ===[0m
-[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2728.8
-[2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
-[2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [7,6]
-[2m4[0m  .   .   .   .  [32m * [0m  .   .   .    Energy:     4 / 5000
-[2m5[0m  .   .   .   .   .   .   .  [32m * [0m   Shields:    0 / 2500
-[2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  7
-[2m7[0m  .   .   .   .   .  [36m<E>[0m  .   .    Klingons:   15
-[2m8[0m  .   .   .   .  [32m * [0m  .   .   .    Starbases:  3
+cmd 9 48
+nav s 7 6Cannot execute: destination sector is occupied
 
 cmd 11 55
 nav q 5 2 6Cannot execute: insufficient energy for warp movement
@@ -36817,70 +36776,68 @@ nav q 5 2 6Cannot execute: insufficient energy for warp movement
 cmd 11 55
 nav q 1 1 6Cannot execute: insufficient energy for warp movement
 
-cmd 7 659
+cmd 7 698
 nav 5 2[32m[WARP ENGINES ENGAGED][0m Arrived at sector [5,2]
-[36m=== SHORT RANGE SENSOR SCAN [2,1] ===[0m
-[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2738.8
-[2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
+[36m=== SHORT RANGE SENSOR SCAN [2,8] ===[0m
+[2m1[0m  .   .  [32m * [0m  .   .   .   .   .    Stardate:   2727.1
+[2m2[0m  .   .   .  [32m * [0m  .   .  [32m * [0m [32m * [0m   CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [5,2]
-[2m4[0m  .   .   .   .  [32m * [0m  .   .   .    Energy:     3 / 5000
-[2m5[0m  .  [36m<E>[0m  .   .   .   .   .  [32m * [0m   Shields:    0 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1086 / 5000
+[2m5[0m  .  [36m<E>[0m  .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  7
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
-[2m8[0m  .   .   .   .  [32m * [0m  .   .   .    Starbases:  3
+[2m7[0m  .   .   .   .   .  [32m * [0m [32m * [0m [32m * [0m   Klingons:   15
+[2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
 cmd 7 93
 tor 2 8[33m[TORPEDO TRACK][0m Fired on course 0.46 from [5,2]
-Torpedo absorbed by star at [4,5]
+Torpedo absorbed by star at [2,7]
 
 cmd 9 60
 tor 291.7[33m[TORPEDO TRACK][0m Fired on course 291.70 from [5,2]
 
-cmd 9 659
+cmd 9 698
 nav s 4 3[32m[WARP ENGINES ENGAGED][0m Arrived at sector [4,3]
-[36m=== SHORT RANGE SENSOR SCAN [2,1] ===[0m
-[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2748.8
-[2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
+[36m=== SHORT RANGE SENSOR SCAN [2,8] ===[0m
+[2m1[0m  .   .  [32m * [0m  .   .   .   .   .    Stardate:   2737.1
+[2m2[0m  .   .   .  [32m * [0m  .   .  [32m * [0m [32m * [0m   CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [4,3]
-[2m4[0m  .   .  [36m<E>[0m  .  [32m * [0m  .   .   .    Energy:     2 / 5000
-[2m5[0m  .   .   .   .   .   .   .  [32m * [0m   Shields:    0 / 2500
+[2m4[0m  .   .  [36m<E>[0m  .   .   .   .   .    Energy:     1085 / 5000
+[2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  5
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
-[2m8[0m  .   .   .   .  [32m * [0m  .   .   .    Starbases:  3
+[2m7[0m  .   .   .   .   .  [32m * [0m [32m * [0m [32m * [0m   Klingons:   15
+[2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
-cmd 7 94
+cmd 7 59
 tor 4 5[33m[TORPEDO TRACK][0m Fired on course -0.00 from [4,3]
-Torpedo absorbed by star at [4,5]
 
-cmd 3 602
-srs[36m=== SHORT RANGE SENSOR SCAN [2,1] ===[0m
-[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2748.8
-[2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
+cmd 3 641
+srs[36m=== SHORT RANGE SENSOR SCAN [2,8] ===[0m
+[2m1[0m  .   .  [32m * [0m  .   .   .   .   .    Stardate:   2737.1
+[2m2[0m  .   .   .  [32m * [0m  .   .  [32m * [0m [32m * [0m   CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [4,3]
-[2m4[0m  .   .  [36m<E>[0m  .  [32m * [0m  .   .   .    Energy:     2 / 5000
-[2m5[0m  .   .   .   .   .   .   .  [32m * [0m   Shields:    0 / 2500
+[2m4[0m  .   .  [36m<E>[0m  .   .   .   .   .    Energy:     1085 / 5000
+[2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  4
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
-[2m8[0m  .   .   .   .  [32m * [0m  .   .   .    Starbases:  3
+[2m7[0m  .   .   .   .   .  [32m * [0m [32m * [0m [32m * [0m   Klingons:   15
+[2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
-cmd 7 659
+cmd 7 698
 nav 8 4[32m[WARP ENGINES ENGAGED][0m Arrived at sector [8,4]
-[36m=== SHORT RANGE SENSOR SCAN [2,1] ===[0m
-[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2758.8
-[2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
+[36m=== SHORT RANGE SENSOR SCAN [2,8] ===[0m
+[2m1[0m  .   .  [32m * [0m  .   .   .   .   .    Stardate:   2747.1
+[2m2[0m  .   .   .  [32m * [0m  .   .  [32m * [0m [32m * [0m   CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [8,4]
-[2m4[0m  .   .   .   .  [32m * [0m  .   .   .    Energy:     1 / 5000
-[2m5[0m  .   .   .   .   .   .   .  [32m * [0m   Shields:    0 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1084 / 5000
+[2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  4
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
-[2m8[0m  .   .   .  [36m<E>[0m [32m * [0m  .   .   .    Starbases:  3
+[2m7[0m  .   .   .   .   .  [32m * [0m [32m * [0m [32m * [0m   Klingons:   15
+[2m8[0m  .   .   .  [36m<E>[0m  .   .   .   .    Starbases:  3
 
 cmd 7 58
 tor 2 2[33m[TORPEDO TRACK][0m Fired on course 1.89 from [8,4]
 
-cmd 9 93
+cmd 9 58
 tor c 1.1[33m[TORPEDO TRACK][0m Fired on course 0.08 from [8,4]
-Torpedo absorbed by star at [8,5]
 
 cmd 5 738
 chart[36m=== GALACTIC STAR CHART ===[0m
@@ -36888,7 +36845,7 @@ chart[36m=== GALACTIC STAR CHART ===[0m
   ---------------------------------
 1 |...|...|...|...|...|...|...|107|
   ---------------------------------
-2 |[36m004[0m|...|[33m.B.[0m|...|[33m.B.[0m|...|...|008|
+2 |...|...|[33m.B.[0m|...|[33m.B.[0m|...|...|[36m008[0m|
   ---------------------------------
 3 |...|...|...|...|006|...|...|...|
   ---------------------------------
@@ -36906,31 +36863,39 @@ chart[36m=== GALACTIC STAR CHART ===[0m
 cmd 8 57
 she 1295Cannot execute: insufficient energy for shield transfer
 
-save 0 2634
-{"RNG":{},"rules":{"profile":"expert","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1.25,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.9,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[2,1],"Sector":[8,4],"Energy":1,"Shields":0,"Torpedoes":2,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,0,0,0,6,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,6,0,0,0]],"enemies":null,"stars":[[3,8],[8,5],[5,8],[4,5]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,7,5,7,9,9,6,106,107],[0,4,4,12,6,16,7,4,8],[0,7,8,6,7,6,2,7,9],[0,6,1,8,5,12,203,2,2],[0,4,7,108,3,3,3,4,9],[0,301,7,5,5,7,4,7,9],[0,7,7,309,106,1,1,2,4],[0,6,7,7,5,1,1,309,9]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,true,false,false,false,false,false,false,true],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,true,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,2,1,2,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,1,0,0,0,0,0],[0,0,0,0,0,0,0,2,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2758.7619047619046,"InitialStardate":2694,"TimeRemaining":-37.76190476190476,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":27,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+save 0 2662
+{"RNG":{},"rules":{"profile":"expert","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1.25,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.9,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[2,8],"Sector":[8,4],"Energy":1084,"Shields":0,"Torpedoes":2,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,6,0,0,0,0,0],[0,0,0,0,6,0,0,6,6],[0,0,0,0,0,0,0,0,6],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,6,6,6],[0,0,0,0,1,0,0,0,0]],"enemies":null,"stars":[[1,3],[7,6],[7,8],[3,8],[2,4],[2,8],[7,7],[2,7]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,7,5,7,9,9,6,106,107],[0,4,4,12,6,16,7,4,8],[0,7,8,6,7,6,2,7,9],[0,6,1,8,5,12,203,2,2],[0,4,7,108,3,3,3,4,9],[0,301,7,5,5,7,4,7,9],[0,7,7,309,106,1,1,2,4],[0,6,7,7,5,1,1,309,9]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,true,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,2,1,2,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,1,0,0,0,0,0],[0,0,0,0,0,0,0,2,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2747.095238095238,"InitialStardate":2694,"TimeRemaining":-26.095238095238095,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":27,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 load 5 2
 @lastok
-cmd 7 53
-pha 368Cannot execute: insufficient energy to fire phasers
+cmd 7 44
+pha 368Cannot execute: no enemy ships in quadrant
 
-cmd 9 709
+cmd 9 698
 nav s 7 2[32m[WARP ENGINES ENGAGED][0m Arrived at sector [7,2]
-[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
-[36m=== SHORT RANGE SENSOR SCAN [2,1] ===[0m
-[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2768.8
-[2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
+[36m=== SHORT RANGE SENSOR SCAN [2,8] ===[0m
+[2m1[0m  .   .  [32m * [0m  .   .   .   .   .    Stardate:   2757.1
+[2m2[0m  .   .   .  [32m * [0m  .   .  [32m * [0m [32m * [0m   CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [7,2]
-[2m4[0m  .   .   .   .  [32m * [0m  .   .   .    Energy:     0 / 5000
-[2m5[0m  .   .   .   .   .   .   .  [32m * [0m   Shields:    0 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1083 / 5000
+[2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  2
-[2m7[0m  .  [36m<E>[0m  .   .   .   .   .   .    Klingons:   15
-[2m8[0m  .   .   .   .  [32m * [0m  .   .   .    Starbases:  3
+[2m7[0m  .  [36m<E>[0m  .   .   .  [32m * [0m [32m * [0m [32m * [0m   Klingons:   15
+[2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
 cmd 11 55
 nav q 4 5 9Cannot execute: insufficient energy for warp movement
 
-cmd 7 55
-nav 8 7Cannot execute: insufficient energy for warp movement
+cmd 7 698
+nav 8 7[32m[WARP ENGINES ENGAGED][0m Arrived at sector [8,7]
+[36m=== SHORT RANGE SENSOR SCAN [2,8] ===[0m
+[2m1[0m  .   .  [32m * [0m  .   .   .   .   .    Stardate:   2767.1
+[2m2[0m  .   .   .  [32m * [0m  .   .  [32m * [0m [32m * [0m   CONDITION:  [32mGREEN[0m
+[2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [8,7]
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1082 / 5000
+[2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
+[2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  2
+[2m7[0m  .   .   .   .   .  [32m * [0m [32m * [0m [32m * [0m   Klingons:   15
+[2m8[0m  .   .   .   .   .   .  [36m<E>[0m  .    Starbases:  3
 
 cmd 5 738
 chart[36m=== GALACTIC STAR CHART ===[0m
@@ -36938,7 +36903,7 @@ chart[36m=== GALACTIC STAR CHART ===[0m
   ---------------------------------
 1 |...|...|...|...|...|...|...|107|
   ---------------------------------
-2 |[36m004[0m|...|[33m.B.[0m|...|[33m.B.[0m|...|...|008|
+2 |...|...|[33m.B.[0m|...|[33m.B.[0m|...|...|[36m008[0m|
   ---------------------------------
 3 |...|...|...|...|006|...|...|...|
   ---------------------------------
@@ -36953,33 +36918,61 @@ chart[36m=== GALACTIC STAR CHART ===[0m
 8 |...|...|...|...|...|...|...|...|
   ---------------------------------
 
-cmd 11 55
-nav 5.9 0.1Cannot execute: insufficient energy for warp movement
+cmd 11 698
+nav 5.9 0.1[32m[WARP ENGINES ENGAGED][0m Arrived at sector [8,8]
+[36m=== SHORT RANGE SENSOR SCAN [2,8] ===[0m
+[2m1[0m  .   .  [32m * [0m  .   .   .   .   .    Stardate:   2768.1
+[2m2[0m  .   .   .  [32m * [0m  .   .  [32m * [0m [32m * [0m   CONDITION:  [32mGREEN[0m
+[2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [8,8]
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1082 / 5000
+[2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
+[2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  2
+[2m7[0m  .   .   .   .   .  [32m * [0m [32m * [0m [32m * [0m   Klingons:   15
+[2m8[0m  .   .   .   .   .   .   .  [36m<E>[0m   Starbases:  3
 
-cmd 7 55
-nav 0 2Cannot execute: insufficient energy for warp movement
+cmd 7 698
+nav 0 2[32m[WARP ENGINES ENGAGED][0m Arrived at sector [8,8]
+[36m=== SHORT RANGE SENSOR SCAN [2,8] ===[0m
+[2m1[0m  .   .  [32m * [0m  .   .   .   .   .    Stardate:   2773.1
+[2m2[0m  .   .   .  [32m * [0m  .   .  [32m * [0m [32m * [0m   CONDITION:  [32mGREEN[0m
+[2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [8,8]
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1066 / 5000
+[2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
+[2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  2
+[2m7[0m  .   .   .   .   .  [32m * [0m [32m * [0m [32m * [0m   Klingons:   15
+[2m8[0m  .   .   .   .   .   .   .  [36m<E>[0m   Starbases:  3
 
 cmd 3 49
 docCannot execute: no starbase in current quadrant
 
-cmd 11 55
-nav q 4 3 1Cannot execute: insufficient energy for warp movement
+cmd 11 821
+nav q 4 3 1[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [4,3] sector [4,4]
+[35m*** ENVIRONMENT ALERT: Entering Mutara Nebula. Electromagnetic dispersion drops shields to 0! ***[0m
+[36m=== SHORT RANGE SENSOR SCAN [4,3] ===[0m
+[2m1[0m [32m * [0m [32m * [0m  .  [32m * [0m [32m * [0m  .   .   .    Stardate:   2783.1
+[2m2[0m  .   .   .   .  [32m * [0m  .   .  [32m * [0m   CONDITION:  [32mGREEN[0m
+[2m3[0m  .   .   .   .  [32m * [0m  .   .   .    Sector:     [4,4]
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1065 / 5000
+[2m5[0m  .  [32m * [0m  .   .   .   .   .   .    Shields:    0 / 2500
+[2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  2
+[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   15
+[2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
-cmd 8 57
-she 1868Cannot execute: insufficient energy for shield transfer
+cmd 8 111
+she 1868Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-save 0 2634
-{"RNG":{},"rules":{"profile":"expert","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1.25,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.9,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[2,1],"Sector":[7,2],"Energy":0,"Shields":0,"Torpedoes":2,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,0,0,0,6,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,0,0,0,0,0,0,0],[0,0,1,0,0,0,0,0,0],[0,0,0,0,0,6,0,0,0]],"enemies":null,"stars":[[3,8],[8,5],[5,8],[4,5]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,7,5,7,9,9,6,106,107],[0,4,4,12,6,16,7,4,8],[0,7,8,6,7,6,2,7,9],[0,6,1,8,5,12,203,2,2],[0,4,7,108,3,3,3,4,9],[0,301,7,5,5,7,4,7,9],[0,7,7,309,106,1,1,2,4],[0,6,7,7,5,1,1,309,9]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,true,false,false,false,false,false,false,true],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,true,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,2,1,2,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,1,0,0,0,0,0],[0,0,0,0,0,0,0,2,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2768.7619047619046,"InitialStardate":2694,"TimeRemaining":-47.76190476190476,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":27,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+save 0 2663
+{"RNG":{},"rules":{"profile":"expert","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1.25,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.9,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[4,3],"Sector":[4,4],"Energy":1064.9,"Shields":0,"Torpedoes":2,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,6,6,0,6,6,0,0,0],[0,0,0,0,0,6,0,0,6],[0,0,0,0,0,6,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,6,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[5,2],[1,4],[2,5],[3,5],[2,8],[1,5],[1,2],[1,1]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,7,5,7,9,9,6,106,107],[0,4,4,12,6,16,7,4,8],[0,7,8,6,7,6,2,7,9],[0,6,1,8,5,12,203,2,2],[0,4,7,108,3,3,3,4,9],[0,301,7,5,5,7,4,7,9],[0,7,7,309,106,1,1,2,4],[0,6,7,7,5,1,1,309,9]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,true,false,false,false],[false,false,false,true,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,true,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,2,1,2,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,1,0,0,0,0,0],[0,0,0,0,0,0,0,2,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2783.095238095238,"InitialStardate":2694,"TimeRemaining":-62.095238095238095,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":27,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 load 5 2
 @lastok
 cmd 6 67
 she -6Cannot execute: insufficient shield energy to transfer to engines
 
-cmd 8 53
-pha 1003Cannot execute: insufficient energy to fire phasers
+cmd 8 44
+pha 1003Cannot execute: no enemy ships in quadrant
 
-cmd 8 57
-she 2567Cannot execute: insufficient energy for shield transfer
+cmd 8 111
+she 2567Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
 cmd 5 738
 chart[36m=== GALACTIC STAR CHART ===[0m
@@ -36987,11 +36980,11 @@ chart[36m=== GALACTIC STAR CHART ===[0m
   ---------------------------------
 1 |...|...|...|...|...|...|...|107|
   ---------------------------------
-2 |[36m004[0m|...|[33m.B.[0m|...|[33m.B.[0m|...|...|008|
+2 |...|...|[33m.B.[0m|...|[33m.B.[0m|...|...|008|
   ---------------------------------
 3 |...|...|...|...|006|...|...|...|
   ---------------------------------
-4 |...|...|...|...|[33m.B.[0m|...|...|...|
+4 |...|...|[36m008[0m|...|[33m.B.[0m|...|...|...|
   ---------------------------------
 5 |...|...|...|...|...|...|...|...|
   ---------------------------------
@@ -37005,11 +36998,20 @@ chart[36m=== GALACTIC STAR CHART ===[0m
 cmd 11 55
 nav q 1 2 6Cannot execute: insufficient energy for warp movement
 
-cmd 8 57
-she 2781Cannot execute: insufficient energy for shield transfer
+cmd 8 111
+she 2781Cannot execute: sensors indicate extreme particle ionization: shields cannot hold cohesive geometry in nebula
 
-cmd 7 55
-nav 0 2Cannot execute: insufficient energy for warp movement
+cmd 7 668
+nav 0 2[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [4,5] sector [4,4]
+[36m=== SHORT RANGE SENSOR SCAN [4,5] ===[0m
+[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2788.1
+[2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
+[2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
+[2m4[0m  .   .  [33m>B<[0m [36m<E>[0m  .   .   .   .    Energy:     1049 / 5000
+[2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
+[2m6[0m  .   .   .  [32m * [0m  .   .   .   .    Torpedoes:  2
+[2m7[0m  .  [32m * [0m  .   .   .   .   .   .    Klingons:   15
+[2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
 cmd 11 55
 nav q 7 5 6Cannot execute: insufficient energy for warp movement
@@ -37017,20 +37019,19 @@ nav q 7 5 6Cannot execute: insufficient energy for warp movement
 cmd 11 55
 nav q 6 1 6Cannot execute: insufficient energy for warp movement
 
-cmd 9 95
-tor 144.2[33m[TORPEDO TRACK][0m Fired on course 144.20 from [7,2]
-Torpedo absorbed by star at [8,5]
+cmd 9 60
+tor 144.2[33m[TORPEDO TRACK][0m Fired on course 144.20 from [4,4]
 
-cmd 3 602
-srs[36m=== SHORT RANGE SENSOR SCAN [2,1] ===[0m
-[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2768.8
+cmd 3 596
+srs[36m=== SHORT RANGE SENSOR SCAN [4,5] ===[0m
+[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2788.1
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
-[2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [7,2]
-[2m4[0m  .   .   .   .  [32m * [0m  .   .   .    Energy:     0 / 5000
-[2m5[0m  .   .   .   .   .   .   .  [32m * [0m   Shields:    0 / 2500
-[2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  1
-[2m7[0m  .  [36m<E>[0m  .   .   .   .   .   .    Klingons:   15
-[2m8[0m  .   .   .   .  [32m * [0m  .   .   .    Starbases:  3
+[2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
+[2m4[0m  .   .  [33m>B<[0m [36m<E>[0m  .   .   .   .    Energy:     1049 / 5000
+[2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
+[2m6[0m  .   .   .  [32m * [0m  .   .   .   .    Torpedoes:  1
+[2m7[0m  .  [32m * [0m  .   .   .   .   .   .    Klingons:   15
+[2m8[0m  .   .   .   .   .   .   .   .    Starbases:  3
 
 cmd 3 416
 dam[36m=== DAMAGE CONTROL REPORT ===[0m
@@ -37043,8 +37044,8 @@ Damage Control         : [32mOPERATIONAL[0m
 Shield Control         : [32mOPERATIONAL[0m
 Library Computer       : [32mOPERATIONAL[0m
 
-save 0 2634
-{"RNG":{},"rules":{"profile":"expert","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1.25,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.9,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[2,1],"Sector":[7,2],"Energy":0,"Shields":0,"Torpedoes":1,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,0,0,0,6,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,0,0,0,0,0,0,0],[0,0,1,0,0,0,0,0,0],[0,0,0,0,0,6,0,0,0]],"enemies":null,"stars":[[3,8],[8,5],[5,8],[4,5]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,7,5,7,9,9,6,106,107],[0,4,4,12,6,16,7,4,8],[0,7,8,6,7,6,2,7,9],[0,6,1,8,5,12,203,2,2],[0,4,7,108,3,3,3,4,9],[0,301,7,5,5,7,4,7,9],[0,7,7,309,106,1,1,2,4],[0,6,7,7,5,1,1,309,9]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,true,false,false,false,false,false,false,true],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,true,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,2,1,2,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,1,0,0,0,0,0],[0,0,0,0,0,0,0,2,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2768.7619047619046,"InitialStardate":2694,"TimeRemaining":-47.76190476190476,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":27,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+save 0 2641
+{"RNG":{},"rules":{"profile":"expert","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1.25,"klingon_cloak":true,"spatial_anomalies":true,"adversaries":true,"time_margin":0.9,"anim_speed":2},"Skill":3,"Length":2,"Enterprise":{"Quad":[4,5],"Sector":[4,4],"Energy":1048.9,"Shields":0,"Torpedoes":1,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,5,1,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,6,0,0,0,0],[0,0,6,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":null,"starbase":[4,3],"stars":[[7,2],[6,4]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,7,5,7,9,9,6,106,107],[0,4,4,12,6,16,7,4,8],[0,7,8,6,7,6,2,7,9],[0,6,1,8,5,12,203,2,2],[0,4,7,108,3,3,3,4,9],[0,301,7,5,5,7,4,7,9],[0,7,7,309,106,1,1,2,4],[0,6,7,7,5,1,1,309,9]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,false,false,false,true],[false,false,false,false,false,true,false,false,false],[false,false,false,true,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,true,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,2,1,2,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,2,1,0,0,0,0,0],[0,0,0,0,0,0,0,2,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":15,"RemainingStarbases":3,"Stardate":2788.095238095238,"InitialStardate":2694,"TimeRemaining":-67.0952380952381,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":27,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 END
 CASE random--1-emeritus 1
 new 11 624
@@ -47715,76 +47716,72 @@ High electrostatic discharge has disabled defensive shields and blinded long-ran
 Locate and destroy the enemy commander before your ship is compromised.
 
 
-cmd 7 154
-pha 346[33m[PHASERS FIRED][0m Allocated 346 units
-Phaser beam hit target at [8,6]: 77 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 476 units damage
+cmd 7 60
+pha 346Cannot execute: phasers cannot lock on to a cloaked vessel
 
-cmd 7 154
-pha 418[33m[PHASERS FIRED][0m Allocated 418 units
-Phaser beam hit target at [8,6]: 93 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 310 units damage
+cmd 7 60
+pha 418Cannot execute: phasers cannot lock on to a cloaked vessel
 
-cmd 14 729
+cmd 14 727
 nav c 4.11 6.7[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [8,1] sector [8,5]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -17)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [8,1] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2165.5
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
-[2m3[0m [32m * [0m  .   .   .   .   .   .   .    Sector:     [8,5]
-[2m4[0m  .   .   .   .   .   .  [32m * [0m  .    Energy:     1435 / 5000
+[2m3[0m [32m * [0m  .   .  [32m * [0m  .   .   .   .    Sector:     [8,5]
+[2m4[0m  .   .   .   .   .   .  [32m * [0m  .    Energy:     2985 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .  [32m * [0m   Torpedoes:  10
-[2m7[0m  .   .   .   .   .  [32m * [0m  .   .    Klingons:   1
+[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .  [36m<E>[0m  .   .   .    Starbases:  0
 
 cmd 7 44
 pha 199Cannot execute: no enemy ships in quadrant
 
-cmd 9 711
+cmd 9 709
 nav q 8 3[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [8,3] sector [4,4]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -17)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [8,3] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2175.5
-[2m2[0m  .   .   .   .   .  [32m * [0m  .   .    CONDITION:  [32mGREEN[0m
-[2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1434 / 5000
-[2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
-[2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  10
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
-[2m8[0m  .   .   .   .   .  [32m * [0m  .   .    Starbases:  0
-
-cmd 11 719
-nav q 6 7 6[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [6,7] sector [4,4]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -17)
-[36m=== SHORT RANGE SENSOR SCAN [6,7] ===[0m
-[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2177.2
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     138 / 5000
-[2m5[0m  .   .   .  [32m * [0m  .   .   .   .    Shields:    0 / 2500
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     2984 / 5000
+[2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
+[2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  10
+[2m7[0m  .   .   .   .   .  [32m * [0m  .   .    Klingons:   1
+[2m8[0m  .   .   .   .   .  [32m * [0m  .   .    Starbases:  0
+
+cmd 11 718
+nav q 6 7 6[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [6,7] sector [4,4]
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
+[36m=== SHORT RANGE SENSOR SCAN [6,7] ===[0m
+[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2177.2
+[2m2[0m  .   .   .   .   .  [32m * [0m  .   .    CONDITION:  [32mGREEN[0m
+[2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1688 / 5000
+[2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .  [32m * [0m  .   .   .    Torpedoes:  10
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .  [32m * [0m  .   .   .    Starbases:  0
 
-cmd 7 53
-pha 392Cannot execute: insufficient energy to fire phasers
+cmd 7 44
+pha 392Cannot execute: no enemy ships in quadrant
 
-cmd 6 45
-she 19Deflector Shields: 19  |  Total energy: 119
+cmd 6 46
+she 19Deflector Shields: 19  |  Total energy: 1669
 
 cmd 7 58
 tor 2 8[33m[TORPEDO TRACK][0m Fired on course 0.46 from [4,4]
 
 cmd 11 709
 nav 3.3 2.4[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [6,5] sector [7,1]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -17)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [6,5] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2181.3
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [7,1]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     53 / 5000
-[2m5[0m  .   .   .   .   .   .  [32m * [0m  .    Shields:    19 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1603 / 5000
+[2m5[0m  .   .   .  [32m * [0m  .   .   .   .    Shields:    19 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  9
 [2m7[0m [36m<E>[0m  .  [32m * [0m  .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
@@ -47794,24 +47791,24 @@ helpCOMMANDS: nav, srs, lrs, pha, tor, she, dam, chart, com, scenario [list|<id>
 
 cmd 7 694
 nav 5 3[32m[WARP ENGINES ENGAGED][0m Arrived at sector [5,3]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -17)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [6,5] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2191.3
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [5,3]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     51 / 5000
-[2m5[0m  .   .  [36m<E>[0m  .   .   .  [32m * [0m  .    Shields:    19 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1601 / 5000
+[2m5[0m  .   .  [36m<E>[0m [32m * [0m  .   .   .   .    Shields:    19 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  9
 [2m7[0m  .   .  [32m * [0m  .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
-cmd 3 585
+cmd 3 587
 srs[36m=== SHORT RANGE SENSOR SCAN [6,5] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2191.3
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [5,3]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     51 / 5000
-[2m5[0m  .   .  [36m<E>[0m  .   .   .  [32m * [0m  .    Shields:    19 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1601 / 5000
+[2m5[0m  .   .  [36m<E>[0m [32m * [0m  .   .   .   .    Shields:    19 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  9
 [2m7[0m  .   .  [32m * [0m  .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
@@ -47851,13 +47848,13 @@ tor 5 1[33m[TORPEDO TRACK][0m Fired on course 3.14 from [5,3]
 
 cmd 7 694
 nav 6 4[32m[WARP ENGINES ENGAGED][0m Arrived at sector [6,4]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -17)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [6,5] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2201.3
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [6,4]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     49 / 5000
-[2m5[0m  .   .   .   .   .   .  [32m * [0m  .    Shields:    19 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1599 / 5000
+[2m5[0m  .   .   .  [32m * [0m  .   .   .   .    Shields:    19 / 2500
 [2m6[0m  .   .   .  [36m<E>[0m  .   .   .   .    Torpedoes:  7
 [2m7[0m  .   .  [32m * [0m  .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
@@ -47867,13 +47864,13 @@ nav q 8 1 6Cannot execute: insufficient energy for warp movement
 
 cmd 7 694
 nav 7 2[32m[WARP ENGINES ENGAGED][0m Arrived at sector [7,2]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -17)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [6,5] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2211.3
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [7,2]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     47 / 5000
-[2m5[0m  .   .   .   .   .   .  [32m * [0m  .    Shields:    19 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     1597 / 5000
+[2m5[0m  .   .   .  [32m * [0m  .   .   .   .    Shields:    19 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  7
 [2m7[0m  .  [36m<E>[0m [32m * [0m  .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
@@ -47899,22 +47896,22 @@ chart[36m=== GALACTIC STAR CHART ===[0m
 8 |004|...|002|...|...|...|...|...|
   ---------------------------------
 
-cmd 7 145
+cmd 7 143
 tor 6 6[33m[TORPEDO TRACK][0m Fired on course 0.24 from [7,2]
 Torpedo absorbed by star at [7,3]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -17)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 
 cmd 11 55
 nav q 1 8 6Cannot execute: insufficient energy for warp movement
 
-cmd 8 57
-she 1444Cannot execute: insufficient energy for shield transfer
+cmd 8 47
+she 1444Deflector Shields: 1463  |  Total energy: 153
 
 cmd 8 53
 pha 1109Cannot execute: insufficient energy to fire phasers
 
-cmd 7 53
-pha 149Cannot execute: insufficient energy to fire phasers
+cmd 7 44
+pha 149Cannot execute: no enemy ships in quadrant
 
 cmd 14 55
 nav c 5.76 6.5Cannot execute: insufficient energy for warp movement
@@ -47928,28 +47925,28 @@ pha 442Cannot execute: insufficient energy to fire phasers
 cmd 9 60
 tor 357.0[33m[TORPEDO TRACK][0m Fired on course 357.00 from [7,2]
 
-cmd 9 694
+cmd 9 695
 nav s 5 3[32m[WARP ENGINES ENGAGED][0m Arrived at sector [5,3]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -17)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [6,5] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2221.3
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [5,3]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     45 / 5000
-[2m5[0m  .   .  [36m<E>[0m  .   .   .  [32m * [0m  .    Shields:    19 / 2500
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     151 / 5000
+[2m5[0m  .   .  [36m<E>[0m [32m * [0m  .   .   .   .    Shields:    1463 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  5
 [2m7[0m  .   .  [32m * [0m  .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
-cmd 11 763
+cmd 11 764
 nav q 1 7 1[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [1,7] sector [4,4]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -17)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [1,7] ===[0m
 [2m1[0m  .  [32m * [0m  .   .   .   .   .   .    Stardate:   2231.3
 [2m2[0m  .  [32m * [0m  .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
-[2m3[0m [32m * [0m [32m * [0m [32m * [0m  .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     43 / 5000
-[2m5[0m  .   .   .   .   .  [32m * [0m  .   .    Shields:    19 / 2500
+[2m3[0m [32m * [0m [32m * [0m  .   .   .   .   .   .    Sector:     [4,4]
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     149 / 5000
+[2m5[0m  .   .   .   .   .  [32m * [0m [32m * [0m  .    Shields:    1463 / 2500
 [2m6[0m  .   .   .   .   .   .   .  [32m * [0m   Torpedoes:  5
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
 [2m8[0m [32m * [0m  .   .   .   .   .   .   .    Starbases:  0
@@ -47978,23 +47975,21 @@ tor 1 2 3Error: usage: tor <course> or tor <row> <col>
 cmd 11 55
 nav q 8 8 6Cannot execute: insufficient energy for warp movement
 
-cmd 7 748
+cmd 7 749
 nav 2 7[32m[WARP ENGINES ENGAGED][0m Arrived at sector [2,7]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -17)
+[31;1m*** MISSION TERMINATED ***[0m (Score: 0)
 [36m=== SHORT RANGE SENSOR SCAN [1,7] ===[0m
 [2m1[0m  .  [32m * [0m  .   .   .   .   .   .    Stardate:   2241.3
 [2m2[0m  .  [32m * [0m  .   .   .   .  [36m<E>[0m  .    CONDITION:  [32mGREEN[0m
-[2m3[0m [32m * [0m [32m * [0m [32m * [0m  .   .   .   .   .    Sector:     [2,7]
-[2m4[0m  .   .   .   .   .   .   .   .    Energy:     41 / 5000
-[2m5[0m  .   .   .   .   .  [32m * [0m  .   .    Shields:    19 / 2500
+[2m3[0m [32m * [0m [32m * [0m  .   .   .   .   .   .    Sector:     [2,7]
+[2m4[0m  .   .   .   .   .   .   .   .    Energy:     147 / 5000
+[2m5[0m  .   .   .   .   .  [32m * [0m [32m * [0m  .    Shields:    1463 / 2500
 [2m6[0m  .   .   .   .   .   .   .  [32m * [0m   Torpedoes:  1
 [2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
 [2m8[0m [32m * [0m  .   .   .   .   .   .   .    Starbases:  0
 
-cmd 7 145
+cmd 7 58
 tor 3 4[33m[TORPEDO TRACK][0m Fired on course 3.46 from [2,7]
-Torpedo absorbed by star at [3,3]
-[31;1m*** MISSION TERMINATED ***[0m (Score: -17)
 
 cmd 11 37
 nav q 1 1 0Error: warp factor must be positive
@@ -48014,8 +48009,8 @@ nav s 0 3Error: sector coordinates must be between 1 and 8
 cmd 11 55
 nav q 1 3 6Cannot execute: insufficient energy for warp movement
 
-save 0 2682
-{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[1,7],"Sector":[2,7],"Energy":40.53269999999972,"Shields":19,"Torpedoes":0,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,6,0,0,0,0,0,0],[0,0,6,0,0,0,0,1,0],[0,6,6,6,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,6,0,0],[0,0,0,0,0,0,0,0,6],[0,0,0,0,0,0,0,0,0],[0,6,0,0,0,0,0,0,0]],"enemies":null,"stars":[[6,8],[5,6],[3,1],[2,2],[8,1],[3,2],[1,2],[3,3]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,8,8,8,2,7,9,8,4],[0,9,2,5,2,3,3,5,6],[0,2,7,1,3,3,2,1,1],[0,4,3,8,1,4,2,7,6],[0,1,2,6,2,103,8,5,1],[0,5,3,3,5,2,7,3,9],[0,4,3,7,4,3,7,7,3],[0,4,7,2,4,2,6,2,3]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,true,false,true,false],[false,false,false,false,false,false,false,false,false],[false,true,false,true,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2241.325870646766,"InitialStardate":2164,"TimeRemaining":-47.32587064676618,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":17,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
+save 0 2684
+{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[1,7],"Sector":[2,7],"Energy":146.53269999999975,"Shields":1463,"Torpedoes":0,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,6,0,0,0,0,0,0],[0,0,6,0,0,0,0,1,0],[0,6,6,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,6,6,0],[0,0,0,0,0,0,0,0,6],[0,0,0,0,0,0,0,0,0],[0,6,0,0,0,0,0,0,0]],"enemies":null,"stars":[[5,7],[6,8],[5,6],[3,1],[2,2],[8,1],[3,2],[1,2]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,8,8,8,2,7,9,8,4],[0,9,2,5,2,3,3,5,6],[0,2,7,1,3,3,2,1,1],[0,4,3,8,1,4,2,7,6],[0,1,2,6,2,103,8,5,1],[0,5,3,3,5,2,7,3,9],[0,4,3,7,4,3,7,7,3],[0,4,7,2,4,2,6,2,3]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,true,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,true,false,true,false],[false,false,false,false,false,false,false,false,false],[false,true,false,true,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":2241.325870646766,"InitialStardate":2164,"TimeRemaining":-47.32587064676618,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":0,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 END
 CASE scenario-mutara-3 1
 new 14 597
@@ -65498,32 +65493,30 @@ High electrostatic discharge has disabled defensive shields and blinded long-ran
 Locate and destroy the enemy commander before your ship is compromised.
 
 
-cmd 7 155
-pha 540[33m[PHASERS FIRED][0m Allocated 540 units
-Phaser beam hit target at [2,5]: 241 units
-[31;1m[RETURN FIRE][0m Klingon returns fire: 615 units damage
+cmd 7 60
+pha 540Cannot execute: phasers cannot lock on to a cloaked vessel
 
 cmd 7 171
 tor 2 5[33m[TORPEDO TRACK][0m Fired on course 1.11 from [4,4]
 Torpedo hit Klingon at [2,5]: 500 units damage
-[31;1m[RETURN FIRE][0m Klingon returns fire: 139 units damage
+[31;1m[RETURN FIRE][0m Klingon returns fire: 449 units damage
 
-cmd 7 176
+cmd 7 170
 tor 2 5[33m[TORPEDO TRACK][0m Fired on course 1.11 from [4,4]
-[31;1m*** KLINGON WARSHIP DESTROYED AT [2,5] ***[0m
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 684)
+Torpedo hit Klingon at [2,5]: 500 units damage
+[31;1m[RETURN FIRE][0m Klingon returns fire: 16 units damage
 
-cmd 11 739
+cmd 11 728
 nav q 4 3 5[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [4,3] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 834)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [4,3] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2989.0
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .  [32m * [0m  .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     3081 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     3910 / 5000
 [2m5[0m  .   .   .   .   .   .   .  [32m * [0m   Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  8
-[2m7[0m  .   .   .   .   .  [32m * [0m  .  [32m * [0m   Klingons:   0
+[2m7[0m  .   .   .   .   .  [32m * [0m  .  [32m * [0m   Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
 cmd 3 191
@@ -65548,7 +65541,7 @@ chart[36m=== GALACTIC STAR CHART ===[0m
   ---------------------------------
 4 |...|004|[36m004[0m|...|...|...|...|...|
   ---------------------------------
-5 |...|...|...|...|003|...|...|...|
+5 |...|...|...|...|103|...|...|...|
   ---------------------------------
 6 |...|...|...|...|...|...|...|...|
   ---------------------------------
@@ -65568,30 +65561,30 @@ Damage Control         : [32mOPERATIONAL[0m
 Shield Control         : [32mOPERATIONAL[0m
 Library Computer       : [32mOPERATIONAL[0m
 
-cmd 11 784
+cmd 11 773
 nav q 5 1 3[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [5,1] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 678)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [5,1] ===[0m
 [2m1[0m  .   .  [32m * [0m  .   .   .  [32m * [0m  .    Stardate:   2992.3
 [2m2[0m  .   .   .   .   .  [32m * [0m  .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .  [32m * [0m  .    Energy:     3000 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .  [32m * [0m  .    Energy:     3829 / 5000
 [2m5[0m  .   .   .   .   .   .  [32m * [0m  .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  8
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   0
+[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
 [2m8[0m [32m * [0m [32m * [0m [32m * [0m  .  [32m * [0m  .   .   .    Starbases:  0
 
-cmd 11 730
+cmd 11 719
 nav q 6 2 2[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [6,2] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 632)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [6,2] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   2997.3
 [2m2[0m  .   .  [32m * [0m  .  [32m * [0m [32m * [0m  .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     2984 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     3813 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  8
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   0
+[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
 cmd 5 711
@@ -65606,7 +65599,7 @@ chart[36m=== GALACTIC STAR CHART ===[0m
   ---------------------------------
 4 |...|004|004|...|...|...|...|...|
   ---------------------------------
-5 |009|...|...|...|003|...|...|...|
+5 |009|...|...|...|103|...|...|...|
   ---------------------------------
 6 |...|[36m003[0m|...|...|...|...|...|...|
   ---------------------------------
@@ -65625,30 +65618,30 @@ lrs[36m=== LONG RANGE SENSOR SCAN ===[0m
 : 008 : 004 : 001 : 
 -------------------
 
-cmd 11 748
+cmd 11 737
 nav q 1 6 3[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [1,6] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 621)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [1,6] ===[0m
 [2m1[0m  .  [32m * [0m  .  [32m * [0m  .   .   .   .    Stardate:   3000.7
 [2m2[0m  .   .  [32m * [0m  .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     2903 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     3732 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  8
-[2m7[0m  .   .   .   .   .   .   .  [32m * [0m   Klingons:   0
+[2m7[0m  .   .   .   .   .   .   .  [32m * [0m   Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .  [32m * [0m   Starbases:  0
 
-cmd 11 739
+cmd 11 728
 nav q 4 1 3[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [4,1] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 613)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [4,1] ===[0m
 [2m1[0m  .   .   .   .   .   .  [32m * [0m  .    Stardate:   3004.0
 [2m2[0m  .   .  [32m * [0m  .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .  [32m * [0m  .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .  [32m * [0m  .   .    Energy:     2822 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .  [32m * [0m  .   .    Energy:     3651 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  8
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   0
+[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
 cmd 5 711
@@ -65663,7 +65656,7 @@ chart[36m=== GALACTIC STAR CHART ===[0m
   ---------------------------------
 4 |[36m004[0m|004|004|...|...|...|...|...|
   ---------------------------------
-5 |009|...|...|...|003|...|...|...|
+5 |009|...|...|...|103|...|...|...|
   ---------------------------------
 6 |...|003|...|...|...|...|...|...|
   ---------------------------------
@@ -65672,30 +65665,30 @@ chart[36m=== GALACTIC STAR CHART ===[0m
 8 |...|...|...|...|...|...|...|...|
   ---------------------------------
 
-cmd 11 757
+cmd 11 746
 nav q 6 3 6[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [6,3] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 611)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [6,3] ===[0m
 [2m1[0m  .   .   .   .  [32m * [0m  .   .   .    Stardate:   3005.7
 [2m2[0m  .  [32m * [0m  .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m [32m * [0m  .   .  [36m<E>[0m  .   .  [32m * [0m  .    Energy:     1526 / 5000
+[2m4[0m [32m * [0m  .   .  [36m<E>[0m  .   .  [32m * [0m  .    Energy:     2355 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  8
-[2m7[0m  .   .   .   .   .   .  [32m * [0m  .    Klingons:   0
+[2m7[0m  .   .   .   .   .   .  [32m * [0m  .    Klingons:   1
 [2m8[0m  .   .  [32m * [0m  .   .   .   .   .    Starbases:  0
 
-cmd 11 748
+cmd 11 737
 nav q 1 3 2[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [1,3] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 605)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [1,3] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   3010.7
 [2m2[0m  .   .   .   .   .   .   .  [32m * [0m   CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1510 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     2339 / 5000
 [2m5[0m  .   .   .   .  [32m * [0m  .   .   .    Shields:    0 / 2500
 [2m6[0m [32m * [0m  .   .   .   .   .  [32m * [0m  .    Torpedoes:  8
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   0
+[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .  [32m * [0m  .   .    Starbases:  0
 
 cmd 5 711
@@ -65710,7 +65703,7 @@ chart[36m=== GALACTIC STAR CHART ===[0m
   ---------------------------------
 4 |004|004|004|...|...|...|...|...|
   ---------------------------------
-5 |009|...|...|...|003|...|...|...|
+5 |009|...|...|...|103|...|...|...|
   ---------------------------------
 6 |...|003|006|...|...|...|...|...|
   ---------------------------------
@@ -65731,7 +65724,7 @@ chart[36m=== GALACTIC STAR CHART ===[0m
   ---------------------------------
 4 |004|004|004|...|...|...|...|...|
   ---------------------------------
-5 |009|...|...|...|003|...|...|...|
+5 |009|...|...|...|103|...|...|...|
   ---------------------------------
 6 |...|003|006|...|...|...|...|...|
   ---------------------------------
@@ -65740,56 +65733,56 @@ chart[36m=== GALACTIC STAR CHART ===[0m
 8 |...|...|...|...|...|...|...|...|
   ---------------------------------
 
-cmd 11 784
+cmd 11 773
 nav q 5 3 2[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [5,3] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 601)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [5,3] ===[0m
 [2m1[0m  .  [32m * [0m  .  [32m * [0m  .  [32m * [0m  .  [32m * [0m   Stardate:   3015.7
 [2m2[0m  .   .   .  [32m * [0m  .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .  [32m * [0m  .   .    Energy:     1494 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .  [32m * [0m  .   .    Energy:     2323 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  8
-[2m7[0m  .   .   .   .   .   .  [32m * [0m  .    Klingons:   0
+[2m7[0m  .   .   .   .   .   .  [32m * [0m  .    Klingons:   1
 [2m8[0m  .   .   .   .  [32m * [0m  .   .  [32m * [0m   Starbases:  0
 
-cmd 11 766
+cmd 11 755
 nav q 6 1 3[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [6,1] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 600)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [6,1] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   3019.0
 [2m2[0m  .  [32m * [0m  .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m [32m * [0m  .   .  [36m<E>[0m  .   .   .   .    Energy:     1413 / 5000
+[2m4[0m [32m * [0m  .   .  [36m<E>[0m  .   .   .   .    Energy:     2242 / 5000
 [2m5[0m  .   .  [32m * [0m  .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .  [32m * [0m  .   .  [32m * [0m  .   .   .    Torpedoes:  8
-[2m7[0m  .   .  [32m * [0m  .   .   .   .   .    Klingons:   0
+[2m7[0m  .   .  [32m * [0m  .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .  [32m * [0m   Starbases:  0
 
-cmd 11 712
+cmd 11 701
 nav q 3 8 2[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [3,8] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 598)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [3,8] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   3024.0
 [2m2[0m  .   .   .   .   .   .  [32m * [0m  .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1397 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     2226 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  8
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   0
+[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
-cmd 11 766
+cmd 11 755
 nav q 2 2 4[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [2,2] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 597)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [2,2] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   3026.5
 [2m2[0m  .   .   .   .   .  [32m * [0m [32m * [0m  .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1141 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1970 / 5000
 [2m5[0m  .   .  [32m * [0m  .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  8
-[2m7[0m  .  [32m * [0m  .   .   .   .   .   .    Klingons:   0
+[2m7[0m  .  [32m * [0m  .   .   .   .   .   .    Klingons:   1
 [2m8[0m [32m * [0m  .  [32m * [0m  .   .   .   .   .    Starbases:  0
 
 cmd 5 711
@@ -65804,7 +65797,7 @@ chart[36m=== GALACTIC STAR CHART ===[0m
   ---------------------------------
 4 |004|004|004|...|...|...|...|...|
   ---------------------------------
-5 |009|...|009|...|003|...|...|...|
+5 |009|...|009|...|103|...|...|...|
   ---------------------------------
 6 |007|003|006|...|...|...|...|...|
   ---------------------------------
@@ -65824,17 +65817,17 @@ Damage Control         : [32mOPERATIONAL[0m
 Shield Control         : [32mOPERATIONAL[0m
 Library Computer       : [32mOPERATIONAL[0m
 
-cmd 11 765
+cmd 11 755
 nav q 6 5 4[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [6,5] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 596)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [6,5] ===[0m
 [2m1[0m  .   .   .   .  [32m * [0m  .   .   .    Stardate:   3029.0
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .  [32m * [0m  .  [32m * [0m  .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     885 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1714 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .  [32m * [0m  .  [32m * [0m [32m * [0m  .   .    Torpedoes:  8
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   0
+[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .  [32m * [0m  .   .   .    Starbases:  0
 
 cmd 3 416
@@ -65848,17 +65841,17 @@ Damage Control         : [32mOPERATIONAL[0m
 Shield Control         : [32mOPERATIONAL[0m
 Library Computer       : [32mOPERATIONAL[0m
 
-cmd 11 720
+cmd 11 710
 nav q 7 5 3[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [7,5] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 595)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [7,5] ===[0m
 [2m1[0m  .   .   .  [32m * [0m  .   .   .   .    Stardate:   3032.3
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     804 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1633 / 5000
 [2m5[0m  .  [32m * [0m  .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  8
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   0
+[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
 cmd 5 711
@@ -65873,7 +65866,7 @@ chart[36m=== GALACTIC STAR CHART ===[0m
   ---------------------------------
 4 |004|004|004|...|...|...|...|...|
   ---------------------------------
-5 |009|...|009|...|003|...|...|...|
+5 |009|...|009|...|103|...|...|...|
   ---------------------------------
 6 |007|003|006|...|007|...|...|...|
   ---------------------------------
@@ -65904,7 +65897,7 @@ chart[36m=== GALACTIC STAR CHART ===[0m
   ---------------------------------
 4 |004|004|004|...|...|...|...|...|
   ---------------------------------
-5 |009|...|009|...|003|...|...|...|
+5 |009|...|009|...|103|...|...|...|
   ---------------------------------
 6 |007|003|006|...|007|...|...|...|
   ---------------------------------
@@ -65913,17 +65906,17 @@ chart[36m=== GALACTIC STAR CHART ===[0m
 8 |...|...|...|...|...|...|...|...|
   ---------------------------------
 
-cmd 11 711
+cmd 11 701
 nav q 4 6 5[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [4,6] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 595)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [4,6] ===[0m
 [2m1[0m  .   .   .   .   .   .   .   .    Stardate:   3034.3
 [2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
 [2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     179 / 5000
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     1008 / 5000
 [2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .  [32m * [0m  .   .   .   .   .   .    Torpedoes:  8
-[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   0
+[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
 cmd 3 191
@@ -65933,11 +65926,21 @@ lrs[36m=== LONG RANGE SENSOR SCAN ===[0m
 -------------------
 : 009 : 001 : 007 : 
 -------------------
-: 003 : 004 : 007 : 
+: 103 : 004 : 007 : 
 -------------------
 
-cmd 11 55
-nav q 3 7 5Cannot execute: insufficient energy for warp movement
+cmd 11 709
+nav q 3 7 5[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [3,7] sector [4,4]
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
+[36m=== SHORT RANGE SENSOR SCAN [3,7] ===[0m
+[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   3036.3
+[2m2[0m  .   .   .   .   .   .   .   .    CONDITION:  [32mGREEN[0m
+[2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [4,4]
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     383 / 5000
+[2m5[0m  .   .   .   .   .   .   .  [32m * [0m   Shields:    0 / 2500
+[2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  8
+[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
+[2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
 cmd 5 711
 chart[36m=== GALACTIC STAR CHART ===[0m
@@ -65947,11 +65950,11 @@ chart[36m=== GALACTIC STAR CHART ===[0m
   ---------------------------------
 2 |...|007|...|...|...|...|...|...|
   ---------------------------------
-3 |...|...|...|...|...|...|...|001|
+3 |...|...|...|...|...|...|[36m002[0m|001|
   ---------------------------------
-4 |004|004|004|...|...|[36m001[0m|...|...|
+4 |004|004|004|...|...|001|...|...|
   ---------------------------------
-5 |009|...|009|...|003|...|...|...|
+5 |009|...|009|...|103|...|...|...|
   ---------------------------------
 6 |007|003|006|...|007|...|...|...|
   ---------------------------------
@@ -65966,24 +65969,34 @@ nav q 3 3 6Cannot execute: insufficient energy for warp movement
 cmd 11 55
 nav q 1 4 5Cannot execute: insufficient energy for warp movement
 
-cmd 11 747
+cmd 11 736
 nav q 4 8 2[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [4,8] sector [4,4]
-[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m (Score: 594)
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
 [36m=== SHORT RANGE SENSOR SCAN [4,8] ===[0m
-[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   3039.3
-[2m2[0m  .   .  [32m * [0m  .   .   .   .   .    CONDITION:  [32mGREEN[0m
-[2m3[0m  .   .   .   .   .   .   .  [32m * [0m   Sector:     [4,4]
-[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     163 / 5000
-[2m5[0m [32m * [0m  .   .   .   .   .   .  [32m * [0m   Shields:    0 / 2500
+[2m1[0m  .   .   .   .   .   .   .   .    Stardate:   3041.3
+[2m2[0m  .  [32m * [0m [32m * [0m  .   .   .   .   .    CONDITION:  [32mGREEN[0m
+[2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     367 / 5000
+[2m5[0m [32m * [0m  .   .   .   .   .   .   .    Shields:    0 / 2500
 [2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  8
-[2m7[0m  .   .   .  [32m * [0m  .   .   .   .    Klingons:   0
+[2m7[0m [32m * [0m  .   .  [32m * [0m  .   .   .   .    Klingons:   1
 [2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
 cmd 11 55
 nav q 4 6 6Cannot execute: insufficient energy for warp movement
 
-cmd 11 55
-nav q 3 5 4Cannot execute: insufficient energy for warp movement
+cmd 11 718
+nav q 3 5 4[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [3,5] sector [4,4]
+[31;1m*** MISSION TERMINATED ***[0m (Score: -10)
+[36m=== SHORT RANGE SENSOR SCAN [3,5] ===[0m
+[2m1[0m  .   .   .  [32m * [0m  .  [32m * [0m  .   .    Stardate:   3043.8
+[2m2[0m  .   .   .   .   .   .   .  [32m * [0m   CONDITION:  [32mGREEN[0m
+[2m3[0m  .   .   .   .   .   .   .   .    Sector:     [4,4]
+[2m4[0m  .   .   .  [36m<E>[0m  .   .   .   .    Energy:     111 / 5000
+[2m5[0m  .   .   .   .   .   .   .   .    Shields:    0 / 2500
+[2m6[0m  .   .   .   .   .   .   .   .    Torpedoes:  8
+[2m7[0m  .   .   .   .   .   .   .   .    Klingons:   1
+[2m8[0m  .   .   .   .   .   .   .   .    Starbases:  0
 
 cmd 5 711
 chart[36m=== GALACTIC STAR CHART ===[0m
@@ -65993,11 +66006,11 @@ chart[36m=== GALACTIC STAR CHART ===[0m
   ---------------------------------
 2 |...|007|...|...|...|...|...|...|
   ---------------------------------
-3 |...|...|...|...|...|...|...|001|
+3 |...|...|...|...|[36m003[0m|...|002|001|
   ---------------------------------
-4 |004|004|004|...|...|001|...|[36m005[0m|
+4 |004|004|004|...|...|001|...|005|
   ---------------------------------
-5 |009|...|009|...|003|...|...|...|
+5 |009|...|009|...|103|...|...|...|
   ---------------------------------
 6 |007|003|006|...|007|...|...|...|
   ---------------------------------
@@ -66006,8 +66019,8 @@ chart[36m=== GALACTIC STAR CHART ===[0m
 8 |...|...|...|...|...|...|...|...|
   ---------------------------------
 
-save 0 2635
-{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[4,8],"Sector":[4,4],"Energy":163,"Shields":0,"Torpedoes":8,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,6,0,0,0,0,0],[0,0,0,0,0,0,0,0,6],[0,0,0,0,1,0,0,0,0],[0,6,0,0,0,0,0,0,6],[0,0,0,0,0,0,0,0,0],[0,0,0,0,6,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[3,8],[5,8],[2,3],[5,1],[7,4]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,6,9,5,2,2,5,1,2],[0,2,7,7,1,5,6,1,7],[0,1,6,2,2,3,9,2,1],[0,4,4,4,8,9,1,7,5],[0,9,5,9,2,3,4,7,1],[0,7,3,6,8,7,4,7,5],[0,8,4,1,6,2,6,8,3],[0,5,7,1,9,7,1,1,9]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,true,false,false,true,false,false],[false,false,true,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,true],[false,true,true,true,false,false,true,false,true],[false,true,false,true,false,true,false,false,false],[false,true,true,true,false,true,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":0,"RemainingStarbases":0,"Stardate":3039.333333333334,"InitialStardate":2987,"TimeRemaining":-22.333333333333332,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":1,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":16,"help_calls":0,"starships_lost":0},"game_won":true,"game_over":false,"days_remaining":30,"klingons_remaining":0,"score":0,"options":{"difficulty":""}}
+save 0 2625
+{"RNG":{},"scenario":"mutara-nebula","rules":{"profile":"normal","surveillance":"classic","sensor_degradation":true,"repair_multiplier":1,"klingon_cloak":true,"spatial_anomalies":false,"adversaries":false,"time_margin":1,"anim_speed":2},"Skill":4,"Length":1,"Enterprise":{"Quad":[3,5],"Sector":[4,4],"Energy":111,"Shields":0,"Torpedoes":8,"Condition":0,"Devices":[0,0,0,0,0,0,0,0],"Damage":[0,0,0,0,0,0,0,0],"MaxEnergy":5000,"MaxTorpedoes":10,"LifeSupport":0},"CurrentQuad":{"grid":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,6,0,6,0,0],[0,0,0,0,0,0,0,0,6],[0,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"enemies":null,"stars":[[2,8],[1,6],[1,4]]},"GalaxyChart":[[0,0,0,0,0,0,0,0,0],[0,6,9,5,2,2,5,1,2],[0,2,7,7,1,5,6,1,7],[0,1,6,2,2,3,9,2,1],[0,4,4,4,8,9,1,7,5],[0,9,5,9,2,103,4,7,1],[0,7,3,6,8,7,4,7,5],[0,8,4,1,6,2,6,8,3],[0,5,7,1,9,7,1,1,9]],"ChartDiscovered":[[false,false,false,false,false,false,false,false,false],[false,false,false,true,false,false,true,false,false],[false,false,true,false,false,false,false,false,false],[false,false,false,false,false,true,false,true,true],[false,true,true,true,false,false,true,false,true],[false,true,false,true,false,true,false,false,false],[false,true,true,true,false,true,false,false,false],[false,false,false,false,false,true,false,false,false],[false,false,false,false,false,false,false,false,false]],"ChartKnownBases":[[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false],[false,false,false,false,false,false,false,false,false]],"quadrant_env":[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,1,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],"RemainingKlingons":1,"RemainingStarbases":0,"Stardate":3043.833333333334,"InitialStardate":2987,"TimeRemaining":-26.833333333333332,"metrics":{"klingons_killed":0,"commanders_killed":0,"super_commanders_killed":0,"romulans_killed":0,"romulans_surrendered":0,"starbases_destroyed":0,"stars_destroyed":0,"planets_destroyed":0,"casualties":10,"help_calls":0,"starships_lost":0},"game_won":false,"game_over":false,"days_remaining":30,"klingons_remaining":15,"score":0,"options":{"difficulty":""}}
 END
 CASE smart-scenario-mutara-1 1
 new 9 633

@@ -147,9 +147,44 @@ Regression tests are in `crates/sst-engine/tests/bug_fixes.rs` unless noted.
    terminal load of the same file give the same state
    (`crates/sst-wasm/tests/go_tests.rs`).
 
+10. **Focused phasers hit Klingons in every game.** `ActionPhaserDirect`
+    (`pha E r,c`) looked for its target only in `Enemies`, which is empty
+    without adversaries, so focused phasers at a Klingon drained the energy
+    and did nothing. The target is now any visible ship at the sector: a
+    Klingon on the legacy list (damage and kills are applied there and copied
+    to `Enemies`), or a Romulan or Tholian. Every kill clears the sector,
+    updates the counters and the galaxy chart (Go never decremented the chart
+    for a focused Romulan or Tholian kill, so the ship came back when the
+    quadrant was re-entered) and runs the victory check.
+11. **Spread phasers hit Romulans and Tholians.** `ActionFirePhasers` only
+    divided its energy between the legacy Klingon list, so Romulans and
+    Tholians were immune to spread fire, and phasers refused to fire at all
+    ("no enemy ships in quadrant") once only they were left. The energy is
+    now split evenly between every uncloaked Klingon, Romulan and Tholian and
+    each share is applied with the classic rules (divided by distance,
+    shields first, shields down in a nebula). `PhaserHit` gained a `Faction`
+    field (omitted for Klingons, so a Klingon hit encodes as before) and the
+    console and browser name the ship that was hit. Cloaked ships are not
+    targeted (Go hit and decloaked cloaked commanders); with only a cloaked
+    commander in the quadrant the refusal reads "phasers cannot lock on to a
+    cloaked vessel". A manual allocation, which names Klingons by ID, still
+    reaches cloaked Klingons as in Go. Balance: see the autoplay numbers in
+    the commit message (`cargo run --release -p sst-engine --example
+    autoplay`).
+12. **No weapon locks on to a cloaked ship.** Focused phasers hit cloaked
+    Romulans although target lock refused cloaked ships, and target lock
+    (`ActionTorpedoDirect`) itself only checked cloaked Klingons. Both now
+    refuse any cloaked ship at the target sector with "TARGET LOCK FAILED:
+    CLOAKED VESSEL" before spending energy or a torpedo; blind torpedo fire
+    along a line still hits a cloaked ship (fix 2).
+
 Re-recorded cases:
 
 | Transcript | Cases | Cause |
 | :--- | :--- | :--- |
 | `engine/save.txt` | every `envhash` and envelope dump (`version` is now 3); the `compact`/`legacy` bytes and `load`/`loadtour` hashes of the three sources with Klingons in the quadrant (Kobayashi Maru, Mutara Nebula, tour) | 8 |
 | `wasm/sessions.txt` | the `save` output of 58 sessions that save with Klingons in the quadrant (`random-*`, `scenario-kobayashi-maru-1`, `scenario-mutara-4/5`, `smart-*`, `oddload-*`); in 9 of them (`random-2-custom`, `random-7-casual`, `random-7-expert`, `random-42-hardcore`, `random-777-casual`, `random-2024-hardcore`, `random--12345-casual`, `random-1099511627776-expert`, `random-1099511627776-custom`) the commands after a `load` also changed, because the loaded Klingons are still there | 8, 9 |
+| `engine/games.txt` | 115 of the 130 TUI games: 37 of the 41 without adversaries or cloaking (0, 2, 6, 8, 9, 14, 15, 23, 24, 27, 30, 33, 38, 39, 41, 42, 48, 54, 56, 63, 65, 71, 80, 81, 86, 89, 95, 96, 104, 105, 107, 110, 113, 119, 120, 128, 129), 22 of the 25 with cloaking only (3, 11, 17, 26, 32, 47, 50, 51, 57, 59, 62, 66, 72, 74, 75, 83, 87, 90, 98, 99, 114, 123), 20 of the 25 with adversaries (1, 12, 16, 25, 31, 37, 40, 46, 49, 55, 70, 73, 77, 79, 88, 92, 94, 117, 118, 121) and 36 of the 39 with both (5, 7, 10, 19-22, 28, 29, 34, 36, 43-45, 53, 58, 60, 68, 69, 76, 84, 85, 91, 93, 97, 100, 101, 106, 108, 109, 112, 115, 116, 124, 125, 127) | 10-12 |
+| `engine/games.txt` | 16 of the 48 scenario games (130, 131, 133, 135, 137, 139, 140, 145, 146, 149, 151, 152, 155, 157, 160, 161), 23 of the 26 tour games (180-198, 200-203) and 47 of the 60 browser sessions (204, 205, 208-211, 213, 214, 216-218, 220-223, 225-237, 240-242, 244, 245, 248, 249, 251-262) | 10-12 |
+| `tui/scenarios.txt` | `scenario_mutara-nebula` (both profiles): spread phasers no longer hit the cloaked commander | 11 |
+| `wasm/sessions.txt` | `fixed-casual`, `fixed-normal`, `fixed-hardcore`, `random-7-expert`, `random-42-normal`, `random-777-emeritus`, `random--1-expert`, `scenario-mutara-2`, `smart-scenario-mutara-0` | 10-12 |

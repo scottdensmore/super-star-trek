@@ -14,7 +14,7 @@ use crate::refits::{calculate_torpedo_damage, RefitID};
 use crate::scenarios::{get_scenario, ScenarioID};
 use crate::score::compute_score;
 use crate::state::{
-    cell, cell_mut, remove_enemy_klingon, sync_quadrant_enemies, GameState, KlingonRef,
+    cell, cell_mut, remove_enemy_klingon, sync_quadrant_enemies, EnemyRef, GameState, KlingonRef,
 };
 use crate::tactics::ActionPhaserDirect;
 use crate::types::*;
@@ -592,82 +592,77 @@ impl ActionFirePhasers {
         if g.enterprise.condition == ConditionType::Docked {
             return Err(EngineError::new("cannot fire phasers while docked"));
         }
-        if g.current_quad.klingons.is_empty() {
+        let manual = !self.manual_allocation.is_empty();
+        let targets = phaser_targets(g, manual);
+        if targets.is_empty() {
+            // A cloaked commander shows on the scanners as an unknown
+            // contact; say why the phasers will not fire at it.
+            if g.current_quad
+                .klingons
+                .iter()
+                .flatten()
+                .any(|k| k.borrow().is_cloaked)
+            {
+                return Err(EngineError::new(
+                    "phasers cannot lock on to a cloaked vessel",
+                ));
+            }
             return Err(EngineError::new("no enemy ships in quadrant"));
         }
         g.enterprise.energy -= total;
         let mut events = vec![Event::PhaserFired(EventPhaserFired { energy: total })];
 
-        let list = g.current_quad.klingons.to_vec();
-        let manual = !self.manual_allocation.is_empty();
-        let per_target = total / list.len() as f64;
-        for kp in list.iter() {
-            let k = kl(kp);
+        let per_target = total / targets.len() as f64;
+        let mut adversary_killed = false;
+        for target in targets.iter() {
             let alloc = if manual {
-                let kid = k.borrow().id;
-                match self.manual_allocation.get(&kid) {
+                match self.manual_allocation.get(&target.id()) {
                     Some(a) if *a > 0.0 => *a,
                     _ => continue,
                 }
             } else {
                 per_target
             };
-            if in_nebula(g) {
-                k.borrow_mut().shields = 0.0;
-            }
-            let dist = distance(g.enterprise.sector, k.borrow().sector);
-            let mut damage = compute_phaser_damage(alloc, dist);
-            let mut effective = damage;
-            let destroyed;
-            {
-                let mut kb = k.borrow_mut();
-                if kb.shields > 0.0 {
-                    if kb.shields >= damage {
-                        kb.shields -= damage;
-                        effective = 0.0;
-                    } else {
-                        effective = damage - kb.shields;
-                        kb.shields = 0.0;
-                    }
-                }
-                destroyed = effective >= kb.energy;
-                if destroyed {
-                    damage = kb.energy;
-                    kb.energy = 0.0;
-                } else {
-                    kb.energy -= effective;
-                }
-            }
+            let nebula = in_nebula(g);
+            let dist = distance(g.enterprise.sector, target.sector());
+            let damage = compute_phaser_damage(alloc, dist);
+            let (damage, destroyed) = target.absorb(damage, nebula);
+            let (sector, id, faction) = (target.sector(), target.id(), target.faction());
             if destroyed {
-                let (sector, is_cmd, id) = {
-                    let kb = k.borrow();
-                    (kb.sector, kb.is_commander, kb.id)
-                };
-                remove_enemy_klingon(&mut g.current_quad, id);
                 *cell_mut(&mut g.current_quad.grid, sector) = EntityType::Empty;
                 if g.remaining_klingons > 0 {
                     g.remaining_klingons -= 1;
                 }
                 g.klingons_remaining = g.remaining_klingons;
                 dec_galaxy_klingons(g);
-                if is_cmd {
-                    g.metrics.commanders_killed += 1;
-                } else {
-                    g.metrics.klingons_killed += 1;
+                match target {
+                    PhaserTarget::Klingon(k) => {
+                        remove_enemy_klingon(&mut g.current_quad, id);
+                        if k.borrow().is_commander {
+                            g.metrics.commanders_killed += 1;
+                        } else {
+                            g.metrics.klingons_killed += 1;
+                        }
+                    }
+                    PhaserTarget::Adversary(_) => {
+                        adversary_killed = true;
+                        if faction == FactionType::Romulan {
+                            g.metrics.romulans_killed += 1;
+                        }
+                    }
                 }
             }
-            let (sector, id, cloaked) = {
-                let kb = k.borrow();
-                (kb.sector, kb.id, kb.is_cloaked)
-            };
             events.push(Event::PhaserHit(EventPhaserHit {
                 target: sector,
                 klingon_id: id,
                 damage,
                 destroyed,
+                faction,
             }));
-            if cloaked {
-                events.extend(decloak_klingon(Some(k)));
+            if let PhaserTarget::Klingon(k) = target {
+                if k.borrow().is_cloaked {
+                    events.extend(decloak_klingon(Some(k)));
+                }
             }
         }
         if manual && g.rules.klingon_cloak {
@@ -691,9 +686,117 @@ impl ActionFirePhasers {
             }
         }
         g.current_quad.klingons = survivors;
+        if adversary_killed {
+            let mut remaining = GoVec::nil();
+            for e in g.current_quad.enemies.iter() {
+                let dead = e.as_ref().is_some_and(|e| {
+                    let e = e.borrow();
+                    e.faction != FactionType::Klingon && e.energy <= 0.0
+                });
+                if !dead {
+                    remaining.push(e.clone());
+                }
+            }
+            g.current_quad.enemies = remaining;
+        }
 
         Ok(evaluate_scenario(g, events))
     }
+}
+
+/// A ship phasers can hit: a Klingon on the legacy list, or a Romulan or
+/// Tholian in `Enemies`.
+pub(crate) enum PhaserTarget {
+    Klingon(KlingonRef),
+    Adversary(EnemyRef),
+}
+
+impl PhaserTarget {
+    pub(crate) fn id(&self) -> i32 {
+        match self {
+            PhaserTarget::Klingon(k) => k.borrow().id,
+            PhaserTarget::Adversary(e) => e.borrow().id,
+        }
+    }
+
+    pub(crate) fn sector(&self) -> Coord {
+        match self {
+            PhaserTarget::Klingon(k) => k.borrow().sector,
+            PhaserTarget::Adversary(e) => e.borrow().sector,
+        }
+    }
+
+    pub(crate) fn faction(&self) -> FactionType {
+        match self {
+            PhaserTarget::Klingon(_) => FactionType::Klingon,
+            PhaserTarget::Adversary(e) => e.borrow().faction,
+        }
+    }
+
+    /// Applies `damage` (shields first; a nebula collapses them) and returns
+    /// the damage to report (the remaining energy for a kill) and whether
+    /// the ship was destroyed.
+    pub(crate) fn absorb(&self, damage: f64, nebula: bool) -> (f64, bool) {
+        fn hit(shields: &mut f64, energy: &mut f64, damage: f64, nebula: bool) -> (f64, bool) {
+            if nebula {
+                *shields = 0.0;
+            }
+            let mut effective = damage;
+            if *shields > 0.0 {
+                if *shields >= damage {
+                    *shields -= damage;
+                    effective = 0.0;
+                } else {
+                    effective = damage - *shields;
+                    *shields = 0.0;
+                }
+            }
+            if effective >= *energy {
+                let left = *energy;
+                *energy = 0.0;
+                (left, true)
+            } else {
+                *energy -= effective;
+                (damage, false)
+            }
+        }
+        match self {
+            PhaserTarget::Klingon(k) => {
+                let mut k = k.borrow_mut();
+                let k = &mut *k;
+                hit(&mut k.shields, &mut k.energy, damage, nebula)
+            }
+            PhaserTarget::Adversary(e) => {
+                let mut e = e.borrow_mut();
+                let e = &mut *e;
+                hit(&mut e.shields, &mut e.energy, damage, nebula)
+            }
+        }
+    }
+}
+
+/// The ships spread phasers divide their energy between: every uncloaked
+/// Klingon (legacy list order), then every live, uncloaked Romulan and
+/// Tholian (`Enemies` order). Go only ever targeted the legacy Klingon list,
+/// so Romulans and Tholians were immune to spread fire, and it hit (and
+/// decloaked) cloaked commanders, which no weapon can lock on to. A manual
+/// allocation names its Klingons by ID, so `manual` keeps Go's rule for
+/// them: cloaked Klingons are included (and a hit decloaks them).
+pub(crate) fn phaser_targets(g: &GameState, manual: bool) -> Vec<PhaserTarget> {
+    let mut targets = Vec::new();
+    for k in g.current_quad.klingons.iter() {
+        let k = kl(k);
+        if manual || !k.borrow().is_cloaked {
+            targets.push(PhaserTarget::Klingon(k.clone()));
+        }
+    }
+    for e in g.current_quad.enemies.iter().flatten() {
+        let eb = e.borrow();
+        if eb.faction != FactionType::Klingon && eb.energy > 0.0 && !eb.is_cloaked {
+            targets.push(PhaserTarget::Adversary(e.clone()));
+        }
+    }
+    targets
 }
 
 /// Go `ActionMove`: course in radians (0 = east, pi/2 = north), warp factor,

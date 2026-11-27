@@ -7,8 +7,8 @@ use std::fmt::Write as _;
 
 use sst_engine::gofmt::{fmt_f, pad_right};
 use sst_engine::{
-    col, row, ConditionType, DeviceID, EntityType, EnvironmentType, Event, GameOverReason,
-    GameState, Scenario, NUM_DEVICES,
+    col, row, ConditionType, DeviceID, EntityType, EnvironmentType, Event, FactionType,
+    GameOverReason, GameState, Scenario, NUM_DEVICES,
 };
 
 pub const ANSI_RESET: &str = "\x1b[0m";
@@ -242,9 +242,14 @@ pub fn format_combat_events(events: &[Event]) -> String {
             }
             Event::PhaserHit(e) => {
                 if e.destroyed {
+                    let ship = match e.faction {
+                        FactionType::Romulan => "ROMULAN",
+                        FactionType::Tholian => "THOLIAN",
+                        _ => "KLINGON",
+                    };
                     let _ = write!(
                         b,
-                        "{ANSI_RED}*** KLINGON DESTROYED BY PHASER FIRE ***{ANSI_RESET}\r\n"
+                        "{ANSI_RED}*** {ship} DESTROYED BY PHASER FIRE ***{ANSI_RESET}\r\n"
                     );
                 } else {
                     let _ = write!(

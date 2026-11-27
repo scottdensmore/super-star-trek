@@ -3063,14 +3063,14 @@ frame 2734
 │ COMMAND> pha 300                                                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 49 key 13 "" 0
-= 9bdbd1a772154672 pend=11 quit=0
+= 8a2e044f3882d603 pend=9 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
 │  1   2   3   4   5   6   7   8  ││ CONDITION RED   LOC: Q[5,5] S[4,4]      │  
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2021.0   Time Remaining: 30.0 │  
-│2  .   .   .   .   .   .   .   . ││ Energy:   [████████░░] 3944/5000        │  
-│3  .   .   .   .  <K>  .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
+│2  .   .   .   .   .   .   .   . ││ Energy:   [██████████] 5000/5000        │  
+│3  .   .   .   .   ?   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
 │4  .   .   .  <E>  .   .   .   . ││ Torpedoes: [TORP: 10/10]   🔊 80%       │  
 │5  .   *   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                │  
 │6  .   .   .   .   *   .   .   . ││ Warp:      OK  Tubes:             OK    │  
@@ -3083,21 +3083,21 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Phasers discharged with 300 energy                                           │
-│ Hit on Klingon #1: 212 units damage                                          │
-│ Klingon #1 decloaked!                                                        │
-│ Klingon #1 returned fire: 756 damage (HULL HIT: -756 Energy)                 │
+│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
+│ Short-range scan updated.                                                    │
+│ Ship status nominal.                                                         │
+│ phasers cannot lock on to a cloaked vessel                                   │
 │ COMMAND>                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 50 tick
-= 59cda860235dd100 pend=3 quit=0
+= 8a2e044f3882d603 pend=2 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
 │  1   2   3   4   5   6   7   8  ││ CONDITION RED   LOC: Q[5,5] S[4,4]      │  
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2021.0   Time Remaining: 30.0 │  
-│2  .   .   .   .   .   .   .   . ││ Energy:   [████████░░] 3944/5000        │  
-│3  .   .   .   .  *K*  .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
+│2  .   .   .   .   .   .   .   . ││ Energy:   [██████████] 5000/5000        │  
+│3  .   .   .   .   ?   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
 │4  .   .   .  <E>  .   .   .   . ││ Torpedoes: [TORP: 10/10]   🔊 80%       │  
 │5  .   *   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                │  
 │6  .   .   .   .   *   .   .   . ││ Warp:      OK  Tubes:             OK    │  
@@ -3110,23 +3110,23 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Phasers discharged with 300 energy                                           │
-│ Hit on Klingon #1: 212 units damage                                          │
-│ Klingon #1 decloaked!                                                        │
-│ Klingon #1 returned fire: 756 damage (HULL HIT: -756 Energy)                 │
+│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
+│ Short-range scan updated.                                                    │
+│ Ship status nominal.                                                         │
+│ phasers cannot lock on to a cloaked vessel                                   │
 │ COMMAND>                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 51 tick
-= 59cda860235dd100 pend=3 quit=0
+= 8a2e044f3882d603 pend=2 quit=0
 step 52 tick
-= 9bdbd1a772154672 pend=3 quit=0
+= 8a2e044f3882d603 pend=2 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
 │  1   2   3   4   5   6   7   8  ││ CONDITION RED   LOC: Q[5,5] S[4,4]      │  
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2021.0   Time Remaining: 30.0 │  
-│2  .   .   .   .   .   .   .   . ││ Energy:   [████████░░] 3944/5000        │  
-│3  .   .   .   .  <K>  .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
+│2  .   .   .   .   .   .   .   . ││ Energy:   [██████████] 5000/5000        │  
+│3  .   .   .   .   ?   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
 │4  .   .   .  <E>  .   .   .   . ││ Torpedoes: [TORP: 10/10]   🔊 80%       │  
 │5  .   *   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                │  
 │6  .   .   .   .   *   .   .   . ││ Warp:      OK  Tubes:             OK    │  
@@ -3139,21 +3139,21 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Phasers discharged with 300 energy                                           │
-│ Hit on Klingon #1: 212 units damage                                          │
-│ Klingon #1 decloaked!                                                        │
-│ Klingon #1 returned fire: 756 damage (HULL HIT: -756 Energy)                 │
+│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
+│ Short-range scan updated.                                                    │
+│ Ship status nominal.                                                         │
+│ phasers cannot lock on to a cloaked vessel                                   │
 │ COMMAND>                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 53 tick
-= ec865abc1acfc3c0 pend=2 quit=0
+= 8a2e044f3882d603 pend=2 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
 │  1   2   3   4   5   6   7   8  ││ CONDITION RED   LOC: Q[5,5] S[4,4]      │  
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2021.0   Time Remaining: 30.0 │  
-│2  .   .   .   .   .   .   .   . ││ Energy:   [████████░░] 3944/5000        │  
-│3  .   .   .   .  +K+  .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
+│2  .   .   .   .   .   .   .   . ││ Energy:   [██████████] 5000/5000        │  
+│3  .   .   .   .   ?   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
 │4  .   .   .  <E>  .   .   .   . ││ Torpedoes: [TORP: 10/10]   🔊 80%       │  
 │5  .   *   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                │  
 │6  .   .   .   .   *   .   .   . ││ Warp:      OK  Tubes:             OK    │  
@@ -3166,21 +3166,21 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Phasers discharged with 300 energy                                           │
-│ Hit on Klingon #1: 212 units damage                                          │
-│ Klingon #1 decloaked!                                                        │
-│ Klingon #1 returned fire: 756 damage (HULL HIT: -756 Energy)                 │
+│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
+│ Short-range scan updated.                                                    │
+│ Ship status nominal.                                                         │
+│ phasers cannot lock on to a cloaked vessel                                   │
 │ COMMAND>                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 54 key -1 "s" 0
-= 4d38b818c81cda33 pend=3 quit=0
+= 39ef95ec20b55d30 pend=3 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
 │  1   2   3   4   5   6   7   8  ││ CONDITION RED   LOC: Q[5,5] S[4,4]      │  
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2021.0   Time Remaining: 30.0 │  
-│2  .   .   .   .   .   .   .   . ││ Energy:   [████████░░] 3944/5000        │  
-│3  .   .   .   .  +K+  .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
+│2  .   .   .   .   .   .   .   . ││ Energy:   [██████████] 5000/5000        │  
+│3  .   .   .   .   ?   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
 │4  .   .   .  <E>  .   .   .   . ││ Torpedoes: [TORP: 10/10]   🔊 80%       │  
 │5  .   *   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                │  
 │6  .   .   .   .   *   .   .   . ││ Warp:      OK  Tubes:             OK    │  
@@ -3193,21 +3193,21 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Phasers discharged with 300 energy                                           │
-│ Hit on Klingon #1: 212 units damage                                          │
-│ Klingon #1 decloaked!                                                        │
-│ Klingon #1 returned fire: 756 damage (HULL HIT: -756 Energy)                 │
+│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
+│ Short-range scan updated.                                                    │
+│ Ship status nominal.                                                         │
+│ phasers cannot lock on to a cloaked vessel                                   │
 │ COMMAND> s                                                                   │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 55 key -1 "h" 0
-= 39ba2c573fa74b5b pend=4 quit=0
+= 9132f6eb6fb754c8 pend=4 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
 │  1   2   3   4   5   6   7   8  ││ CONDITION RED   LOC: Q[5,5] S[4,4]      │  
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2021.0   Time Remaining: 30.0 │  
-│2  .   .   .   .   .   .   .   . ││ Energy:   [████████░░] 3944/5000        │  
-│3  .   .   .   .  +K+  .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
+│2  .   .   .   .   .   .   .   . ││ Energy:   [██████████] 5000/5000        │  
+│3  .   .   .   .   ?   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
 │4  .   .   .  <E>  .   .   .   . ││ Torpedoes: [TORP: 10/10]   🔊 80%       │  
 │5  .   *   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                │  
 │6  .   .   .   .   *   .   .   . ││ Warp:      OK  Tubes:             OK    │  
@@ -3220,21 +3220,21 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Phasers discharged with 300 energy                                           │
-│ Hit on Klingon #1: 212 units damage                                          │
-│ Klingon #1 decloaked!                                                        │
-│ Klingon #1 returned fire: 756 damage (HULL HIT: -756 Energy)                 │
+│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
+│ Short-range scan updated.                                                    │
+│ Ship status nominal.                                                         │
+│ phasers cannot lock on to a cloaked vessel                                   │
 │ COMMAND> sh                                                                  │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 56 key -1 "e" 0
-= 2e9239847c2cb4a6 pend=5 quit=0
+= 1eccb74735476b75 pend=5 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
 │  1   2   3   4   5   6   7   8  ││ CONDITION RED   LOC: Q[5,5] S[4,4]      │  
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2021.0   Time Remaining: 30.0 │  
-│2  .   .   .   .   .   .   .   . ││ Energy:   [████████░░] 3944/5000        │  
-│3  .   .   .   .  +K+  .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
+│2  .   .   .   .   .   .   .   . ││ Energy:   [██████████] 5000/5000        │  
+│3  .   .   .   .   ?   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
 │4  .   .   .  <E>  .   .   .   . ││ Torpedoes: [TORP: 10/10]   🔊 80%       │  
 │5  .   *   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                │  
 │6  .   .   .   .   *   .   .   . ││ Warp:      OK  Tubes:             OK    │  
@@ -3247,23 +3247,23 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Phasers discharged with 300 energy                                           │
-│ Hit on Klingon #1: 212 units damage                                          │
-│ Klingon #1 decloaked!                                                        │
-│ Klingon #1 returned fire: 756 damage (HULL HIT: -756 Energy)                 │
+│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
+│ Short-range scan updated.                                                    │
+│ Ship status nominal.                                                         │
+│ phasers cannot lock on to a cloaked vessel                                   │
 │ COMMAND> she                                                                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 57 key -15 " " 0
-= 2e9239847c2cb4a6 pend=6 quit=0
+= 1eccb74735476b75 pend=6 quit=0
 step 58 key -1 "4" 0
-= 70c59eaf3236385a pend=7 quit=0
+= f668ab3423696579 pend=7 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
 │  1   2   3   4   5   6   7   8  ││ CONDITION RED   LOC: Q[5,5] S[4,4]      │  
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2021.0   Time Remaining: 30.0 │  
-│2  .   .   .   .   .   .   .   . ││ Energy:   [████████░░] 3944/5000        │  
-│3  .   .   .   .  +K+  .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
+│2  .   .   .   .   .   .   .   . ││ Energy:   [██████████] 5000/5000        │  
+│3  .   .   .   .   ?   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
 │4  .   .   .  <E>  .   .   .   . ││ Torpedoes: [TORP: 10/10]   🔊 80%       │  
 │5  .   *   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                │  
 │6  .   .   .   .   *   .   .   . ││ Warp:      OK  Tubes:             OK    │  
@@ -3276,21 +3276,21 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Phasers discharged with 300 energy                                           │
-│ Hit on Klingon #1: 212 units damage                                          │
-│ Klingon #1 decloaked!                                                        │
-│ Klingon #1 returned fire: 756 damage (HULL HIT: -756 Energy)                 │
+│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
+│ Short-range scan updated.                                                    │
+│ Ship status nominal.                                                         │
+│ phasers cannot lock on to a cloaked vessel                                   │
 │ COMMAND> she 4                                                               │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 59 key -1 "0" 0
-= c067706dffc3ecca pend=8 quit=0
+= 678edbaaa48357e9 pend=8 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
 │  1   2   3   4   5   6   7   8  ││ CONDITION RED   LOC: Q[5,5] S[4,4]      │  
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2021.0   Time Remaining: 30.0 │  
-│2  .   .   .   .   .   .   .   . ││ Energy:   [████████░░] 3944/5000        │  
-│3  .   .   .   .  +K+  .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
+│2  .   .   .   .   .   .   .   . ││ Energy:   [██████████] 5000/5000        │  
+│3  .   .   .   .   ?   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
 │4  .   .   .  <E>  .   .   .   . ││ Torpedoes: [TORP: 10/10]   🔊 80%       │  
 │5  .   *   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                │  
 │6  .   .   .   .   *   .   .   . ││ Warp:      OK  Tubes:             OK    │  
@@ -3303,21 +3303,21 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Phasers discharged with 300 energy                                           │
-│ Hit on Klingon #1: 212 units damage                                          │
-│ Klingon #1 decloaked!                                                        │
-│ Klingon #1 returned fire: 756 damage (HULL HIT: -756 Energy)                 │
+│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
+│ Short-range scan updated.                                                    │
+│ Ship status nominal.                                                         │
+│ phasers cannot lock on to a cloaked vessel                                   │
 │ COMMAND> she 40                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 60 key -1 "0" 0
-= 86d1d04f321adc1a pend=9 quit=0
+= f069e1995785c359 pend=9 quit=0
 frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
 │  1   2   3   4   5   6   7   8  ││ CONDITION RED   LOC: Q[5,5] S[4,4]      │  
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2021.0   Time Remaining: 30.0 │  
-│2  .   .   .   .   .   .   .   . ││ Energy:   [████████░░] 3944/5000        │  
-│3  .   .   .   .  +K+  .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
+│2  .   .   .   .   .   .   .   . ││ Energy:   [██████████] 5000/5000        │  
+│3  .   .   .   .   ?   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
 │4  .   .   .  <E>  .   .   .   . ││ Torpedoes: [TORP: 10/10]   🔊 80%       │  
 │5  .   *   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                │  
 │6  .   .   .   .   *   .   .   . ││ Warp:      OK  Tubes:             OK    │  
@@ -3330,21 +3330,21 @@ frame 2734
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Phasers discharged with 300 energy                                           │
-│ Hit on Klingon #1: 212 units damage                                          │
-│ Klingon #1 decloaked!                                                        │
-│ Klingon #1 returned fire: 756 damage (HULL HIT: -756 Energy)                 │
+│ Long-range scan complete. Star chart updated for 3x3 surrounding quadrants.  │
+│ Short-range scan updated.                                                    │
+│ Ship status nominal.                                                         │
+│ phasers cannot lock on to a cloaked vessel                                   │
 │ COMMAND> she 400                                                             │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 61 key 13 "" 0
-= dbb6b5a0d636a525 pend=9 quit=0
+= f64b1a88e0e887f6 pend=9 quit=0
 frame 2819
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
 │  1   2   3   4   5   6   7   8  ││ CONDITION RED   LOC: Q[5,5] S[4,4]      │  
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2021.0   Time Remaining: 30.0 │  
-│2  .   .   .   .   .   .   .   . ││ Energy:   [████████░░] 3944/5000        │  
-│3  .   .   .   .  +K+  .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
+│2  .   .   .   .   .   .   .   . ││ Energy:   [██████████] 5000/5000        │  
+│3  .   .   .   .   ?   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
 │4  .   .   .  <E>  .   .   .   . ││ Torpedoes: [TORP: 10/10]   🔊 80%       │  
 │5  .   *   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                │  
 │6  .   .   .   .   *   .   .   . ││ Warp:      OK  Tubes:             OK    │  
@@ -3357,27 +3357,27 @@ frame 2819
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ Hit on Klingon #1: 212 units damage                                          │
-│ Klingon #1 decloaked!                                                        │
-│ Klingon #1 returned fire: 756 damage (HULL HIT: -756 Energy)                 │
+│ Short-range scan updated.                                                    │
+│ Ship status nominal.                                                         │
+│ phasers cannot lock on to a cloaked vessel                                   │
 │ sensors indicate extreme particle ionization: shields cannot hold cohesive   │
 │ geometry in nebula                                                           │
 │ COMMAND>                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 62 tick
-= dbb6b5a0d636a525 pend=2 quit=0
+= f64b1a88e0e887f6 pend=2 quit=0
 step 63 tick
-= dbb6b5a0d636a525 pend=2 quit=0
+= f64b1a88e0e887f6 pend=2 quit=0
 step 64 tick
-= dbb6b5a0d636a525 pend=2 quit=0
+= f64b1a88e0e887f6 pend=2 quit=0
 step 65 submit "tor 3 5"
-= a89f3bb91daae666 pend=4 quit=0
-frame 2819
+= 58a62f785a820c70 pend=4 quit=0
+frame 2734
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701              [Theme: MODERN (F2)] 
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮  
 │  1   2   3   4   5   6   7   8  ││ CONDITION RED   LOC: Q[5,5] S[4,4]      │  
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2021.0   Time Remaining: 30.0 │  
-│2  .   .   .   .   .   .   .   . ││ Energy:   [████████░░] 3762/5000        │  
+│2  .   .   .   .   .   .   .   . ││ Energy:   [█████████░] 4464/5000        │  
 │3  .   .   .   .   *   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        │  
 │4  .   .   .  <E>  .   .   .   . ││ Torpedoes: [TORP: 9/10]   🔊 80%        │  
 │5  .   *   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                │  
@@ -3391,39 +3391,38 @@ frame 2819
                                    │   6   003  003  008                     │  
                                    ╰─────────────────────────────────────────╯  
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ sensors indicate extreme particle ionization: shields cannot hold cohesive   │
-│ geometry in nebula                                                           │
 │ Torpedo fired on course 0.79                                                 │
+│ Klingon #1 decloaked!                                                        │
 │ Hit on [3,5]: 500 units damage                                               │
-│ Klingon #1 returned fire: 182 damage (HULL HIT: -182 Energy)                 │
+│ Klingon #1 returned fire: 536 damage (HULL HIT: -536 Energy)                 │
 │ COMMAND>                                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 step 66 tick
-= d00af988424207f6 pend=3 quit=0
+= 0bd8477884ced218 pend=3 quit=0
 step 67 tick
-= 7eb3c70acb4b877a pend=3 quit=0
+= 4c94b0d245eae0fc pend=3 quit=0
 step 68 tick
-= acc2640a144e5d07 pend=2 quit=0
+= 71520edc078d7713 pend=2 quit=0
 step 69 submit "tor 1.57"
-= 352545f7dec0c104 pend=4 quit=0
+= edf4d4a4fc6e8347 pend=4 quit=0
 step 70 tick
-= 4bc6295d03306f74 pend=3 quit=0
+= 4c980519d3100ce9 pend=3 quit=0
 step 71 tick
-= f61c15945715c1a2 pend=3 quit=0
+= 9ff58955f7f89b7f pend=3 quit=0
 step 72 tick
-= e9dae2e5a4ced153 pend=3 quit=0
+= f2c82b1958911832 pend=3 quit=0
 step 73 tick
-= 795558b655398a09 pend=2 quit=0
+= 2f2c55c9e6910178 pend=2 quit=0
 step 74 submit "tor c 3"
-= 98ad7fdd0ae52201 pend=4 quit=0
+= 3590ecc8ddb3551e pend=4 quit=0
 step 75 tick
-= bd3c88a438532b99 pend=3 quit=0
+= 2d801323b2653bcc pend=3 quit=0
 step 76 tick
-= b5aa52512d92ce83 pend=3 quit=0
+= 9a6287698ed8623e pend=3 quit=0
 step 77 tick
-= ddd9c9b6d86011ca pend=3 quit=0
+= c4622b027f7b45fb pend=3 quit=0
 step 78 tick
-= 3def00130cc827bc pend=2 quit=0
+= 24f9888228e9576d pend=2 quit=0
 step 79 submit "pha 500"
 = 27ef98975cadcd6c pend=2 quit=0
 step 80 tick
@@ -3439,43 +3438,43 @@ step 84 key -1 "t" 0
 step 85 key 13 "" 0
 = 56ac21130cd5c3d5 pend=2 quit=0
 step 86 size 120 40
-= b3242e76370b5cb6 pend=2 quit=0
+= 03b8891d17443f03 pend=2 quit=0
 step 87 tick
-= b3242e76370b5cb6 pend=1 quit=0
+= 03b8891d17443f03 pend=1 quit=0
 step 88 tick
-= b3242e76370b5cb6 pend=1 quit=0
+= 03b8891d17443f03 pend=1 quit=0
 step 89 key -1 "n" 0
-= b3242e76370b5cb6 pend=1 quit=0
+= 03b8891d17443f03 pend=1 quit=0
 step 90 key -1 "a" 0
-= b3242e76370b5cb6 pend=1 quit=0
+= 03b8891d17443f03 pend=1 quit=0
 step 91 key -1 "v" 0
-= b3242e76370b5cb6 pend=1 quit=0
+= 03b8891d17443f03 pend=1 quit=0
 step 92 key -15 " " 0
-= f3af75dbed20d14a pend=2 quit=0
+= 40d252cadc2c6e6e pend=2 quit=0
 step 93 key -1 "3" 0
-= c5574e8235681b99 pend=3 quit=0
+= 4bf4bb66e39efcdd pend=3 quit=0
 step 94 key -1 "." 0
-= 290486e5a9f3cb8f pend=4 quit=0
+= 70309a57819a947b pend=4 quit=0
 step 95 key -1 "1" 0
-= 4401e65324d2888a pend=5 quit=0
+= 20f432cd378d7e46 pend=5 quit=0
 step 96 key -1 "4" 0
-= e51a488f2dcb4ff6 pend=6 quit=0
+= 5b8040f0d6049bba pend=6 quit=0
 step 97 key -15 " " 0
-= e51a488f2dcb4ff6 pend=7 quit=0
+= 5b8040f0d6049bba pend=7 quit=0
 step 98 key -1 "1" 0
-= d66dc83a262bd9e9 pend=8 quit=0
+= b44ea2092212472d pend=8 quit=0
 step 99 key 13 "" 0
-= 19d8c79d66ac1643 pend=8 quit=0
+= 5da2fefcd60df45f pend=8 quit=0
 step 100 tick
-= 19d8c79d66ac1643 pend=2 quit=0
+= 5da2fefcd60df45f pend=2 quit=0
 step 101 tick
-= 19d8c79d66ac1643 pend=2 quit=0
+= 5da2fefcd60df45f pend=2 quit=0
 frame 4469
  ★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701                                                      [Theme: MODERN (F2)]      
 ┌─────────────────────────────────┐╭─────────────────────────────────────────╮╭─────────────────────────────────────────────╮
 │  1   2   3   4   5   6   7   8  ││ CONDITION RED   LOC: Q[5,5] S[4,4]      ││         GALACTIC STAR CHART [K-B-S]         │
 │1  .   .   .   .   .   .   .   . ││ Stardate: 2021.0   Time Remaining: 30.0 ││      1    2    3    4    5    6    7    8   │
-│2  .   .   .   .   .   .   .   . ││ Energy:   [██████░░░░] 3015/5000        ││  1  ···  ···  ···  ···  ···  ···  ···  ···  │
+│2  .   .   .   .   .   .   .   . ││ Energy:   [███████░░░] 3260/5000        ││  1  ···  ···  ···  ···  ···  ···  ···  ···  │
 │3  .   .   .   .   .   .   .   . ││ Shields:  [░░░░░░░░░░]    0/2500        ││  2  ···  ···  ···  ···  ···  ···  ···  ···  │
 │4  .   .   .  <E>  .   .   .   . ││ Torpedoes: [TORP: 7/10]   🔊 80%        ││  3  ···  ···  ···  ···  ···  ···  ···  ···  │
 │5  .   *   .   .   .   .   .   . ││ SUBSYSTEM REPAIR STATUS:                ││  4  ···  ···  ···  002  007  004  ···  ···  │
@@ -3489,7 +3488,7 @@ frame 4469
                                    │   6   003  003  008                     ││ [Ctrl+G] Interactive Map   [T] Target Lock  │
                                    ╰─────────────────────────────────────────╯╰─────────────────────────────────────────────╯
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮     
-│ *** Klingon #1 destroyed (102 damage) ***                                                                            │     
+│ *** Klingon #1 destroyed (295 damage) ***                                                                            │     
 │ *** MISSION ACCOMPLISHED! Score: 524 ***                                                                             │     
 │ Score recorded for Captain t: 524 points ([COMM])                                                                    │     
 │ unknown command: "3.14" (type 'help' for commands)                                                                   │     
@@ -3599,65 +3598,65 @@ step 47 key -1 "0" 0
 step 48 key -1 "0" 0
 = bc273ae123c717da pend=9 quit=0
 step 49 key 13 "" 0
-= 9540459c05af6a7f pend=11 quit=0
+= 9ac690a012c6f9d6 pend=9 quit=0
 step 50 tick
-= 04dc7e6c8bc8e518 pend=3 quit=0
+= 57b710e9841d78dc pend=2 quit=0
 step 51 tick
-= 5aff12b5b9bb6cb8 pend=3 quit=0
+= 9ac690a012c6f9d6 pend=2 quit=0
 step 52 tick
-= 24952c0c2e6a1aef pend=3 quit=0
+= 57b710e9841d78dc pend=2 quit=0
 step 53 tick
-= 2e2a1686e57ee345 pend=2 quit=0
+= 9ac690a012c6f9d6 pend=2 quit=0
 step 54 key -1 "s" 0
-= 8f695aff4fb8e310 pend=3 quit=0
+= 77b0fd1985d26f17 pend=3 quit=0
 step 55 key -1 "h" 0
-= b77e121490bcac50 pend=4 quit=0
+= 333d6c62291ebc07 pend=4 quit=0
 step 56 key -1 "e" 0
-= 20790f6feb78bfb7 pend=5 quit=0
+= df08be6ecdcf7170 pend=5 quit=0
 step 57 key -15 " " 0
-= f957fc94852d711f pend=6 quit=0
+= ac4429485c51fcb8 pend=6 quit=0
 step 58 key -1 "4" 0
-= f6d639097fcd92fb pend=7 quit=0
+= 5030c33d0d94069c pend=7 quit=0
 step 59 key -1 "0" 0
-= b64e55cc870ad973 pend=8 quit=0
+= 102293c9df91b934 pend=8 quit=0
 step 60 key -1 "0" 0
-= b9c8dae506f40cfb pend=9 quit=0
+= d0a936b6816e873c pend=9 quit=0
 step 61 key 13 "" 0
-= 4d47b61c22f552b6 pend=9 quit=0
+= 7e47e1f295f66353 pend=9 quit=0
 step 62 tick
-= d3e4d4eac32c4368 pend=2 quit=0
+= 19d6ec73eb2afccb pend=2 quit=0
 step 63 tick
-= 4d47b61c22f552b6 pend=2 quit=0
+= 7e47e1f295f66353 pend=2 quit=0
 step 64 tick
-= d3e4d4eac32c4368 pend=2 quit=0
+= 19d6ec73eb2afccb pend=2 quit=0
 step 65 submit "tor 3 5"
-= 26b57dea499b1a74 pend=4 quit=0
+= af4eec65e7cf0af4 pend=4 quit=0
 step 66 tick
-= 4fb1b0bf0832fd5a pend=3 quit=0
+= 15091a5f64e10792 pend=3 quit=0
 step 67 tick
-= 03a800bd28c95488 pend=3 quit=0
+= 1e408d911b64d0ba pend=3 quit=0
 step 68 tick
-= fe3270186eaf0fae pend=2 quit=0
+= 7cb2607ebb3677b2 pend=2 quit=0
 step 69 submit "tor 1.57"
-= f72db5feed4a51ba pend=4 quit=0
+= 77e915137a08dfab pend=4 quit=0
 step 70 tick
-= 20b3cbc2fa884878 pend=3 quit=0
+= 186a8e928df63c41 pend=3 quit=0
 step 71 tick
-= 6b5c530347734d2a pend=3 quit=0
+= 573116eb3c5a938f pend=3 quit=0
 step 72 tick
-= 5e7a8f1e294b025f pend=3 quit=0
+= cd762898b8d6113e pend=3 quit=0
 step 73 tick
-= bf9168fe6cd1274e pend=2 quit=0
+= e3e483fde544ef2b pend=2 quit=0
 step 74 submit "tor c 3"
-= 8c690808fd638e8d pend=4 quit=0
+= 7eff535ee0bb1334 pend=4 quit=0
 step 75 tick
-= 143ead1973b82737 pend=3 quit=0
+= 9a8ddf77d19f87a6 pend=3 quit=0
 step 76 tick
-= c550449a42ecb101 pend=3 quit=0
+= aa8f04332a609ddc pend=3 quit=0
 step 77 tick
-= 8b8a020cd1e20f00 pend=3 quit=0
+= 76a0df3e368c5b41 pend=3 quit=0
 step 78 tick
-= 8b3eee0c14bb5de5 pend=2 quit=0
+= 4a2df07dc20b6f90 pend=2 quit=0
 step 79 submit "pha 500"
 = 90cd7e842ca965b5 pend=2 quit=0
 step 80 tick
@@ -3673,43 +3672,43 @@ step 84 key -1 "t" 0
 step 85 key 13 "" 0
 = 1a1e68d8939864d1 pend=2 quit=0
 step 86 size 120 40
-= d1af18493468d256 pend=2 quit=0
+= b1dae19f3f7a770d pend=2 quit=0
 step 87 tick
-= a185ac9311c7d9d1 pend=1 quit=0
+= ff8194e46c12d642 pend=1 quit=0
 step 88 tick
-= d1af18493468d256 pend=1 quit=0
+= b1dae19f3f7a770d pend=1 quit=0
 step 89 key -1 "n" 0
-= d1af18493468d256 pend=1 quit=0
+= b1dae19f3f7a770d pend=1 quit=0
 step 90 key -1 "a" 0
-= d1af18493468d256 pend=1 quit=0
+= b1dae19f3f7a770d pend=1 quit=0
 step 91 key -1 "v" 0
-= d1af18493468d256 pend=1 quit=0
+= b1dae19f3f7a770d pend=1 quit=0
 step 92 key -15 " " 0
-= b2530b344973af28 pend=2 quit=0
+= b27550ef435a4e16 pend=2 quit=0
 step 93 key -1 "3" 0
-= 59b289156a8b8659 pend=3 quit=0
+= 1a38c7d03f57d3f3 pend=3 quit=0
 step 94 key -1 "." 0
-= 670885553d93142f pend=4 quit=0
+= ca55ecedbfad8385 pend=4 quit=0
 step 95 key -1 "1" 0
-= 6429209f524793c4 pend=5 quit=0
+= 808aa00b330806d2 pend=5 quit=0
 step 96 key -1 "4" 0
-= 2a57659acee8c450 pend=6 quit=0
+= c98aaccd95d05506 pend=6 quit=0
 step 97 key -15 " " 0
-= 344e340d715f2008 pend=7 quit=0
+= 7832f658dfa25dfe pend=7 quit=0
 step 98 key -1 "1" 0
-= 5eae3133a3be6071 pend=8 quit=0
+= 75bcc0723991d847 pend=8 quit=0
 step 99 key 13 "" 0
-= 5efd2662d2d4b705 pend=8 quit=0
+= 91c5dad45a4f8b2d pend=8 quit=0
 step 100 tick
-= 38839f247845200b pend=2 quit=0
+= 10202f89f5ec5223 pend=2 quit=0
 step 101 tick
-= 5efd2662d2d4b705 pend=2 quit=0
+= 91c5dad45a4f8b2d pend=2 quit=0
 frame 13383
 [48;2;11;15;25m [0m[1;38;2;0;229;255;48;2;11;15;25m★ SUPER STAR TREK ★  USS ENTERPRISE NCC-1701                                                      [Theme: MODERN (F2)][0m[48;2;11;15;25m [0m     
 [38;2;30;40;59m┌─────────────────────────────────┐[0m[38;2;30;40;59m╭─────────────────────────────────────────╮[0m[38;2;30;40;59m╭─────────────────────────────────────────────╮[0m
 [38;2;30;40;59m│[0m[48;2;11;15;25m[1;38;2;100;116;139m  1   2   3   4   5   6   7   8  [0m[0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[38;2;136;27;43mCONDITION RED[0m   [38;2;226;232;240mLOC: [0m[1;38;2;0;229;255mQ[5,5] S[4,4][0m[0m[48;2;11;15;25m [0m[48;2;11;15;25m     [0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[1;38;2;0;229;255m        GALACTIC STAR CHART [K-B-S][0m[0m[48;2;11;15;25m [0m[48;2;11;15;25m        [0m[38;2;30;40;59m│[0m
 [38;2;30;40;59m│[0m[48;2;11;15;25m[1;38;2;100;116;139m1 [0m[38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m[0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[38;2;226;232;240mStardate: [0m[1;38;2;0;229;255m2021.0[0m   [38;2;226;232;240mTime Remaining: [0m[1;38;2;0;229;255m30.0[0m[0m[48;2;11;15;25m [0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[1;38;2;100;116;139m     1    2    3    4    5    6    7    8  [0m[0m[48;2;11;15;25m [0m[38;2;30;40;59m│[0m
-[38;2;30;40;59m│[0m[48;2;11;15;25m[1;38;2;100;116;139m2 [0m[38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m[0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[38;2;226;232;240mEnergy:  [0m [38;2;226;232;240m[[0m[38;2;0;229;255m██████[0m[38;2;30;40;59m░░░░[0m[38;2;226;232;240m][0m [1;38;2;0;229;255m3015/5000[0m[0m[48;2;11;15;25m [0m[48;2;11;15;25m       [0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[1;38;2;100;116;139m 1 [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[0m[48;2;11;15;25m [0m[38;2;30;40;59m│[0m
+[38;2;30;40;59m│[0m[48;2;11;15;25m[1;38;2;100;116;139m2 [0m[38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m[0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[38;2;226;232;240mEnergy:  [0m [38;2;226;232;240m[[0m[38;2;0;229;255m███████[0m[38;2;30;40;59m░░░[0m[38;2;226;232;240m][0m [1;38;2;0;229;255m3260/5000[0m[0m[48;2;11;15;25m [0m[48;2;11;15;25m       [0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[1;38;2;100;116;139m 1 [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[0m[48;2;11;15;25m [0m[38;2;30;40;59m│[0m
 [38;2;30;40;59m│[0m[48;2;11;15;25m[1;38;2;100;116;139m3 [0m[38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m[0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[38;2;226;232;240mShields: [0m [38;2;226;232;240m[[0m[38;2;0;229;255m[0m[38;2;30;40;59m░░░░░░░░░░[0m[38;2;226;232;240m][0m [1;38;2;0;229;255m   0/2500[0m[0m[48;2;11;15;25m [0m[48;2;11;15;25m       [0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[1;38;2;100;116;139m 2 [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[0m[48;2;11;15;25m [0m[38;2;30;40;59m│[0m
 [38;2;30;40;59m│[0m[48;2;11;15;25m[1;38;2;100;116;139m4 [0m[38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [1;38;2;0;229;255m<E>[0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m[0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[38;2;226;232;240mTorpedoes: [0m[1;38;2;0;229;255m[TORP: 7/10][0m   [1;38;2;0;229;255m🔊 80%[0m[0m[48;2;11;15;25m [0m[48;2;11;15;25m       [0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[1;38;2;100;116;139m 3 [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[0m[48;2;11;15;25m [0m[38;2;30;40;59m│[0m
 [38;2;30;40;59m│[0m[48;2;11;15;25m[1;38;2;100;116;139m5 [0m[38;2;51;65;85m . [0m [38;2;255;255;255m * [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m [38;2;51;65;85m . [0m[0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[1;38;2;0;229;255mSUBSYSTEM REPAIR STATUS:[0m[0m[48;2;11;15;25m [0m[48;2;11;15;25m               [0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[1;38;2;100;116;139m 4 [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[38;2;147;163;184m 002 [0m[38;2;147;163;184m 007 [0m[38;2;147;163;184m 004 [0m[38;2;51;65;85m ··· [0m[38;2;51;65;85m ··· [0m[0m[48;2;11;15;25m [0m[38;2;30;40;59m│[0m
@@ -3723,7 +3722,7 @@ frame 13383
                                    [38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m  6  [38;2;226;232;240m 003 [0m[38;2;226;232;240m 003 [0m[38;2;226;232;240m 008 [0m[0m[48;2;11;15;25m [0m[48;2;11;15;25m                   [0m[38;2;30;40;59m│[0m[38;2;30;40;59m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[38;2;226;232;240m[Ctrl+G] Interactive Map   [T] Target Lock[0m[0m[48;2;11;15;25m [0m[48;2;11;15;25m [0m[38;2;30;40;59m│[0m
                                    [38;2;30;40;59m╰─────────────────────────────────────────╯[0m[38;2;30;40;59m╰─────────────────────────────────────────────╯[0m
 [38;2;255;51;68m╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮[0m     
-[38;2;255;51;68m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[38;2;147;163;184m*** Klingon #1 destroyed (102 damage) ***[0m[0m[48;2;11;15;25m [0m[48;2;11;15;25m                                                                           [0m[38;2;255;51;68m│[0m     
+[38;2;255;51;68m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[38;2;147;163;184m*** Klingon #1 destroyed (295 damage) ***[0m[0m[48;2;11;15;25m [0m[48;2;11;15;25m                                                                           [0m[38;2;255;51;68m│[0m     
 [38;2;255;51;68m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[38;2;147;163;184m*** MISSION ACCOMPLISHED! Score: 524 ***[0m[0m[48;2;11;15;25m [0m[48;2;11;15;25m                                                                            [0m[38;2;255;51;68m│[0m     
 [38;2;255;51;68m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[38;2;147;163;184mScore recorded for Captain t: 524 points ([COMM])[0m[0m[48;2;11;15;25m [0m[48;2;11;15;25m                                                                   [0m[38;2;255;51;68m│[0m     
 [38;2;255;51;68m│[0m[48;2;11;15;25m [0m[48;2;11;15;25m[38;2;147;163;184munknown command: "3.14" (type 'help' for commands)[0m[0m[48;2;11;15;25m [0m[48;2;11;15;25m                                                                  [0m[38;2;255;51;68m│[0m     

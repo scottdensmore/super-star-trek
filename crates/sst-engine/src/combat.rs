@@ -84,11 +84,10 @@ pub struct ActionTorpedoDirect {
 
 impl ActionTorpedoDirect {
     pub fn execute(&self, g: &mut GameState) -> Result<Vec<Event>, EngineError> {
-        for k in g.current_quad.klingons.iter() {
-            let k = k.as_ref().expect("nil pointer dereference").borrow();
-            if k.sector == self.target_sector && k.is_cloaked {
-                return Err(EngineError::new("TARGET LOCK FAILED: CLOAKED VESSEL"));
-            }
+        // Go only checked the legacy Klingon list, so a cloaked Romulan
+        // could be locked on to.
+        if let Some(why) = crate::tactics::cloaked_at(g, self.target_sector) {
+            return Err(EngineError::new(why));
         }
         ActionFireTorpedo {
             target: self.target_sector,

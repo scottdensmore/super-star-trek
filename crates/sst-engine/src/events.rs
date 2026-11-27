@@ -5,7 +5,9 @@
 //! [`Event`] enum replaces Go's `Event` interface and type switches.
 
 use crate::rules::SurveillanceMode;
-use crate::types::{ConditionType, Coord, DeviceID, EntityType, EnvironmentType, GameOverReason};
+use crate::types::{
+    ConditionType, Coord, DeviceID, EntityType, EnvironmentType, FactionType, GameOverReason,
+};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -36,9 +38,13 @@ pub struct EventPhaserFired {
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct EventPhaserHit {
     pub target: Coord,
+    /// The hit ship's ID (a Romulan's or Tholian's too, despite the name).
     pub klingon_id: i32,
     pub damage: f64,
     pub destroyed: bool,
+    /// The hit ship's faction (omitted from the JSON for Klingons, so a
+    /// Klingon hit encodes exactly as in the Go edition).
+    pub faction: FactionType,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -315,7 +321,7 @@ crate::go_json_struct!(EventShieldTransfer, "EventShieldTransfer", "engine.Event
 crate::go_json_struct!(EventTorpedoFired, "EventTorpedoFired", "engine.EventTorpedoFired" { origin => "Origin", angle => "Angle" });
 crate::go_json_struct!(EventTorpedoHit, "EventTorpedoHit", "engine.EventTorpedoHit" { target => "Target", entity => "Entity", damage => "Damage", destroyed => "Destroyed" });
 crate::go_json_struct!(EventPhaserFired, "EventPhaserFired", "engine.EventPhaserFired" { energy => "Energy" });
-crate::go_json_struct!(EventPhaserHit, "EventPhaserHit", "engine.EventPhaserHit" { target => "Target", klingon_id => "KlingonID", damage => "Damage", destroyed => "Destroyed" });
+crate::go_json_struct!(EventPhaserHit, "EventPhaserHit", "engine.EventPhaserHit" { target => "Target", klingon_id => "KlingonID", damage => "Damage", destroyed => "Destroyed", faction => "Faction" omitempty });
 crate::go_json_struct!(EventDocked, "EventDocked", "engine.EventDocked" { starbase => "Starbase" });
 crate::go_json_struct!(EventShipMoved, "EventShipMoved", "engine.EventShipMoved" { from_quad => "FromQuad", to_quad => "ToQuad", from_sector => "FromSector", to_sector => "ToSector", warp => "Warp", energy_used => "EnergyUsed", time_used => "TimeUsed" });
 crate::go_json_struct!(EventObstacleEncountered, "EventObstacleEncountered", "engine.EventObstacleEncountered" { sector => "Sector", entity => "Entity" });

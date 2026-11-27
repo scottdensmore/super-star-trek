@@ -1,14 +1,18 @@
 //! Unified adversary turn and targeted phasers (port of `pkg/engine/tactics.go`).
 
-use crate::actions::{dec_galaxy_klingons, evaluate_victory, ActionResult, EngineError};
+use std::rc::Rc;
+
+use crate::actions::{
+    dec_galaxy_klingons, evaluate_victory, phaser_targets, ActionResult, EngineError, PhaserTarget,
+};
 use crate::combat::{compute_phaser_damage, klingon_counter_attack, temp_klingon};
 use crate::events::*;
 use crate::geometry::distance;
-use crate::json::GoVec;
 use crate::klingon_pack::{calculate_pack_damage_multiplier, execute_commander_screening};
 use crate::romulan::{advance_plasma_torpedoes, intercept_plasma_torpedo, romulan_turn};
 use crate::state::{
-    cell, cell_mut, sync_enemies_from_klingons, sync_quadrant_enemies, GameState, Klingon,
+    cell, cell_mut, remove_enemy_klingon, sync_enemies_from_klingons, sync_quadrant_enemies,
+    GameState, Klingon,
 };
 use crate::tholian::{damage_web_segment, tholian_turn};
 use crate::types::*;
@@ -78,7 +82,41 @@ pub fn unified_adversary_turn(g: &mut GameState) -> Vec<Event> {
     events
 }
 
+/// The target-lock refusal for a cloaked ship at `t` (a cloaked Klingon
+/// commander or Romulan), shared by focused phasers and
+/// [`crate::combat::ActionTorpedoDirect`].
+pub fn cloaked_at(g: &GameState, t: Coord) -> Option<&'static str> {
+    let klingon = g
+        .current_quad
+        .klingons
+        .iter()
+        .flatten()
+        .any(|k| k.borrow().sector == t && k.borrow().is_cloaked);
+    let enemy = g.current_quad.enemies.iter().flatten().any(|e| {
+        let e = e.borrow();
+        e.sector == t && e.is_cloaked && e.energy > 0.0
+    });
+    (klingon || enemy).then_some("TARGET LOCK FAILED: CLOAKED VESSEL")
+}
+
+/// The visible ship at `t` for focused phasers: a Klingon on the legacy
+/// list (where phasers, torpedoes and `KlingonTurn` keep Klingon damage, in
+/// every game) or a Romulan or Tholian in `Enemies`.
+fn focused_target(g: &GameState, t: Coord) -> Option<PhaserTarget> {
+    phaser_targets(g, false).into_iter().find(|p| match p {
+        PhaserTarget::Klingon(k) => k.borrow().sector == t && k.borrow().energy > 0.0,
+        PhaserTarget::Adversary(_) => p.sector() == t,
+    })
+}
+
 /// Go `ActionPhaserDirect`: focused phasers at a sector (ship, plasma torpedo or web).
+///
+/// Go looked for the target only in `Enemies`, which is empty in a game
+/// without adversaries, so focused phasers at a Klingon drained the energy
+/// and did nothing; it also hit cloaked Romulans that target lock refuses.
+/// The target is now any visible ship ([`focused_target`]); a cloaked ship
+/// refuses the lock like [`crate::combat::ActionTorpedoDirect`], before any
+/// energy is spent.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct ActionPhaserDirect {
     pub target_sector: Coord,
@@ -97,8 +135,10 @@ impl ActionPhaserDirect {
         if t[0] < 1 || t[0] > 8 || t[1] < 1 || t[1] > 8 {
             return Err(EngineError::new("target sector out of bounds"));
         }
+        if let Some(why) = cloaked_at(g, t) {
+            return Err(EngineError::new(why));
+        }
         g.enterprise.energy -= self.energy;
-        sync_enemies_from_klingons(&mut g.current_quad);
         let mut events = Vec::new();
         match cell(&g.current_quad.grid, t) {
             EntityType::PlasmaTorpedo => {
@@ -115,78 +155,57 @@ impl ActionPhaserDirect {
                 }
             }
             _ => {
+                let Some(target) = focused_target(g, t) else {
+                    return Ok(events);
+                };
                 let dist = compute_distance(g.enterprise.sector, t);
                 let dmg = compute_phaser_damage(self.energy, dist);
-                let list = g.current_quad.enemies.to_vec();
-                for e in list.iter().flatten() {
-                    let hit = {
-                        let eb = e.borrow();
-                        eb.sector == t && eb.energy > 0.0
-                    };
-                    if !hit {
-                        continue;
-                    }
-                    let energy_before = e.borrow().energy;
-                    let dead = {
-                        let mut eb = e.borrow_mut();
-                        eb.shields -= dmg;
-                        if eb.shields < 0.0 {
-                            eb.energy += eb.shields;
-                            eb.shields = 0.0;
-                        }
-                        if eb.energy <= 0.0 {
-                            eb.energy = 0.0;
-                            true
-                        } else {
-                            false
-                        }
-                    };
-                    let (sector, faction, id, is_cmd) = {
-                        let eb = e.borrow();
-                        (eb.sector, eb.faction, eb.id, eb.is_commander)
-                    };
-                    if faction == FactionType::Klingon {
-                        // Go left the legacy Klingon list (which phasers,
-                        // torpedoes and KlingonTurn use) untouched here, and
-                        // never counted a Klingon kill.
-                        events.push(Event::PhaserHit(EventPhaserHit {
-                            target: sector,
-                            klingon_id: id,
-                            damage: if dead { energy_before } else { dmg },
-                            destroyed: dead,
-                        }));
+                let (damage, dead) = target.absorb(dmg, false);
+                let (id, faction) = (target.id(), target.faction());
+                events.push(Event::PhaserHit(EventPhaserHit {
+                    target: t,
+                    klingon_id: id,
+                    damage,
+                    destroyed: dead,
+                    faction,
+                }));
+                match &target {
+                    PhaserTarget::Klingon(k) => {
                         if dead {
-                            if is_cmd {
+                            if k.borrow().is_commander {
                                 g.metrics.commanders_killed += 1;
                             } else {
                                 g.metrics.klingons_killed += 1;
                             }
-                            dec_galaxy_klingons(g);
+                            g.current_quad
+                                .klingons
+                                .vec_mut()
+                                .retain(|o| !o.as_ref().is_some_and(|o| Rc::ptr_eq(o, k)));
+                            remove_enemy_klingon(&mut g.current_quad, id);
+                        } else {
+                            sync_enemies_from_klingons(&mut g.current_quad);
                         }
                     }
-                    if dead {
-                        *cell_mut(&mut g.current_quad.grid, sector) = EntityType::Empty;
-                        if faction == FactionType::Romulan {
-                            g.metrics.romulans_killed += 1;
-                        }
-                        let mut remaining = GoVec::nil();
-                        for other in g.current_quad.enemies.iter().flatten() {
-                            let ob = other.borrow();
-                            if ob.id != id && ob.energy > 0.0 {
-                                remaining.push(Some(other.clone()));
+                    PhaserTarget::Adversary(e) => {
+                        if dead {
+                            if faction == FactionType::Romulan {
+                                g.metrics.romulans_killed += 1;
                             }
+                            g.current_quad
+                                .enemies
+                                .vec_mut()
+                                .retain(|o| !o.as_ref().is_some_and(|o| Rc::ptr_eq(o, e)));
                         }
-                        g.current_quad.enemies = remaining;
-                        sync_quadrant_enemies(&mut g.current_quad);
-                        if g.remaining_klingons > 0 {
-                            g.remaining_klingons -= 1;
-                        }
-                        g.klingons_remaining = g.remaining_klingons;
-                        evaluate_victory(g, true, &mut events);
-                    } else if faction == FactionType::Klingon {
-                        sync_quadrant_enemies(&mut g.current_quad);
                     }
-                    break;
+                }
+                if dead {
+                    *cell_mut(&mut g.current_quad.grid, t) = EntityType::Empty;
+                    if g.remaining_klingons > 0 {
+                        g.remaining_klingons -= 1;
+                    }
+                    g.klingons_remaining = g.remaining_klingons;
+                    dec_galaxy_klingons(g);
+                    evaluate_victory(g, true, &mut events);
                 }
             }
         }

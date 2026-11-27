@@ -505,3 +505,228 @@ fn older_saves_rebuild_the_quadrants_klingons() {
     assert!(lt.is_some());
     assert!(!lg.unwrap().borrow().current_quad.klingons.is_empty());
 }
+
+// 10. Focused phasers hit Klingons in games without adversaries.
+/// A game without adversaries: the Klingons live only on the legacy list.
+fn classic_quadrant(klingons: &[(i32, Coord, f64)]) -> GameState {
+    let mut g = quadrant_game(vec![]);
+    g.rules.adversaries = false;
+    g.current_quad.klingons = GoVec::empty();
+    for &(id, sector, energy) in klingons {
+        g.current_quad.grid[sector[0] as usize][sector[1] as usize] = EntityType::Klingon;
+        g.current_quad.klingons.push(ptr(Klingon {
+            id,
+            sector,
+            energy,
+            ..Default::default()
+        }));
+    }
+    g.remaining_klingons = klingons.len() as i32 + 1;
+    g.klingons_remaining = g.remaining_klingons;
+    g
+}
+
+fn phaser_at(g: &mut GameState, target_sector: Coord, energy: f64) -> ActionResult {
+    Action::PhaserDirect(ActionPhaserDirect {
+        target_sector,
+        energy,
+    })
+    .execute(g)
+}
+
+#[test]
+fn focused_phasers_hit_a_klingon_without_adversaries() {
+    let mut g = classic_quadrant(&[(1, [4, 6], 500.0), (2, [1, 1], 300.0)]);
+    let events = phaser_at(&mut g, [4, 6], 200.0).unwrap();
+    // 200 energy at distance 2.
+    assert!(
+        events.iter().any(|e| matches!(e,
+            Event::PhaserHit(h) if h.klingon_id == 1 && !h.destroyed && h.damage == 100.0)),
+        "{events:?}"
+    );
+    assert_eq!(klingon_by_id(&g, 1).unwrap().energy, 400.0);
+    assert_eq!(g.enterprise.energy, 4800.0);
+
+    let events = phaser_at(&mut g, [4, 6], 2000.0).unwrap();
+    assert!(events.iter().any(|e| matches!(e,
+        Event::PhaserHit(h) if h.klingon_id == 1 && h.destroyed && h.damage == 400.0)));
+    assert!(klingon_by_id(&g, 1).is_none());
+    assert_eq!(g.current_quad.grid[4][6], EntityType::Empty);
+    assert_eq!(g.metrics.klingons_killed, 1);
+    assert_eq!(g.remaining_klingons, 2);
+    assert!(klingon_by_id(&g, 2).is_some());
+}
+
+// 11. Spread phasers hit every visible hostile ship.
+#[test]
+fn spread_phasers_hit_romulans_and_tholians() {
+    let mut g = quadrant_game(vec![
+        enemy(1, FactionType::Klingon, [4, 6], 500.0, 0.0),
+        enemy(2, FactionType::Romulan, [4, 8], 1000.0, 400.0),
+        enemy(3, FactionType::Tholian, [8, 4], 800.0, 300.0),
+        EnemyVessel {
+            is_cloaked: true,
+            ..enemy(4, FactionType::Romulan, [1, 1], 1000.0, 400.0)
+        },
+    ]);
+    let events = Action::FirePhasers(ActionFirePhasers {
+        energy: 2400.0,
+        ..Default::default()
+    })
+    .execute(&mut g)
+    .unwrap();
+    let hits: Vec<&EventPhaserHit> = events
+        .iter()
+        .filter_map(|e| match e {
+            Event::PhaserHit(h) => Some(h),
+            _ => None,
+        })
+        .collect();
+    // 2400 split over the three visible ships (800 each), divided by distance.
+    assert_eq!(hits.len(), 3, "{events:?}");
+    assert_eq!(
+        (hits[0].klingon_id, hits[0].faction),
+        (1, FactionType::Klingon)
+    );
+    assert_eq!(hits[0].damage, 400.0);
+    assert_eq!(
+        (hits[1].klingon_id, hits[1].faction),
+        (2, FactionType::Romulan)
+    );
+    assert_eq!(hits[1].damage, 200.0);
+    assert_eq!(
+        (hits[2].klingon_id, hits[2].faction),
+        (3, FactionType::Tholian)
+    );
+    assert_eq!(hits[2].damage, 200.0);
+    assert_eq!(klingon_by_id(&g, 1).unwrap().energy, 100.0);
+    let r = enemy_by_id(&g, 2).unwrap();
+    assert_eq!(
+        (r.shields, r.energy),
+        (200.0, 1000.0),
+        "shields absorb first"
+    );
+    let t = enemy_by_id(&g, 3).unwrap();
+    assert_eq!((t.shields, t.energy), (100.0, 800.0));
+    let cloaked = enemy_by_id(&g, 4).unwrap();
+    assert_eq!(
+        (cloaked.shields, cloaked.energy),
+        (400.0, 1000.0),
+        "cloaked ships are not targeted"
+    );
+}
+
+#[test]
+fn spread_phasers_destroy_the_last_tholian_and_win() {
+    let mut g = quadrant_game(vec![enemy(3, FactionType::Tholian, [4, 5], 800.0, 300.0)]);
+    let events = Action::FirePhasers(ActionFirePhasers {
+        energy: 1500.0,
+        ..Default::default()
+    })
+    .execute(&mut g)
+    .expect("phasers fire with only a Tholian in the quadrant");
+    assert!(events.iter().any(|e| matches!(e,
+        Event::PhaserHit(h) if h.destroyed && h.faction == FactionType::Tholian && h.damage == 800.0)));
+    assert!(enemy_by_id(&g, 3).is_none());
+    assert_eq!(g.current_quad.grid[4][5], EntityType::Empty);
+    assert_eq!(g.remaining_klingons, 0);
+    assert_eq!(game_over(&events).unwrap().reason, GameOverReason::Won);
+}
+
+#[test]
+fn spread_phasers_skip_cloaked_ships_and_refuse_when_none_is_visible() {
+    let mut g = quadrant_game(vec![EnemyVessel {
+        is_cloaked: true,
+        ..enemy(4, FactionType::Romulan, [1, 1], 1000.0, 400.0)
+    }]);
+    let err = Action::FirePhasers(ActionFirePhasers {
+        energy: 500.0,
+        ..Default::default()
+    })
+    .execute(&mut g)
+    .unwrap_err();
+    assert_eq!(err.0, "no enemy ships in quadrant");
+    assert_eq!(g.enterprise.energy, 5000.0);
+
+    // A cloaked Klingon commander is skipped as well.
+    let mut g = quadrant_game(vec![
+        enemy(1, FactionType::Klingon, [4, 6], 500.0, 0.0),
+        EnemyVessel {
+            is_commander: true,
+            is_cloaked: true,
+            ..enemy(2, FactionType::Klingon, [6, 4], 1200.0, 0.0)
+        },
+    ]);
+    let events = Action::FirePhasers(ActionFirePhasers {
+        energy: 400.0,
+        ..Default::default()
+    })
+    .execute(&mut g)
+    .unwrap();
+    let hit_ids: Vec<i32> = events
+        .iter()
+        .filter_map(|e| match e {
+            Event::PhaserHit(h) => Some(h.klingon_id),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(hit_ids, vec![1]);
+    assert_eq!(klingon_by_id(&g, 2).unwrap().energy, 1200.0);
+
+    // With only the cloaked commander (an unknown contact on the scanners)
+    // left, the refusal says why.
+    let mut g = quadrant_game(vec![EnemyVessel {
+        is_commander: true,
+        is_cloaked: true,
+        ..enemy(2, FactionType::Klingon, [6, 4], 1200.0, 0.0)
+    }]);
+    let err = Action::FirePhasers(ActionFirePhasers {
+        energy: 400.0,
+        ..Default::default()
+    })
+    .execute(&mut g)
+    .unwrap_err();
+    assert_eq!(err.0, "phasers cannot lock on to a cloaked vessel");
+}
+
+// 12. Focused phasers and target lock refuse cloaked ships.
+#[test]
+fn focused_phasers_refuse_a_cloaked_ship() {
+    let mut g = quadrant_game(vec![
+        EnemyVessel {
+            is_cloaked: true,
+            ..enemy(4, FactionType::Romulan, [4, 7], 1000.0, 400.0)
+        },
+        EnemyVessel {
+            is_commander: true,
+            is_cloaked: true,
+            ..enemy(2, FactionType::Klingon, [6, 4], 1200.0, 0.0)
+        },
+    ]);
+    for target in [[4, 7], [6, 4]] {
+        let err = phaser_at(&mut g, target, 500.0).unwrap_err();
+        assert_eq!(err.0, "TARGET LOCK FAILED: CLOAKED VESSEL");
+        let err = Action::TorpedoDirect(ActionTorpedoDirect {
+            target_sector: target,
+        })
+        .execute(&mut g)
+        .unwrap_err();
+        assert_eq!(err.0, "TARGET LOCK FAILED: CLOAKED VESSEL");
+    }
+    assert_eq!(g.enterprise.energy, 5000.0);
+    assert_eq!(g.enterprise.torpedoes, 10);
+    assert_eq!(enemy_by_id(&g, 4).unwrap().energy, 1000.0);
+    assert_eq!(klingon_by_id(&g, 2).unwrap().energy, 1200.0);
+
+    // Once it decloaks, focused phasers hit it.
+    g.current_quad.enemies[0]
+        .as_ref()
+        .unwrap()
+        .borrow_mut()
+        .is_cloaked = false;
+    g.current_quad.grid[4][7] = EntityType::Romulan;
+    let events = phaser_at(&mut g, [4, 7], 1500.0).unwrap();
+    assert!(events.iter().any(|e| matches!(e,
+        Event::PhaserHit(h) if h.klingon_id == 4 && h.faction == FactionType::Romulan)));
+    assert_eq!(enemy_by_id(&g, 4).unwrap().shields, 0.0);
+}

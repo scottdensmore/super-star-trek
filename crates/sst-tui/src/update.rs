@@ -12,8 +12,8 @@ use sst_engine::parser::{fields, trim_space};
 use sst_engine::{
     compute_score, execute_klingon_turn_if_active, get_scenario, gomath, gopath, persist, Action,
     ActionDock, ActionFirePhasers, ActionFireTorpedo, ActionLRScan, ActionMove, ActionPhaserDirect,
-    ConditionType, Coord, DeviceID, EntityType, Event, EventGameOver, GameOverReason, Leaderboard,
-    ANIM_SPEED_CINEMATIC, ANIM_SPEED_FAST, ANIM_SPEED_OFF,
+    ConditionType, Coord, DeviceID, EntityType, Event, EventGameOver, FactionType, GameOverReason,
+    Leaderboard, ANIM_SPEED_CINEMATIC, ANIM_SPEED_FAST, ANIM_SPEED_OFF,
 };
 use sst_tuikit::tea::{
     self, Cmd, KeyMsg, MouseMsg, Msg, WindowSizeMsg, KEY_CTRL_C, KEY_CTRL_D, KEY_CTRL_G,
@@ -1664,6 +1664,15 @@ fn format_game_over(e: &EventGameOver) -> String {
     }
 }
 
+/// The ship name for a phaser hit on `f`.
+fn faction_name(f: FactionType) -> &'static str {
+    match f {
+        FactionType::Romulan => "Romulan",
+        FactionType::Tholian => "Tholian",
+        _ => "Klingon",
+    }
+}
+
 /// Go `formatEvent`: human-readable tactical log line ("" for silent events).
 pub fn format_event(ev: &Event) -> String {
     match ev {
@@ -1692,15 +1701,18 @@ pub fn format_event(ev: &Event) -> String {
         }
         Event::PhaserFired(e) => format!("Phasers discharged with {} energy", fmt_f(e.energy, 0)),
         Event::PhaserHit(e) => {
+            let ship = faction_name(e.faction);
             if e.destroyed {
                 format!(
-                    "*** Klingon #{} destroyed ({} damage) ***",
+                    "*** {} #{} destroyed ({} damage) ***",
+                    ship,
                     e.klingon_id,
                     fmt_f(e.damage, 0)
                 )
             } else {
                 format!(
-                    "Hit on Klingon #{}: {} units damage",
+                    "Hit on {} #{}: {} units damage",
+                    ship,
                     e.klingon_id,
                     fmt_f(e.damage, 0)
                 )
