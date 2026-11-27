@@ -994,3 +994,42 @@ fn model_new_model_player_init() {
         assert!(m.audio_dispatcher.is_some());
     });
 }
+
+/// When no OS audio player works, the terminal-bell fallback's visual bell
+/// flashes the command bar (Go's callback captured a copy of the bar, so the
+/// flash never showed).
+#[test]
+fn terminal_bell_fallback_flashes_the_command_bar() {
+    with_env(|| {
+        let m = nm(new_game());
+        assert!(!m.command_bar.visual_bell());
+        let bell = sst_audio::TerminalBellPlayer::new(
+            sst_audio::BellWriter::None,
+            Some(sst_tui::visual_bell_callback(&m.bell_pending)),
+        );
+        sst_audio::Player::play(&bell, sst_audio::SOUND_TORPEDO_LAUNCH);
+        let (m, cmd) = upd(
+            &m,
+            tea::msg(tea::WindowSizeMsg {
+                width: 80,
+                height: 24,
+            }),
+        );
+        assert!(m.command_bar.visual_bell(), "bell flashed");
+        assert!(cmd.is_some(), "expiry tick scheduled");
+        let (m, _) = upd(&m, tea::msg(VisualBellExpireMsg));
+        assert!(!m.command_bar.visual_bell());
+
+        // Muted: the fallback stays silent and dark.
+        sst_audio::Player::set_muted(&bell, true);
+        sst_audio::Player::play(&bell, sst_audio::SOUND_TORPEDO_LAUNCH);
+        let (m, _) = upd(
+            &m,
+            tea::msg(tea::WindowSizeMsg {
+                width: 80,
+                height: 24,
+            }),
+        );
+        assert!(!m.command_bar.visual_bell());
+    });
+}

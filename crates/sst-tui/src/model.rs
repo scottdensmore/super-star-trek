@@ -6,6 +6,7 @@
 //! `Rc` handles, so clones share them exactly like Go copies share pointers.
 
 use std::rc::Rc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 use sst_audio::{Dispatcher, NullPlayer, PlayerRef};
@@ -89,6 +90,9 @@ pub struct Model {
     pub red_alert_active: bool,
     /// Source of `time.Now()` (double-click timing, scenario seeds, record dates).
     pub clock: Rc<dyn Clock>,
+    /// Raised by the audio player's terminal-bell fallback (see
+    /// [`visual_bell_callback`]); the next update flashes the command bar.
+    pub bell_pending: Arc<AtomicBool>,
 }
 
 impl Model {
@@ -181,24 +185,31 @@ pub fn visual_bell_cmd() -> Option<Cmd> {
     })
 }
 
-fn make_player() -> PlayerRef {
+/// The visual-bell callback handed to the audio player: it may run on the
+/// audio worker thread, so it only raises `pending`, which the model turns
+/// into a command-bar flash on its next update.
+pub fn visual_bell_callback(pending: &Arc<AtomicBool>) -> sst_audio::VisualBell {
+    let pending = pending.clone();
+    Arc::new(move || pending.store(true, Ordering::SeqCst))
+}
+
+fn make_player(bell_pending: &Arc<AtomicBool>) -> PlayerRef {
     if sst_audio::testing() {
         return Rc::new(NullPlayer::new());
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
-        // Go quirk: the callback captures the local command bar `cb` before it
-        // is copied into the model, so the visual bell never reaches the
-        // rendered bar. The callback is therefore a no-op here.
-        let bell: sst_audio::VisualBell = Arc::new(|| {});
+        // When no OS audio player works, the terminal-bell fallback rings the
+        // bell and calls this. (Go's callback captured a local copy of the
+        // command bar, so the flash never reached the rendered bar.)
         Rc::new(sst_audio::NativeOSPlayer::new(
             sst_audio::BellWriter::Stdout,
-            Some(bell),
+            Some(visual_bell_callback(bell_pending)),
         ))
     }
     #[cfg(target_arch = "wasm32")]
     {
-        let _ = Arc::new(());
+        let _ = bell_pending;
         Rc::new(NullPlayer::new())
     }
 }
@@ -216,7 +227,8 @@ pub fn new_model(g: Option<GameRef>, th: impl Into<Option<Theme>>) -> Model {
         None => default_rules_for_profile(&DifficultyProfile::normal()),
     };
 
-    let player = make_player();
+    let bell_pending = Arc::new(AtomicBool::new(false));
+    let player = make_player(&bell_pending);
     player.set_volume(80);
     let cfg = config::load_config();
     if let Ok(c) = &cfg {
@@ -285,6 +297,7 @@ pub fn new_model(g: Option<GameRef>, th: impl Into<Option<Theme>>) -> Model {
         red_alert_cycle: 0,
         red_alert_active: false,
         clock,
+        bell_pending,
     };
     m.sync_child_components();
     m

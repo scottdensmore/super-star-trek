@@ -113,6 +113,14 @@ impl Model {
     pub fn update_in_place(&mut self, msg: Msg) -> Option<Cmd> {
         let cmd = self.update_inner(msg);
         self.evaluate_tour_sector();
+        // The terminal-bell fallback rang: flash the command bar.
+        if self
+            .bell_pending
+            .swap(false, std::sync::atomic::Ordering::SeqCst)
+        {
+            self.command_bar.set_visual_bell(true);
+            return tea::batch(vec![cmd, visual_bell_cmd()]);
+        }
         cmd
     }
 

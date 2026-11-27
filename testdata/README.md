@@ -210,6 +210,13 @@ Regression tests are in `crates/sst-engine/tests/bug_fixes.rs` unless noted.
     tour) (`crates/sst-tui/tests/go_model_a.rs`). No transcript thaws or
     freezes a save, so none moved.
 
+16. **The visual bell fallback flashes.** When no OS audio player works,
+    the terminal-bell fallback rings `\a` and calls a visual-bell callback;
+    Go's callback captured a local copy of the command bar, so the flash
+    never reached the screen (the port kept it a no-op). The callback now
+    raises a flag that the console turns into the command-bar flash on its
+    next update (`crates/sst-tui/tests/go_model_b.rs`).
+
 Re-recorded cases:
 
 | Transcript | Cases | Cause |
