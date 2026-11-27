@@ -90,10 +90,33 @@ pub fn assert_same(label: &str, want: &str, got: &str) {
 }
 
 /// Line cursor over a transcript.
+///
+/// Record mode (`SST_PARITY_RECORD=<path>`) re-records a transcript after an
+/// intentional behaviour change: the harness runs the recorded inputs as
+/// usual, but instead of comparing, every checked line is written with the
+/// value the engine now produces (original lines with the checked prefix are
+/// consumed, so cases whose behaviour did not change come out byte for byte
+/// identical). Input lines are copied. Harnesses whose transcripts change
+/// shape call [`Lines::inputs`] to name their input prefixes, so stale output
+/// lines that the new run no longer produces are dropped. The result is
+/// written to `<path>` when the cursor is dropped.
 pub struct Lines<'a> {
     pub lines: Vec<&'a str>,
     pub pos: usize,
     pub bytes_compared: usize,
+    pub rec: Option<(String, Vec<String>)>,
+    inputs: Option<&'static [&'static str]>,
+}
+
+impl Drop for Lines<'_> {
+    fn drop(&mut self) {
+        if let Some((path, out)) = self.rec.take() {
+            let mut text = out.join("\n");
+            text.push('\n');
+            std::fs::write(&path, text).unwrap_or_else(|e| panic!("write {path}: {e}"));
+            eprintln!("recorded {} lines to {path}", out.len());
+        }
+    }
 }
 
 impl<'a> Lines<'a> {
@@ -102,6 +125,29 @@ impl<'a> Lines<'a> {
             lines: s.lines().collect(),
             pos: 0,
             bytes_compared: 0,
+            rec: std::env::var("SST_PARITY_RECORD")
+                .ok()
+                .filter(|p| !p.is_empty())
+                .map(|p| (p, Vec::new())),
+            inputs: None,
+        }
+    }
+
+    /// Names the prefixes of input lines (record mode only skips other lines
+    /// when it reads an input).
+    pub fn inputs(mut self, prefixes: &'static [&'static str]) -> Self {
+        self.inputs = Some(prefixes);
+        self
+    }
+
+    pub fn recording(&self) -> bool {
+        self.rec.is_some()
+    }
+
+    /// Appends a line to the recording.
+    pub fn record(&mut self, line: String) {
+        if let Some((_, out)) = &mut self.rec {
+            out.push(line);
         }
     }
 
@@ -110,14 +156,64 @@ impl<'a> Lines<'a> {
     }
 
     pub fn next(&mut self) -> Option<&'a str> {
+        if self.rec.is_some() {
+            if let Some(inputs) = self.inputs {
+                while let Some(l) = self.peek() {
+                    if inputs.iter().any(|p| l.starts_with(p)) {
+                        break;
+                    }
+                    self.pos += 1;
+                }
+            }
+            let l = self.peek();
+            self.pos += 1;
+            if let Some(l) = l {
+                self.record(l.to_string());
+            }
+            return l;
+        }
         let l = self.peek();
         self.pos += 1;
         l
     }
 
+    /// Un-reads the line just returned by [`Lines::next`].
+    pub fn unread(&mut self) {
+        self.pos -= 1;
+        if let Some((_, out)) = &mut self.rec {
+            out.pop();
+        }
+    }
+
     /// Next line, which must start with `prefix` (returns the remainder).
+    /// In record mode a non-matching line is left in place (an inserted
+    /// line) and "" is returned.
+    /// In record mode the consumed line is an input and is copied.
     #[track_caller]
     pub fn expect(&mut self, prefix: &str) -> &'a str {
+        if self.rec.is_some() {
+            let before = self.pos;
+            let r = self.consume(prefix);
+            if self.pos > before {
+                self.record(self.lines[before].to_string());
+            }
+            return r;
+        }
+        self.consume(prefix)
+    }
+
+    /// [`Lines::expect`] without recording.
+    #[track_caller]
+    fn consume(&mut self, prefix: &str) -> &'a str {
+        if self.rec.is_some() {
+            return match self.peek().and_then(|l| l.strip_prefix(prefix)) {
+                Some(r) => {
+                    self.pos += 1;
+                    r
+                }
+                None => "",
+            };
+        }
         let l = self
             .next()
             .unwrap_or_else(|| panic!("unexpected end, wanted {prefix:?}"));
@@ -132,10 +228,14 @@ impl<'a> Lines<'a> {
         }
     }
 
-    /// Compares an expected line `prefix + got`.
+    /// Compares an expected line `prefix + got` (records it in record mode).
     #[track_caller]
     pub fn check(&mut self, prefix: &str, got: &str) {
-        let want = self.expect(prefix);
+        let want = self.consume(prefix);
+        if self.rec.is_some() {
+            self.record(format!("{prefix}{got}"));
+            return;
+        }
         self.bytes_compared += want.len();
         if want != got {
             panic!(

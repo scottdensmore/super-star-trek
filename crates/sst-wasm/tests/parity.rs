@@ -22,6 +22,7 @@ enum Item {
     Case {
         name: String,
         reseed: bool,
+        header: String,
     },
     End,
     Rec {
@@ -47,6 +48,7 @@ fn parse(data: &[u8]) -> Vec<Item> {
             "CASE" => items.push(Item::Case {
                 name: parts[1].to_string(),
                 reseed: parts[2] == "1",
+                header: header.to_string(),
             }),
             "END" => items.push(Item::End),
             op => {
@@ -88,9 +90,26 @@ fn parity_sessions() {
     let mut name = String::new();
     let mut skip = false;
     let mut raw_go = false;
+    // SST_PARITY_RECORD=<path> re-records the transcript after an intentional
+    // behaviour change: each output becomes what the session now produces
+    // (unchanged outputs, Go-panic tails and the RNG:null re-saves keep their
+    // recorded bytes, so only changed cases differ).
+    let record = std::env::var("SST_PARITY_RECORD")
+        .ok()
+        .filter(|p| !p.is_empty());
+    let mut rec: Vec<u8> = Vec::new();
+    let push_rec = |rec: &mut Vec<u8>, op: &str, arg: &str, out: &str| {
+        rec.extend_from_slice(format!("{op} {} {}\n{arg}{out}\n", arg.len(), out.len()).as_bytes());
+    };
     for item in items {
         match item {
-            Item::Case { name: n, reseed } => {
+            Item::Case {
+                name: n,
+                reseed,
+                header,
+            } => {
+                rec.extend_from_slice(header.as_bytes());
+                rec.push(b'\n');
                 name = n;
                 skip = false;
                 last_save.clear();
@@ -100,8 +119,8 @@ fn parity_sessions() {
                 // re-save (see `Session::load`).
                 raw_go = !reseed;
             }
-            Item::End => {}
-            Item::Rec { .. } if skip => {}
+            Item::End => rec.extend_from_slice(b"END\n"),
+            Item::Rec { op, arg, out } if skip => push_rec(&mut rec, &op, &arg, &out),
             Item::Rec { op, arg, out } => {
                 let ctx = format!("case {name}, {op} {arg:?}");
                 let got = match op.as_str() {
@@ -133,6 +152,7 @@ fn parity_sessions() {
                         );
                         st.stopped_at_go_panic += 1;
                         skip = true;
+                        push_rec(&mut rec, &op, &arg, &out);
                         continue;
                     }
                     "save" => {
@@ -153,12 +173,18 @@ fn parity_sessions() {
                     }
                     other => panic!("unknown op {other}"),
                 };
+                let recorded = out.clone();
                 let mut out = out;
                 if raw_go && op == "save" && out.starts_with(RNG_NULL) {
                     // Deviation: a loaded state without a PRNG is reseeded,
                     // so it re-saves as `"RNG":{}` instead of Go's `null`.
                     out = format!("{{\"RNG\":{{}},{}", &out[RNG_NULL.len()..]);
                     st.rng_null_resaves += 1;
+                }
+                if record.is_some() {
+                    let keep = if got == out { &recorded } else { &got };
+                    push_rec(&mut rec, &op, &arg, keep);
+                    continue;
                 }
                 assert!(
                     got == out,
@@ -168,6 +194,10 @@ fn parity_sessions() {
                 st.bytes += out.len();
             }
         }
+    }
+    if let Some(p) = &record {
+        std::fs::write(p, &rec).unwrap();
+        return;
     }
     eprintln!(
         "wasm session parity: {} cases, {} steps, {} bytes compared, {} cases stopped at a Go panic, {} RNG:null re-saves",

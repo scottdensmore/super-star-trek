@@ -36,6 +36,27 @@ fn game_over(events: &[Event]) -> Option<EventGameOver> {
 impl Sim<'_, '_> {
     /// P/E/X lines are either full (`P {...}`) or hashed (`P# <fnv>`).
     fn detail(&mut self, tag: &str, payload: &str) {
+        if self.l.recording() {
+            let full = format!("{tag} ");
+            let keep_full = self.l.peek().is_some_and(|x| x.starts_with(&full));
+            let hashed = self
+                .l
+                .peek()
+                .is_some_and(|x| x.starts_with(&format!("{tag}# ")));
+            if keep_full || hashed {
+                self.l.pos += 1;
+            }
+            // SST_PARITY_RECORD_FULL=1 writes every payload in full (for
+            // inspecting a re-recorded case; do not commit that output).
+            let keep_full = keep_full || std::env::var_os("SST_PARITY_RECORD_FULL").is_some();
+            let line = if keep_full {
+                format!("{tag} {payload}")
+            } else {
+                format!("{tag}# {}", fnv_hex(payload.as_bytes()))
+            };
+            self.l.record(line);
+            return;
+        }
         let line = self.l.next().expect("detail line");
         if let Some(h) = line.strip_prefix(&format!("{tag}# ")) {
             self.l.bytes_compared += payload.len();
@@ -65,10 +86,17 @@ impl Sim<'_, '_> {
         }
         if cleared {
             t.borrow_mut().advance_to_drydock(bounty);
-            for _ in 0..4 {
+            for i in 0..4 {
                 // The Go harness drew the refit from its command RNG; take it from the transcript.
                 let line = self.l.peek().unwrap();
-                let id = RefitID::new(line[2..].split(' ').next().unwrap());
+                let id = if self.l.recording() && !line.starts_with("B ") {
+                    // A re-recorded case clears a sector where Go did not:
+                    // pick a refit deterministically.
+                    let ids = refit_ids();
+                    ids[(self.steps + i) % ids.len()].clone()
+                } else {
+                    RefitID::new(line[2..].split(' ').next().unwrap())
+                };
                 assert!(refit_ids().contains(&id));
                 let res = purchase_refit(Some(&mut t.borrow_mut()), &id);
                 let es = match res {
@@ -243,10 +271,20 @@ impl Sim<'_, '_> {
             }
             "MK" => {
                 let n: Vec<i32> = rest.split(' ').map(|x| x.parse().unwrap()).collect();
-                let k = self.g.borrow().current_quad.klingons[n[0] as usize]
-                    .clone()
-                    .unwrap();
-                let ev = move_klingon(&mut self.g.borrow_mut(), &k, [n[1], n[2]]);
+                // A re-recorded case may have lost the Klingon the Go harness
+                // picked (destroyed earlier than in Go): the op is a no-op.
+                let k = self
+                    .g
+                    .borrow()
+                    .current_quad
+                    .klingons
+                    .get(n[0] as usize)
+                    .cloned()
+                    .flatten();
+                let ev = match k {
+                    Some(k) => move_klingon(&mut self.g.borrow_mut(), &k, [n[1], n[2]]),
+                    None => Vec::new(),
+                };
                 self.detail("E", &events_to_json(&ev));
             }
             _ => panic!("extra {line}"),
@@ -335,7 +373,7 @@ fn as_str(v: &Value) -> String {
 #[test]
 fn scripted_games_match_go() {
     let d = data("games.txt");
-    let mut l = Lines::new(&d);
+    let mut l = Lines::new(&d).inputs(&["game ", "> ", "M ", "A ", "V ", "MK ", "end", "S "]);
     let (mut games, mut commands, mut overs, mut extras) = (0, 0, 0, 0);
     let mut kinds = std::collections::BTreeMap::new();
     while let Some(header) = l.next() {
@@ -413,7 +451,7 @@ fn scripted_games_match_go() {
                 break;
             }
             if line.starts_with("S ") {
-                sim.l.pos -= 1;
+                sim.l.unread();
                 let g = sim.g.clone();
                 sim.l.check_full(&g.borrow());
                 continue;

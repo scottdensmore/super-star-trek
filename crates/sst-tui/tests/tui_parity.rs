@@ -148,6 +148,8 @@ struct Session {
     profile: String,
     setup: String,
     steps: Vec<Expect>,
+    /// Byte range of the session in its file (for re-recording).
+    span: (usize, usize),
 }
 
 struct Reader<'a> {
@@ -187,6 +189,7 @@ fn parse_file(data: &[u8]) -> (String, i64, Vec<Session>) {
         } else if let Some(v) = l.strip_prefix("clock_unix_nano ") {
             t = v.parse().unwrap();
         } else if let Some(v) = l.strip_prefix("session ") {
+            let start = r.p - l.len() - 1;
             let (name, profile) = v.rsplit_once(' ').unwrap();
             let setup = r.line().unwrap();
             let setup = setup.strip_prefix("setup ").unwrap().to_string();
@@ -195,6 +198,7 @@ fn parse_file(data: &[u8]) -> (String, i64, Vec<Session>) {
                 profile: profile.into(),
                 setup,
                 steps: Vec::new(),
+                span: (start, 0),
             };
             loop {
                 let l = r.line().unwrap();
@@ -222,6 +226,7 @@ fn parse_file(data: &[u8]) -> (String, i64, Vec<Session>) {
                     frame,
                 });
             }
+            s.span.1 = r.p;
             sessions.push(s);
         } else if !l.is_empty() && !l.starts_with('#') {
             panic!("unexpected line {l:?}");
@@ -493,7 +498,17 @@ fn first_diff(a: &[u8], b: &[u8]) -> String {
     "(no line diff)".into()
 }
 
-fn run_session(s: &Session, t_nanos: i64, root: &Path, idx: usize, st: &mut Stats) {
+/// Runs a session. In record mode every step runs (no early stop) and the
+/// session's transcript text with the values now produced is returned when
+/// any step differs.
+fn run_session(
+    s: &Session,
+    t_nanos: i64,
+    root: &Path,
+    idx: usize,
+    st: &mut Stats,
+    record: bool,
+) -> Option<Vec<u8>> {
     let dir = root.join(format!("s{idx}"));
     let home = dir.join("home");
     let work = dir.join("work");
@@ -535,6 +550,8 @@ fn run_session(s: &Session, t_nanos: i64, root: &Path, idx: usize, st: &mut Stat
         now,
     };
     st.sessions += 1;
+    let mut rec = format!("session {} {}\nsetup {}\n", s.name, s.profile, s.setup).into_bytes();
+    let mut changed = false;
     for e in &s.steps {
         run_step(&mut d, &e.line);
         touch_files(&work, now);
@@ -558,6 +575,24 @@ fn run_session(s: &Session, t_nanos: i64, root: &Path, idx: usize, st: &mut Stat
                 problems.push(first_diff(f, view.as_bytes()));
             }
         }
+        if record {
+            rec.extend_from_slice(
+                format!(
+                    "step {}\n= {h} pend={} quit={}\n",
+                    e.line,
+                    d.pending.len(),
+                    if d.quit { 1 } else { 0 }
+                )
+                .as_bytes(),
+            );
+            if e.frame.is_some() {
+                rec.extend_from_slice(format!("frame {}\n", view.len()).as_bytes());
+                rec.extend_from_slice(view.as_bytes());
+                rec.push(b'\n');
+            }
+            changed |= !problems.is_empty();
+            continue;
+        }
         if !problems.is_empty() {
             st.mismatches.push(format!(
                 "{} [{}] step {:?}: {}",
@@ -571,6 +606,8 @@ fn run_session(s: &Session, t_nanos: i64, root: &Path, idx: usize, st: &mut Stat
     }
     let _ = std::env::set_current_dir(root);
     let _ = std::fs::remove_dir_all(&dir);
+    rec.extend_from_slice(b"end\n");
+    changed.then_some(rec)
 }
 
 #[test]
@@ -583,6 +620,12 @@ fn tui_transcript_parity() {
     let root = std::env::temp_dir().join(format!("sst-tui-parity-{}", std::process::id()));
     std::fs::create_dir_all(&root).unwrap();
     let filter = std::env::var("SST_PARITY_FILTER").unwrap_or_default();
+    // SST_PARITY_RECORD=<dir> re-records the sessions whose behaviour changed
+    // (after an intentional change) and writes each transcript to <dir>;
+    // unchanged sessions are copied byte for byte.
+    let record_dir = std::env::var("SST_PARITY_RECORD")
+        .ok()
+        .filter(|d| !d.is_empty());
 
     let mut files: Vec<PathBuf> = std::fs::read_dir(dir)
         .unwrap()
@@ -604,12 +647,25 @@ fn tui_transcript_parity() {
     for f in &files {
         let data = std::fs::read(f).unwrap();
         let (_date, t, sessions) = parse_file(&data);
+        let mut out = Vec::new();
+        let mut copied = 0;
         for s in &sessions {
             idx += 1;
             if !filter.is_empty() && !s.name.contains(&filter) {
                 continue;
             }
-            run_session(s, t, &root, idx, &mut st);
+            let rec = run_session(s, t, &root, idx, &mut st, record_dir.is_some());
+            if let Some(rec) = rec {
+                out.extend_from_slice(&data[copied..s.span.0]);
+                out.extend_from_slice(&rec);
+                copied = s.span.1;
+                eprintln!("re-recorded {} [{}]", s.name, s.profile);
+            }
+        }
+        if let Some(rd) = &record_dir {
+            out.extend_from_slice(&data[copied..]);
+            let dest = Path::new(rd).join(f.file_name().unwrap());
+            std::fs::write(&dest, &out).unwrap();
         }
     }
     let _ = std::fs::remove_dir_all(&root);
