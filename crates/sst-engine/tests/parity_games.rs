@@ -335,7 +335,7 @@ impl Sim<'_, '_> {
         match res {
             Err(e) => self.detail("X", &e.0),
             Ok(mut events) => {
-                session_counter_attack(&mut self.g.borrow_mut(), action, &mut events);
+                execute_klingon_turn_if_active(&mut self.g.borrow_mut(), action, &mut events);
                 self.detail("E", &events_to_json(&events));
                 if game_over(&events).is_some() {
                     self.over = true;

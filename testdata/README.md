@@ -269,6 +269,22 @@ Re-recorded cases:
     unchanged. The scenario modal and the browser formatter transcript gained
     record modes (commands above).
 
+19. **The browser runs the console's enemy turn.** `Session.Execute` ran
+    only `KlingonTurn` (`session_counter_attack`), so on the expert and
+    emeritus profiles, which enable adversaries, Romulans, Tholians, plasma
+    torpedoes and webs never acted in the browser. The session now calls
+    `execute_klingon_turn_if_active`, the function the console runs after
+    every command, so the two run the same enemy turn: `UnifiedAdversaryTurn`
+    when adversaries are enabled or present, otherwise `KlingonTurn`. That
+    also brings the console's two other rules to the browser: focused phasers
+    (`pha E r,c`) now give the enemy a turn, and `nav q` to the quadrant the
+    ship is already in (a move within the quadrant) no longer does. Engine
+    balance is unchanged (the autoplay example already used the console's
+    turn). `crates/sst-wasm/tests/terminal_parity.rs` plays scripted
+    expert and emeritus games through a browser session and the console's
+    command handler from the same start and compares the state after every
+    command.
+
 Re-recorded cases:
 
 | Transcript | Cases | Cause |
@@ -279,3 +295,5 @@ Re-recorded cases:
 | `wasm/sessions.txt` | the briefing and phaser refusals of the 10 Mutara sessions (`scenario-mutara-0` to `-5`, `smart-scenario-mutara-0` to `-3`) and of 15 sessions that launch it (`fixed-casual`, `fixed-normal`, `fixed-hardcore`, `random--12345-expert`, `random-1-nightmare`, `random-2024-normal`, `random-42-normal`, `random-7-expert`, `random-7-normal`, `random-777-casual`, `random-777-nightmare`, `random-99-hardcore`, `random-99999-custom`, `random-99999-hardcore`, `random-99999-nightmare`) | 18 |
 | `tui/scenarios.txt` | `scenario_modal` (the Mutara constraints) and `scenario_mutara-nebula` (the refusal hint), both profiles | 18 |
 | `components/scenariomodal.txt` | the 48 views with the Mutara Nebula selected | 18 |
+| `engine/games.txt` | 45 of the 60 browser sessions: the 13 on the expert/emeritus profiles (208, 209, 216, 217, 225, 232, 233, 240, 241, 248, 249, 256, 257; the adversary turn), 31 that fire focused phasers (205, 210, 211, 213, 214, 220-223, 226, 228-231, 234-237, 242, 244, 245, 251-255, 258-262) and 204 (`nav q` to its own quadrant) | 19 |
+| `wasm/sessions.txt` | `random-42-emeritus`, `random-777-emeritus`, `random-1099511627776-expert` (the adversary turn) and `random-2024-normal` (`nav q 5 5` inside the Mutara Nebula no longer draws return fire) | 19 |

@@ -6,9 +6,8 @@ use sst_audio::{Dispatcher, NullPlayer, PlayerRef};
 use sst_engine::json::JsonError;
 use sst_engine::parser::{fields, parse_command, trim_space};
 use sst_engine::{
-    decode_load_game, default_rules_for_profile, encode_session, get_scenario,
-    session_counter_attack, Action, DifficultyProfile, GameLength, GameState, ScenarioID,
-    SkillLevel,
+    decode_load_game, default_rules_for_profile, encode_session, execute_klingon_turn_if_active,
+    get_scenario, Action, DifficultyProfile, GameLength, GameState, ScenarioID, SkillLevel,
 };
 
 use crate::formatter::*;
@@ -118,8 +117,9 @@ impl Session {
                 // A refusal may carry a hint on a second line.
                 Err(err) => return format!("Cannot execute: {}\r\n", err.0.replace('\n', "\r\n")),
             };
-            // Surviving Klingons counter-attack on turn-consuming actions.
-            session_counter_attack(&mut self.game, &action, &mut events);
+            // The enemy turn the console runs: Klingons, and on the
+            // adversary profiles Romulans, Tholians, plasma and webs.
+            execute_klingon_turn_if_active(&mut self.game, &action, &mut events);
             self.dispatcher.dispatch_events(&events);
             let mut out = format_combat_events(&events);
             if matches!(action, Action::Move(_)) {

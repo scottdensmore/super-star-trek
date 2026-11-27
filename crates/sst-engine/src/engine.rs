@@ -1,5 +1,5 @@
 //! Dispatch and turn advancement (port of `pkg/engine/engine.go`), plus the
-//! post-action adversary turn used by the TUI and the WASM session.
+//! post-action enemy turn shared by the console and the browser session.
 
 use crate::actions::{evaluate_victory, events_destroy_hostile, Action, ActionResult};
 use crate::combat::{cloak_klingon, klingon_turn};
@@ -65,6 +65,10 @@ fn is_inter_quad(events: &[Event]) -> bool {
 /// The TUI's `executeKlingonTurnIfActive` (pkg/tui/update.go): after a
 /// turn-consuming action, run `UnifiedAdversaryTurn` (when adversary
 /// factions are present) or `KlingonTurn`, appending their events.
+///
+/// The browser session runs the same turn. (Go's `Session.Execute` only ran
+/// `KlingonTurn`, so Romulans, Tholians, plasma and webs never acted in the
+/// browser.)
 pub fn execute_klingon_turn_if_active(g: &mut GameState, action: &Action, events: &mut Vec<Event>) {
     if has_game_over(events) {
         return;
@@ -94,31 +98,5 @@ pub fn execute_klingon_turn_if_active(g: &mut GameState, action: &Action, events
             events.extend(k);
             evaluate_victory(g, killed, events);
         }
-    }
-}
-
-/// The WASM session's counter-attack rule (cmd/wasm/session.go `Execute`):
-/// only `KlingonTurn`, only for torpedo/phaser/shield actions and
-/// intra-quadrant moves.
-pub fn session_counter_attack(g: &mut GameState, action: &Action, events: &mut Vec<Event>) {
-    if has_game_over(events) {
-        return;
-    }
-    if g.current_quad.klingons.is_empty() || g.enterprise.condition == ConditionType::Docked {
-        return;
-    }
-    let should_attack = match action {
-        Action::FireTorpedo(_)
-        | Action::TorpedoDirect(_)
-        | Action::FirePhasers(_)
-        | Action::Shields(_) => true,
-        Action::Move(_) => !is_inter_quad(events),
-        _ => false,
-    };
-    if should_attack {
-        let k = klingon_turn(g);
-        let killed = events_destroy_hostile(&k);
-        events.extend(k);
-        evaluate_victory(g, killed, events);
     }
 }

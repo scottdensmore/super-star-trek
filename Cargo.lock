@@ -293,6 +293,7 @@ dependencies = [
  "js-sys",
  "sst-audio",
  "sst-engine",
+ "sst-tui",
  "wasm-bindgen",
 ]
 

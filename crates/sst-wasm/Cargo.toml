@@ -16,3 +16,7 @@ sst-audio = { path = "../sst-audio" }
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "=0.2.130"
 js-sys = "0.3.107"
+
+[dev-dependencies]
+# The browser/terminal parity test drives the console's command handler.
+sst-tui = { path = "../sst-tui" }
