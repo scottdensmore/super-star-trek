@@ -235,6 +235,7 @@ fn event(line: &str) -> Event {
             entity: EntityType(int(&mut it)),
             damage: num(&mut it),
             destroyed: int(&mut it) == 1,
+            ..Default::default()
         }),
         "PhaserFired" => Event::PhaserFired(EventPhaserFired {
             energy: num(&mut it),
@@ -309,6 +310,12 @@ fn event(line: &str) -> Event {
 #[test]
 fn parity_combat_events() {
     let (mut cases, mut bytes) = (0, 0);
+    // SST_PARITY_RECORD=<path> (with this test selected) re-records the
+    // transcript: each output becomes what the formatter now produces.
+    let record = std::env::var("SST_PARITY_RECORD")
+        .ok()
+        .filter(|p| !p.is_empty());
+    let mut rec: Vec<u8> = Vec::new();
     for item in parse(&read("events.txt")) {
         let Item::Rec { op, arg, out } = item else {
             continue;
@@ -320,12 +327,23 @@ fn parity_combat_events() {
             arg.split('\n').map(event).collect()
         };
         let got = format_combat_events(&events);
+        if record.is_some() {
+            rec.extend_from_slice(
+                format!("{op} {} {}\n{arg}{got}\n", arg.len(), got.len()).as_bytes(),
+            );
+            cases += 1;
+            continue;
+        }
         assert!(
             got == out,
             "events {arg:?}\n--- go ---\n{out:?}\n--- rust ---\n{got:?}"
         );
         cases += 1;
         bytes += out.len();
+    }
+    if let Some(path) = record {
+        std::fs::write(&path, &rec).unwrap();
+        eprintln!("recorded {cases} event lists to {path}");
     }
     eprintln!("wasm event parity: {cases} event lists, {bytes} bytes compared");
     assert_eq!(cases, 600);

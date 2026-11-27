@@ -38,7 +38,15 @@ impl<'a> TeletypeSubscriber<'a> {
                 if evt.destroyed {
                     let _ = writeln!(self.w, "*** Klingon destroyed ***");
                 } else {
-                    let _ = writeln!(self.w, "Hit: {} units", fmt_f(evt.damage, 0));
+                    let _ = write!(self.w, "Hit: {} units", fmt_f(evt.damage, 0));
+                    if evt.shield_damage > 0.0 {
+                        let _ = write!(
+                            self.w,
+                            " (shields absorbed {})",
+                            fmt_f(evt.shield_damage, 0)
+                        );
+                    }
+                    let _ = writeln!(self.w);
                 }
             }
             _ => {}

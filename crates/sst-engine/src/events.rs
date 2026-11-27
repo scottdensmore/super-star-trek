@@ -26,8 +26,12 @@ pub struct EventTorpedoFired {
 pub struct EventTorpedoHit {
     pub target: Coord,
     pub entity: EntityType,
+    /// Damage that got through the target's shields (for a kill, the energy
+    /// the target had left).
     pub damage: f64,
     pub destroyed: bool,
+    /// Damage the target's shields absorbed (omitted from the JSON when 0).
+    pub shield_damage: f64,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -319,7 +323,7 @@ use crate::json::{Decoder, Encoder, GoJson, Value};
 
 crate::go_json_struct!(EventShieldTransfer, "EventShieldTransfer", "engine.EventShieldTransfer" { new_shields => "NewShields", new_energy => "NewEnergy" });
 crate::go_json_struct!(EventTorpedoFired, "EventTorpedoFired", "engine.EventTorpedoFired" { origin => "Origin", angle => "Angle" });
-crate::go_json_struct!(EventTorpedoHit, "EventTorpedoHit", "engine.EventTorpedoHit" { target => "Target", entity => "Entity", damage => "Damage", destroyed => "Destroyed" });
+crate::go_json_struct!(EventTorpedoHit, "EventTorpedoHit", "engine.EventTorpedoHit" { target => "Target", entity => "Entity", damage => "Damage", destroyed => "Destroyed", shield_damage => "ShieldDamage" omitempty });
 crate::go_json_struct!(EventPhaserFired, "EventPhaserFired", "engine.EventPhaserFired" { energy => "Energy" });
 crate::go_json_struct!(EventPhaserHit, "EventPhaserHit", "engine.EventPhaserHit" { target => "Target", klingon_id => "KlingonID", damage => "Damage", destroyed => "Destroyed", faction => "Faction" omitempty });
 crate::go_json_struct!(EventDocked, "EventDocked", "engine.EventDocked" { starbase => "Starbase" });

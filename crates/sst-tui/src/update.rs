@@ -1691,12 +1691,16 @@ pub fn format_event(ev: &Event) -> String {
                     fmt_f(e.damage, 0)
                 )
             } else {
-                format!(
+                let mut s = format!(
                     "Hit on [{},{}]: {} units damage",
                     e.target[0],
                     e.target[1],
                     fmt_f(e.damage, 0)
-                )
+                );
+                if e.shield_damage > 0.0 {
+                    s += &format!(" (shields absorbed {})", fmt_f(e.shield_damage, 0));
+                }
+                s
             }
         }
         Event::PhaserFired(e) => format!("Phasers discharged with {} energy", fmt_f(e.energy, 0)),

@@ -127,7 +127,7 @@ events 85 214
 TorpedoHit 9 2 11 442.5 0
 PhaserFired 184.5
 AnomalyDiscovered 0
-ShipMoved 8 7 8 7 7 8Torpedo hit Klingon at [9,2]: 442 units damage
+ShipMoved 8 7 8 7 7 8Torpedo hit Tholian at [9,2]: 442 units damage
 [33m[PHASERS FIRED][0m Allocated 184 units
 [35m*** ENVIRONMENT ALERT: Spatial anomaly detected! ***[0m
 [32m[WARP ENGINES ENGAGED][0m Arrived at sector [7,8]
@@ -167,7 +167,7 @@ TorpedoFired 5 0 1347.3935494305672[33m[TORPEDO TRACK][0m Fired on course 1347
 
 events 45 97
 TorpedoHit 7 8 10 4799 0
-SubsystemRepaired -1Torpedo hit Klingon at [7,8]: 4799 units damage
+SubsystemRepaired -1Torpedo hit Romulan at [7,8]: 4799 units damage
 [32m[REPAIR][0m Subsystem has been repaired.
 
 events 53 73
@@ -234,9 +234,9 @@ events 0 0
 
 events 0 0
 
-events 41 55
+events 41 54
 ConditionChanged
-TorpedoHit 5 7 12 1645 1[31;1m*** KLINGON WARSHIP DESTROYED AT [5,7] ***[0m
+TorpedoHit 5 7 12 1645 1[31;1m*** PLASMA TORPEDO DESTROYED AT [5,7] ***[0m
 
 events 39 66
 KlingonCounterAttack -264.2462670785564[31;1m[RETURN FIRE][0m Klingon returns fire: -264 units damage
@@ -502,13 +502,13 @@ TorpedoFired 5 2 1.234567895e+08[32m*** FEDERATION MISSION ACCOMPLISHED ***[0m
 [36m*** SUBSPACE RIFT: Wormhole transit completed to Quadrant [9, 4] Sector [1, 2]! ***[0m
 [33m[TORPEDO TRACK][0m Fired on course 123456789.50 from [5,2]
 
-events 105 238
+events 105 242
 SubsystemDamaged 3 7.85
 SubsystemDamaged -2 2828
 TorpedoHit 2 2 13 4628.275643468707 1
 PhaserFired 1937.5[31;1m[DAMAGE][0m Phaser Control damaged! Repair in 7.8 stardates
 [31;1m[DAMAGE][0m Subsystem damaged! Repair in 2828.0 stardates
-[31;1m*** KLINGON WARSHIP DESTROYED AT [2,2] ***[0m
+[31;1m*** THOLIAN WEB SEGMENT DESTROYED AT [2,2] ***[0m
 [33m[PHASERS FIRED][0m Allocated 1938 units
 
 events 125 324
@@ -520,7 +520,7 @@ TorpedoHit 1 5 11 644703.21156925 0[32m[WARP ENGINES ENGAGED][0m Arrived at qu
 [36m*** SUBSPACE RIFT: Wormhole transit completed to Quadrant [5, 4] Sector [8, 4]! ***[0m
 Torpedo absorbed by planet atmosphere at [3,7]
 [33m[TORPEDO TRACK][0m Fired on course 80.25 from [1,4]
-Torpedo hit Klingon at [1,5]: 644703 units damage
+Torpedo hit Tholian at [1,5]: 644703 units damage
 
 events 141 289
 SingularityAbsorption
@@ -624,7 +624,7 @@ Torpedo hit Klingon at [3,9]: 4 units damage
 events 30 49
 PhaserFired 375155.52535906393[33m[PHASERS FIRED][0m Allocated 375156 units
 
-events 130 222
+events 130 215
 HelpCalled
 ShieldTransfer 3520.4119545403223 0.375
 TorpedoFired 8 6 12.25
@@ -632,15 +632,15 @@ AnomalyDiscovered 0
 TorpedoHit 6 4 5 4694.695470101787 1Deflector Shields: 3520  |  Total energy: 0
 [33m[TORPEDO TRACK][0m Fired on course 12.25 from [8,6]
 [35m*** ENVIRONMENT ALERT: Spatial anomaly detected! ***[0m
-[31;1m*** KLINGON WARSHIP DESTROYED AT [6,4] ***[0m
+[31;1m*** STARBASE DESTROYED AT [6,4] ***[0m
 
-events 115 200
+events 115 193
 PhaserHit 8 6 2071.0037266125632 1
 PhaserFired 6.05
 TorpedoHit 5 5 5 -2.3987483129303544 1
 TorpedoHit 2 6 3 375.5 0[31;1m*** KLINGON DESTROYED BY PHASER FIRE ***[0m
 [33m[PHASERS FIRED][0m Allocated 6 units
-[31;1m*** KLINGON WARSHIP DESTROYED AT [5,5] ***[0m
+[31;1m*** STARBASE DESTROYED AT [5,5] ***[0m
 Torpedo hit Klingon at [2,6]: 376 units damage
 
 events 22 59
@@ -725,7 +725,7 @@ TorpedoHit 2 6 10 220.5 0[33m[PHASERS FIRED][0m Allocated 16 units
 [31;1m[DAMAGE][0m Long Range Sensors damaged! Repair in -184.4 stardates
 [32m[REPAIR][0m Library Computer has been repaired.
 Deflector Shields: 40  |  Total energy: 96
-Torpedo hit Klingon at [2,6]: 220 units damage
+Torpedo hit Romulan at [2,6]: 220 units damage
 
 events 91 252
 SingularityAbsorption
@@ -987,7 +987,7 @@ TorpedoHit 2 3 11 281.25 0[33m[PHASERS FIRED][0m Allocated 361 units
 [36m*** SUBSPACE RIFT: Wormhole transit completed to Quadrant [7, 5] Sector [4, 7]! ***[0m
 [35m*** GRAVITATIONAL SINGULARITY: Photon torpedo absorbed into event horizon! ***[0m
 [33m[TORPEDO TRACK][0m Fired on course -432.97 from [0,9]
-Torpedo hit Klingon at [2,3]: 281 units damage
+Torpedo hit Tholian at [2,3]: 281 units damage
 
 events 38 136
 WormholeJump 5 0 9 0
@@ -1089,7 +1089,7 @@ SubsystemRepaired -1
 GameOver 4 945587.0797940466
 TorpedoHit 2 5 11 1e+21 0[32m[REPAIR][0m Subsystem has been repaired.
 [31;1m*** MISSION TERMINATED ***[0m (Score: 945587)
-Torpedo hit Klingon at [2,5]: 1000000000000000000000 units damage
+Torpedo hit Tholian at [2,5]: 1000000000000000000000 units damage
 
 events 92 176
 GameOver 4 25
@@ -1290,7 +1290,7 @@ ConditionChangedDeflector Shields: 455031  |  Total energy: -475
 events 21 72
 ShipMoved 3 0 4 2 0 3[32m[WARP ENGINES ENGAGED][0m Arrived at quadrant [4,2] sector [0,3]
 
-events 126 351
+events 126 350
 ObstacleEncountered 9 9
 ShipMoved 1 2 1 2 1 8
 SingularityAbsorption
@@ -1298,7 +1298,7 @@ TorpedoHit 3 7 12 814805.8579633618 1
 WormholeJump 5 7 1 7[31;1m[NAVIGATION HAZARD][0m Blocked at sector [9,9]
 [32m[WARP ENGINES ENGAGED][0m Arrived at sector [1,8]
 [35m*** GRAVITATIONAL SINGULARITY: Photon torpedo absorbed into event horizon! ***[0m
-[31;1m*** KLINGON WARSHIP DESTROYED AT [3,7] ***[0m
+[31;1m*** PLASMA TORPEDO DESTROYED AT [3,7] ***[0m
 [36m*** SUBSPACE RIFT: Wormhole transit completed to Quadrant [5, 7] Sector [1, 7]! ***[0m
 
 events 119 239
@@ -1504,7 +1504,7 @@ AnomalyDiscovered 3
 TorpedoHit 4 6 10 810.2568551062561 0
 AnomalyDiscovered 3Phaser beam hit target at [1,3]: 832 units
 [35m*** ENVIRONMENT ALERT: Spatial anomaly detected! ***[0m
-Torpedo hit Klingon at [4,6]: 810 units damage
+Torpedo hit Romulan at [4,6]: 810 units damage
 [35m*** ENVIRONMENT ALERT: Spatial anomaly detected! ***[0m
 
 events 97 238
@@ -1792,7 +1792,7 @@ TorpedoHit 1 1 10 257.5 0
 ShipMoved 0 5 0 5 4 1
 TorpedoFired 7 8 0.375
 ConditionChanged
-ShieldTransfer 299859.63820212183 10.05Torpedo hit Klingon at [1,1]: 258 units damage
+ShieldTransfer 299859.63820212183 10.05Torpedo hit Romulan at [1,1]: 258 units damage
 [32m[WARP ENGINES ENGAGED][0m Arrived at sector [4,1]
 [33m[TORPEDO TRACK][0m Fired on course 0.38 from [7,8]
 Deflector Shields: 299860  |  Total energy: 10
@@ -1881,13 +1881,13 @@ SubsystemRepaired 6[36m[STARBASE DOCKING][0m Docked with Starbase at [7,7]. Sh
 [36m*** SUBSPACE RIFT: Wormhole transit completed to Quadrant [8, 1] Sector [2, 9]! ***[0m
 [32m[REPAIR][0m Shield Control has been repaired.
 
-events 86 204
+events 86 203
 SubsystemDamaged 5 8.65
 PhaserHit 2 2 418 1
 TorpedoHit 6 9 11 843.5 1
 HazardTriggered [31;1m[DAMAGE][0m Damage Control damaged! Repair in 8.7 stardates
 [31;1m*** KLINGON DESTROYED BY PHASER FIRE ***[0m
-[31;1m*** KLINGON WARSHIP DESTROYED AT [6,9] ***[0m
+[31;1m*** THOLIAN VESSEL DESTROYED AT [6,9] ***[0m
 [33m*** HAZARD:  ***[0m
 
 events 130 306
@@ -1994,10 +1994,10 @@ ShipMoved 6 2 6 2 1 3
 ConditionChangedDeflector Shields: 17  |  Total energy: 3224
 [32m[WARP ENGINES ENGAGED][0m Arrived at sector [1,3]
 
-events 104 157
+events 104 161
 TorpedoHit 6 1 13 -300.7498968821014 1
 PhaserFired 301988.30998067016
-PhaserHit 6 3 1861.3583259188283 1[31;1m*** KLINGON WARSHIP DESTROYED AT [6,1] ***[0m
+PhaserHit 6 3 1861.3583259188283 1[31;1m*** THOLIAN WEB SEGMENT DESTROYED AT [6,1] ***[0m
 [33m[PHASERS FIRED][0m Allocated 301988 units
 [31;1m*** KLINGON DESTROYED BY PHASER FIRE ***[0m
 
@@ -2216,13 +2216,13 @@ ObstacleEncountered 4 4[33m*** HAZARD: Ion storm turbulence deflected course **
 
 events 0 0
 
-events 94 215
+events 94 214
 ShieldTransfer 492.25 946323.5671206546
 Docked 5 1
 ConditionChanged
 TorpedoHit 3 8 11 1455.5 1Deflector Shields: 492  |  Total energy: 946324
 [36m[STARBASE DOCKING][0m Docked with Starbase at [5,1]. Shields dropped, energy and torpedoes replenished.
-[31;1m*** KLINGON WARSHIP DESTROYED AT [3,8] ***[0m
+[31;1m*** THOLIAN VESSEL DESTROYED AT [3,8] ***[0m
 
 events 90 160
 SubsystemRepaired -1
@@ -2534,7 +2534,7 @@ Phaser beam hit target at [2,6]: 19 units
 events 57 95
 PhaserFired 460.25
 TorpedoHit 6 0 11 -306.2701551466686 0[33m[PHASERS FIRED][0m Allocated 460 units
-Torpedo hit Klingon at [6,0]: -306 units damage
+Torpedo hit Tholian at [6,0]: -306 units damage
 
 events 141 245
 PhaserFired -483.3518125894945
@@ -2616,7 +2616,7 @@ SingularityAbsorption[32m[REPAIR][0m Subsystem has been repaired.
 events 53 47
 TorpedoHit 3 5 10 18.25 0
 HelpCalled
-ConditionChangedTorpedo hit Klingon at [3,5]: 18 units damage
+ConditionChangedTorpedo hit Romulan at [3,5]: 18 units damage
 
 events 121 337
 TorpedoHit 5 8 1 1885.5 0
@@ -2777,7 +2777,7 @@ GameOver 2 273.5
 AnomalyDiscovered 2
 TorpedoHit 8 7 10 -450.0882588440433 1[31;1m*** MISSION TERMINATED ***[0m (Score: 274)
 [33m*** ENVIRONMENT ALERT: Entering Ion Storm! High energy particle flux detected. ***[0m
-[31;1m*** KLINGON WARSHIP DESTROYED AT [8,7] ***[0m
+[31;1m*** ROMULAN WARBIRD DESTROYED AT [8,7] ***[0m
 
 events 26 49
 TorpedoHit 6 6 12 1299.5 0Torpedo hit Klingon at [6,6]: 1300 units damage
@@ -2841,7 +2841,7 @@ TorpedoHit 1 7 10 716.5 0
 KlingonCounterAttack 609054.7116481956
 ShieldTransfer 0.375 50
 Docked 7 7
-ShieldTransfer 333 1209.5Torpedo hit Klingon at [1,7]: 716 units damage
+ShieldTransfer 333 1209.5Torpedo hit Romulan at [1,7]: 716 units damage
 [31;1m[RETURN FIRE][0m Klingon returns fire: 609055 units damage
 Deflector Shields: 0  |  Total energy: 50
 [36m[STARBASE DOCKING][0m Docked with Starbase at [7,7]. Shields dropped, energy and torpedoes replenished.
@@ -3037,7 +3037,7 @@ Docked 4 8
 SubsystemDamaged -1 -378.32038300148406
 TorpedoHit 7 5 11 6.95 0[36m[STARBASE DOCKING][0m Docked with Starbase at [4,8]. Shields dropped, energy and torpedoes replenished.
 [31;1m[DAMAGE][0m Subsystem damaged! Repair in -378.3 stardates
-Torpedo hit Klingon at [7,5]: 7 units damage
+Torpedo hit Tholian at [7,5]: 7 units damage
 
 events 66 178
 ObstacleEncountered 1 2
@@ -3245,7 +3245,7 @@ SingularityAbsorption
 TorpedoFired 0 7 16.85
 TorpedoHit 1 9 11 1216.4058537606732 0[35m*** GRAVITATIONAL SINGULARITY: Photon torpedo absorbed into event horizon! ***[0m
 [33m[TORPEDO TRACK][0m Fired on course 16.85 from [0,7]
-Torpedo hit Klingon at [1,9]: 1216 units damage
+Torpedo hit Tholian at [1,9]: 1216 units damage
 
 events 135 181
 HazardTriggered Ion storm turbulence deflected course
@@ -3278,7 +3278,7 @@ events 96 234
 TorpedoHit 4 0 11 0.375 0
 PhaserHit 4 5 328 0
 WormholeJump 3 8 4 3
-GameOver 3 3.3499999999999996Torpedo hit Klingon at [4,0]: 0 units damage
+GameOver 3 3.3499999999999996Torpedo hit Tholian at [4,0]: 0 units damage
 Phaser beam hit target at [4,5]: 328 units
 [36m*** SUBSPACE RIFT: Wormhole transit completed to Quadrant [3, 8] Sector [4, 3]! ***[0m
 [31;1m*** MISSION TERMINATED ***[0m (Score: 3)
@@ -3290,7 +3290,7 @@ ConditionChanged[33m*** ENVIRONMENT ALERT: Entering Ion Storm! High energy part
 events 81 168
 TorpedoHit 2 4 11 -438.2113265522693 0
 SubsystemDamaged -1 263.25
-GameOver 5 4001Torpedo hit Klingon at [2,4]: -438 units damage
+GameOver 5 4001Torpedo hit Tholian at [2,4]: -438 units damage
 [31;1m[DAMAGE][0m Subsystem damaged! Repair in 263.2 stardates
 [31;1m*** MISSION TERMINATED ***[0m (Score: 4001)
 

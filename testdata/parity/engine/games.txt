@@ -144,7 +144,7 @@ E [{"type":"ShipMoved","data":{"FromQuad":[5,1],"ToQuad":[7,3],"FromSector":[4,4
 H 0f26c64edcffa71f
 > 746f7220342033
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[4,3],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":3.141592653589793}},{"type":"RomulanDecloak","data":{"RomulanID":2,"Sector":[4,3]}},{"type":"TorpedoHit","data":{"Target":[4,3],"Entity":10,"Damage":500,"Destroyed":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":133.61526121757348,"ShieldDamage":133.61526121757348,"HullDamage":0}},{"type":"KlingonCounterAttack","data":{"EnemyID":2,"Damage":360,"ShieldDamage":360,"HullDamage":0}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":3.141592653589793}},{"type":"RomulanDecloak","data":{"RomulanID":2,"Sector":[4,3]}},{"type":"TorpedoHit","data":{"Target":[4,3],"Entity":10,"Damage":100,"Destroyed":false,"ShieldDamage":400}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":133.61526121757348,"ShieldDamage":133.61526121757348,"HullDamage":0}},{"type":"KlingonCounterAttack","data":{"EnemyID":2,"Damage":360,"ShieldDamage":360,"HullDamage":0}}]
 H 7fcfdc110a860576
 > 70686120333030
 P {"Action":{"Type":"engine.ActionFirePhasers","Data":{"Energy":300,"ManualAllocation":null}},"Special":"","Error":null}
@@ -947,7 +947,7 @@ K [{"ID":1,"Sector":[6,2],"Energy":1391.9191496445019,"Shields":0,"IsCommander":
 R f4e7a6efc620133706a15af1a3a0d83d
 > 746f7220352033
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[5,3],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[7,3],"Angle":1.5707963267948966}},{"type":"TorpedoHit","data":{"Target":[5,3],"Entity":11,"Damage":500,"Destroyed":false}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":true}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":487.17170237557565,"ShieldDamage":0,"HullDamage":487.17170237557565}},{"type":"WebSegmentLaid","data":{"SpinnerID":2,"Coord":[5,3]}}]
+E [{"type":"TorpedoFired","data":{"Origin":[7,3],"Angle":1.5707963267948966}},{"type":"TorpedoHit","data":{"Target":[5,3],"Entity":11,"Damage":200,"Destroyed":false,"ShieldDamage":300}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":true}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":487.17170237557565,"ShieldDamage":0,"HullDamage":487.17170237557565}},{"type":"WebSegmentLaid","data":{"SpinnerID":2,"Coord":[5,3]}}]
 H f6c8461f013bceaa
 > 6e6176207320372034
 P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":1,"DestSector":[7,4],"DestQuad":[0,0]}},"Special":"","Error":null}
@@ -1268,7 +1268,7 @@ E [{"type":"TorpedoFired","data":{"Origin":[8,6],"Angle":5.969026041820607}},{"t
 H f56648a9e7b2a533
 > 746f7220382035
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[8,5],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[8,6],"Angle":3.141592653589793}},{"type":"RomulanDecloak","data":{"RomulanID":1,"Sector":[8,5]}},{"type":"TorpedoHit","data":{"Target":[8,5],"Entity":10,"Damage":500,"Destroyed":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":293.33333333333337,"ShieldDamage":0,"HullDamage":293.33333333333337}}]
+E [{"type":"TorpedoFired","data":{"Origin":[8,6],"Angle":3.141592653589793}},{"type":"RomulanDecloak","data":{"RomulanID":1,"Sector":[8,5]}},{"type":"TorpedoHit","data":{"Target":[8,5],"Entity":10,"Damage":266.66666666666663,"Destroyed":false,"ShieldDamage":233.33333333333334}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":293.33333333333337,"ShieldDamage":0,"HullDamage":293.33333333333337}}]
 H 6080804d1cd9b0c0
 > 73686520313335
 P {"Action":{"Type":"engine.ActionShields","Data":{"Amount":135}},"Special":"","Error":null}
@@ -1759,7 +1759,7 @@ P {"Action":null,"Special":"help xyz","Error":null}
 H fed85d6bb9a2dd92
 > 746f7220352034
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[5,4],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":4.71238898038469}},{"type":"RomulanDecloak","data":{"RomulanID":1,"Sector":[5,4]}},{"type":"TorpedoHit","data":{"Target":[5,4],"Entity":10,"Damage":500,"Destroyed":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":265,"ShieldDamage":265,"HullDamage":0}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":4.71238898038469}},{"type":"RomulanDecloak","data":{"RomulanID":1,"Sector":[5,4]}},{"type":"TorpedoHit","data":{"Target":[5,4],"Entity":10,"Damage":337.5,"Destroyed":false,"ShieldDamage":162.5}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":265,"ShieldDamage":265,"HullDamage":0}}]
 H dd069d8853eb0aaa
 > 7068612036333320352c34
 P {"Action":{"Type":"engine.ActionPhaserDirect","Data":{"TargetSector":[5,4],"Energy":633}},"Special":"","Error":null}
@@ -1901,7 +1901,7 @@ P {"Action":null,"Special":"","Error":"phaser energy must be positive"}
 H c4458b8c040beaaf
 > 746f7220352034
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[5,4],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[3,4],"Angle":4.71238898038469}},{"type":"RomulanDecloak","data":{"RomulanID":3,"Sector":[4,4]}},{"type":"TorpedoHit","data":{"Target":[4,4],"Entity":10,"Damage":500,"Destroyed":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":3,"Damage":360,"ShieldDamage":0,"HullDamage":360}},{"type":"GameOver","data":{"Reason":5,"Score":0}}]
+E [{"type":"TorpedoFired","data":{"Origin":[3,4],"Angle":4.71238898038469}},{"type":"RomulanDecloak","data":{"RomulanID":3,"Sector":[4,4]}},{"type":"TorpedoHit","data":{"Target":[4,4],"Entity":10,"Damage":100,"Destroyed":false,"ShieldDamage":400}},{"type":"KlingonCounterAttack","data":{"EnemyID":3,"Damage":360,"ShieldDamage":0,"HullDamage":360}},{"type":"GameOver","data":{"Reason":5,"Score":0}}]
 G 5 {"KlingonsKilled":1,"KlingonPoints":10,"CommandersKilled":1,"CommanderPoints":50,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":1,"SurrenderedPoints":1,"ElapsedStardates":73.8528138528136,"KillRate":0.027080890973036436,"KillRatePoints":14,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":62,"CasualtyPenalty":62,"TotalScore":13,"RankTitle":"Starfleet Cadet","RankBadge":"[CADET]"}
 H 16c868552560b950
 > 2020
@@ -2489,7 +2489,7 @@ E [{"type":"ShipMoved","data":{"FromQuad":[2,7],"ToQuad":[2,7],"FromSector":[4,4
 H 929125d8bf09c8e1
 > 746f7220332032
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[3,2],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,3],"Angle":2.356194490192345}},{"type":"RomulanDecloak","data":{"RomulanID":2,"Sector":[3,2]}},{"type":"TorpedoHit","data":{"Target":[3,2],"Entity":10,"Damage":500,"Destroyed":false}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":true}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":391.0899187309349,"ShieldDamage":0,"HullDamage":391.0899187309349}},{"type":"KlingonCounterAttack","data":{"EnemyID":2,"Damage":254.5584412271571,"ShieldDamage":0,"HullDamage":254.5584412271571}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,3],"Angle":2.356194490192345}},{"type":"RomulanDecloak","data":{"RomulanID":2,"Sector":[3,2]}},{"type":"TorpedoHit","data":{"Target":[3,2],"Entity":10,"Damage":100,"Destroyed":false,"ShieldDamage":400}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":true}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":391.0899187309349,"ShieldDamage":0,"HullDamage":391.0899187309349}},{"type":"KlingonCounterAttack","data":{"EnemyID":2,"Damage":254.5584412271571,"ShieldDamage":0,"HullDamage":254.5584412271571}}]
 H e005d3362228904e
 > 6e617620352033
 P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":1,"DestSector":[5,3],"DestQuad":[0,0]}},"Special":"","Error":null}
@@ -2825,7 +2825,7 @@ X attacker not found in quadrant
 H bc4bdad9d36d709e
 > 746f7220372034
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[7,4],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":4.71238898038469}},{"type":"TorpedoHit","data":{"Target":[7,4],"Entity":11,"Damage":500,"Destroyed":false}},{"type":"WebSegmentLaid","data":{"SpinnerID":1,"Coord":[7,4]}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":4.71238898038469}},{"type":"TorpedoHit","data":{"Target":[7,4],"Entity":11,"Damage":200,"Destroyed":false,"ShieldDamage":300}},{"type":"WebSegmentLaid","data":{"SpinnerID":1,"Coord":[7,4]}}]
 H e9c2639563587047
 > 6e6176207120362031
 P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":1,"DestSector":[0,0],"DestQuad":[6,1]}},"Special":"","Error":null}
@@ -2840,7 +2840,7 @@ E [{"type":"ShipMoved","data":{"FromQuad":[6,1],"ToQuad":[1,8],"FromSector":[4,4
 H dbba13082f0f2f68
 > 746f7220342036
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[4,6],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":-0}},{"type":"TorpedoHit","data":{"Target":[4,6],"Entity":11,"Damage":500,"Destroyed":false}},{"type":"WebSegmentLaid","data":{"SpinnerID":1,"Coord":[4,6]}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":-0}},{"type":"TorpedoHit","data":{"Target":[4,6],"Entity":11,"Damage":200,"Destroyed":false,"ShieldDamage":300}},{"type":"WebSegmentLaid","data":{"SpinnerID":1,"Coord":[4,6]}}]
 H 445ae368496ead09
 > 68656c70
 P {"Action":null,"Special":"help","Error":null}
@@ -2918,7 +2918,7 @@ E [{"type":"PhaserFired","data":{"Energy":50}},{"type":"PhaserHit","data":{"Targ
 H 72b92842d81c5e49
 > 746f7220332035
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[3,5],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":0.7853981633974483}},{"type":"TorpedoHit","data":{"Target":[3,5],"Entity":10,"Damage":500,"Destroyed":false}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":true}},{"type":"PlasmaImpact","data":{"TorpedoID":1001,"ShieldDamage":0,"HullDamage":800}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":228.9165982216946,"ShieldDamage":0,"HullDamage":228.9165982216946}},{"type":"KlingonCounterAttack","data":{"EnemyID":2,"Damage":254.5584412271571,"ShieldDamage":0,"HullDamage":254.5584412271571}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":0.7853981633974483}},{"type":"TorpedoHit","data":{"Target":[3,5],"Entity":10,"Damage":100,"Destroyed":false,"ShieldDamage":400}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":true}},{"type":"PlasmaImpact","data":{"TorpedoID":1001,"ShieldDamage":0,"HullDamage":800}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":228.9165982216946,"ShieldDamage":0,"HullDamage":228.9165982216946}},{"type":"KlingonCounterAttack","data":{"EnemyID":2,"Damage":254.5584412271571,"ShieldDamage":0,"HullDamage":254.5584412271571}}]
 H e467686954ae6c25
 > 70686120353030
 P {"Action":{"Type":"engine.ActionFirePhasers","Data":{"Energy":500,"ManualAllocation":null}},"Special":"","Error":null}
@@ -3584,7 +3584,7 @@ E [{"type":"ShipMoved","data":{"FromQuad":[6,4],"ToQuad":[5,1],"FromSector":[5,3
 H 571fa9f3ba77b083
 > 746f7220372038
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[7,8],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":5.639684198386302}},{"type":"TorpedoHit","data":{"Target":[7,8],"Entity":11,"Damage":500,"Destroyed":false}},{"type":"WebSegmentLaid","data":{"SpinnerID":1,"Coord":[7,8]}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":5.639684198386302}},{"type":"TorpedoHit","data":{"Target":[7,8],"Entity":11,"Damage":200,"Destroyed":false,"ShieldDamage":300}},{"type":"WebSegmentLaid","data":{"SpinnerID":1,"Coord":[7,8]}}]
 H 1379a36a6d724680
 > 746f7220382038
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[8,8],"Angle":0,"Direction":0}},"Special":"","Error":null}
@@ -3604,7 +3604,7 @@ E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":5.497787143782138}},{"t
 H ec9976d234a2842f
 > 746f7220342036
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[4,6],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":-0}},{"type":"RomulanDecloak","data":{"RomulanID":2,"Sector":[4,6]}},{"type":"TorpedoHit","data":{"Target":[4,6],"Entity":10,"Damage":500,"Destroyed":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":172.58417437512688,"ShieldDamage":0,"HullDamage":172.58417437512688}},{"type":"KlingonCounterAttack","data":{"EnemyID":2,"Damage":180,"ShieldDamage":0,"HullDamage":180}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":-0}},{"type":"RomulanDecloak","data":{"RomulanID":2,"Sector":[4,6]}},{"type":"TorpedoHit","data":{"Target":[4,6],"Entity":10,"Damage":100,"Destroyed":false,"ShieldDamage":400}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":172.58417437512688,"ShieldDamage":0,"HullDamage":172.58417437512688}},{"type":"KlingonCounterAttack","data":{"EnemyID":2,"Damage":180,"ShieldDamage":0,"HullDamage":180}}]
 H 7b59440583b6f55c
 > 746f72206320372e39
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[0,0],"Angle":0,"Direction":7.9}},"Special":"","Error":null}
@@ -4019,7 +4019,7 @@ E [{"type":"ShipMoved","data":{"FromQuad":[7,7],"ToQuad":[5,5],"FromSector":[6,8
 H 82846b72bb1f206a
 > 746f7220322038
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[2,8],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":0.4636476090008061}},{"type":"RomulanDecloak","data":{"RomulanID":3,"Sector":[3,7]}},{"type":"TorpedoHit","data":{"Target":[3,7],"Entity":10,"Damage":500,"Destroyed":false}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":true}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":533.6116417883229,"ShieldDamage":0,"HullDamage":533.6116417883229}},{"type":"KlingonCounterAttack","data":{"EnemyID":2,"Damage":242.82689662661383,"ShieldDamage":0,"HullDamage":242.82689662661383}},{"type":"KlingonCounterAttack","data":{"EnemyID":3,"Damage":113.84199576606166,"ShieldDamage":0,"HullDamage":113.84199576606166}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":0.4636476090008061}},{"type":"RomulanDecloak","data":{"RomulanID":3,"Sector":[3,7]}},{"type":"TorpedoHit","data":{"Target":[3,7],"Entity":10,"Damage":100,"Destroyed":false,"ShieldDamage":400}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":true}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":533.6116417883229,"ShieldDamage":0,"HullDamage":533.6116417883229}},{"type":"KlingonCounterAttack","data":{"EnemyID":2,"Damage":242.82689662661383,"ShieldDamage":0,"HullDamage":242.82689662661383}},{"type":"KlingonCounterAttack","data":{"EnemyID":3,"Damage":113.84199576606166,"ShieldDamage":0,"HullDamage":113.84199576606166}}]
 H ce5082de4a3bf429
 > 746f7220322038
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[2,8],"Angle":0,"Direction":0}},"Special":"","Error":null}
@@ -4304,7 +4304,7 @@ E# a46279ef1ccc0667
 H 8e3682fee56fab52
 > 746f7220382031
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[8,1],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":4.068887871591405}},{"type":"TorpedoHit","data":{"Target":[7,1],"Entity":11,"Damage":500,"Destroyed":false}},{"type":"WebSegmentLaid","data":{"SpinnerID":1,"Coord":[7,1]}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":4.068887871591405}},{"type":"TorpedoHit","data":{"Target":[7,1],"Entity":11,"Damage":240,"Destroyed":false,"ShieldDamage":260}},{"type":"WebSegmentLaid","data":{"SpinnerID":1,"Coord":[7,1]}}]
 H f7b9e7194a6fe385
 > 746f7220382031
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[8,1],"Angle":0,"Direction":0}},"Special":"","Error":null}
@@ -4368,7 +4368,7 @@ E [{"type":"PhaserHit","data":{"Target":[2,2],"KlingonID":1,"Damage":253.4977810
 H fbac674cdffafcbe
 > 746f7220342033
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[4,3],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":3.141592653589793}},{"type":"RomulanDecloak","data":{"RomulanID":2,"Sector":[4,3]}},{"type":"TorpedoHit","data":{"Target":[4,3],"Entity":10,"Damage":500,"Destroyed":false}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":true}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":223.05684032776955,"ShieldDamage":0,"HullDamage":223.05684032776955}},{"type":"KlingonCounterAttack","data":{"EnemyID":2,"Damage":360,"ShieldDamage":0,"HullDamage":360}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":3.141592653589793}},{"type":"RomulanDecloak","data":{"RomulanID":2,"Sector":[4,3]}},{"type":"TorpedoHit","data":{"Target":[4,3],"Entity":10,"Damage":100,"Destroyed":false,"ShieldDamage":400}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":true}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":223.05684032776955,"ShieldDamage":0,"HullDamage":223.05684032776955}},{"type":"KlingonCounterAttack","data":{"EnemyID":2,"Damage":360,"ShieldDamage":0,"HullDamage":360}}]
 H 99d57eb53ddfffa1
 > 746f7220322032
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[2,2],"Angle":0,"Direction":0}},"Special":"","Error":null}
@@ -4958,7 +4958,7 @@ P {"Action":null,"Special":"scenarios","Error":null}
 H 656201714bc2c2d4
 > 746f7220322036
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[2,6],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[6,2],"Angle":0.7853981633974483}},{"type":"TorpedoHit","data":{"Target":[2,6],"Entity":11,"Damage":500,"Destroyed":false}}]
+E [{"type":"TorpedoFired","data":{"Origin":[6,2],"Angle":0.7853981633974483}},{"type":"TorpedoHit","data":{"Target":[2,6],"Entity":11,"Damage":389.858170748588,"Destroyed":false,"ShieldDamage":110.14182925141199}}]
 H 34b0d9319020eb31
 > 6e6176207320372033
 P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":1,"DestSector":[7,3],"DestQuad":[0,0]}},"Special":"","Error":null}
@@ -4994,7 +4994,7 @@ E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":0.6435011087932844}},{"
 H 6b299c3b1669b6cc
 > 746f7220322038
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[2,8],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":0.4636476090008061}},{"type":"TorpedoHit","data":{"Target":[2,8],"Entity":11,"Damage":500,"Destroyed":false}},{"type":"WebSegmentLaid","data":{"SpinnerID":1,"Coord":[2,8]}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":0.4636476090008061}},{"type":"TorpedoHit","data":{"Target":[2,8],"Entity":11,"Damage":200,"Destroyed":false,"ShieldDamage":300}},{"type":"WebSegmentLaid","data":{"SpinnerID":1,"Coord":[2,8]}}]
 H 9df63710aa14fa26
 > 6e6176207120362032
 P {"Action":{"Type":"engine.ActionMove","Data":{"Course":0,"Warp":1,"DestSector":[0,0],"DestQuad":[6,2]}},"Special":"","Error":null}
@@ -5025,7 +5025,7 @@ E [{"type":"PhaserHit","data":{"Target":[6,2],"KlingonID":1,"Damage":41.36574669
 H 05b26fa361d22016
 > 746f7220352032
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[5,2],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":3.6052402625905993}},{"type":"TorpedoHit","data":{"Target":[5,2],"Entity":11,"Damage":500,"Destroyed":false}},{"type":"WebSegmentLaid","data":{"SpinnerID":1,"Coord":[5,2]}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":3.6052402625905993}},{"type":"TorpedoHit","data":{"Target":[5,2],"Entity":11,"Damage":241.36574669941302,"Destroyed":false,"ShieldDamage":258.634253300587}},{"type":"WebSegmentLaid","data":{"SpinnerID":1,"Coord":[5,2]}}]
 H c9bf9f5ce5ccb65f
 > 7068612033353320342032
 P {"Action":{"Type":"engine.ActionPhaserDirect","Data":{"TargetSector":[4,2],"Energy":353}},"Special":"","Error":null}
@@ -5527,7 +5527,7 @@ E# 18ea534549d58495
 H 0b3c3359ffa5a8a4
 > 746f7220322e3831
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[0,0],"Angle":2.81,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":2.81}},{"type":"TorpedoHit","data":{"Target":[3,1],"Entity":11,"Damage":500,"Destroyed":false}},{"type":"WebSegmentLaid","data":{"SpinnerID":1,"Coord":[3,1]}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":2.81}},{"type":"TorpedoHit","data":{"Target":[3,1],"Entity":11,"Damage":266.66666666666663,"Destroyed":false,"ShieldDamage":233.33333333333334}},{"type":"WebSegmentLaid","data":{"SpinnerID":1,"Coord":[3,1]}}]
 H 67f2179be778e7a1
 > 746f7220312e3131
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[0,0],"Angle":1.11,"Direction":0}},"Special":"","Error":null}
@@ -6364,7 +6364,7 @@ E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":2.158798930342464}},{"t
 H a5d97aa73cbec1e5
 > 746f7220312032
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[1,2],"Angle":0,"Direction":0}},"Special":"","Error":null}
-E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":2.158798930342464}},{"type":"TorpedoHit","data":{"Target":[1,2],"Entity":11,"Damage":500,"Destroyed":false}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":true}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":391.6876451131125,"ShieldDamage":0,"HullDamage":391.6876451131125}}]
+E [{"type":"TorpedoFired","data":{"Origin":[4,4],"Angle":2.158798930342464}},{"type":"TorpedoHit","data":{"Target":[1,2],"Entity":11,"Damage":200,"Destroyed":false,"ShieldDamage":300}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":true}},{"type":"KlingonCloakState","data":{"KlingonID":1,"Cloaked":false}},{"type":"KlingonCounterAttack","data":{"EnemyID":1,"Damage":391.6876451131125,"ShieldDamage":0,"HullDamage":391.6876451131125}}]
 H a243003cb604bb12
 > 746f7220352036
 P {"Action":{"Type":"engine.ActionFireTorpedo","Data":{"Target":[5,6],"Angle":0,"Direction":0}},"Special":"","Error":null}
@@ -6870,7 +6870,7 @@ E# f0fbe6d3656143b1
 H e4c671000c82b823
 > 746f7220322033
 P# 95714d360588b852
-E# 242927eb38ec5808
+E# 7d941cc46a7da5ee
 H 33746546a3b01e4f
 > 7068612031353030
 P# 97aba585b52ff062
@@ -6937,7 +6937,7 @@ X# f7f488a7554d6a7d
 H ed5f332e04e28bd1
 > 746f7220312033
 P# 0bb2f02e117dd57b
-E# 559b0fced25552c8
+E# 2266d4a5d26c1032
 H 4e4b9d7f50a2f8ec
 > 7068612033303820322034
 P# e7d6252e5201c979
@@ -7338,7 +7338,7 @@ E# 91d61a502cd7c6ef
 H f4e4c05cf18037a9
 > 746f7220362034
 P# 0f39f010f76af44b
-E# 86279a5103ab7084
+E# 602cb7a2980d43d4
 H b6884ce94bce5933
 > 6c727363616e
 E# 0e24d3007df282cb
@@ -7734,7 +7734,7 @@ E# cae97c177d3be369
 H e7df67e116bd90b6
 > 746f7220312034
 P# e9165c9212e26dae
-E# 794527e600701427
+E# 59b85f4af2d637d3
 H 494dfce0434eaedb
 > 70686120323030
 P# 3d9beee204506526
@@ -7816,7 +7816,7 @@ P# de51db14db121c5a
 E# 858ba88db9625dcc
 H 15ed71b564ffec3f
 A engine.ActionTorpedoDirect {"TargetSector":[7,1]}
-E# 1a706ac0aae5f804
+E# 5c7d1f9274e8ff40
 H 7e18c02feeffbe7f
 > 7068612034373120372c31
 P# 10119ad4e60e88da
@@ -8027,7 +8027,7 @@ E# add6018d739718ec
 H ae985b2a64c7459e
 > 746f7220312031
 P# 1f63db22111e0a45
-E# c092c76341cd6c32
+E# 07fcd992a5342c00
 H 4b9d824649ab7d2d
 > 746f7220372035
 P# 82300d44171436b3
@@ -8364,7 +8364,7 @@ X# efe33e3ce9c06999
 H 28f19d756b6d07eb
 > 746f7220342037
 P# 2da16516739e63e8
-E# cd799f3485c65ff5
+E# d6706de895537581
 H 4e8a64f0fe6cc58d
 > 746f7220312e3938
 P# f6161dc445a56885
@@ -9130,7 +9130,7 @@ P# 4a41b116f3e0565a
 H d442c0ffcd817082
 > 746f7220342035
 P# df4dc1ac90998b72
-E# 58037fd1ab3f078a
+E# c6fe9d1eef176530
 G 5 {"KlingonsKilled":0,"KlingonPoints":0,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":162.48376623376635,"KillRate":0,"KillRatePoints":0,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":28,"CasualtyPenalty":28,"TotalScore":-28,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H 62bd42dbeb62663e
 > 746f72206320362e31
@@ -9314,7 +9314,7 @@ X# f7f488a7554d6a7d
 H 1a67dca982118fd5
 > 746f7220362032
 P# 193e49739bb11901
-E# 3158e5d0fbf1c80e
+E# dc01ddba5e672b60
 G 5 {"KlingonsKilled":0,"KlingonPoints":0,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":28,"KillRate":0,"KillRatePoints":0,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":61,"CasualtyPenalty":61,"TotalScore":-61,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H ce7b7014df88ccbb
 > 7068612036343520362032
@@ -9595,7 +9595,7 @@ M 9 4 3
 H 61b8f8cdbe5f1e33
 > 746f7220352034
 P# 47611608a9a7ab62
-E# 8e8d310c0e225e6c
+E# 27145b012d977654
 H 1570010937f575ee
 M 7 1 3
 H 5524fd2d36136187
@@ -9920,7 +9920,7 @@ E# 6c4b0529f9479491
 H 068e8e3c81a783c8
 > 746f7220382038
 P# 9121074e4d4fd5d5
-E# 2651a17b5b82d4a1
+E# 1743f641a2432670
 H e269b08fa6c6349d
 > 70686120333030
 P# 4b35511c4982234f
@@ -10548,7 +10548,7 @@ X# 8ad79a18d8ee491d
 H 2a08f7b4ce651cc1
 > 746f7220352032
 P# 68e890c2ee2e7f64
-E# 16ff945865003c14
+E# e1bc5d2b283985bb
 G 5 {"KlingonsKilled":1,"KlingonPoints":10,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":1,"SurrenderedPoints":1,"ElapsedStardates":163.9923076923078,"KillRate":0.0060978469909470385,"KillRatePoints":3,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":20,"CasualtyPenalty":20,"TotalScore":-6,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H 77b4fa2d564b04ea
 > 746f7220352034
@@ -10862,7 +10862,7 @@ X# f7f488a7554d6a7d
 H f875dcb15b1856a9
 > 746f7220342035
 P# df4dc1ac90998b72
-E# 4f0bd57a6e4aad6c
+E# f0fb00843bc1a8b4
 G 5 {"KlingonsKilled":1,"KlingonPoints":10,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":55.63333333333367,"KillRate":0.017974835230676944,"KillRatePoints":9,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":30,"CasualtyPenalty":30,"TotalScore":-11,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H f556a3d3e2283043
 > 746f7220332e3736
@@ -11138,7 +11138,7 @@ E# af92636e7878868a
 H 4c6c7ca35908457b
 > 746f7220352038
 P# 4ea4a56c9fe8c5b6
-E# dbb902c301c7d445
+E# c43f30bb04179c21
 H fe819093f26f6189
 > 6e617620332035
 P# 42dd008207eba70b
@@ -11241,7 +11241,7 @@ X# 050e8d3be1810bd6
 H 9259411e761914e7
 > 746f7220362033
 P# d2c5d99796edfbbe
-E# 2120033aab0e6b59
+E# 21d334364badf22f
 G 5 {"KlingonsKilled":0,"KlingonPoints":0,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":182.9000000000001,"KillRate":0,"KillRatePoints":0,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":56,"CasualtyPenalty":56,"TotalScore":-56,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H 0117537b5393842d
 > 746f7220352035
@@ -11491,7 +11491,7 @@ P# f38682d08d732e6e
 H 2cbad836fc0397bb
 > 746f7220352033
 P# ddffe90544824ce7
-E# f250f9d06e9f8f60
+E# c22df15be1143aff
 H d9f58f33c380decd
 > 70686120383030
 P# 852db98d34abd6d0
@@ -12362,7 +12362,7 @@ E# baaff29d8bc1f874
 H 19872d3a61db08e6
 > 746f7220342032
 P# c253b5270b14c3f7
-E# 0485b287d8732ee5
+E# 2e7d857d563beee5
 H b451fc6a08ecd0bc
 > 746f7220342032
 P# c253b5270b14c3f7
@@ -12669,7 +12669,7 @@ E# 4ab030d85aa4c5f1
 H ef80fda3a214bf5f
 > 746f7220352035
 P# 8b7f3a2dd7678105
-E# 94fdb720114e0ef2
+E# 7c3bcad19876908c
 H de5b0dc713956052
 > 6e6176
 P# 43762fcf0b7e26b6
@@ -13782,7 +13782,7 @@ E# a74ba2755bf0bbfe
 H ac564f24e7ef1ce6
 > 746f7220322038
 P# c23fab091720aa33
-E# 82fe589cae3a122b
+E# 491121d8c66babff
 H 0543a4703e840740
 > 746f7220332038
 P# 8342cdfb05e874a8
@@ -14043,7 +14043,7 @@ E# 82c73c01380cef07
 H 261d243538fa87c2
 > 746f7220322032
 P# 5a7263c107ebdcf5
-E# eb7d959619cf8623
+E# d6c9c2731b73ea51
 H 42192bb1fcb85709
 > 73686520373736
 P# 8815591ffa426437
@@ -14131,7 +14131,7 @@ E# 3bd1c5c0768ee180
 H 0d1965a0dfceb722
 > 746f7220352033
 P# ddffe90544824ce7
-E# 5fe600e47c23b3cc
+E# 3c91fb92595fcaf4
 H 73477beb7a38e885
 > 7068612031353030
 P# 97aba585b52ff062
@@ -14409,7 +14409,7 @@ X# 1a0aa46c2221b0ec
 H ac3e1c24a2a8182c
 > 746f7220342037
 P# 2da16516739e63e8
-E# c14e7b2b1070232c
+E# 689a25b915fb9fee
 H 4103ebbc5f5fb98a
 > 6c727363616e
 E# cfe95d53de84974f
@@ -14478,7 +14478,7 @@ M 8 7 2
 H bf973ef427aa1525
 > 746f7220352034
 P# 47611608a9a7ab62
-E# ae5e7955d17db7e4
+E# 5703b3afa2cc9b4a
 H c8f782a6390764b3
 > 6e6176207320372032
 P# 7178feb1252325a0
@@ -14679,7 +14679,7 @@ E# a0e29565a6915dd3
 H 0b6f4dcc9f175e13
 > 746f7220372033
 P# 8114303310772029
-E# 4855d93309ceb7bf
+E# d122cc282fa13a55
 H df3ade4511b3d703
 > 2020
 P# f38682d08d732e6e
@@ -14932,7 +14932,7 @@ E# 0e2473dbb7eb540d
 H 5a78c9de3ff983b5
 > 746f72206320332e37
 P# 6380c19041033377
-E# 1bd8c04487bbf59b
+E# c4201862eed9a89d
 H 46947cf02ec4de58
 > 746f72206320392e30
 P# 83e2b6c2f363c354
@@ -15469,7 +15469,7 @@ E# 393339c1a9d0e135
 H 786121ff118d5da2
 > 746f7220372031
 P# 94fa2566a782071f
-E# f66130fb25a5e46f
+E# 1cc43f5806b9f459
 H b5b2a23ac6ede917
 > 746f7220372031
 P# 94fa2566a782071f
@@ -15497,7 +15497,7 @@ E# 70184a2819d36a16
 H 9e9249b69f8ea23f
 > 746f7220342037
 P# 2da16516739e63e8
-E# bb78bab3e14d9005
+E# 8c0c9c8c52c09913
 H 4a4fdf257c0d5213
 > 73686520363734
 P# 508aeae7cd347dd4
@@ -15855,7 +15855,7 @@ X# cd2f6b9eb23938fb
 H 80462b45585d803f
 > 746f7220342035
 P# df4dc1ac90998b72
-E# 5839e2b6a61fdd1f
+E# 51afc34def2bb6c7
 H 08c80c34bebb61c6
 > 6e617620332e393920302e3233
 P# 5fb25ea628546e8a
@@ -15879,7 +15879,7 @@ E# b4130d7438d8bacb
 H 342fbe963b009cfe
 > 746f7220312032
 P# 4aac5da2662a69d8
-E# 6a2b1709d1db9075
+E# e2fed4e03be1bff8
 H 5b9f9279cc7d6ae5
 > 736865202d373833
 P# 1e0d4badd9c60a74
@@ -16176,7 +16176,7 @@ P# 60b5a76147f20b76
 H 967b667195f6abf2
 > 746f7220342033
 P# ab0acc830e56d6b4
-E# f921229753453103
+E# 84815e44843df321
 G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":40,"KillRate":0.05,"KillRatePoints":25,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":30,"CasualtyPenalty":30,"TotalScore":15,"RankTitle":"Starfleet Cadet","RankBadge":"[CADET]"}
 H 0fa52f4bc6f31a22
 > 7068612031353030
@@ -16584,7 +16584,7 @@ E# 60801c403b88c8b6
 H 43329d675a39fb20
 > 746f7220362038
 P# 184bb43c0bb9ae3f
-E# fee56d12a69c4dbf
+E# b678836ffbc0ebdf
 H 83cf0b78f278cb8b
 > 6e6176207120362034
 P# 97dcbbbde2964cb3
@@ -16930,7 +16930,7 @@ E# dbcc26555fa328c7
 H 1344646cfa33a23e
 > 746f7220362035
 P# 0be47d1f14711b68
-E# e81bd29cba7f7d44
+E# de46c8f387f59b96
 H 64a5ec75f86ecac2
 > 6e61762071203420342030
 P# 0cdd7e405207e919
@@ -18279,7 +18279,7 @@ E# f9d98d9ecc3454c8
 H a4c93d2802069a11
 > 746f7220362032
 P# 193e49739bb11901
-E# b6fe1a264472a4c6
+E# 3e3a1ffb79d4ec68
 H bfa91088cbca3911
 > 6c727363616e
 E# 38846e596951a64c
@@ -18646,7 +18646,7 @@ E# 5b73df08ee7afc2c
 H 2a8bb62f7dfe56ce
 > 746f7220352033
 P# ddffe90544824ce7
-E# 05d118d2dc0cce54
+E# b0f21a60c0f9454c
 G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":83,"KillRate":0.024096385542168676,"KillRatePoints":12,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":11,"CasualtyPenalty":11,"TotalScore":21,"RankTitle":"Starfleet Cadet","RankBadge":"[CADET]"}
 H 6e63fb8e95e51357
 > 6e6176207120312035
@@ -18848,7 +18848,7 @@ E# af8d79df265da052
 H 2b0f99499ee528c4
 > 746f7220382035
 P# ef0d2de857262586
-E# 343b20d2f579aa5d
+E# 865ffbb2b38a26e9
 H ca74b7d44192ab79
 M 9 2 2
 H 14d72892acca8924
@@ -19106,7 +19106,7 @@ E# d76abd3eac800502
 H c2b28f6c9c5c74d7
 > 746f7220342035
 P# df4dc1ac90998b72
-E# 58696f32a4495adb
+E# eb43615e5aba6850
 G 5 {"KlingonsKilled":1,"KlingonPoints":10,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":2,"SurrenderedPoints":2,"ElapsedStardates":34.166666666666515,"KillRate":0.02926829268292696,"KillRatePoints":15,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":45,"CasualtyPenalty":45,"TotalScore":-18,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H 3330f4465d450487
 > 73686520323832
@@ -19731,7 +19731,7 @@ E# b41c7e0e928ee9f1
 H 37b05143875507dd
 > 746f7220342035
 P# df4dc1ac90998b72
-E# 0fb3fc0c4fc9df29
+E# 1c5cc5a42bc543c7
 H 48477d91356312b9
 > 7068612031353030
 P# 97aba585b52ff062
@@ -20532,7 +20532,7 @@ E# 10f1fbeaaa979f19
 H 7bed724519468d6f
 > 746f7220312032
 P# 4aac5da2662a69d8
-E# 77dde0249fec9dac
+E# 64f52108e966b601
 H f7f48b8df0f2d841
 > 6c727363616e
 E# a4817aa1debed5fe
@@ -20819,7 +20819,7 @@ E# d94b6e6616cb57d8
 H 5861da0fc211732c
 > 746f7220352032
 P# 68e890c2ee2e7f64
-E# 09e2f6b12d23f208
+E# c7f0bab932af9012
 H bc8f46618868feb1
 > 70686120333030
 P# 4b35511c4982234f
@@ -22114,7 +22114,7 @@ X# f7f488a7554d6a7d
 H f71b025134ad1301
 > 746f7220352034
 P# 47611608a9a7ab62
-E# 88dafdb99a358bc6
+E# a5d124693d88a7c4
 G 5 {"KlingonsKilled":0,"KlingonPoints":0,"CommandersKilled":1,"CommanderPoints":50,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":5.882352941176578,"KillRate":0.1699999999999969,"KillRatePoints":85,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":67,"CasualtyPenalty":67,"TotalScore":68,"RankTitle":"Starfleet Cadet","RankBadge":"[CADET]"}
 H e8299160d34cb619
 > 6e617620352034
@@ -23002,7 +23002,7 @@ E# 26628a1738534524
 H 65e06d388cf20795
 > 746f7220372037
 P# f9084f66dfc5841d
-E# f578405d7eb1db60
+E# 33af3b66de7a7368
 H ca1c008c53ade947
 > 6e617620312035
 P# ff0e9dc24c73632d
@@ -23088,7 +23088,7 @@ X# f7f488a7554d6a7d
 H 0392d4258ec91d92
 > 746f7220372038
 P# 9f8078df2ef32894
-E# 0452279f96497700
+E# a922db459cb530ae
 G 5 {"KlingonsKilled":0,"KlingonPoints":0,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":119.16315789473674,"KillRate":0,"KillRatePoints":0,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":98,"CasualtyPenalty":98,"TotalScore":-98,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H 3fb6e3a58034ef20
 > 6e617620312036
@@ -23556,7 +23556,7 @@ P# b0d96964464ed3b9
 H 084c7244e757fe4c
 > 746f7220332034
 P# fefc3b3ee2f582bc
-E# ef2523e6a496cf8c
+E# 50bc56fbf4497d3a
 H 271533b0da24eca9
 > 746f7220332034
 P# fefc3b3ee2f582bc
@@ -23928,7 +23928,7 @@ E# fffee4fe2f7f04fe
 H f70c72a0b2c761ce
 > 746f7220362035
 P# 0be47d1f14711b68
-E# 5f6ddd947bac1ec2
+E# c9dcd0ba8b05446a
 H c9a629173c37affb
 > 7068612036333120352c34
 P# 99444d2f64b4520b
@@ -24917,7 +24917,7 @@ X# 8ad79a18d8ee491d
 H 83f2cc444d6a5c93
 > 746f7220342032
 P# c253b5270b14c3f7
-E# f7e567af9bcb51b1
+E# b4af9f98eed50cc7
 G 5 {"KlingonsKilled":0,"KlingonPoints":0,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":113.70392156862727,"KillRate":0,"KillRatePoints":0,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":18,"CasualtyPenalty":18,"TotalScore":-18,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H 5ffd9fd647dc9cd2
 > 6e617620332035
@@ -25592,7 +25592,7 @@ X# 8ad79a18d8ee491d
 H 5aca6dce81af7198
 > 746f7220342033
 P# ab0acc830e56d6b4
-E# 13170460ee0f0fae
+E# eddd39f16b93474c
 H 71536d5197374128
 > 73686520333633
 P# 7d025b6c36aacab9
@@ -27344,7 +27344,7 @@ game 178 tui tour {"seed":300}
 H 87838914184cc0aa
 > 746f7220362037
 P# bd90d9b5316c42f2
-E# 8428134a911ee4ef
+E# 68e8857f654ea027
 H 0a1e9523bd3d2efe
 > 7068612038373120352c36
 P# 3d37330d90bf801b
@@ -27355,7 +27355,7 @@ P# c44e156cfed0913e
 H 262b25ab1b5a2a28
 > 746f7220332034
 P# fefc3b3ee2f582bc
-E# de264bf32971c9da
+E# ba2c13fbcfe2db3a
 H 08ad836a523520b6
 > 746f7220302e3932
 P# b5bc3ca2b9940644
@@ -28009,7 +28009,7 @@ E# 29dc80c1334e8f6e
 H 4c101457dc96f643
 > 746f7220332034
 P# fefc3b3ee2f582bc
-E# d261d09159745369
+E# a7ed02d3c3385a09
 H f47ebb14c08ad288
 > 73686520313736
 P# 5e0e12ecec34fbf5
@@ -28021,7 +28021,7 @@ E# 96478b5466fd1256
 H 520d93a43161d610
 > 746f7220342035
 P# df4dc1ac90998b72
-E# b8486a228938e138
+E# 270efbc9f13ca582
 H 7874accf73b5fc22
 > 746f7220332034
 P# fefc3b3ee2f582bc
@@ -28634,7 +28634,7 @@ E# eedd254e2cf609fb
 H ea452bdb58d9e1c8
 > 746f7220322033
 P# 95714d360588b852
-E# 5ca26e15e92d28db
+E# 0234b0bed2ecc43d
 H 977323411f48763c
 > 6e617620382034
 P# a0e4a2784def15c5
@@ -28664,7 +28664,7 @@ X# 1a0aa46c2221b0ec
 H 3eccee4aa7f7c665
 > 746f7220362035
 P# 0be47d1f14711b68
-E# d44211e82f3701c1
+E# 249d073559d07849
 H 463fd46a9297e37a
 > 6c727363616e
 E# eedd254e2cf609fb
@@ -28696,11 +28696,11 @@ K null
 R b36c06f4e4fdb22f94b4f608452ff949
 > 746f7220312031
 P# 1f63db22111e0a45
-E# ba10cff0f374cd53
+E# 174185bef04eb2f9
 H 5cf0ed90edd4c835
 > 746f7220372038
 P# 9f8078df2ef32894
-E# 13b271df7504e896
+E# 07947a8cf93863ea
 H 3abca9e3c4a165f1
 > 746f7220312031
 P# 1f63db22111e0a45
@@ -28740,7 +28740,7 @@ K [{"ID":21,"Sector":[4,7],"Energy":1200,"Shields":600,"IsCommander":true,"IsClo
 R fdf9334ca08ab873e62ee385616ab4f0
 > 746f7220352035
 P# 8b7f3a2dd7678105
-E# 896eef3438ee17f4
+E# 8c2ef418fe4f6293
 H 86977fa45c71daa5
 > 6e6176207120372036
 P# 79c038dbc8b4f742
@@ -28798,7 +28798,7 @@ E# c79bd92ded206465
 H a4711058d0713014
 > 746f7220332033
 P# 80f0061ec03d8afd
-E# 7e684ce56921efdd
+E# 78c4669565a4c005
 H 6b740eac89880b40
 > 6e6176207120352032
 P# 62ab71f84d4bbf80
@@ -28816,7 +28816,7 @@ TS {"id":"tour-603","active":true,"current_sector_index":1,"sectors":[{"index":1
 H 76d58fbdd40a18c5
 > 746f7220312031
 P# 1f63db22111e0a45
-E# 43eaebb204ad2cbb
+E# 17289892d175bd93
 H 2c307cb450122d39
 > 70686120383030
 P# 852db98d34abd6d0
@@ -28894,7 +28894,7 @@ X# 1a0aa46c2221b0ec
 H 59863a8b749ed30f
 > 746f7220352036
 P# 51baad2a4183be98
-E# b47c37bbcd7ead87
+E# 5221ca228cbb0cef
 H ee96fbd34859be5b
 > 70686120383030
 P# 852db98d34abd6d0
@@ -28906,7 +28906,7 @@ X# 1a0aa46c2221b0ec
 H ee96fbd34859be5b
 > 746f7220332034
 P# fefc3b3ee2f582bc
-E# b237912aafb41580
+E# 3186fff2434976f0
 H 4393fd06589981d0
 > 746f7220332034
 P# fefc3b3ee2f582bc
@@ -28940,7 +28940,7 @@ E# eb6bd4ec04c1699c
 H 3a48e386b203bd7b
 > 746f7220312032
 P# 4aac5da2662a69d8
-E# d5a9ed4359112e3e
+E# 68c2c0bfbd91b625
 H 9d7af2c189dceb5d
 > 7068612030
 P# 67246de5b31d8f6d
@@ -29009,7 +29009,7 @@ TS {"id":"tour-704","active":false,"current_sector_index":2,"sectors":[{"index":
 H b3eeb3db3d908276
 > 746f7220342037
 P# 2da16516739e63e8
-E# 1b9538e429ca20b7
+E# 83188d0fee8367c0
 G 5 {"KlingonsKilled":0,"KlingonPoints":0,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":5,"KillRate":0,"KillRatePoints":0,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":74,"CasualtyPenalty":74,"TotalScore":-74,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H 2f5f3c72bd16a620
 > 6e6176207120372036
@@ -29033,7 +29033,7 @@ G 5 {"KlingonsKilled":1,"KlingonPoints":10,"CommandersKilled":0,"CommanderPoints
 H dfde83ec7c0d76ae
 > 746f7220342037
 P# 2da16516739e63e8
-E# 2245aa666c10ee73
+E# 955b1dfca5599d03
 G 5 {"KlingonsKilled":1,"KlingonPoints":10,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":5,"KillRate":0.2,"KillRatePoints":100,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":127,"CasualtyPenalty":127,"TotalScore":-17,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H 323c11528392f1d8
 > 6e6176207320352034
@@ -29047,7 +29047,7 @@ G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints
 H ac8f41c3b6ae9055
 > 746f7220342037
 P# 2da16516739e63e8
-E# f9f2aacac577616a
+E# 4e4410fbf614d78c
 G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":5,"KillRate":0.4,"KillRatePoints":200,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":143,"CasualtyPenalty":143,"TotalScore":77,"RankTitle":"Starfleet Cadet","RankBadge":"[CADET]"}
 H dc9c588a96675a4c
 > 746f7220342036
@@ -29554,7 +29554,7 @@ P# 60b5a76147f20b76
 H d9f410258d5afa51
 > 746f7220322033
 P# 95714d360588b852
-E# 5ca26e15e92d28db
+E# 0234b0bed2ecc43d
 H 586a4ecae5b0081d
 > 706861202d35
 P# 67246de5b31d8f6d
@@ -29597,14 +29597,14 @@ E# 1d6fae5807ffdc92
 H f5f796913ca81955
 > 746f7220312032
 P# 4aac5da2662a69d8
-E# 16b3b47152b7d29e
+E# be20477856e06b82
 H 6bef9f86ce2aa6b8
 > 6c727363616e
 E# df47a1d616fcea13
 H e77b7e484bad4f70
 > 746f7220362038
 P# 184bb43c0bb9ae3f
-E# 8ee2af90d0b71b3c
+E# df3305ed07152ad6
 H 1831ea972c61ddbc
 > 746f7220352038
 P# 4ea4a56c9fe8c5b6
@@ -30260,7 +30260,7 @@ P# 2017124ce7927b0d
 H e059b4efec3a669e
 > 746f7220322033
 P# 95714d360588b852
-E# 5ca26e15e92d28db
+E# 0234b0bed2ecc43d
 H 1774e6ff2021f8fe
 > 746f7220332034
 P# fefc3b3ee2f582bc
@@ -30290,11 +30290,11 @@ E# eb714d05f2df7312
 H 79a653c8a9b93871
 > 746f7220362038
 P# 184bb43c0bb9ae3f
-E# a430c29fc39f8398
+E# bc42648c1f6bb19c
 H f68eb5f7b1f5fa8c
 > 746f7220312034
 P# e9165c9212e26dae
-E# c830b64d7958c6a5
+E# f8b3574b67af06b3
 H 161a220f8b49fb60
 > 746f7220342038
 P# 7611cf49bd9bafc9
@@ -30332,7 +30332,7 @@ E# 246a25923641c2e2
 H dd5bee56e88603d3
 > 746f7220342037
 P# 2da16516739e63e8
-E# f8aa2b7e00149caa
+E# e6559cb45656aafa
 H d42824e8f79a1e59
 > 7068612038353220352035
 P# 122c22ecae0ca2f1
@@ -30387,7 +30387,7 @@ G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints
 H 6f08d28d95e6c652
 > 746f72206320382e38
 P# cb67df393f4ed237
-E# 3f8be3d1b53d3775
+E# c738a3733edcd2a3
 G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":5,"KillRate":0.4,"KillRatePoints":200,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":72,"CasualtyPenalty":72,"TotalScore":148,"RankTitle":"Lieutenant","RankBadge":"[LT]"}
 H 10fd285fdb98a49c
 > 746f7220352035
@@ -30925,7 +30925,7 @@ E# 2d49918d9dc3ac99
 H 27e0f59d9b4ac75c
 > 746f7220342035
 P# df4dc1ac90998b72
-E# 16d6479ec95525fa
+E# 37a8bb5fb2b1c108
 H 0d90d23102c7e8ed
 > 7068612031353030
 P# 97aba585b52ff062
@@ -30957,7 +30957,7 @@ E# 02adda11a0840411
 H c286200791a35a4f
 > 746f7220342034
 P# e52f3fc4b9de6e15
-E# ddf2a1c788dc7d87
+E# 8c4e0eb29c914ddd
 H 5a4b55904e7bccd1
 > 73686520373138
 P# 1e9b4dde5b3eb623
@@ -31651,11 +31651,11 @@ X# cd2f6b9eb23938fb
 H 9ec58581ac35de70
 > 746f7220352036
 P# 51baad2a4183be98
-E# b47c37bbcd7ead87
+E# 5221ca228cbb0cef
 H 662fae3dd96ca5e0
 > 746f7220322e3239
 P# 09d620a562720ed0
-E# d4f7d928734f8e6c
+E# 9de0d2e1c2ca6d14
 H ab998367832414b3
 > 746f7220332034
 P# fefc3b3ee2f582bc
@@ -31699,7 +31699,7 @@ TS {"id":"tour-1209","active":true,"current_sector_index":2,"sectors":[{"index":
 H 283bbb9b48a6e8b2
 > 746f7220342035
 P# df4dc1ac90998b72
-E# e0c93020520f3ac1
+E# 3e93563448c39735
 H 53983cb131463692
 > 6e6176207320352034
 P# ede588e415f7aefc
@@ -31748,7 +31748,7 @@ X# 4261cbcf682dcf95
 H 6ebae420bff68d1e
 > 746f7220362e3236
 P# 93b04284ff8effe3
-E# 41b8c9ac84b1511f
+E# 1b0ee0b82b9f4d3f
 G 5 {"KlingonsKilled":0,"KlingonPoints":0,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":10,"KillRate":0,"KillRatePoints":0,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":149,"CasualtyPenalty":149,"TotalScore":-149,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H fc0453aa55fc3720
 > 706861203530
@@ -32971,7 +32971,7 @@ E# e862cf61b455adf3
 H ce90a26c911a3949
 > 746f7220332034
 P# fefc3b3ee2f582bc
-E# d424545ae6b2be6c
+E# bc6047b480aa250c
 H 060f000fa26d79d4
 > 70686120333030
 P# 4b35511c4982234f
@@ -33035,7 +33035,7 @@ E# 2bca38529ff0bdca
 H e87179def81690bd
 > 746f7220352036
 P# 51baad2a4183be98
-E# ad73e7145b122a23
+E# b6991196124fecd3
 H a4960d4dbe2bb43e
 > 7068612031353030
 P# 97aba585b52ff062
@@ -33305,7 +33305,7 @@ X# 6cc51935f2771d5f
 H 5642d60e1c70bfba
 > 746f7220342035
 P# df4dc1ac90998b72
-E# febabb6100602de6
+E# 38f316ffb01f6f1e
 H 89a146cbdac4c9dd
 > 70686120313030
 P# 304e9368e8cfaec9
@@ -33335,7 +33335,7 @@ TS {"id":"tour-1512","active":true,"current_sector_index":3,"sectors":[{"index":
 H 544b06e183465237
 > 746f7220342035
 P# df4dc1ac90998b72
-E# c7b20b6e1668224e
+E# 54c3c511b5932f0e
 H 39e38be6929ac98a
 > 7068612032383620332034
 P# dea5724e7acf3727
@@ -33713,7 +33713,7 @@ game 191 tui tour {"seed":1613}
 H bfdee43620f2f88b
 > 746f7220362037
 P# bd90d9b5316c42f2
-E# 8428134a911ee4ef
+E# 68e8857f654ea027
 H ca209cdc53f0b973
 > 6e617620332037
 P# fdf24a5c2bd061ad
@@ -33745,11 +33745,11 @@ TS {"id":"tour-1613","active":true,"current_sector_index":1,"sectors":[{"index":
 H 7ddad09e9255167c
 > 746f7220312031
 P# 1f63db22111e0a45
-E# 43eaebb204ad2cbb
+E# 17289892d175bd93
 H 05fbc93e6e5a482c
 > 746f7220372038
 P# 9f8078df2ef32894
-E# 70519e35402aa0ca
+E# 1bcc9ad8f5d6bc80
 H 1f858ad9519f69ca
 > 746f72206320362e32
 P# 539bf2a456b26493
@@ -33812,7 +33812,7 @@ M 8 1 8
 H 04c75467e1191ac6
 > 746f7220322033
 P# 95714d360588b852
-E# 5ca26e15e92d28db
+E# 0234b0bed2ecc43d
 H 36e8f3eb81f1ec76
 > 746f72206320382e39
 P# 831c7376c0390e5e
@@ -33846,7 +33846,7 @@ TS {"id":"tour-1714","active":true,"current_sector_index":1,"sectors":[{"index":
 H 265a47f55c565f20
 > 746f7220382038
 P# 9121074e4d4fd5d5
-E# cd1eee1c1252bc2e
+E# 38b822677e6f476a
 H 926461efcabbaf00
 > 746f72206320322e34
 P# 8530ab31206f8b19
@@ -33938,7 +33938,7 @@ E# 2958acbf885a3fc6
 H 525f888968498b9d
 > 746f7220332034
 P# fefc3b3ee2f582bc
-E# 4ba83546a04b5c80
+E# 94f6743b960c27f0
 H 5e405f53d657973e
 > 73686520363636
 P# e00b27b217e3765d
@@ -34594,7 +34594,7 @@ E# 293490a6b688bd1f
 H 322b5ed36ad51cf7
 > 746f7220342035
 P# df4dc1ac90998b72
-E# 19a16992d808236f
+E# ec4e36c0428b6b27
 G 5 {"KlingonsKilled":0,"KlingonPoints":0,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":10,"KillRate":0,"KillRatePoints":0,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":18,"CasualtyPenalty":18,"TotalScore":-18,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 T false true 0
 F {"entries":[],"tour_records":[{"date":"","callsign":"Enterprise","rank":"Commander (KIA)","score":0,"sectors_cleared":0,"total_sectors":4,"refits_count":0,"medals":[],"completed":false}]}
@@ -34634,7 +34634,7 @@ X# f7f488a7554d6a7d
 H 9affd32d7b2f35c1
 > 746f7220372038
 P# 9f8078df2ef32894
-E# be9faac9c6bbc263
+E# 12f11f499adf8a29
 G 5 {"KlingonsKilled":0,"KlingonPoints":0,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":1,"RomulanPoints":20,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":10,"KillRate":0,"KillRatePoints":0,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":33,"CasualtyPenalty":33,"TotalScore":-13,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H 3ca33ff352ed9fe8
 > 7068612038383820362038
@@ -35233,7 +35233,7 @@ game 195 tui tour {"seed":2017}
 H 30554e5be8964118
 > 746f7220322033
 P# 95714d360588b852
-E# 5ca26e15e92d28db
+E# 0234b0bed2ecc43d
 H 0bad1604cc01171e
 M 7 4 6
 H d2d941493557e207
@@ -35249,7 +35249,7 @@ E# 00a30b3e986e3b6e
 H 5bac42c6650c4b6b
 > 746f7220342035
 P# df4dc1ac90998b72
-E# b8486a228938e138
+E# 270efbc9f13ca582
 H 9e77168b2dcb4320
 > 746f7220342035
 P# df4dc1ac90998b72
@@ -35307,7 +35307,7 @@ E# 6c53db14c070950d
 H c2c140970f57f293
 > 746f7220352035
 P# 8b7f3a2dd7678105
-E# 9e6c11460846d4ef
+E# 7cdb66e6cabc7221
 H 244cbda25e2bf823
 V 2.7 [0,0,0,0,0,0,0,0]
 H 244cbda25e2bf823
@@ -35329,7 +35329,7 @@ X# 4261cbcf682dcf95
 H 679dd2ee2d29e229
 > 746f7220342036
 P# 30f6d80856983ccb
-E# fb27acad9cfa5abf
+E# 4b6be5f7929e12c0
 G 5 {"KlingonsKilled":0,"KlingonPoints":0,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":5,"KillRate":0,"KillRatePoints":0,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":79,"CasualtyPenalty":79,"TotalScore":-79,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H d43db568c704a34e
 > 70686120313030
@@ -35381,7 +35381,7 @@ G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints
 H 5d19bb21b7ea220e
 > 746f7220342037
 P# 2da16516739e63e8
-E# 3a67ba308bcf8668
+E# d94613adc4522882
 G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":5,"KillRate":0.4,"KillRatePoints":200,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":106,"CasualtyPenalty":106,"TotalScore":114,"RankTitle":"Lieutenant","RankBadge":"[LT]"}
 H 54cdf05c875b401b
 > 746f7220342037
@@ -35974,7 +35974,7 @@ TS {"id":"tour-2118","active":true,"current_sector_index":1,"sectors":[{"index":
 H 97e9a14e84925a0f
 > 746f7220312031
 P# 1f63db22111e0a45
-E# ba10cff0f374cd53
+E# 174185bef04eb2f9
 H 58789f8728df47cc
 > 7068612039323520312c32
 P# afb42a7b059e4209
@@ -36233,7 +36233,7 @@ X# 050e8d3be1810bd6
 H cd11fc7cdfdd001d
 > 746f7220342037
 P# 2da16516739e63e8
-E# 943da6991edc1efc
+E# 5947a27f4541e8fa
 G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":10,"KillRate":0.2,"KillRatePoints":100,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":120,"CasualtyPenalty":120,"TotalScore":0,"RankTitle":"Starfleet Cadet","RankBadge":"[CADET]"}
 H 2525178084a1c2e7
 > 7068612039373920342c36
@@ -36640,7 +36640,7 @@ X# 1a0aa46c2221b0ec
 H c8d34536a0d03175
 > 746f7220362037
 P# bd90d9b5316c42f2
-E# 8428134a911ee4ef
+E# 68e8857f654ea027
 H 06dc9a1ded92dfed
 > 746f7220352036
 P# 51baad2a4183be98
@@ -36648,7 +36648,7 @@ E# 5f34186d37c7a4e9
 H a8ea5ceaa4d6b77d
 > 746f7220332034
 P# fefc3b3ee2f582bc
-E# 1716cc0da1f28dca
+E# 07fb7e4feb5dcf2a
 H 5365f91e56b56d04
 > 746f7220332034
 P# fefc3b3ee2f582bc
@@ -36725,7 +36725,7 @@ E# f926895bfca79aa3
 H 2676de84d11be553
 > 746f7220332034
 P# fefc3b3ee2f582bc
-E# ee4e91346cbc6ca4
+E# d11c0b77bfe6770e
 H 6108602d819d54f1
 > 746f7220352e3437
 P# 1acbcb26fca55035
@@ -36782,7 +36782,7 @@ E# 992cccf68e22dadd
 H edff22a617fc10b7
 > 746f7220342035
 P# df4dc1ac90998b72
-E# d35af18cd46c291d
+E# 93d59e95403a7d05
 H 57b53e0561b9e193
 > 746f7220332034
 P# fefc3b3ee2f582bc
@@ -36842,7 +36842,7 @@ X# 050e8d3be1810bd6
 H db48c20d0c9d42df
 > 746f7220342035
 P# df4dc1ac90998b72
-E# 5fb84d9665bebe74
+E# b77867ada715650a
 G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":5,"KillRate":0.4,"KillRatePoints":200,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":100,"CasualtyPenalty":100,"TotalScore":120,"RankTitle":"Lieutenant","RankBadge":"[LT]"}
 H c0823074cc26ed4f
 > 70686120313030
@@ -36860,7 +36860,7 @@ G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints
 H a7c992f5727584d3
 > 746f7220342035
 P# df4dc1ac90998b72
-E# b9c1915b6d103247
+E# 63896d5ad04feb65
 G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":5,"KillRate":0.4,"KillRatePoints":200,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":116,"CasualtyPenalty":116,"TotalScore":104,"RankTitle":"Lieutenant","RankBadge":"[LT]"}
 H 993fbdc37a7e2bde
 > 7068612032363420332c34
@@ -37320,7 +37320,7 @@ E# beccc483fa59019e
 H 8f3010f0f088a005
 > 746f7220362035
 P# 0be47d1f14711b68
-E# 8003b04b2447980f
+E# 09239b03b3e8414d
 H 720bb22bcab3d82a
 > 7068612033393420332034
 P# a18e54ae18adf5ff
@@ -37417,7 +37417,7 @@ game 199 tui tour {"seed":2421}
 H ecef06141aaa4f7b
 > 746f7220322033
 P# 95714d360588b852
-E# 5ca26e15e92d28db
+E# 0234b0bed2ecc43d
 H cccb0be8dd4fb9d7
 > 746f7220332034
 P# fefc3b3ee2f582bc
@@ -37482,7 +37482,7 @@ G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints
 H cf1e58893b94d91f
 > 746f7220342037
 P# 2da16516739e63e8
-E# e616fdf738baa766
+E# fe4045f95a30636b
 G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":5,"KillRate":0.4,"KillRatePoints":200,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":64,"CasualtyPenalty":64,"TotalScore":156,"RankTitle":"Lieutenant","RankBadge":"[LT]"}
 H f1b13bb0190d31b7
 > 6e6176207120322034
@@ -38222,7 +38222,7 @@ TS {"id":"tour-2522","active":true,"current_sector_index":2,"sectors":[{"index":
 H 8215a44022595fef
 > 746f7220332035
 P# bbce1ad9b2db997f
-E# e2425530c685f01c
+E# 83d684402c29e8d3
 H dca3b3abe2798b7f
 > 746f7220342036
 P# 30f6d80856983ccb
@@ -38245,7 +38245,7 @@ TS {"id":"tour-2522","active":false,"current_sector_index":2,"sectors":[{"index"
 H ca4f12cd6820ea18
 > 746f7220342037
 P# 2da16516739e63e8
-E# b7975d6277eff29f
+E# 4f8e38f775bbb79c
 G 5 {"KlingonsKilled":1,"KlingonPoints":10,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":5,"KillRate":0.2,"KillRatePoints":100,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":70,"CasualtyPenalty":70,"TotalScore":40,"RankTitle":"Starfleet Cadet","RankBadge":"[CADET]"}
 H e6664c173711406c
 > 70686120323030
@@ -38273,7 +38273,7 @@ X# 4261cbcf682dcf95
 H 5247b96ed149990e
 > 746f7220342036
 P# 30f6d80856983ccb
-E# 4437a6bffe0dc638
+E# f5e775e14e046ac0
 G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":5,"KillRate":0.4,"KillRatePoints":200,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":105,"CasualtyPenalty":105,"TotalScore":115,"RankTitle":"Lieutenant","RankBadge":"[LT]"}
 H 6650a930701e5c45
 > 7068612033353220342036
@@ -38792,7 +38792,7 @@ TS {"id":"tour-2623","active":true,"current_sector_index":1,"sectors":[{"index":
 H 2384bf51045ffecf
 > 746f7220312031
 P# 1f63db22111e0a45
-E# ba10cff0f374cd53
+E# 174185bef04eb2f9
 H 32cfbe66ea61b71a
 > 6e6176207120352032
 P# 62ab71f84d4bbf80
@@ -38810,11 +38810,11 @@ TS {"id":"tour-2623","active":true,"current_sector_index":2,"sectors":[{"index":
 H fcac3036078c9363
 > 746f7220342037
 P# 2da16516739e63e8
-E# 94a0b10b5706909b
+E# 97ffcaa9cedbab35
 H b1143d68bb03a044
 > 746f7220342037
 P# 2da16516739e63e8
-E# c1900ced33713d72
+E# 77772abf722123cd
 H 3c92e3654cd8f0e4
 > 746f7220342036
 P# 30f6d80856983ccb
@@ -38822,7 +38822,7 @@ E# ea78ab31d046dcc6
 H 4982f3fd2d71d633
 > 746f7220342037
 P# 2da16516739e63e8
-E# 2a708418396acc8e
+E# 12b94c3531efb0f3
 H 2468339910be4622
 A engine.ActionCallHelp {}
 E# 553578341d2fac6d
@@ -38877,7 +38877,7 @@ X# 4261cbcf682dcf95
 H 05b94c9e1e84ef70
 > 746f7220342037
 P# 2da16516739e63e8
-E# 5aa82655d841d05f
+E# 18cac2b8e498f9a7
 G 5 {"KlingonsKilled":2,"KlingonPoints":20,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":20,"KillRate":0.1,"KillRatePoints":50,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":1,"HelpPenalty":45,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":101,"CasualtyPenalty":101,"TotalScore":-76,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H 230edd53ecfd9e35
 > 746f7220352e3834
@@ -39497,7 +39497,7 @@ E# 7b96944f7ee12cfb
 H 402be1ec2d9c8850
 > 746f7220332034
 P# fefc3b3ee2f582bc
-E# cca8b22c52540c07
+E# dfbdc68625899045
 H 07180105e7bb7f10
 > 746f7220332034
 P# fefc3b3ee2f582bc
@@ -39513,7 +39513,7 @@ E# 0e2876feed7d3493
 H fab515718fad45be
 > 746f7220362037
 P# bd90d9b5316c42f2
-E# 7af60cf9ac5fd9d8
+E# 92e4b33d06de8ac7
 H 8fbd5de81719e1de
 > 736865
 P# 9b44832ab3a7796e
@@ -40185,14 +40185,14 @@ TS {"id":"tour-2825","active":true,"current_sector_index":2,"sectors":[{"index":
 H 499e3e43ca6e3460
 > 746f7220342037
 P# 2da16516739e63e8
-E# e0c93020520f3ac1
+E# 3e93563448c39735
 H f09bda088bdfe32b
 > 6e617620312e35
 P# 43762fcf0b7e26b6
 H f09bda088bdfe32b
 > 746f7220342036
 P# 30f6d80856983ccb
-E# bbf98b62b99fd3e8
+E# 3da76ddf59bc7779
 H a84d5ace9469beb6
 > 73686520343639
 P# be0a211f34ad4910
@@ -40216,7 +40216,7 @@ TS {"id":"tour-2825","active":false,"current_sector_index":2,"sectors":[{"index"
 H cb34fa3257864558
 > 746f7220352035
 P# 8b7f3a2dd7678105
-E# 93e0910bab27677a
+E# 250112d18f657d8f
 G 5 {"KlingonsKilled":0,"KlingonPoints":0,"CommandersKilled":0,"CommanderPoints":0,"SuperCommandersKilled":0,"SuperCommanderPoints":0,"RomulansKilled":0,"RomulanPoints":0,"RomulansSurrendered":0,"SurrenderedPoints":0,"ElapsedStardates":10,"KillRate":0,"KillRatePoints":0,"GameWon":false,"WinBonus":0,"StarbasesLost":0,"StarbasePenalty":0,"StarshipsLost":0,"StarshipPenalty":0,"HelpCalls":0,"HelpPenalty":0,"PlanetsDestroyed":0,"PlanetPenalty":0,"StarsDestroyed":0,"StarPenalty":0,"Casualties":81,"CasualtyPenalty":81,"TotalScore":-81,"RankTitle":"Dishonorable Discharge","RankBadge":"[DISHONOR]"}
 H 7df9dc36eb996ca4
 > 706861203530
@@ -41342,7 +41342,7 @@ X# 1a0aa46c2221b0ec
 H 26b2d69a0b012eca
 > 746f7220372034
 P# 2208764b3e141770
-E# 505768d6dbfd970f
+E# b111c9ae836f32e1
 H 7318c17026d12aef
 > 6c727363616e
 W bypass
@@ -41560,7 +41560,7 @@ E# 09612b07b5ecb5a5
 H efb19d76d91ca16c
 > 746f7220362035
 P# 0be47d1f14711b68
-E# 67643ac3e9e71512
+E# 6b215f95ae5cf052
 H 277b1109c90e8185
 > 6e617620302e3520313030
 P# 9425f5b0ee3d1e64
@@ -42481,7 +42481,7 @@ E# a603e8f892fbc244
 H ae9f45360d24d56a
 > 746f7220382031
 P# de51db14db121c5a
-E# b750a084d25c205d
+E# 6337d9141c0e9e39
 H 7892499c564ee7d7
 > 746f7220382031
 P# de51db14db121c5a
@@ -42625,7 +42625,7 @@ E# 2af8ee87ac840fb5
 H 046eb15d1eb15e81
 > 746f7220332031
 P# abcaa1858a9a3b93
-E# 03bb152b479b83b4
+E# bfcf8d4740b642a4
 H dd69c8d2fc364ac5
 > 746f7220322e3635
 P# 333e3b3114b5ac10
@@ -44512,7 +44512,7 @@ E# 8a43d1d4ab0014b6
 H c8407f433703f74b
 > 746f7220332037
 P# d5672e10be049f89
-E# c583a2a95feb22e7
+E# b62d45f8dce0c913
 H 670de4a702b0a110
 > 70686120383030
 P# 852db98d34abd6d0
@@ -44674,7 +44674,7 @@ E# a21aac3c5f012cf1
 H f104f4a5e6972d58
 > 746f7220332034
 P# fefc3b3ee2f582bc
-E# 8fba336142528bd9
+E# 4af7047b82e4387b
 H 7faf95033b89a921
 > 70686120333030
 P# 4b35511c4982234f
@@ -44694,7 +44694,7 @@ E# 0355a7e257590b8f
 H b8735362d35c8cc8
 > 746f7220312036
 P# 7bd71dddac3349a4
-E# baf9ab3ce603f4a0
+E# 268a5c3160d39770
 H a91e503c4a05f687
 > 73686520313931
 P# 9b7e63c05e788e48
@@ -45590,7 +45590,7 @@ E# af2ab32768fff7ec
 H 7b182511f12e44d3
 > 746f7220342031
 P# f482c18ef61b443e
-E# d85cfcfb9392b33e
+E# 4838aff5ed07b099
 H 7c40cf782c8efa85
 > 6e617620322034
 P# e9cdb35ded572bd3
@@ -46121,7 +46121,7 @@ E# 6753ec685e658782
 H 15e48d55ac63c69c
 > 746f7220372034
 P# 2208764b3e141770
-E# 505768d6dbfd970f
+E# b111c9ae836f32e1
 H ec12e2206c3e0cf4
 > 706861203530
 P# 2ab3c8785001a2cb
@@ -46208,7 +46208,7 @@ E# f2bbe72ef55e9adc
 H 607b11420eece570
 > 746f7220342035
 P# df4dc1ac90998b72
-E# fad8406e3fe3e82b
+E# 498e7605aa87cf57
 H 880bdc78ba81461f
 > 6e6176207120332038
 P# 8bcd9730a27fa0bc
@@ -46224,7 +46224,7 @@ E# 55812b67c2e1b9a9
 H 8e0a064708b8afa8
 > 746f7220382038
 P# 9121074e4d4fd5d5
-E# 5c6671668e0757cd
+E# 15b9a816bd01b382
 H 88c992a49aee7582
 > 6e6176207120382038
 P# 3a12386463791529
@@ -46305,7 +46305,7 @@ X# 1a0aa46c2221b0ec
 H cbfd50c36078199c
 > 746f7220372031
 P# 94fa2566a782071f
-E# 28842d2595df2b2d
+E# 945367b4d7719197
 H 2a8d5af3065bcb17
 > 746f7220372031
 P# 94fa2566a782071f
@@ -47408,7 +47408,7 @@ E# fd686ecd0518c9ad
 H f6deed7ba72d1a6b
 > 746f7220362036
 P# c37257cd5ab12595
-E# b9fb35008ffa185d
+E# 3259c4a8f851ee87
 H e1d833726249e66c
 > 746f7220362036
 P# c37257cd5ab12595

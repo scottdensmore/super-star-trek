@@ -453,3 +453,25 @@ fn model_tour_preserves_sector_enemies() {
         assert_eq!(faction0(&m), FactionType::Tholian);
     });
 }
+
+/// Torpedo hits report the damage after shields, and phaser hits name the
+/// faction of the ship hit.
+#[test]
+fn format_event_reports_shields_and_factions() {
+    use sst_engine::{Event, EventPhaserHit, EventTorpedoHit, FactionType};
+    let s = sst_tui::format_event(&Event::TorpedoHit(EventTorpedoHit {
+        target: [4, 7],
+        damage: 100.0,
+        shield_damage: 400.0,
+        ..Default::default()
+    }));
+    assert_eq!(s, "Hit on [4,7]: 100 units damage (shields absorbed 400)");
+    let s = sst_tui::format_event(&Event::PhaserHit(EventPhaserHit {
+        target: [4, 7],
+        klingon_id: 3,
+        damage: 200.0,
+        faction: FactionType::Tholian,
+        ..Default::default()
+    }));
+    assert_eq!(s, "Hit on Tholian #3: 200 units damage");
+}

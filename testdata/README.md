@@ -178,6 +178,19 @@ Regression tests are in `crates/sst-engine/tests/bug_fixes.rs` unless noted.
     CLOAKED VESSEL" before spending energy or a torpedo; blind torpedo fire
     along a line still hits a cloaked ship (fix 2).
 
+13. **Torpedo hits report the damage actually dealt.** A torpedo hit that
+    did not destroy its target reported the full 500 (Go never subtracted
+    what the target's shields absorbed). `TorpedoHit.Damage` is now the
+    damage that got through (for a kill, the energy the ship had left) and
+    the new `ShieldDamage` field (omitted when 0) what the shields took; the
+    console ("Hit on [r,c]: 100 units damage (shields absorbed 400)"), the
+    browser and the teletype stream show both, and a hit absorbed entirely
+    by shields still sounds the explosion. The browser's torpedo lines also
+    name the target instead of calling every ship (and a starbase) a
+    Klingon warship, and the browser event transcript gained a record mode
+    (`SST_PARITY_RECORD=/tmp/events.txt cargo test --release -p sst-wasm
+    --test parity parity_combat_events`).
+
 Re-recorded cases:
 
 | Transcript | Cases | Cause |
@@ -188,3 +201,6 @@ Re-recorded cases:
 | `engine/games.txt` | 16 of the 48 scenario games (130, 131, 133, 135, 137, 139, 140, 145, 146, 149, 151, 152, 155, 157, 160, 161), 23 of the 26 tour games (180-198, 200-203) and 47 of the 60 browser sessions (204, 205, 208-211, 213, 214, 216-218, 220-223, 225-237, 240-242, 244, 245, 248, 249, 251-262) | 10-12 |
 | `tui/scenarios.txt` | `scenario_mutara-nebula` (both profiles): spread phasers no longer hit the cloaked commander | 11 |
 | `wasm/sessions.txt` | `fixed-casual`, `fixed-normal`, `fixed-hardcore`, `random-7-expert`, `random-42-normal`, `random-777-emeritus`, `random--1-expert`, `scenario-mutara-2`, `smart-scenario-mutara-0` | 10-12 |
+| `engine/games.txt` | 51 TUI games with adversaries (1, 4, 5, 7, 10, 12, 13, 16, 19, 20, 22, 25, 29, 31, 34, 36, 37, 40, 43-46, 49, 52, 53, 55, 60, 61, 67-70, 73, 76, 77, 79, 82, 84, 91-94, 97, 101, 103, 109, 115, 117, 118, 124, 127), 24 of the 26 tour games (178-185, 187, 189-203) and 9 browser sessions (208, 209, 216, 232, 233, 241, 248, 249, 257): hits on shielded ships | 13 |
+| `wasm/sessions.txt` | `random-2-expert`, `random-7-emeritus`, `smart-scenario-siege-1` | 13 |
+| `wasm/events.txt` | 24 of the 600 synthetic event lists (torpedo hits on non-Klingon targets) | 13 |

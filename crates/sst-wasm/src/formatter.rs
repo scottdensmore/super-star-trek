@@ -217,20 +217,37 @@ pub fn format_combat_events(events: &[Event]) -> String {
             Event::TorpedoHit(e) => {
                 let (r, c) = (row(e.target), col(e.target));
                 if e.destroyed {
+                    let what = match e.entity {
+                        EntityType::Romulan => "ROMULAN WARBIRD",
+                        EntityType::Tholian => "THOLIAN VESSEL",
+                        EntityType::Starbase => "STARBASE",
+                        EntityType::PlasmaTorpedo => "PLASMA TORPEDO",
+                        EntityType::TholianWeb => "THOLIAN WEB SEGMENT",
+                        _ => "KLINGON WARSHIP",
+                    };
                     let _ = write!(
                         b,
-                        "{ANSI_RED}*** KLINGON WARSHIP DESTROYED AT [{r},{c}] ***{ANSI_RESET}\r\n"
+                        "{ANSI_RED}*** {what} DESTROYED AT [{r},{c}] ***{ANSI_RESET}\r\n"
                     );
                 } else if e.entity == EntityType::Star {
                     let _ = write!(b, "Torpedo absorbed by star at [{r},{c}]\r\n");
                 } else if e.entity == EntityType::Planet {
                     let _ = write!(b, "Torpedo absorbed by planet atmosphere at [{r},{c}]\r\n");
                 } else {
+                    let what = match e.entity {
+                        EntityType::Romulan => "Romulan",
+                        EntityType::Tholian => "Tholian",
+                        _ => "Klingon",
+                    };
                     let _ = write!(
                         b,
-                        "Torpedo hit Klingon at [{r},{c}]: {} units damage\r\n",
+                        "Torpedo hit {what} at [{r},{c}]: {} units damage",
                         fmt_f(e.damage, 0)
                     );
+                    if e.shield_damage > 0.0 {
+                        let _ = write!(b, " (shields absorbed {})", fmt_f(e.shield_damage, 0));
+                    }
+                    b.push_str("\r\n");
                 }
             }
             Event::PhaserFired(e) => {

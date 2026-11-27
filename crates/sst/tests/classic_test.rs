@@ -77,6 +77,7 @@ fn test_teletype_torpedo_events() {
         entity: EntityType::Klingon,
         damage: 500.0,
         destroyed: true,
+        ..Default::default()
     }));
     assert_eq!(out, "*** Klingon destroyed ***\n");
 
@@ -85,8 +86,19 @@ fn test_teletype_torpedo_events() {
         entity: EntityType::Klingon,
         damage: 250.0,
         destroyed: false,
+        ..Default::default()
     }));
     assert_eq!(out, "Hit: 250 units\n");
+
+    // The damage that got through, and what the shields absorbed.
+    let out = handle(Event::TorpedoHit(EventTorpedoHit {
+        target: [4, 7],
+        entity: EntityType::Romulan,
+        damage: 100.0,
+        shield_damage: 400.0,
+        ..Default::default()
+    }));
+    assert_eq!(out, "Hit: 100 units (shields absorbed 400)\n");
 }
 
 /// `tests/golden_test.go` `TestGoldenParityBasics`.

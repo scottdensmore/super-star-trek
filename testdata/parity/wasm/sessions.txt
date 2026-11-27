@@ -12204,9 +12204,9 @@ Torpedo absorbed by star at [5,7]
 cmd 11 55
 nav q 2 8 6Cannot execute: insufficient energy for warp movement
 
-cmd 7 113
+cmd 7 106
 tor 7 5[33m[TORPEDO TRACK][0m Fired on course 5.03 from [4,4]
-[31;1m*** KLINGON WARSHIP DESTROYED AT [8,5] ***[0m
+[31;1m*** STARBASE DESTROYED AT [8,5] ***[0m
 
 cmd 3 416
 dam[36m=== DAMAGE CONTROL REPORT ===[0m
@@ -15109,9 +15109,9 @@ lrs[36m=== LONG RANGE SENSOR SCAN ===[0m
 : *** : *** : *** : 
 -------------------
 
-cmd 7 113
+cmd 7 106
 tor 1.7[33m[TORPEDO TRACK][0m Fired on course 1.70 from [6,2]
-[31;1m*** KLINGON WARSHIP DESTROYED AT [4,2] ***[0m
+[31;1m*** STARBASE DESTROYED AT [4,2] ***[0m
 
 cmd 8 57
 she 1640Cannot execute: insufficient energy for shield transfer
@@ -67758,9 +67758,9 @@ she 988Deflector Shields: 2488  |  Total energy: 3500
 [31;1m[RETURN FIRE][0m Klingon returns fire: 288 units damage
 [31;1m[RETURN FIRE][0m Klingon returns fire: 262 units damage
 
-cmd 7 166
+cmd 7 159
 tor 4 1[33m[TORPEDO TRACK][0m Fired on course 3.14 from [4,4]
-[31;1m*** KLINGON WARSHIP DESTROYED AT [4,2] ***[0m
+[31;1m*** STARBASE DESTROYED AT [4,2] ***[0m
 [31;1m*** MISSION TERMINATED ***[0m (Score: -100)
 
 cmd 7 146

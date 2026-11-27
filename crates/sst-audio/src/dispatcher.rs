@@ -43,7 +43,9 @@ pub fn sound_for_event(event: &Event) -> Option<SoundID> {
         Event::PhaserFired(_) => SOUND_PHASER,
         Event::TorpedoFired(_) => SOUND_TORPEDO_LAUNCH,
         Event::PhaserHit(e) if e.destroyed || e.damage > 0.0 => SOUND_EXPLOSION,
-        Event::TorpedoHit(e) if e.destroyed || e.damage > 0.0 => SOUND_EXPLOSION,
+        Event::TorpedoHit(e) if e.destroyed || e.damage > 0.0 || e.shield_damage > 0.0 => {
+            SOUND_EXPLOSION
+        }
         Event::KlingonCounterAttack(e) if e.damage > 0.0 => SOUND_DAMAGE,
         Event::SubsystemDamaged(_) => SOUND_DAMAGE,
         Event::ShieldTransfer(_) => SOUND_SHIELDS,

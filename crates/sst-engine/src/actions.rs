@@ -319,6 +319,10 @@ impl ActionFireTorpedo {
         }
 
         let mut damage = calculate_torpedo_damage(Some(g), 500.0);
+        // What the target's shields absorbed; `damage` ends up as what got
+        // through (Go reported the full torpedo yield on every hit that did
+        // not destroy the ship, whatever the shields took).
+        let mut shield_damage = 0.0;
         let mut destroyed = false;
         let mut hit_commander: Option<KlingonRef> = None;
 
@@ -356,9 +360,11 @@ impl ActionFireTorpedo {
                     let mut effective = damage;
                     if t.shields > 0.0 {
                         if t.shields >= damage {
+                            shield_damage = damage;
                             t.shields -= damage;
                             effective = 0.0;
                         } else {
+                            shield_damage = t.shields;
                             effective = damage - t.shields;
                             t.shields = 0.0;
                         }
@@ -373,6 +379,7 @@ impl ActionFireTorpedo {
                         remove_enemy_klingon(&mut g.current_quad, id);
                     } else {
                         t.energy -= effective;
+                        damage = effective;
                     }
                 } else {
                     destroyed = true;
@@ -449,9 +456,11 @@ impl ActionFireTorpedo {
                     let mut effective = damage;
                     if t.shields > 0.0 {
                         if t.shields >= damage {
+                            shield_damage = damage;
                             t.shields -= damage;
                             effective = 0.0;
                         } else {
+                            shield_damage = t.shields;
                             effective = damage - t.shields;
                             t.shields = 0.0;
                         }
@@ -464,6 +473,7 @@ impl ActionFireTorpedo {
                         g.current_quad.enemies.remove(target_index);
                     } else {
                         t.energy -= effective;
+                        damage = effective;
                     }
                 } else {
                     destroyed = true;
@@ -515,6 +525,7 @@ impl ActionFireTorpedo {
             entity: hit_entity,
             damage,
             destroyed,
+            shield_damage,
         }));
 
         if g.rules.klingon_cloak {

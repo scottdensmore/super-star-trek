@@ -730,3 +730,46 @@ fn focused_phasers_refuse_a_cloaked_ship() {
         Event::PhaserHit(h) if h.klingon_id == 4 && h.faction == FactionType::Romulan)));
     assert_eq!(enemy_by_id(&g, 4).unwrap().shields, 0.0);
 }
+
+// 13. Torpedo hits report the damage actually dealt.
+fn torpedo_hit(events: &[Event]) -> &EventTorpedoHit {
+    events
+        .iter()
+        .find_map(|e| match e {
+            Event::TorpedoHit(h) => Some(h),
+            _ => None,
+        })
+        .expect("torpedo hit")
+}
+
+#[test]
+fn torpedo_hit_reports_damage_after_shields() {
+    // A Romulan with 400 shields: 400 of the 500 are absorbed.
+    let mut g = quadrant_game(vec![enemy(2, FactionType::Romulan, [4, 7], 1000.0, 400.0)]);
+    let events = torpedo_at(&mut g, [4, 7]);
+    let h = torpedo_hit(&events);
+    assert!(!h.destroyed);
+    assert_eq!((h.damage, h.shield_damage), (100.0, 400.0));
+    assert_eq!(enemy_by_id(&g, 2).unwrap().energy, 900.0);
+
+    // Shields that absorb the whole torpedo: no hull damage.
+    let mut g = quadrant_game(vec![enemy(3, FactionType::Tholian, [4, 7], 800.0, 600.0)]);
+    let h = torpedo_hit(&torpedo_at(&mut g, [4, 7])).clone();
+    assert_eq!((h.damage, h.shield_damage), (0.0, 500.0));
+
+    // An unshielded Klingon takes the full 500.
+    let mut g = classic_quadrant(&[(1, [4, 7], 900.0)]);
+    let h = torpedo_hit(&torpedo_at(&mut g, [4, 7])).clone();
+    assert_eq!(
+        (h.damage, h.shield_damage, h.destroyed),
+        (500.0, 0.0, false)
+    );
+
+    // A kill reports the energy the ship had left and what its shields took.
+    let mut g = quadrant_game(vec![enemy(1, FactionType::Klingon, [4, 7], 150.0, 100.0)]);
+    let h = torpedo_hit(&torpedo_at(&mut g, [4, 7])).clone();
+    assert_eq!(
+        (h.damage, h.shield_damage, h.destroyed),
+        (150.0, 100.0, true)
+    );
+}

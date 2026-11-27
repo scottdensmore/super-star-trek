@@ -827,3 +827,32 @@ fn js_audio_player_volume() {
     p.set_volume(120);
     assert_eq!(p.volume(), 100);
 }
+
+/// Torpedo hits name the ship and report the damage after shields.
+#[test]
+fn format_torpedo_hits_name_the_target_and_shields() {
+    let out = format_combat_events(&[
+        Event::TorpedoHit(EventTorpedoHit {
+            target: [4, 7],
+            entity: EntityType::Romulan,
+            damage: 100.0,
+            shield_damage: 400.0,
+            destroyed: false,
+        }),
+        Event::TorpedoHit(EventTorpedoHit {
+            target: [2, 2],
+            entity: EntityType::Starbase,
+            damage: 500.0,
+            destroyed: true,
+            ..Default::default()
+        }),
+    ]);
+    assert!(
+        out.contains("Torpedo hit Romulan at [4,7]: 100 units damage (shields absorbed 400)"),
+        "{out:?}"
+    );
+    assert!(
+        out.contains("*** STARBASE DESTROYED AT [2,2] ***"),
+        "{out:?}"
+    );
+}
