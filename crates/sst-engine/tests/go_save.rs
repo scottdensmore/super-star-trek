@@ -377,8 +377,11 @@ fn save_and_load_preserves_expanded_adversaries_and_hazards() {
     assert!(ws.len() == 1 && ws[0].as_ref().unwrap().borrow().strength == 180.0);
 }
 
+/// Format 3 saves the legacy Klingon list and restores it as written (Go
+/// rebuilt it from `Enemies` on load, which lost every Klingon of a game
+/// without adversaries); format-2 saves still rebuild it from `Enemies`.
 #[test]
-fn save_and_load_syncs_klingons_on_load() {
+fn save_and_load_restores_klingons_and_migrates_v2() {
     let dir = temp_dir("sync");
     let path = join(&dir, "klingon_sync.json");
     let mut g = GameState::new_game_with_seed(6666);
@@ -392,10 +395,38 @@ fn save_and_load_syncs_klingons_on_load() {
         ..Default::default()
     })]);
     g.current_quad.grid[3][3] = EntityType::Commander;
+    sync_quadrant_enemies(&mut g.current_quad);
+    // Phaser damage on the legacy list not yet carried over to Enemies.
+    g.current_quad.klingons[0]
+        .as_ref()
+        .unwrap()
+        .borrow_mut()
+        .energy = 450.0;
     persist::save_game(&game_ref(g), &path).expect("save");
     let l = persist::load_game(&path).expect("load");
+    {
+        let l = l.borrow();
+        assert_eq!(l.current_quad.enemies.len(), 1);
+        assert_eq!(l.current_quad.klingons.len(), 1);
+        let k = l.current_quad.klingons[0].as_ref().unwrap().borrow();
+        assert!(
+            k.id == 1 && k.sector == [3, 3] && k.energy == 450.0 && k.is_commander,
+            "{k:?}"
+        );
+    }
+
+    // What the Go edition wrote: version 2, no Klingon list.
+    let v3 = std::fs::read_to_string(&path).unwrap();
+    assert!(v3.contains("\"version\": 3,"));
+    let go = l.borrow().clone();
+    let mut go = go;
+    go.current_quad.klingons = GoVec::nil();
+    let v2 = String::from_utf8(encode_save_game(&game_ref(go)).unwrap())
+        .unwrap()
+        .replace("\"version\": 3,", "\"version\": 2,");
+    assert!(!v2.contains("\"klingons\""));
+    let l = decode_load_game(v2.as_bytes()).expect("v2 load");
     let l = l.borrow();
-    assert_eq!(l.current_quad.enemies.len(), 1);
     assert_eq!(l.current_quad.klingons.len(), 1);
     let k = l.current_quad.klingons[0].as_ref().unwrap().borrow();
     assert!(

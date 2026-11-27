@@ -236,7 +236,7 @@ fn tours_match_go() {
         .enumerate()
     {
         let t = tour_ref(TourState::new_at(seed, 0));
-        l.check(&format!("tour {seed} "), &marshal(&t));
+        l.check(&format!("tour {seed} "), &marshal_go_tour(&t));
         let gr = t.borrow_mut().start_current_sector(None);
         l.check("start ", "<nil>");
         let mut g = gr.unwrap();
@@ -305,12 +305,12 @@ fn tours_match_go() {
                     Err(e) => e.0,
                 },
             );
-            l.check("tourstate ", &fnv_hex(marshal(&t).as_bytes()));
+            l.check("tourstate ", &fnv_hex(marshal_go_tour(&t).as_bytes()));
             step += 1;
         }
         let (rank, medals) = calculate_tour_commission(Some(&t.borrow()));
         l.check("commission ", &format!("{} {}", rank, marshal(&medals)));
-        l.check("final ", &marshal(&t));
+        l.check("final ", &marshal_go_tour(&t));
         let mut lb = Leaderboard::new();
         let mut rec = lb.record_tour_at(&t.borrow(), ["", "Excelsior"][ti % 2], GoTime::default());
         rec.date = "FIXED".into();
@@ -348,7 +348,7 @@ fn tours_match_go() {
             let _ = purchase_refit(Some(&mut t.borrow_mut()), &id);
         }
     }
-    l.check("maxed ", &marshal(&t));
+    l.check("maxed ", &marshal_go_tour(&t));
     let g = t.borrow_mut().start_current_sector(Some(2)).unwrap();
     l.check_full(&g.borrow());
     l.check(

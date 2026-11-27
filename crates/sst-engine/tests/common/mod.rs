@@ -54,9 +54,29 @@ pub fn marshal<T: json::GoJson + ?Sized>(v: &T) -> String {
     }
 }
 
+/// The state's JSON as the Go edition wrote it: without the legacy Klingon
+/// list, which saves carry since format 3 and [`state_parts`] hashes
+/// separately anyway.
+pub fn marshal_go_state(g: &GameState) -> String {
+    let mut g = g.clone();
+    g.current_quad.klingons = sst_engine::json::GoVec::nil();
+    marshal(&g)
+}
+
+/// [`marshal_go_state`] for a tour: its current game without the Klingon list.
+pub fn marshal_go_tour(t: &sst_engine::TourRef) -> String {
+    let mut tc = t.borrow().clone();
+    if let Some(g) = &tc.current_game_state {
+        let mut gc = g.borrow().clone();
+        gc.current_quad.klingons = sst_engine::json::GoVec::nil();
+        tc.current_game_state = Some(sst_engine::game_ref(gc));
+    }
+    marshal(&tc)
+}
+
 pub fn state_parts(g: &GameState) -> (String, String, String) {
     (
-        marshal(g),
+        marshal_go_state(g),
         marshal(&g.current_quad.klingons),
         rng_state(&g.rng),
     )

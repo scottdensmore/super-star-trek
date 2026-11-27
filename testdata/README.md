@@ -109,3 +109,47 @@ All 66 games without adversaries, all 48 scenario games and the other 49
 browser sessions in `engine/games.txt`, the other 52 console sessions, the
 other 174 browser sessions in `wasm/sessions.txt`, and all component,
 toolkit, theme, audio and formatter references are unchanged.
+
+## Second round of fixes
+
+These fixes change behaviour that the first round still kept from Go, so
+more transcripts moved; each case below lost its Go byte-parity on purpose.
+Regression tests are in `crates/sst-engine/tests/bug_fixes.rs` unless noted.
+
+8. **Saves keep the Klingons in the current quadrant (save format 3).** The
+   legacy Klingon list (`QuadrantState.klingons`) was tagged `json:"-"` and
+   the loaders rebuilt it from `Enemies`, which is empty in a game without
+   adversaries: after a load the quadrant's Klingons sat on the grid, but
+   phasers reported "no enemy ships", any torpedo hit destroyed one outright
+   and they never fired. (With adversaries the rebuild also discarded
+   damage not yet copied to `Enemies`.) The list is now saved as
+   `CurrentQuad.klingons` (omitted when empty) and envelopes are written as
+   version 3; a version-3 load keeps the list exactly as saved. Older saves
+   (version-2 envelopes, bare legacy saves, browser sessions) are migrated
+   on load by `migrate_quadrant_klingons`: Klingons recorded in `Enemies`
+   are taken from there, and every other Klingon or commander on the grid
+   gets the entry a fresh quadrant entry would give it (next free ID,
+   `300 + 150 * rand + 25 * skill` energy, `950 + 400 * rand + 50 * skill`
+   for a commander, drawn from the reseeded PRNG). Their battle damage was
+   never saved and cannot be recovered. `testdata/saves/` holds old saves
+   that must keep loading: the `go-*` files are byte-for-byte Go output (the
+   two legacy files are the hex dumps recorded in `engine/save.txt`; the
+   envelope's hash equals the recorded Go `envhash`), the `prev-*` files were
+   written by the previous release (whose encoders matched Go byte for
+   byte). The engine parity harnesses hash a state's JSON without the new
+   field (the list was already hashed on its own), so a case moved only
+   where a save's bytes or a loaded list actually differ.
+9. **The browser loader runs the terminal loader's fix-ups.** `Session.Load`
+   unmarshalled the state and stopped there (the port already reseeded a
+   nil PRNG to avoid Go's panic). It now goes through `decode_load_game`:
+   default rules for a save without a profile, the PRNG reseeded from the
+   stardate, and the Klingon migration above, so a browser load and a
+   terminal load of the same file give the same state
+   (`crates/sst-wasm/tests/go_tests.rs`).
+
+Re-recorded cases:
+
+| Transcript | Cases | Cause |
+| :--- | :--- | :--- |
+| `engine/save.txt` | every `envhash` and envelope dump (`version` is now 3); the `compact`/`legacy` bytes and `load`/`loadtour` hashes of the three sources with Klingons in the quadrant (Kobayashi Maru, Mutara Nebula, tour) | 8 |
+| `wasm/sessions.txt` | the `save` output of 58 sessions that save with Klingons in the quadrant (`random-*`, `scenario-kobayashi-maru-1`, `scenario-mutara-4/5`, `smart-*`, `oddload-*`); in 9 of them (`random-2-custom`, `random-7-casual`, `random-7-expert`, `random-42-hardcore`, `random-777-casual`, `random-2024-hardcore`, `random--12345-casual`, `random-1099511627776-expert`, `random-1099511627776-custom`) the commands after a `load` also changed, because the loaded Klingons are still there | 8, 9 |

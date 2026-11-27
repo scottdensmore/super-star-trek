@@ -159,7 +159,8 @@ pub struct QuadrantState {
     pub web_segments: GoVec<Ptr<TholianWebSegment>>,
     pub starbase: Option<Coord>,
     pub stars: GoVec<Coord>,
-    /// `json:"-"`.
+    /// The legacy per-quadrant Klingon list. Go tagged it `json:"-"`, so
+    /// saves lost it; it is saved since format version 3.
     pub klingons: GoVec<Ptr<Klingon>>,
 }
 
@@ -170,6 +171,7 @@ crate::go_json_struct!(QuadrantState, "QuadrantState", "engine.QuadrantState" {
     web_segments => "web_segments" omitempty,
     starbase => "starbase" omitempty,
     stars => "stars" omitempty,
+    klingons => "klingons" omitempty,
 });
 
 /// Go `SyncQuadrantEnemies`: rebuilds the legacy Klingons slice from Enemies.

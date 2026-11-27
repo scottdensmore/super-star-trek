@@ -1,0 +1,1360 @@
+{
+  "version": 2,
+  "game_state": {
+    "RNG": {},
+    "rules": {
+      "profile": "normal",
+      "surveillance": "classic",
+      "sensor_degradation": true,
+      "repair_multiplier": 1,
+      "klingon_cloak": false,
+      "spatial_anomalies": false,
+      "adversaries": false,
+      "time_margin": 1,
+      "anim_speed": 2
+    },
+    "Skill": 3,
+    "Length": 2,
+    "Enterprise": {
+      "Quad": [
+        1,
+        7
+      ],
+      "Sector": [
+        4,
+        4
+      ],
+      "Energy": 3000,
+      "Shields": 0,
+      "Torpedoes": 10,
+      "Condition": 2,
+      "Devices": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "Damage": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "MaxEnergy": 3000,
+      "MaxTorpedoes": 10,
+      "LifeSupport": 0
+    },
+    "CurrentQuad": {
+      "grid": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          11,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          3
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          11,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "enemies": [
+        {
+          "id": 31,
+          "faction": 0,
+          "sector": [
+            4,
+            8
+          ],
+          "energy": 1800,
+          "shields": 800,
+          "max_energy": 0,
+          "is_commander": true,
+          "is_cloaked": false,
+          "cloak_turns": 0,
+          "special_state": 0
+        },
+        {
+          "id": 32,
+          "faction": 1,
+          "sector": [
+            2,
+            6
+          ],
+          "energy": 1200,
+          "shields": 500,
+          "max_energy": 0,
+          "is_commander": false,
+          "is_cloaked": true,
+          "cloak_turns": 2,
+          "special_state": 0
+        },
+        {
+          "id": 33,
+          "faction": 2,
+          "sector": [
+            1,
+            2
+          ],
+          "energy": 800,
+          "shields": 300,
+          "max_energy": 0,
+          "is_commander": false,
+          "is_cloaked": false,
+          "cloak_turns": 0,
+          "special_state": 0
+        },
+        {
+          "id": 34,
+          "faction": 2,
+          "sector": [
+            8,
+            2
+          ],
+          "energy": 800,
+          "shields": 300,
+          "max_energy": 0,
+          "is_commander": false,
+          "is_cloaked": false,
+          "cloak_turns": 0,
+          "special_state": 1
+        }
+      ]
+    },
+    "GalaxyChart": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        3,
+        7,
+        5,
+        1,
+        6,
+        6,
+        8,
+        4
+      ],
+      [
+        0,
+        6,
+        7,
+        8,
+        4,
+        8,
+        302,
+        6,
+        2
+      ],
+      [
+        0,
+        9,
+        5,
+        1,
+        109,
+        3,
+        2,
+        7,
+        1
+      ],
+      [
+        0,
+        4,
+        105,
+        1,
+        6,
+        8,
+        2,
+        9,
+        4
+      ],
+      [
+        0,
+        6,
+        3,
+        13,
+        5,
+        6,
+        6,
+        3,
+        7
+      ],
+      [
+        0,
+        319,
+        103,
+        5,
+        308,
+        6,
+        3,
+        4,
+        4
+      ],
+      [
+        0,
+        3,
+        5,
+        6,
+        5,
+        3,
+        3,
+        9,
+        5
+      ],
+      [
+        0,
+        6,
+        9,
+        1,
+        307,
+        7,
+        13,
+        6,
+        8
+      ]
+    ],
+    "ChartDiscovered": [
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    ],
+    "ChartKnownBases": [
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false
+      ]
+    ],
+    "quadrant_env": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    ],
+    "RemainingKlingons": 4,
+    "RemainingStarbases": 3,
+    "Stardate": 2788,
+    "InitialStardate": 2788,
+    "TimeRemaining": 40,
+    "metrics": {
+      "klingons_killed": 0,
+      "commanders_killed": 0,
+      "super_commanders_killed": 0,
+      "romulans_killed": 0,
+      "romulans_surrendered": 0,
+      "starbases_destroyed": 0,
+      "stars_destroyed": 0,
+      "planets_destroyed": 0,
+      "casualties": 0,
+      "help_calls": 0,
+      "starships_lost": 0
+    },
+    "game_won": false,
+    "game_over": false,
+    "days_remaining": 40,
+    "klingons_remaining": 4,
+    "score": 0,
+    "options": {
+      "difficulty": "normal"
+    }
+  },
+  "tour_state": {
+    "id": "tour-4242",
+    "active": true,
+    "current_sector_index": 3,
+    "sectors": [
+      {
+        "index": 1,
+        "name": "Neutral Zone Patrol",
+        "objective": "border_patrol",
+        "description": "Eliminate cloaked Romulan incursions infiltrating Federation border space.",
+        "initial_days": 30,
+        "hostile_count": 2,
+        "starbase_count": 1,
+        "anomalies": false,
+        "bonus_bounty": 250
+      },
+      {
+        "index": 2,
+        "name": "Border Outpost Defense",
+        "objective": "deep_surveillance",
+        "description": "Neutralize Tholian web spinners constructing energy barriers around border outposts.",
+        "initial_days": 32,
+        "hostile_count": 2,
+        "starbase_count": 1,
+        "anomalies": true,
+        "bonus_bounty": 350
+      },
+      {
+        "index": 3,
+        "name": "Commander Decapitation",
+        "objective": "convoy_escort",
+        "description": "Eliminate the Klingon commander flagship and its escort wolf-pack.",
+        "initial_days": 35,
+        "hostile_count": 3,
+        "starbase_count": 2,
+        "anomalies": false,
+        "bonus_bounty": 500
+      },
+      {
+        "index": 4,
+        "name": "Invasion Fleet Interception",
+        "objective": "starbase_siege",
+        "description": "Defend against a multi-faction armada of Klingon, Romulan, and Tholian warships.",
+        "initial_days": 40,
+        "hostile_count": 4,
+        "starbase_count": 1,
+        "anomalies": true,
+        "bonus_bounty": 750
+      }
+    ],
+    "requisition_points": 0,
+    "installed_refits": {},
+    "total_tour_score": 0,
+    "sectors_completed": 0,
+    "hostiles_destroyed": 0,
+    "current_game_state": {
+      "RNG": {},
+      "rules": {
+        "profile": "normal",
+        "surveillance": "classic",
+        "sensor_degradation": true,
+        "repair_multiplier": 1,
+        "klingon_cloak": false,
+        "spatial_anomalies": false,
+        "adversaries": false,
+        "time_margin": 1,
+        "anim_speed": 2
+      },
+      "Skill": 3,
+      "Length": 2,
+      "Enterprise": {
+        "Quad": [
+          1,
+          7
+        ],
+        "Sector": [
+          4,
+          4
+        ],
+        "Energy": 3000,
+        "Shields": 0,
+        "Torpedoes": 10,
+        "Condition": 2,
+        "Devices": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "Damage": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "MaxEnergy": 3000,
+        "MaxTorpedoes": 10,
+        "LifeSupport": 0
+      },
+      "CurrentQuad": {
+        "grid": [
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            3
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            11,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        ],
+        "enemies": [
+          {
+            "id": 31,
+            "faction": 0,
+            "sector": [
+              4,
+              8
+            ],
+            "energy": 1800,
+            "shields": 800,
+            "max_energy": 0,
+            "is_commander": true,
+            "is_cloaked": false,
+            "cloak_turns": 0,
+            "special_state": 0
+          },
+          {
+            "id": 32,
+            "faction": 1,
+            "sector": [
+              2,
+              6
+            ],
+            "energy": 1200,
+            "shields": 500,
+            "max_energy": 0,
+            "is_commander": false,
+            "is_cloaked": true,
+            "cloak_turns": 2,
+            "special_state": 0
+          },
+          {
+            "id": 33,
+            "faction": 2,
+            "sector": [
+              1,
+              2
+            ],
+            "energy": 800,
+            "shields": 300,
+            "max_energy": 0,
+            "is_commander": false,
+            "is_cloaked": false,
+            "cloak_turns": 0,
+            "special_state": 0
+          },
+          {
+            "id": 34,
+            "faction": 2,
+            "sector": [
+              8,
+              2
+            ],
+            "energy": 800,
+            "shields": 300,
+            "max_energy": 0,
+            "is_commander": false,
+            "is_cloaked": false,
+            "cloak_turns": 0,
+            "special_state": 1
+          }
+        ]
+      },
+      "GalaxyChart": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          3,
+          7,
+          5,
+          1,
+          6,
+          6,
+          8,
+          4
+        ],
+        [
+          0,
+          6,
+          7,
+          8,
+          4,
+          8,
+          302,
+          6,
+          2
+        ],
+        [
+          0,
+          9,
+          5,
+          1,
+          109,
+          3,
+          2,
+          7,
+          1
+        ],
+        [
+          0,
+          4,
+          105,
+          1,
+          6,
+          8,
+          2,
+          9,
+          4
+        ],
+        [
+          0,
+          6,
+          3,
+          13,
+          5,
+          6,
+          6,
+          3,
+          7
+        ],
+        [
+          0,
+          319,
+          103,
+          5,
+          308,
+          6,
+          3,
+          4,
+          4
+        ],
+        [
+          0,
+          3,
+          5,
+          6,
+          5,
+          3,
+          3,
+          9,
+          5
+        ],
+        [
+          0,
+          6,
+          9,
+          1,
+          307,
+          7,
+          13,
+          6,
+          8
+        ]
+      ],
+      "ChartDiscovered": [
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ]
+      ],
+      "ChartKnownBases": [
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          true,
+          false,
+          false
+        ]
+      ],
+      "quadrant_env": [
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      ],
+      "RemainingKlingons": 4,
+      "RemainingStarbases": 3,
+      "Stardate": 2788,
+      "InitialStardate": 2788,
+      "TimeRemaining": 40,
+      "metrics": {
+        "klingons_killed": 0,
+        "commanders_killed": 0,
+        "super_commanders_killed": 0,
+        "romulans_killed": 0,
+        "romulans_surrendered": 0,
+        "starbases_destroyed": 0,
+        "stars_destroyed": 0,
+        "planets_destroyed": 0,
+        "casualties": 0,
+        "help_calls": 0,
+        "starships_lost": 0
+      },
+      "game_won": false,
+      "game_over": false,
+      "days_remaining": 40,
+      "klingons_remaining": 4,
+      "score": 0,
+      "options": {
+        "difficulty": "normal"
+      }
+    },
+    "in_drydock": false,
+    "completed": false,
+    "failed": false,
+    "medals": [],
+    "seed": 4242
+  }
+}

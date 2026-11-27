@@ -29,6 +29,7 @@ CTestTestfile.cmake
 # Saved missions and local high scores written while playing
 *.trk
 *.TRK
+!/testdata/saves/*.TRK
 .sst-scores.json
 
 # Environment and secrets

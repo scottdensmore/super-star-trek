@@ -6,9 +6,9 @@ use sst_audio::{Dispatcher, NullPlayer, PlayerRef};
 use sst_engine::json::JsonError;
 use sst_engine::parser::{fields, parse_command, trim_space};
 use sst_engine::{
-    decode_session, default_rules_for_profile, encode_session, get_scenario,
+    decode_load_game, default_rules_for_profile, encode_session, get_scenario,
     session_counter_attack, Action, DifficultyProfile, GameLength, GameState, ScenarioID,
-    SkillLevel, PRNG,
+    SkillLevel,
 };
 
 use crate::formatter::*;
@@ -136,19 +136,15 @@ impl Session {
 
     /// Go `Load`: replaces the game with the decoded JSON state.
     ///
-    /// DELIBERATE DEVIATION from Go: Go's `json.Unmarshal` leaves `RNG` as a
-    /// `&PRNG{}` with a nil source (or a nil `*PRNG` when the field is absent),
-    /// so the next random draw (e.g. entering a new quadrant) panics and kills
-    /// the Go WASM runtime. Here a missing or nil-source PRNG is reseeded the
-    /// way `engine.LoadGame` does it: `NewPRNG(int64(Stardate))`. Everything
-    /// else matches Go, including the missing post-load fix-ups (the legacy
-    /// Klingon list stays empty and the rules are not defaulted).
+    /// Runs the terminal loader's post-load fix-ups ([`decode_load_game`]):
+    /// rules default to the normal profile when missing, the PRNG is reseeded
+    /// from the stardate, and a session saved before format 3 gets its
+    /// quadrant's Klingons rebuilt. (Go's `Session.Load` skipped all of
+    /// them: the PRNG kept a nil source, so the next random draw panicked,
+    /// and the Klingons in the current quadrant were lost.)
     pub fn load(&mut self, data: &str) -> Result<(), JsonError> {
-        let mut g = decode_session(data)?;
-        if g.rng.as_ref().is_none_or(|r| r.is_nil_source()) {
-            g.rng = Some(PRNG::new(g.stardate as i64));
-        }
-        self.game = g;
+        let g = decode_load_game(data.as_bytes())?;
+        self.game = g.borrow().clone();
         Ok(())
     }
 }

@@ -134,7 +134,7 @@ impl Sim<'_, '_> {
                     }
                 }
             }
-            self.l.check("TS ", &marshal(&t));
+            self.l.check("TS ", &marshal_go_tour(&t));
             return;
         }
         if failed {
@@ -143,7 +143,7 @@ impl Sim<'_, '_> {
             let n = self.lb.tour_records.len();
             self.lb.tour_records[n - 1].date = String::new();
             self.l.check("F ", &marshal(&self.lb));
-            self.l.check("TS ", &marshal(&t));
+            self.l.check("TS ", &marshal_go_tour(&t));
             self.over = true;
         }
     }

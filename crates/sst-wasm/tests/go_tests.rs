@@ -657,8 +657,8 @@ fn wasm_journey_save_and_load() {
     assert_eq!(s2.game().enterprise.sector, s1.game().enterprise.sector);
 }
 
-/// The deliberate deviation: after `Load` the PRNG is reseeded, so entering a
-/// new quadrant (a random draw) works instead of panicking like Go.
+/// After `Load` the PRNG is reseeded like `LoadGame`, so entering a new
+/// quadrant (a random draw) works instead of panicking like Go.
 #[test]
 fn load_reseeds_prng_instead_of_panicking() {
     let mut s1 = Session::new(12345, normal());
@@ -674,6 +674,71 @@ fn load_reseeds_prng_instead_of_panicking() {
     );
     let out = s2.execute("nav q 1 1 6");
     assert!(out.contains("[WARP ENGINES ENGAGED]"), "{out}");
+}
+
+/// The browser loader runs the same post-load fix-ups as the terminal
+/// loader (Go's `Session.Load` skipped them): the quadrant's Klingons
+/// survive a save, older saves get them rebuilt, and empty rules default.
+#[test]
+fn load_runs_the_terminal_post_load_fixups() {
+    let mut s1 = Session::new(2024, normal());
+    s1.game_mut().populate_quadrant([2, 4], [4, 4]);
+    s1.game_mut().current_quad.klingons[0]
+        .as_ref()
+        .unwrap()
+        .borrow_mut()
+        .energy = 99.0;
+    let want: Vec<Klingon> = s1
+        .game()
+        .current_quad
+        .klingons
+        .iter()
+        .flatten()
+        .map(|k| k.borrow().clone())
+        .collect();
+    assert_eq!(want.len(), 3);
+    let saved = s1.save().expect("save");
+    let mut s2 = Session::new(1, normal());
+    s2.load(&saved).expect("load");
+    let got: Vec<Klingon> = s2
+        .game()
+        .current_quad
+        .klingons
+        .iter()
+        .flatten()
+        .map(|k| k.borrow().clone())
+        .collect();
+    assert_eq!(got, want);
+    let out = s2.execute("pha 300");
+    assert!(
+        out.contains("Phaser beam hit") || out.contains("DESTROYED"),
+        "{out}"
+    );
+
+    // A session saved by the previous version: Klingons rebuilt exactly as
+    // the terminal loader rebuilds them.
+    let old = std::fs::read_to_string(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../testdata/saves/prev-session-normal.json"
+    ))
+    .unwrap();
+    let mut s3 = Session::new(1, normal());
+    s3.load(&old).expect("load old session");
+    let terminal = decode_load_game(old.as_bytes()).unwrap();
+    assert_eq!(*s3.game(), *terminal.borrow());
+    assert_eq!(s3.game().current_quad.klingons.len(), 3);
+
+    // Rules missing from the save default to the normal profile.
+    let bare = GameState {
+        stardate: 2500.0,
+        ..Default::default()
+    };
+    let mut s4 = Session::new(1, normal());
+    s4.load(&encode_session(&bare).unwrap()).expect("load bare");
+    assert_eq!(
+        s4.game().rules,
+        default_rules_for_profile(&DifficultyProfile::normal())
+    );
 }
 
 // --- bridge_js_test.go (via a fake JS host) ---
