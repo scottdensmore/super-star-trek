@@ -80,14 +80,29 @@ fn run_program(m: sst_tui::Model, opts: &[ProgramOption]) -> Result<(), String> 
     }
 }
 
-/// Go `isClassic(args)`.
+/// Go `isClassic(args)`: whether the teletype mode is requested.
+///
+/// The last `--classic` / `-classic[=value]` flag decides. An explicit false
+/// value (`--classic=false`, `=0`, `=f`, ... as Go's `strconv.ParseBool`
+/// reads them) means the bridge console; Go sent every `--classic=...` down
+/// the teletype path, which then only printed a notice. A value that is not
+/// a boolean stays on the teletype path, whose flag parser reports it.
 pub fn is_classic(args: &[String]) -> bool {
-    args.iter().any(|arg| {
-        arg == "--classic"
-            || arg == "-classic"
-            || arg.starts_with("--classic=")
-            || arg.starts_with("-classic=")
-    })
+    let mut classic = false;
+    for arg in args {
+        let Some(rest) = arg
+            .strip_prefix("--classic")
+            .or_else(|| arg.strip_prefix("-classic"))
+        else {
+            continue;
+        };
+        if rest.is_empty() {
+            classic = true;
+        } else if let Some(value) = rest.strip_prefix('=') {
+            classic = flag::parse_bool(value).unwrap_or(true);
+        }
+    }
+    classic
 }
 
 /// Go `run(args, in, out, errOut)`: returns the process exit code.

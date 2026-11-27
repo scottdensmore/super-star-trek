@@ -40,6 +40,27 @@ fn test_is_classic() {
             &["--classic-rock"],
             false,
         ),
+        // An explicit false value launches the bridge console (Go took any
+        // --classic=... for teletype mode and then printed a notice).
+        ("classic long flag false", &["--classic=false"], false),
+        (
+            "classic short flag zero",
+            &["-classic=0", "-seed", "1"],
+            false,
+        ),
+        ("classic flag F", &["--classic=F"], false),
+        (
+            "last classic flag wins (on)",
+            &["--classic=false", "--classic"],
+            true,
+        ),
+        (
+            "last classic flag wins (off)",
+            &["--classic", "-classic=f"],
+            false,
+        ),
+        // An invalid value stays on the teletype path, which reports it.
+        ("classic flag bad value", &["--classic=maybe"], true),
     ];
     for (name, args, want) in tests {
         let args: Vec<String> = args.iter().map(|s| s.to_string()).collect();
@@ -91,6 +112,18 @@ fn test_run_tui_mode_valid_flags() {
     let (code, _, _) = run(&[]);
     assert_eq!(code, 0);
     assert_eq!(c.borrow().calls, 3, "expected runProgram with no args");
+}
+
+#[test]
+fn classic_false_launches_the_bridge_console() {
+    let _env = Env::new();
+    let c = capture(Ok(()));
+    let (code, out, err) = run(&["--classic=false", "-seed", "42"]);
+    assert_eq!((code, out.as_str(), err.as_str()), (0, "", ""));
+    assert_eq!(c.borrow().calls, 1, "expected runProgram to be called");
+    let (code, out, _) = run(&["-classic=0"]);
+    assert_eq!((code, out.as_str()), (0, ""));
+    assert_eq!(c.borrow().calls, 2);
 }
 
 #[test]

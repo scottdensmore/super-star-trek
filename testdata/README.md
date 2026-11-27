@@ -191,6 +191,13 @@ Regression tests are in `crates/sst-engine/tests/bug_fixes.rs` unless noted.
     (`SST_PARITY_RECORD=/tmp/events.txt cargo test --release -p sst-wasm
     --test parity parity_combat_events`).
 
+14. **`--classic=false` launches the bridge console.** `isClassic` sent
+    every `--classic=...` argument down the teletype path, which then printed
+    "Teletype mode is off - run sst without --classic ..." and exited. The
+    last `--classic` flag now decides, read like Go's `strconv.ParseBool`
+    (`false`, `0`, `f`, ... launch the console; an invalid value stays on the
+    teletype path, which reports it) (`crates/sst/tests/main_test.rs`).
+
 Re-recorded cases:
 
 | Transcript | Cases | Cause |
@@ -204,3 +211,4 @@ Re-recorded cases:
 | `engine/games.txt` | 51 TUI games with adversaries (1, 4, 5, 7, 10, 12, 13, 16, 19, 20, 22, 25, 29, 31, 34, 36, 37, 40, 43-46, 49, 52, 53, 55, 60, 61, 67-70, 73, 76, 77, 79, 82, 84, 91-94, 97, 101, 103, 109, 115, 117, 118, 124, 127), 24 of the 26 tour games (178-185, 187, 189-203) and 9 browser sessions (208, 209, 216, 232, 233, 241, 248, 249, 257): hits on shielded ships | 13 |
 | `wasm/sessions.txt` | `random-2-expert`, `random-7-emeritus`, `smart-scenario-siege-1` | 13 |
 | `wasm/events.txt` | 24 of the 600 synthetic event lists (torpedo hits on non-Klingon targets) | 13 |
+| `cli/cli.txt` | 48 `classic-eq-false` (now a console launch) and 49 `classic-eq-false-seed` (now the seeded console launch, the same facts and view as 58 `tui-seed`) | 14 |
