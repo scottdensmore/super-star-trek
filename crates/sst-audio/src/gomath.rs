@@ -548,10 +548,15 @@ pub fn pow(x: f64, y: f64) -> f64 {
         } else if y > 0.0 {
             return f64::INFINITY;
         }
-    } else if y == 0.5 {
-        return x.sqrt();
-    } else if y == -0.5 {
-        return 1.0 / x.sqrt();
+    } else if y == 0.5 || y == -0.5 {
+        // Go returns Sqrt(x) (or its reciprocal), whose NaN for a negative x
+        // is the hardware default: negative on amd64 (where the reference
+        // was recorded), positive on arm64. Use the amd64 bits everywhere so
+        // results do not depend on the host.
+        if x < 0.0 {
+            return f64::from_bits(0xfff8_0000_0000_0000);
+        }
+        return if y == 0.5 { x.sqrt() } else { 1.0 / x.sqrt() };
     }
 
     let (mut yi, mut yf) = modf(abs(y));
