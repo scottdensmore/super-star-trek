@@ -15,5 +15,5 @@ echo "=== 2. Running Automated WebAssembly User Journeys ==="
 SST_WASM_PKG_DIR="${PKG_DIR}" node tests/wasm_journey_test.js
 
 echo ""
-echo "=== 3. Replaying Go parity sessions through the WebAssembly build ==="
+echo "=== 3. Replaying the parity sessions through the WebAssembly build ==="
 SST_WASM_PKG_DIR="${PKG_DIR}" node tests/wasm_parity_replay.js

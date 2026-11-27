@@ -1,5 +1,5 @@
 //! Teletype mode (port of `pkg/classic`): a small stub that prints the
-//! banner and the initial energy/shield status, exactly like the Go version.
+//! banner and the initial energy/shield status.
 
 use std::io::{Read, Write};
 
@@ -62,7 +62,7 @@ pub fn run_classic_cli(_in: &mut dyn Read, out: &mut dyn Write, args: &[String])
     let game = GameState::new_game(seed.get(), SkillLevel::Good, GameLength::Medium);
 
     if classic_mode.get() {
-        let _ = writeln!(out, "Super Star Trek (Go Edition)");
+        let _ = writeln!(out, "Super Star Trek");
         let mut sub = TeletypeSubscriber::new(out);
         sub.handle_event(&Event::ShieldTransfer(EventShieldTransfer {
             new_shields: game.enterprise.shields,
@@ -71,7 +71,7 @@ pub fn run_classic_cli(_in: &mut dyn Read, out: &mut dyn Write, args: &[String])
     } else {
         let _ = writeln!(
             out,
-            "Charmbracelet TUI placeholder - use --classic for teletype mode."
+            "Teletype mode is off - run sst without --classic for the bridge console."
         );
     }
     0

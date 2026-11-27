@@ -23,12 +23,11 @@ use sst_tui::config::{self, AudioMode, AUDIO_MODE_OFF};
 use sst_tui::theme;
 use sst_tuikit::tea::{with_alt_screen, with_mouse_cell_motion, Program, ProgramOption};
 
-/// Release version (Go `version`, set with `-ldflags -X` in Go builds). A
-/// release build sets `SST_VERSION` at build time (e.g. `2.0.0`); otherwise
-/// it is the cargo package version plus `-dev` (`2.0.0-dev`, Go's default).
+/// Release version: the cargo package version, unless a release build
+/// overrides it by setting `SST_VERSION` at build time.
 pub const VERSION: &str = match option_env!("SST_VERSION") {
     Some(v) => v,
-    None => concat!(env!("CARGO_PKG_VERSION"), "-dev"),
+    None => env!("CARGO_PKG_VERSION"),
 };
 
 /// Build commit (Go `commit`), from `SST_COMMIT` at build time.

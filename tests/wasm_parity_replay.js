@@ -87,7 +87,7 @@ async function main() {
         steps++;
         bytes += Buffer.byteLength(want);
     }
-    console.log(`✔ WASM parity replay: ${cases} cases, ${steps} steps, ${bytes} bytes identical to Go.`);
+    console.log(`✔ WASM parity replay: ${cases} cases, ${steps} steps, ${bytes} bytes identical to the reference transcripts.`);
 }
 
 main().catch(err => {

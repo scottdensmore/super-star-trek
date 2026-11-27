@@ -38,7 +38,8 @@ cases you expect moved, and add an entry below. (`SST_PARITY_RECORD_FULL=1`
 additionally writes the engine game payloads in full instead of hashed, which
 helps to read a changed game; do not commit that output.) The CLI transcript
 `parity/cli/cli.txt` stores byte lengths, so edit it with a script that
-rewrites the lengths.
+rewrites the lengths; its `--version` output is stored with `{VERSION}`,
+`{COMMIT}` and `{DATE}` placeholders that the test fills in from the build.
 
 ## Intentional changes from the Go reference
 
@@ -82,6 +83,14 @@ fix changes. Every other case is still the original Go recording.
    PRNG with a nil source, so the next random draw panicked. Tour loads now
    reseed from the stardate exactly like `LoadGame`, so both loaders return
    the same state for the same file.
+7. **No "Go" in user-visible text.** The `--classic` banner reads
+   "Super Star Trek" (was "Super Star Trek (Go Edition)"), `--classic=false`
+   no longer names the Go TUI library, `--version` reports the Cargo package
+   version (was Go's hard-coded `2.0.0-dev`; `SST_VERSION`, `SST_COMMIT` and
+   `SST_BUILD_DATE` still override it for release builds), and JSON decoding
+   errors say "into struct field ..." / "into value of type ..." instead of
+   "into Go struct field ..." / "into Go value of type ...".
+
 Re-recorded cases:
 
 | Transcript | Cases | Cause |
@@ -90,9 +99,11 @@ Re-recorded cases:
 | `engine/games.txt` | 25 of the 26 tour games (178-185, 187-203) | 1-5 |
 | `engine/games.txt` | 11 browser sessions on the expert/emeritus profiles, which enable adversaries (208, 209, 216, 217, 225, 233, 241, 248, 249, 256, 257) | 3, 4 |
 | `engine/save.txt` | `loadtour` hash of every envelope save (now equal to the `load` hash) and the two tour-envelope `case` loads (`R` line) | 6 |
+| `engine/save.txt`, `engine/score.txt` | JSON type-error messages | 7 |
 | `tui/games.txt` | `game_adversaries`, `game_click_targets` (both profiles; the latter showed a destroyed Klingon returning fire) | 3 |
 | `tui/tour.txt`, `tui/mash.txt` | `tour_win`, `mash_2` (both profiles): a `gameover 0` in a tour now opens the drydock instead of the Hall of Fame | 1 |
 | `wasm/sessions.txt` | `smart-11-normal`, `smart-4242-casual`, `smart-4242-normal`, `smart-8-normal`, `smart-77-casual`: the final kill now ends with "FEDERATION MISSION ACCOMPLISHED" | 5 |
+| `cli/cli.txt` | the 4 `--version` cases (7, 8, 9, 14; now placeholders), the 6 `--classic` banner cases (44-47, 55, 56) and the 3 placeholder-message cases (48, 49, 111) | 7 |
 
 All 66 games without adversaries, all 48 scenario games and the other 49
 browser sessions in `engine/games.txt`, the other 52 console sessions, the

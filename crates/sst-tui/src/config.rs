@@ -806,7 +806,7 @@ const FIELD_TYPES: [&str; 5] = ["int", "bool", "config.AudioMode", "string", "st
 
 fn type_err(value: &str, field: usize) -> ConfigError {
     ConfigError::Type(format!(
-        "json: cannot unmarshal {value} into Go struct field Config.{} of type {}",
+        "json: cannot unmarshal {value} into struct field Config.{} of type {}",
         FIELDS[field], FIELD_TYPES[field]
     ))
 }
@@ -838,7 +838,7 @@ pub fn decode_config(data: &[u8]) -> Result<Config, ConfigError> {
         b'{' => {}
         c => {
             return Err(ConfigError::Type(format!(
-                "json: cannot unmarshal {} into Go value of type config.Config",
+                "json: cannot unmarshal {} into value of type config.Config",
                 value_kind(c)
             )))
         }
@@ -1163,11 +1163,11 @@ mod tests {
         assert_eq!(msg("{} x"), "invalid character 'x' after top-level value");
         assert_eq!(
             msg("{\"volume\":\"1\"}"),
-            "json: cannot unmarshal string into Go struct field Config.volume of type int"
+            "json: cannot unmarshal string into struct field Config.volume of type int"
         );
         assert_eq!(
             msg("[]"),
-            "json: cannot unmarshal array into Go value of type config.Config"
+            "json: cannot unmarshal array into value of type config.Config"
         );
     }
 }

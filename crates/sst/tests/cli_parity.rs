@@ -111,8 +111,15 @@ fn cli_parity() {
         let config = r.section("config");
         let progerr = r.line() == "progerr true";
         let exit: i32 = r.line().strip_prefix("exit ").unwrap().parse().unwrap();
-        let want_out = r.section("stdout");
-        let want_err = r.section("stderr");
+        // Version output is recorded with placeholders for the build values.
+        let stamp = |s: &str| {
+            s.replace("{VERSION}", super_star_trek::VERSION)
+                .replace("{COMMIT}", super_star_trek::COMMIT)
+                .replace("{DATE}", super_star_trek::DATE)
+        };
+        let want_out = stamp(r.section("stdout"));
+        let want_err = stamp(r.section("stderr"));
+        let (want_out, want_err) = (want_out.as_str(), want_err.as_str());
         let model_line = r.line();
 
         let home = env.fresh_home();

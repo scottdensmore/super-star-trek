@@ -25,7 +25,11 @@ fn handle(e: Event) -> String {
 fn test_run_classic_cli_classic_mode() {
     let (code, out) = classic(&["-classic", "-seed", "12345"]);
     assert_eq!(code, 0);
-    assert!(out.contains("Super Star Trek (Go Edition)"), "got {out:?}");
+    assert!(out.starts_with("Super Star Trek\n"), "got {out:?}");
+    assert!(
+        !out.contains("Go"),
+        "banner still names the Go edition: {out:?}"
+    );
     assert!(
         out.contains("Energy:") && out.contains("Shields:"),
         "got {out:?}"
@@ -38,7 +42,7 @@ fn test_run_classic_cli_default_placeholder() {
     assert_eq!(code, 0);
     assert_eq!(
         out,
-        "Charmbracelet TUI placeholder - use --classic for teletype mode.\n"
+        "Teletype mode is off - run sst without --classic for the bridge console.\n"
     );
 }
 

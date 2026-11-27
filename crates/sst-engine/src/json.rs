@@ -10,7 +10,7 @@
 //!   fields exactly or case-insensitively, unknown keys are ignored, missing
 //!   fields keep their current value, `null` is a no-op except for pointers,
 //!   slices and maps (which become nil), and type mismatches are reported as
-//!   `json: cannot unmarshal X into Go struct field S.f of type T` (the first
+//!   `json: cannot unmarshal X into struct field S.f of type T` (the first
 //!   such error is returned after decoding everything else).
 //!
 //! Types opt in by implementing [`GoJson`]; structs usually use the
@@ -716,7 +716,7 @@ impl Decoder {
         }
         let msg = if self.path.is_empty() {
             format!(
-                "json: cannot unmarshal {} into Go value of type {}",
+                "json: cannot unmarshal {} into value of type {}",
                 value, go_type
             )
         } else {
@@ -725,7 +725,7 @@ impl Decoder {
             format!(
                 "json: cannot unmarshal {} into {}{}.{} of type {}",
                 value,
-                if numeric { "" } else { "Go struct field " },
+                if numeric { "" } else { "struct field " },
                 self.root,
                 self.path.join("."),
                 go_type

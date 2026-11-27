@@ -53,7 +53,7 @@ fn test_run_classic_mode() {
     let (code, out, _) = run(&["--classic"]);
     assert_eq!(code, 0, "expected exit code 0 for --classic");
     assert!(
-        out.contains("Super Star Trek (Go Edition)"),
+        out.contains("Super Star Trek\n"),
         "expected classic banner in output, got {out:?}"
     );
     assert!(
@@ -63,7 +63,7 @@ fn test_run_classic_mode() {
 
     let (code, out, _) = run(&["-classic", "-seed", "999"]);
     assert_eq!(code, 0, "expected exit code 0 for -classic -seed 999");
-    assert!(out.contains("Super Star Trek (Go Edition)"), "got {out:?}");
+    assert!(out.contains("Super Star Trek\n"), "got {out:?}");
 }
 
 #[test]
@@ -439,6 +439,28 @@ fn test_main_version_flag() {
         assert!(out.contains("commit:"), "{out:?}");
         assert!(out.contains("built at:"), "{out:?}");
     }
+}
+
+#[test]
+fn version_defaults_to_the_cargo_package_version() {
+    // Release builds override it with SST_VERSION; otherwise it is exactly
+    // the crate version (Go reported a hard-coded "2.0.0-dev").
+    if option_env!("SST_VERSION").is_none() {
+        assert_eq!(super_star_trek::VERSION, env!("CARGO_PKG_VERSION"));
+    }
+    let _env = Env::new();
+    let (code, out, _) = run(&["--version"]);
+    assert_eq!(code, 0);
+    assert_eq!(
+        out,
+        format!(
+            "sst version {} (commit: {}, built at: {})\n",
+            super_star_trek::VERSION,
+            super_star_trek::COMMIT,
+            super_star_trek::DATE
+        )
+    );
+    assert!(!out.contains("-dev"), "{out:?}");
 }
 
 #[test]
