@@ -198,6 +198,18 @@ Regression tests are in `crates/sst-engine/tests/bug_fixes.rs` unless noted.
     (`false`, `0`, `f`, ... launch the console; an invalid value stays on the
     teletype path, which reports it) (`crates/sst/tests/main_test.rs`).
 
+15. **The console thaws tour saves, and `freeze` exists.** The console's
+    `thaw <file>` and the save browser loaded only the game: a tour save lost
+    its tour, and a standalone save thawed during a tour was then evaluated
+    as the tour's current sector. Loading now detects the save type: a tour
+    save resumes its tour (current sector, refits, drydock), and a standalone
+    save thawed during a tour leaves tour mode with a message and starts that
+    mission (the alternative, refusing it, would leave no way out of a tour
+    short of quitting). `freeze <filename>`, advertised by `help saves` but
+    never implemented, now writes `<filename>.TRK` (a tour save during a
+    tour) (`crates/sst-tui/tests/go_model_a.rs`). No transcript thaws or
+    freezes a save, so none moved.
+
 Re-recorded cases:
 
 | Transcript | Cases | Cause |

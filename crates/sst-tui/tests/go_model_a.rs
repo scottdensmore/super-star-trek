@@ -680,6 +680,111 @@ fn modal_save_browser_thaw_error() {
     assert!(any_msg(&m, |s| s.contains("Failed to thaw")));
 }
 
+fn tour_at_sector(seed: i64, sector: i32) -> (sst_engine::TourRef, GameRef) {
+    let t = sst_engine::tour_ref(sst_engine::TourState::new_at(seed, 0));
+    let g = t.borrow_mut().start_current_sector(Some(sector)).unwrap();
+    (t, g)
+}
+
+/// Thawing a tour save resumes the tour (Go's console loaded only the game
+/// and kept whatever tour, if any, was running).
+#[test]
+fn thaw_resumes_a_tour_save() {
+    let e = env();
+    let dir = e.dir("toursaves");
+    let (t, g) = tour_at_sector(4242, 3);
+    g.borrow_mut().stardate = 3333.0;
+    let path = format!("{dir}/TOUR.TRK");
+    persist::save_tour_game(&path, Some(&g), Some(&t)).unwrap();
+
+    for via_browser in [false, true] {
+        let mut m = new_model(Some(novice_game()), dt());
+        assert!(m.tour.is_none());
+        m = if via_browser {
+            up(
+                &m,
+                tea::msg(savebrowser::LoadGameMsg { path: path.clone() }),
+            )
+        } else {
+            up(&m, submit(&format!("thaw {path}")))
+        };
+        let tour = m.tour.clone().expect("tour resumed");
+        assert_eq!(tour.borrow().current_sector_index, 3);
+        let game = m.game.clone().unwrap();
+        assert_eq!(game.borrow().stardate, 3333.0);
+        assert!(Rc::ptr_eq(
+            tour.borrow().current_game_state.as_ref().unwrap(),
+            &game
+        ));
+        assert!(
+            any_msg(&m, |s| s.contains("Patrol tour resumed: TOUR.TRK")),
+            "{:?}",
+            m.command_bar.messages()
+        );
+    }
+}
+
+/// Thawing a standalone mission during a tour leaves the tour (Go kept the
+/// tour and treated the loaded game as its current sector).
+#[test]
+fn thaw_standalone_save_during_a_tour_leaves_the_tour() {
+    let e = env();
+    let dir = e.dir("mixsaves");
+    let g = novice_game();
+    g.borrow_mut().stardate = 3150.0;
+    let path = format!("{dir}/SOLO.TRK");
+    persist::save_game(&g, &path).unwrap();
+
+    let (t, _) = tour_at_sector(4242, 1);
+    let mut m = new_model_with_tour(Some(t.clone()), dt());
+    m = up(&m, submit(&format!("thaw {path}")));
+    assert!(m.tour.is_none(), "left tour mode");
+    assert_eq!(m.game.as_ref().unwrap().borrow().stardate, 3150.0);
+    assert!(
+        !Rc::ptr_eq(
+            t.borrow().current_game_state.as_ref().unwrap(),
+            m.game.as_ref().unwrap()
+        ),
+        "the tour does not adopt the standalone game"
+    );
+    assert!(any_msg(&m, |s| s.contains("Left the patrol tour")));
+    assert!(any_msg(&m, |s| s.contains("Mission thawed: SOLO.TRK")));
+}
+
+/// `freeze <name>` (advertised by `help saves`) writes a save: a tour save
+/// during a tour, a standalone save otherwise.
+#[test]
+fn freeze_writes_a_save_that_thaws_back() {
+    let e = env();
+    let dir = e.dir("freeze");
+    let g = novice_game();
+    g.borrow_mut().stardate = 3210.0;
+    let mut m = new_model(Some(g), dt());
+    m = up(&m, submit(&format!("freeze {dir}/Mission")));
+    assert!(
+        any_msg(&m, |s| s.contains("Mission frozen: Mission.TRK")),
+        "{:?}",
+        m.command_bar.messages()
+    );
+    let l = persist::load_game(&format!("{dir}/Mission.TRK")).unwrap();
+    assert_eq!(l.borrow().stardate, 3210.0);
+
+    m = up(&m, submit("freeze"));
+    assert!(any_msg(&m, |s| s.contains("Usage: freeze <filename>")));
+    m = up(&m, submit(&format!("freeze {dir}/1bad")));
+    assert!(any_msg(&m, |s| s.contains("file names must begin")));
+
+    let (t, _) = tour_at_sector(4242, 2);
+    let mut m = new_model_with_tour(Some(t), dt());
+    m = up(&m, submit(&format!("freeze {dir}/TOUR")));
+    let (_, lt) = persist::load_tour_game(&format!("{dir}/TOUR.TRK")).unwrap();
+    assert_eq!(lt.expect("tour save").borrow().current_sector_index, 2);
+    let mut m2 = new_model(Some(novice_game()), dt());
+    m2 = up(&m2, submit(&format!("thaw {dir}/TOUR.TRK")));
+    assert!(m2.tour.is_some());
+    drop(m);
+}
+
 #[test]
 fn model_render_header_single_line_no_wrap() {
     let _e = env();

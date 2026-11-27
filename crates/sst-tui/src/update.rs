@@ -248,23 +248,8 @@ impl Model {
         }
 
         if let Some(m) = msg.downcast_ref::<savebrowser::LoadGameMsg>() {
-            match persist::load_game(&m.path) {
-                Err(e) => self.command_bar.add_message(&format!(
-                    "Failed to thaw {}: {}",
-                    gopath::base(&m.path),
-                    e
-                )),
-                Ok(loaded) => {
-                    let sd = loaded.borrow().stardate;
-                    self.game = Some(loaded);
-                    self.selected_sector = [0, 0];
-                    self.command_bar.add_message(&format!(
-                        "Mission thawed: {} (Stardate {})",
-                        gopath::base(&m.path),
-                        fmt_f(sd, 1)
-                    ));
-                }
-            }
+            let path = m.path.clone();
+            self.thaw(&path, &gopath::base(&path));
             self.active_modal = MODAL_NONE;
             let cmd = self.focus_bar();
             let pulse = self.check_red_alert_cmd(ConditionType::Green);
@@ -1104,6 +1089,106 @@ impl Model {
         }
     }
 
+    /// Loads the save at `path` (`label` names it in error messages) and
+    /// detects its type. A tour save resumes that tour (in its drydock when
+    /// it was saved there); a standalone save during a tour leaves the tour
+    /// and starts the standalone mission. (Go loaded only the game: a tour
+    /// save lost its tour, and a standalone save loaded during a tour was
+    /// evaluated as the tour's current sector.)
+    pub fn thaw(&mut self, path: &str, label: &str) {
+        let name = gopath::base(path);
+        let loaded = match persist::load_game(path) {
+            Ok(g) => g,
+            Err(e) => {
+                self.command_bar
+                    .add_message(&format!("Failed to thaw {}: {}", label, e));
+                return;
+            }
+        };
+        let tour_save = persist::load_tour_game(path)
+            .ok()
+            .and_then(|(g, t)| t.map(|t| (g, t)));
+        self.selected_sector = [0, 0];
+        if let Some((game, tour)) = tour_save {
+            let game = game
+                .or_else(|| tour.borrow().current_game_state.clone())
+                .unwrap_or(loaded);
+            tour.borrow_mut().current_game_state = Some(game.clone());
+            let sd = game.borrow().stardate;
+            self.game = Some(game);
+            self.drydock = drydockmodal::new(Some(tour.clone()), self.theme);
+            let (index, total, docked) = {
+                let t = tour.borrow();
+                (t.current_sector_index, t.sectors.len(), t.in_drydock)
+            };
+            self.tour = Some(tour);
+            self.command_bar.add_message(&format!(
+                "Patrol tour resumed: {} (Sector {} of {}, Stardate {})",
+                name,
+                index,
+                total,
+                fmt_f(sd, 1)
+            ));
+            if docked {
+                self.command_bar.add_message("Docked at Starbase 01 Drydock & Refit Facility. Select refits or press Space/D to disembark.");
+            }
+            return;
+        }
+        if self.tour.take().is_some() {
+            self.command_bar.add_message(&format!(
+                "Left the patrol tour: {} is a standalone mission (freeze the tour first to keep it).",
+                name
+            ));
+        }
+        let sd = loaded.borrow().stardate;
+        self.game = Some(loaded);
+        self.command_bar.add_message(&format!(
+            "Mission thawed: {} (Stardate {})",
+            name,
+            fmt_f(sd, 1)
+        ));
+    }
+
+    /// `freeze <filename>` (advertised by `help saves`, missing from Go's
+    /// console): saves the mission as `<filename>.TRK`, as a tour save
+    /// during a patrol tour.
+    pub fn freeze(&mut self, name: &str) {
+        if name.is_empty() {
+            self.command_bar.add_message("Usage: freeze <filename>");
+            return;
+        }
+        let path = match sst_engine::save::resolve_save_path(name) {
+            Ok(p) => p,
+            Err(e) => {
+                self.command_bar.add_message(&e.to_string());
+                return;
+            }
+        };
+        let res = match (&self.tour, &self.game) {
+            (Some(t), g) => persist::save_tour_game(&path, g.as_ref(), Some(t)),
+            (None, Some(g)) => persist::save_game(g, &path),
+            (None, None) => {
+                self.command_bar.add_message("No mission to freeze.");
+                return;
+            }
+        };
+        match res {
+            Err(e) => self.command_bar.add_message(&format!(
+                "Failed to freeze {}: {}",
+                gopath::base(&path),
+                e
+            )),
+            Ok(()) => {
+                let sd = self.game.as_ref().map_or(0.0, |g| g.borrow().stardate);
+                self.command_bar.add_message(&format!(
+                    "Mission frozen: {} (Stardate {})",
+                    gopath::base(&path),
+                    fmt_f(sd, 1)
+                ));
+            }
+        }
+    }
+
     /// Go `displayTourOrders`.
     pub fn display_tour_orders(&mut self) {
         let Some(tour) = self.tour.clone() else {
@@ -1391,21 +1476,14 @@ impl Model {
         if trimmed.starts_with("thaw ") {
             let raw = trim_space(text);
             let path = trim_space(raw.get(5..).unwrap_or("")).to_string();
-            match persist::load_game(&path) {
-                Err(e) => self
-                    .command_bar
-                    .add_message(&format!("Failed to thaw {}: {}", path, e)),
-                Ok(loaded) => {
-                    let sd = loaded.borrow().stardate;
-                    self.game = Some(loaded);
-                    self.selected_sector = [0, 0];
-                    self.command_bar.add_message(&format!(
-                        "Mission thawed: {} (Stardate {})",
-                        gopath::base(&path),
-                        fmt_f(sd, 1)
-                    ));
-                }
-            }
+            self.thaw(&path, &path);
+            return None;
+        }
+
+        if trimmed == "freeze" || trimmed.starts_with("freeze ") {
+            let raw = trim_space(text);
+            let name = trim_space(raw.get(6..).unwrap_or("")).to_string();
+            self.freeze(&name);
             return None;
         }
 
