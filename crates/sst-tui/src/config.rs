@@ -169,6 +169,7 @@ impl From<std::io::Error> for ConfigError {
 // ---------------------------------------------------------------- paths
 
 /// Go `filepath.Clean` for '/'-separated paths.
+#[cfg(unix)]
 fn clean_slash(path: &[u8]) -> Vec<u8> {
     if path.is_empty() {
         return b".".to_vec();

@@ -122,7 +122,9 @@ pub const WITH_REPORT_FOCUS: i16 = 1 << 7;
 
 enum Event {
     Input(InputMsg),
+    #[cfg(unix)]
     Resize,
+    #[cfg(unix)]
     Signal(i32),
     InputClosed,
 }
@@ -647,19 +649,13 @@ impl Runtime {
             };
             match ev {
                 Some(Event::Input(m)) => sched.msgs.push_back(m.into_msg()),
+                #[cfg(unix)]
                 Some(Event::Resize) => self.check_resize(&mut sched),
+                #[cfg(unix)]
                 Some(Event::Signal(s)) => {
-                    #[cfg(unix)]
-                    {
-                        if s == signal_hook::consts::SIGINT {
-                            sched.msgs.push_back(Box::new(InterruptMsg));
-                        } else {
-                            sched.msgs.push_back(Box::new(QuitMsg));
-                        }
-                    }
-                    #[cfg(not(unix))]
-                    {
-                        let _ = s;
+                    if s == signal_hook::consts::SIGINT {
+                        sched.msgs.push_back(Box::new(InterruptMsg));
+                    } else {
                         sched.msgs.push_back(Box::new(QuitMsg));
                     }
                 }

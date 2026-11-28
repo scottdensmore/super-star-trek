@@ -242,9 +242,10 @@ pub fn read(fd: Fd, buf: &mut [u8]) -> io::Result<usize> {
 }
 
 /// Writes all of `data` to `fd`.
-pub fn write_all(fd: Fd, mut data: &[u8]) -> io::Result<()> {
+pub fn write_all(fd: Fd, data: &[u8]) -> io::Result<()> {
     #[cfg(unix)]
     {
+        let mut data = data;
         while !data.is_empty() {
             // SAFETY: data is a valid readable slice.
             let n = unsafe { libc::write(fd, data.as_ptr() as *const libc::c_void, data.len()) };
